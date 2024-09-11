@@ -7,9 +7,6 @@ import java.io.IOException;
 import java.net.URL;
 
 import jakarta.inject.Inject;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -20,21 +17,15 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
-import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
-public class ToolkitLoginWebview extends ViewPart implements ISelectionListener {
+public class ToolkitLoginWebview extends AmazonQView {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
 
@@ -45,8 +36,6 @@ public class ToolkitLoginWebview extends ViewPart implements ISelectionListener 
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
-
-    private boolean darkMode = Display.isSystemDarkTheme();
 
     public ToolkitLoginWebview() {
         this.commandParser = new LoginViewCommandParser();
@@ -85,57 +74,6 @@ public class ToolkitLoginWebview extends ViewPart implements ISelectionListener 
         };
     }
 
-    private void contributeToActionBars(final IViewSite viewSite) {
-        IActionBars bars = viewSite.getActionBars();
-        fillLocalPullDown(bars.getMenuManager());
-        fillLocalToolBar(bars.getToolBarManager());
-    }
-
-    private void fillLocalPullDown(final IMenuManager manager) {
-        manager.add(changeThemeAction);
-        manager.add(signoutAction);
-    }
-
-    private void fillLocalToolBar(final IToolBarManager manager) {
-        manager.add(changeThemeAction);
-    }
-
-    private void createActions(final boolean isLoggedIn) {
-        changeThemeAction = new ChangeThemeAction();
-        signoutAction = new SignoutAction();
-        updateSignoutActionVisibility(isLoggedIn);
-    }
-
-    private Action changeThemeAction;
-    private Action signoutAction;
-
-    private class ChangeThemeAction extends Action {
-        ChangeThemeAction() {
-            setText("Change Color");
-            setToolTipText("Change the color");
-            setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_SYNCED));
-        }
-
-        @Override
-        public void run() {
-            darkMode = !darkMode;
-            browser.execute("changeTheme(" + darkMode + ");");
-        }
-    }
-
-    private class SignoutAction extends Action {
-        SignoutAction() {
-            setText("Sign out");
-        }
-
-        @Override
-        public void run() {
-            AuthUtils.invalidateToken();
-            Display.getDefault().asyncExec(() -> {
-                browser.setText(getContent());
-            });
-        }
-    }
 
     private void handleAuthStatusChange(final boolean isLoggedIn) {
         Display.getDefault().asyncExec(() -> {
@@ -148,9 +86,6 @@ public class ToolkitLoginWebview extends ViewPart implements ISelectionListener 
         });
     }
 
-    private void updateSignoutActionVisibility(final boolean isLoggedIn) {
-        signoutAction.setEnabled(isLoggedIn);
-    }
 
     @Override
     public final void setFocus() {

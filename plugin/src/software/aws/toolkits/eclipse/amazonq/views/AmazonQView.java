@@ -3,6 +3,8 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 
+import java.util.Set;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -11,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
@@ -21,13 +24,17 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public abstract class AmazonQView extends ViewPart implements ISelectionListener {
 	
+	private static final Set<String> amazonQViews = Set.of(
+		ToolkitLoginWebview.ID,
+		AmazonQChatWebview.ID
+	);
+	
 	private Browser browser;
 	private boolean darkMode = Display.isSystemDarkTheme();
 	
     private Action changeThemeAction;
     private Action signoutAction;
     
-
     private class ChangeThemeAction extends Action {
         ChangeThemeAction() {
             setText("Change Color");
@@ -79,13 +86,31 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         updateSignoutActionVisibility(isLoggedIn);
     }
     
-    protected void showView(String viewId) {	
+    public static void showView(String viewId) {	
+    	if (!amazonQViews.contains(viewId)) {
+    		PluginLogger.error("Error occurred while attempting to show a view that is not registered by Amazon Q. You must add the view (" + viewId + ") to amazonQViews Set");
+    		return;
+    	}
+    	
     	IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
     	if (page != null) {
+    		// Show requested view
     		try {
     			page.showView(viewId);
     		} catch (Exception e) {
     			PluginLogger.error("Error occurred while showing view (" + viewId + ")", e);
+    		}
+    		
+    		// Hide all other Amazon Q Views
+    		IViewReference[] viewReferences = page.getViewReferences();
+    		for (IViewReference viewRef : viewReferences) {
+    			if (amazonQViews.contains(viewRef.getId()) && !viewRef.getId().equalsIgnoreCase(viewId)) {
+    				try {
+        				page.hideView(viewRef);
+        			} catch (Exception e) {
+        				PluginLogger.error("Error occurred while hiding view (" + viewId + ")", e);
+        			}
+    			}
     		}
     	}
     }

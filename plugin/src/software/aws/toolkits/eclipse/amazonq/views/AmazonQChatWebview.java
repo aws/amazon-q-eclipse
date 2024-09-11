@@ -18,7 +18,10 @@ import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public class AmazonQChatWebview extends AmazonQView {
 
@@ -27,6 +30,7 @@ public class AmazonQChatWebview extends AmazonQView {
     @Inject
     private Shell shell;
     private Browser browser;
+    private AuthStatusChangedListener authStatusChangedListener;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -44,7 +48,9 @@ public class AmazonQChatWebview extends AmazonQView {
 
         browser.setBackground(black);
         parent.setBackground(black);
-        browser.setText(getContent());
+        AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
+            handleAuthStatusChange(isLoggedIn);
+        }, ThreadingUtils::executeAsyncTask);
 
         BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
         browser.addDisposeListener(e -> prefsFunction.dispose());
@@ -52,6 +58,8 @@ public class AmazonQChatWebview extends AmazonQView {
         createActions(true);
         contributeToActionBars(getViewSite());
         getSite().getPage().addSelectionListener(this);
+        AuthUtils.addAuthStatusChangeListener(this::updateSignoutActionVisibility);
+        authStatusChangedListener = this::handleAuthStatusChange;
 
        new BrowserFunction(browser, "clientApi") {
             @Override
@@ -61,6 +69,18 @@ public class AmazonQChatWebview extends AmazonQView {
                 return null;
             }
         };
+    }
+    
+    private void handleAuthStatusChange(final boolean isLoggedIn) {
+        Display.getDefault().asyncExec(() -> {
+            updateSignoutActionVisibility(isLoggedIn);
+            if (!isLoggedIn) {
+            	browser.setText("Signed out");
+                showView(ToolkitLoginWebview.ID);
+            } else {
+            	browser.setText(getContent());
+            }
+        });
     }
 
 
@@ -144,6 +164,7 @@ public class AmazonQChatWebview extends AmazonQView {
 
     @Override
     public final void dispose() {
+    	AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
         getSite().getPage().removeSelectionListener(this);
         super.dispose();
     }

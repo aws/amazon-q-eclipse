@@ -82,6 +82,7 @@ public class ToolkitLoginWebview extends AmazonQView {
                 browser.setText(getContent());
             } else {
                 browser.setText("Signed in");
+                showView(AmazonQChatWebview.ID);
             }
         });
     }

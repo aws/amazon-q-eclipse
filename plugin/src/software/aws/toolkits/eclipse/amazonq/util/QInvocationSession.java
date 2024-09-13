@@ -312,7 +312,6 @@ public final class QInvocationSession extends QResource {
     	if (suggestionsContext != null) {
     		suggestionsContext.decrementIndex();
     		getViewer().getTextWidget().redraw();
-    		System.out.println("Index decremented. Current index: " + suggestionsContext.getCurrentIndex());
     	}
     }
     
@@ -320,7 +319,6 @@ public final class QInvocationSession extends QResource {
     	if (suggestionsContext != null) {
     		suggestionsContext.incrementIndex();
     		getViewer().getTextWidget().redraw();
-    		System.out.println("Index incremented. Current index: " + suggestionsContext.getCurrentIndex());
     	}
     }
     

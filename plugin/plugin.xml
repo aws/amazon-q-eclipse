@@ -97,6 +97,16 @@
             name="Reject Suggestions"
             id="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
         </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward"
+              name="Toggle Suggestions Forward">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward"
+              name="Toggle Suggestions Backward">
+        </command>
     </extension>
 
     <extension point="org.eclipse.ui.handlers">
@@ -111,6 +121,14 @@
         <handler
                 class="software.aws.toolkits.eclipse.amazonq.handlers.QRejectSuggestionsHandler"
                 commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsForwardHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsBackwardHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward">
         </handler>
     </extension>
 
@@ -132,6 +150,18 @@
             contextId="org.eclipse.ui.textEditorScope"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="ESC">
+        </key>
+        <key
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward"
+              contextId="org.eclipse.ui.textEditorScope"
+              schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+              sequence="M3+[">
+        </key>
+        <key
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward"
+              contextId="org.eclipse.ui.textEditorScope"
+              schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+              sequence="M3+]">
         </key>
     </extension>
 

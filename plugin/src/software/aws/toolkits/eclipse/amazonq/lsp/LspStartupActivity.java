@@ -8,6 +8,16 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IStartup;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
+
 import org.eclipse.lsp4e.LanguageServiceAccessor;
 import org.eclipse.lsp4e.LanguageServersRegistry;
 
@@ -33,6 +43,28 @@ public class LspStartupActivity implements IStartup {
             }
         };
         job.schedule();
+        
+        if(PluginStore.get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
+            this.launchWebview();
+        }
+    }
+    
+    private final void launchWebview() {
+        IWorkbench workbench = PlatformUI.getWorkbench();
+        workbench.getDisplay().asyncExec(new Runnable() {
+            public void run() {
+                try {
+                    IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+                    if (window != null) {
+                        IWorkbenchPage page = window.getActivePage();
+                        page.showView("software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview");
+                        PluginStore.put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
+                    }
+                } catch (PartInitException e) {
+                    PluginLogger.warn("Error occurred during auto loading of plugin", e);
+                }                    
+            }
+        });
     }
 
 }

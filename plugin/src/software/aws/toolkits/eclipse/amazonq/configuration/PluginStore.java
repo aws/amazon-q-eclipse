@@ -3,18 +3,24 @@
 
 package software.aws.toolkits.eclipse.amazonq.configuration;
 
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public final class PluginStore {
-    private static final IEclipsePreferences PREFERENCES = ConfigurationScope.INSTANCE.getNode("software.aws.toolkits.eclipse");
-
+    private static final Preferences PREFERENCES = Preferences.userRoot().node("software.aws.toolkits.eclipse");
     private PluginStore() {
         // Prevent instantiation
     }
 
     public static void put(final String key, final String value) {
         PREFERENCES.put(key, value);
+        try {
+            PREFERENCES.flush();
+        } catch (BackingStoreException e) {
+            PluginLogger.warn(String.format("Error while saving entry to a preference store - key: %s, value: %s", key, value), e);
+        }
     }
 
     public static String get(final String key) {

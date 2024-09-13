@@ -9,8 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 public abstract class AbstractQToggleSuggestionsHandler extends AbstractHandler {
 	public enum Direction {
-		FORWARD,
-		BACKWARD
+		FORWARD, BACKWARD
 	}
 
 	private Direction direction = Direction.FORWARD;
@@ -18,7 +17,8 @@ public abstract class AbstractQToggleSuggestionsHandler extends AbstractHandler 
 	@Override
 	public final boolean isEnabled() {
 		QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
-		return qInvocationSessionInstance != null && qInvocationSessionInstance.isPreviewingSuggestions();
+		return qInvocationSessionInstance != null && !qInvocationSessionInstance.hasBeenTypedahead()
+				&& qInvocationSessionInstance.isPreviewingSuggestions();
 	}
 
 	@Override
@@ -26,17 +26,17 @@ public abstract class AbstractQToggleSuggestionsHandler extends AbstractHandler 
 		QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
 
 		switch (direction) {
-			case FORWARD:
-				qInvocationSessionInstance.incrementCurentSuggestionIndex();
-				break;
-			case BACKWARD:
-				qInvocationSessionInstance.decrementCurrentSuggestionIndex();
-				break;
+		case FORWARD:
+			qInvocationSessionInstance.incrementCurentSuggestionIndex();
+			break;
+		case BACKWARD:
+			qInvocationSessionInstance.decrementCurrentSuggestionIndex();
+			break;
 		}
 
 		return null;
 	}
-	
+
 	protected void setCommandDirection(final Direction direction) {
 		this.direction = direction;
 	}

@@ -18,7 +18,9 @@ import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
+import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public class AmazonQChatWebview extends AmazonQView {
 
@@ -39,7 +41,9 @@ public class AmazonQChatWebview extends AmazonQView {
     public final void createPartControl(final Composite parent) {
         setupAmazonQView(parent, true);
         
-        browser.setText(getContent());
+        AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
+            handleAuthStatusChange(isLoggedIn);
+        }, ThreadingUtils::executeAsyncTask);
 
         BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
         browser.addDisposeListener(e -> prefsFunction.dispose());

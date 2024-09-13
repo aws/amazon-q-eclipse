@@ -36,7 +36,7 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
     
     public static void showView(String viewId) {    
         if (!amazonQViews.contains(viewId)) {
-            PluginLogger.error("Failed to show view. You must add the view (" + viewId + ") to amazonQViews Set");
+            PluginLogger.error("Failed to show view. You must add the view " + viewId + " to amazonQViews Set");
             return;
         }
 
@@ -44,10 +44,10 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         if (page != null) {
             // Show requested view
             try {
-                PluginLogger.info("Attempting to show view" + viewId);
                 page.showView(viewId);
+                PluginLogger.info("Showing view " + viewId);
             } catch (Exception e) {
-                PluginLogger.error("Error occurred while showing view (" + viewId + ")", e);
+                PluginLogger.error("Error occurred while showing view " + viewId, e);
             }
 
             // Hide all other Amazon Q Views
@@ -57,7 +57,7 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
                     try {
                         page.hideView(viewRef);
                     } catch (Exception e) {
-                        PluginLogger.error("Error occurred while hiding view (" + viewId + ")", e);
+                        PluginLogger.error("Error occurred while hiding view " + viewId, e);
                     }
                 }
             }

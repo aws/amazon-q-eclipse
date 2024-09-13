@@ -21,7 +21,10 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
                         AuthUtils.signIn().get();
-                        Display.getDefault().asyncExec(() -> browser.setText("Login succeeded"));
+                        Display.getDefault().asyncExec(() -> {
+                            browser.setText("Login succeeded");
+                            AmazonQView.showView(AmazonQChatWebview.ID);
+                        });
                     } catch (Exception e) {
                         PluginLogger.error("Failed to update token", e);
                     }

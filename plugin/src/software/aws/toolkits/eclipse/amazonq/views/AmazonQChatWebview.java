@@ -3,9 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -16,31 +13,22 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
-import org.eclipse.ui.part.ViewPart;
 
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
-public class AmazonQChatWebview extends ViewPart implements ISelectionListener {
+public class AmazonQChatWebview extends AmazonQView {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
     @Inject
     private Shell shell;
-    private Browser browser;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
-
-    private boolean darkMode = Display.isSystemDarkTheme();
 
     public AmazonQChatWebview() {
         this.commandParser = new LoginViewCommandParser();
@@ -49,20 +37,12 @@ public class AmazonQChatWebview extends ViewPart implements ISelectionListener {
 
     @Override
     public final void createPartControl(final Composite parent) {
-        browser = new Browser(parent, SWT.NATIVE);
-        Display display = Display.getCurrent();
-        Color black = display.getSystemColor(SWT.COLOR_BLACK);
-
-        browser.setBackground(black);
-        parent.setBackground(black);
+        setupAmazonQView(parent, true);
+        
         browser.setText(getContent());
 
         BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
         browser.addDisposeListener(e -> prefsFunction.dispose());
-
-        createActions();
-        contributeToActionBars(getViewSite());
-        getSite().getPage().addSelectionListener(this);
 
        new BrowserFunction(browser, "ideCommand") {
             @Override
@@ -72,45 +52,6 @@ public class AmazonQChatWebview extends ViewPart implements ISelectionListener {
                 return null;
             }
         };
-    }
-
-    private void contributeToActionBars(final IViewSite viewSite) {
-        IActionBars bars = viewSite.getActionBars();
-        fillLocalPullDown(bars.getMenuManager());
-        fillLocalToolBar(bars.getToolBarManager());
-    }
-
-    private void fillLocalPullDown(final IMenuManager manager) {
-        manager.add(changeThemeAction);
-    }
-
-    private void fillLocalToolBar(final IToolBarManager manager) {
-        manager.add(changeThemeAction);
-    }
-
-    private void createActions() {
-        changeThemeAction = new ChangeThemeAction();
-    }
-
-    private Action changeThemeAction;
-
-    private class ChangeThemeAction extends Action {
-        ChangeThemeAction() {
-            setText("Change Color");
-            setToolTipText("Change the color");
-            setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_SYNCED));
-        }
-
-        @Override
-        public void run() {
-            darkMode = !darkMode;
-            browser.execute("changeTheme(" + darkMode + ");");
-        }
-    }
-
-    @Override
-    public final void setFocus() {
-        browser.setFocus();
     }
 
     private class OpenPreferenceFunction extends BrowserFunction {
@@ -194,9 +135,16 @@ public class AmazonQChatWebview extends ViewPart implements ISelectionListener {
     }
 
     @Override
-    public final void dispose() {
-        getSite().getPage().removeSelectionListener(this);
-        super.dispose();
+    protected void handleAuthStatusChange(final boolean isLoggedIn) {
+        Display.getDefault().asyncExec(() -> {
+            amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
+            if (!isLoggedIn) {
+                browser.setText("Signed Out");
+                AmazonQView.showView(ToolkitLoginWebview.ID);
+            } else {
+                browser.setText(getContent());
+            }
+        });
     }
 
 }

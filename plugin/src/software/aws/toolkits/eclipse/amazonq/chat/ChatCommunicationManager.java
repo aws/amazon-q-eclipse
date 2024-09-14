@@ -23,7 +23,7 @@ public class ChatCommunicationManager {
            
            switch(command) {
                case CHAT_TAB_ADD:
-                   GenericTabParams tabParams = jsonHandler.deserialize(jsonParams, GenericTabParams.class).orElse(null);
+                   GenericTabParams tabParams = jsonHandler.deserialize(jsonParams, GenericTabParams.class);
                    chatMessageProivder.sendTabAdd(tabParams);
                    break;
                default:

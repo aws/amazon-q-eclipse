@@ -29,7 +29,7 @@ public class LoginViewCommandParser implements ViewCommandParser {
                 ParsedCommand parsedCommand = commandRequest.getParsedCommand();
                 
                 if (parsedCommand.getCommand() == null) {
-                    return null;
+                    return Optional.empty();
                 }
                 
                 return Optional.ofNullable(parsedCommand);

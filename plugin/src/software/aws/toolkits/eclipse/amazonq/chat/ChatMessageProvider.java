@@ -23,16 +23,11 @@ public class ChatMessageProvider {
     }
     
     public void sendTabAdd(GenericTabParams tabParams) {
-        if (tabParams == null) {
-            PluginLogger.error("Chat server request halted for " + Command.CHAT_TAB_ADD + ". No params provided.");
-            return;
-        }
-        
          try {
              PluginLogger.info("Sending " + Command.CHAT_TAB_ADD + " message to Amazon Q LSP server");
              amazonQLspServer.tabAdd(tabParams).get();
          } catch (InterruptedException | ExecutionException e) {
-             PluginLogger.error("Error occurred while sending ");
+             PluginLogger.error("Error occurred while sending message to Amazon Q LSP server for command " + Command.CHAT_TAB_ADD);
          }
     }
 }

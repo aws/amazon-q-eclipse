@@ -1,5 +1,4 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views.model;
 import java.util.Optional;
@@ -15,8 +14,8 @@ public record CommandRequest(
         if (!command.isPresent()) {
             return Optional.empty();
         }
-
-        ParsedCommand parsedCommand = new ParsedCommand(command.get(), Optional.ofNullable(params));
+        
+        ParsedCommand parsedCommand = new ParsedCommand(command.get(), params);
         return Optional.ofNullable(parsedCommand);
     }
 }

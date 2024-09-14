@@ -18,12 +18,12 @@ public class ChatMessage {
         }
     }
     
-    public ChatResult sendChatRequestAsync(ChatRequestParams chatRequestParams) {
-        return sendEncryptedRequestWithProgress(chatRequestParams);
-    }
-    
-    public ChatResult sendEncryptedRequestWithProgress(ChatRequestParams chatRequestParams) {
-        // TODO: Implement encryption
-        
-    }
+//    public ChatResult sendChatRequestAsync(ChatRequestParams chatRequestParams) {
+//        return sendEncryptedRequestWithProgress(chatRequestParams);
+//    }
+//    
+//    public ChatResult sendEncryptedRequestWithProgress(ChatRequestParams chatRequestParams) {
+//        // TODO: Implement encryption
+//        
+//    }
 }

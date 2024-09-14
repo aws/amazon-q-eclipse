@@ -22,16 +22,15 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         Command command = parsedCommand.getCommand();
         Object params = parsedCommand.getParams();
         
+        PluginLogger.info(command + " being processed by ActionHandler");
+        
         switch (command) {
             case CHAT_READY:
-                PluginLogger.info("Chat_ready command received");
                 break;
             case CHAT_TAB_ADD:
-                PluginLogger.info("Chat_tab_add command received with params " + params.toString());
                 chatCommunicationManager.sendMessageToChatServerAsync(command, params);
                 break;
             case TELEMETRY_EVENT:
-            	PluginLogger.info("Telemetry command received with params " + params.toString());
                 break;
             default:
                 PluginLogger.info("Unhandled command: " + parsedCommand.getCommand());

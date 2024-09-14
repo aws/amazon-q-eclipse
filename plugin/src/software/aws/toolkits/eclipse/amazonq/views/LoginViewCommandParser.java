@@ -26,7 +26,13 @@ public class LoginViewCommandParser implements ViewCommandParser {
             String jsonString = (String) arguments[0];
             try {
                 CommandRequest commandRequest = objectMapper.readValue(jsonString, CommandRequest.class);
-                return commandRequest.getParsedCommand();
+                ParsedCommand parsedCommand = commandRequest.getParsedCommand();
+                
+                if (parsedCommand.getCommand() == null) {
+                    return null;
+                }
+                
+                return Optional.ofNullable(parsedCommand);
             } catch (JsonProcessingException e) {
                 PluginLogger.error("Error parsing webview command JSON: " + e.getMessage());
             }

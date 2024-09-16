@@ -156,12 +156,15 @@ public class AmazonQChatWebview extends ViewPart implements ISelectionListener {
                 + "        html {\n"
                 + "            background-color: var(--mynah-color-bg);\n"
                 + "            color: var(--mynah-color-text-default);\n"
-                + "            height: 100%%;\n"
+                + "            height: 100vh;\n"
                 + "            width: 100%%;\n"
                 + "            overflow: hidden;\n"
                 + "            margin: 0;\n"
                 + "            padding: 0;\n"
                 + "        }\n"
+                + "        textarea:placeholder-shown {\n"
+                + "            line-height: 1.5rem;\n"
+                + "        }"
                 + "    </style>";
     }
 

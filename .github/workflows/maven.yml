@@ -21,6 +21,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install auth module
+      run: |
+        cd plugin/auth
+        npm install
+    - name: Build login webview
+      run: |
+        cd plugin/webview
+        npm run build-ui  
     - name: Setup Maven Action
       uses: s4u/setup-maven-action@v1.14.0
       with:

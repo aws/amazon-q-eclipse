@@ -46,7 +46,8 @@ public final class QInlineVerifyKeyListener implements VerifyKeyListener {
             // Here we conduct typeahead logic
             String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
             int currentOffset = widget.getCaretOffset();
-            qInvocationSessionInstance.setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
+            qInvocationSessionInstance
+                    .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
             IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
             // This needs to be defaulted to true. This key is only present in the
             // preference store if it is set to false.

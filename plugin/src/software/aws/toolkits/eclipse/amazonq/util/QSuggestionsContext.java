@@ -26,15 +26,15 @@ public class QSuggestionsContext {
     }
 
     public final void incrementIndex() {
-    	currentIndex = (currentIndex + 1) % details.size();
+        currentIndex = (currentIndex + 1) % details.size();
     }
-   
+
     public final void decrementIndex() {
-    	if (currentIndex - 1 < 0) {
-    		currentIndex = details.size() - 1;
-    	} else {
-    		currentIndex--;
-    	}
+        if (currentIndex - 1 < 0) {
+            currentIndex = details.size() - 1;
+        } else {
+            currentIndex--;
+        }
     }
 }
 

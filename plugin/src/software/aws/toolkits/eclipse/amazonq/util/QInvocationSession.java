@@ -307,27 +307,27 @@ public final class QInvocationSession extends QResource {
 
         return details.get(index).getSuggestion();
     }
-    
+
     public void decrementCurrentSuggestionIndex() {
-    	if (suggestionsContext != null) {
-    		suggestionsContext.decrementIndex();
-    		getViewer().getTextWidget().redraw();
-    	}
+        if (suggestionsContext != null) {
+            suggestionsContext.decrementIndex();
+            getViewer().getTextWidget().redraw();
+        }
     }
-    
+
     public void incrementCurentSuggestionIndex() {
-    	if (suggestionsContext != null) {
-    		suggestionsContext.incrementIndex();
-    		getViewer().getTextWidget().redraw();
-    	}
+        if (suggestionsContext != null) {
+            suggestionsContext.incrementIndex();
+            getViewer().getTextWidget().redraw();
+        }
     }
-    
+
     public void setHasBeenTypedahead(boolean hasBeenTypedahead) {
-    	this.hasBeenTypedahead = hasBeenTypedahead;
+        this.hasBeenTypedahead = hasBeenTypedahead;
     }
-    
+
     public boolean hasBeenTypedahead() {
-    	return hasBeenTypedahead;
+        return hasBeenTypedahead;
     }
 
     // Additional methods for the session can be added here

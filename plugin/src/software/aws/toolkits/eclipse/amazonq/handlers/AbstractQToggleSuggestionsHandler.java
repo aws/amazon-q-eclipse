@@ -8,36 +8,36 @@ import org.eclipse.core.commands.ExecutionEvent;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 public abstract class AbstractQToggleSuggestionsHandler extends AbstractHandler {
-	public enum Direction {
-		FORWARD, BACKWARD
-	}
+    public enum Direction {
+        FORWARD, BACKWARD
+    }
 
-	private Direction direction = Direction.FORWARD;
+    private Direction direction = Direction.FORWARD;
 
-	@Override
-	public final boolean isEnabled() {
-		QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
-		return qInvocationSessionInstance != null && !qInvocationSessionInstance.hasBeenTypedahead()
-				&& qInvocationSessionInstance.isPreviewingSuggestions();
-	}
+    @Override
+    public final boolean isEnabled() {
+        QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
+        return qInvocationSessionInstance != null && !qInvocationSessionInstance.hasBeenTypedahead()
+                && qInvocationSessionInstance.isPreviewingSuggestions();
+    }
 
-	@Override
-	public Object execute(final ExecutionEvent event) {
-		QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
+    @Override
+    public Object execute(final ExecutionEvent event) {
+        QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
 
-		switch (direction) {
-		case FORWARD:
-			qInvocationSessionInstance.incrementCurentSuggestionIndex();
-			break;
-		case BACKWARD:
-			qInvocationSessionInstance.decrementCurrentSuggestionIndex();
-			break;
-		}
+        switch (direction) {
+        case FORWARD:
+            qInvocationSessionInstance.incrementCurentSuggestionIndex();
+            break;
+        case BACKWARD:
+            qInvocationSessionInstance.decrementCurrentSuggestionIndex();
+            break;
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	protected void setCommandDirection(final Direction direction) {
-		this.direction = direction;
-	}
+    protected void setCommandDirection(final Direction direction) {
+        this.direction = direction;
+    }
 }

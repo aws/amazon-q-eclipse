@@ -1,26 +1,36 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
 
 import org.eclipse.swt.browser.Browser;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public class AmazonQChatViewActionHandler implements ViewActionHandler {
+    private ChatCommunicationManager chatCommunicationManager;
+
+    public AmazonQChatViewActionHandler() {
+        chatCommunicationManager = new ChatCommunicationManager();
+    }
+
     @Override
     public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
-        switch (parsedCommand.getCommand()) {
+        Command command = parsedCommand.getCommand();
+        Object params = parsedCommand.getParams();
+
+        PluginLogger.info(command + " being processed by ActionHandler");
+
+        switch (command) {
             case CHAT_READY:
-                PluginLogger.info("Chat_ready command received");
                 break;
             case CHAT_TAB_ADD:
-                PluginLogger.info("Chat_tab_add command received with params " + parsedCommand.getParams().toString());
+                chatCommunicationManager.sendMessageToChatServerAsync(command, params);
                 break;
             case TELEMETRY_EVENT:
-                PluginLogger.info("Telemetry command received with params " + parsedCommand.getParams().toString());
                 break;
             default:
                 PluginLogger.info("Unhandled command: " + parsedCommand.getCommand());

@@ -2,14 +2,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.model;
 
-import java.util.Optional;
-
 public class ParsedCommand {
 
     private final Command command;
     private final Object params;
 
-    public ParsedCommand(final Command command, final Optional<Object> params) {
+    public ParsedCommand(final Command command, final Object params) {
         this.command = command;
         this.params = params;
     }

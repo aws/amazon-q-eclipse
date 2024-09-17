@@ -25,5 +25,16 @@ public class QSuggestionsContext {
         this.currentIndex = index;
     }
 
+    public final void incrementIndex() {
+        currentIndex = (currentIndex + 1) % details.size();
+    }
+
+    public final void decrementIndex() {
+        if (currentIndex - 1 < 0) {
+            currentIndex = details.size() - 1;
+        } else {
+            currentIndex--;
+        }
+    }
 }
 

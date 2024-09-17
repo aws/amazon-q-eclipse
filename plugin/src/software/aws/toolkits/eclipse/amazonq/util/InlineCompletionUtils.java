@@ -47,8 +47,8 @@ public final class InlineCompletionUtils {
         params.setPosition(invocationPosition);
         return params;
     }
-    
-    private static String getOpenFilePath(IEditorInput editorInput) {
+
+    private static String getOpenFilePath(final IEditorInput editorInput) {
         if (editorInput instanceof FileStoreEditorInput fileStoreEditorInput) {
             return fileStoreEditorInput.getURI().getPath();
         } else if (editorInput instanceof IFileEditorInput fileEditorInput) {

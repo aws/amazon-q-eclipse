@@ -6,77 +6,53 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.io.IOException;
 import java.net.URL;
 
-import jakarta.inject.Inject;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.ContributionItem;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
-import org.eclipse.ui.part.ViewPart;
 
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
+import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public class ToolkitLoginWebview extends ViewPart implements ISelectionListener {
+public final class ToolkitLoginWebview extends AmazonQView {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
-    private static final String shareFeedbackMenuItemText = "Share Feedback";
 
     @Inject
     private Shell shell;
     private Browser browser;
-    private AuthStatusChangedListener authStatusChangedListener;
+    private AmazonQCommonActions amazonQCommonActions;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
 
-    private boolean darkMode = Display.isSystemDarkTheme();
-
     public ToolkitLoginWebview() {
+        browser = getBrowser();
+        amazonQCommonActions = getAmazonQCommonActions();
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new LoginViewActionHandler();
     }
 
     @Override
-    public final void createPartControl(final Composite parent) {
-        browser = new Browser(parent, SWT.NATIVE);
-        Display display = Display.getCurrent();
-        Color black = display.getSystemColor(SWT.COLOR_BLACK);
-
-        browser.setBackground(black);
-        parent.setBackground(black);
+    public void createPartControl(final Composite parent) {
+        setupAmazonQView(parent, true);
 
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);
         }, ThreadingUtils::executeAsyncTask);
-        createActions(true);
 
         BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
         browser.addDisposeListener(e -> prefsFunction.dispose());
 
-        contributeToActionBars(getViewSite());
-        getSite().getPage().addSelectionListener(this);
-        AuthUtils.addAuthStatusChangeListener(this::updateFeedbackContributionItemVisibility);
-        AuthUtils.addAuthStatusChangeListener(this::updateSignoutActionVisibility);
-        authStatusChangedListener = this::handleAuthStatusChange;
 
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
             @Override
@@ -88,94 +64,18 @@ public class ToolkitLoginWebview extends ViewPart implements ISelectionListener 
         };
     }
 
-    private void contributeToActionBars(final IViewSite viewSite) {
-        IActionBars bars = viewSite.getActionBars();
-        fillLocalPullDown(bars.getMenuManager());
-        fillLocalToolBar(bars.getToolBarManager());
-    }
-
-    private void fillLocalPullDown(final IMenuManager manager) {
-        manager.add(changeThemeAction);
-        manager.add(feedbackDialogContributionItem);
-        manager.add(signoutAction);
-    }
-
-    private void fillLocalToolBar(final IToolBarManager manager) {
-        manager.add(changeThemeAction);
-    }
-
-    private void createActions(final boolean isLoggedIn) {
-        changeThemeAction = new ChangeThemeAction();
-        signoutAction = new SignoutAction();
-        updateSignoutActionVisibility(isLoggedIn);
-        feedbackDialogContributionItem = new DialogContributionItem(
-                new FeedbackDialog(shell),
-                shareFeedbackMenuItemText,
-                PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_LCL_LINKTO_HELP)
-                );
-        updateFeedbackContributionItemVisibility(isLoggedIn);
-    }
-
-    private Action changeThemeAction;
-    private Action signoutAction;
-    private ContributionItem feedbackDialogContributionItem;
-
-    private class ChangeThemeAction extends Action {
-        ChangeThemeAction() {
-            setText("Change Color");
-            setToolTipText("Change the color");
-            setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_SYNCED));
-        }
-
-        @Override
-        public void run() {
-            darkMode = !darkMode;
-            browser.execute("changeTheme(" + darkMode + ");");
-        }
-    }
-
-    private class SignoutAction extends Action {
-        SignoutAction() {
-            setText("Sign out");
-        }
-
-        @Override
-        public void run() {
-            AuthUtils.invalidateToken();
-            Display.getDefault().asyncExec(() -> {
-                browser.setText(getContent());
-            });
-        }
-    }
-
-    private void handleAuthStatusChange(final boolean isLoggedIn) {
+    protected void handleAuthStatusChange(final boolean isLoggedIn) {
         Display.getDefault().asyncExec(() -> {
-            updateSignoutActionVisibility(isLoggedIn);
-            updateFeedbackContributionItemVisibility(isLoggedIn);
+            amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
             if (!isLoggedIn) {
                 browser.setText(getContent());
             } else {
                 browser.setText("Signed in");
+                AmazonQView.showView(AmazonQChatWebview.ID);
             }
         });
     }
 
-    private void updateSignoutActionVisibility(final boolean isLoggedIn) {
-        signoutAction.setEnabled(isLoggedIn);
-    }
-    
-    private void updateFeedbackContributionItemVisibility(final boolean isLoggedIn) {
-        feedbackDialogContributionItem.setVisible(isLoggedIn);
-        Display.getDefault().asyncExec(() -> {
-            getViewSite().getActionBars().getMenuManager().markDirty();
-            getViewSite().getActionBars().getMenuManager().update(true);
-        });
-    }
-
-    @Override
-    public final void setFocus() {
-        browser.setFocus();
-    }
 
     private class OpenPreferenceFunction extends BrowserFunction {
         private Runnable function;
@@ -226,7 +126,7 @@ public class ToolkitLoginWebview extends ViewPart implements ISelectionListener 
     }
 
     @Override
-    public final void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
+    public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
         if (selection.isEmpty()) {
             return;
         }
@@ -236,12 +136,5 @@ public class ToolkitLoginWebview extends ViewPart implements ISelectionListener 
         } else {
             browser.execute("setSelection(\"Something was selected in part " + part.getTitle() + "\");");
         }
-    }
-
-    @Override
-    public final void dispose() {
-        AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
-        getSite().getPage().removeSelectionListener(this);
-        super.dispose();
     }
 }

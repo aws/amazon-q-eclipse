@@ -4,30 +4,41 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.eclipse.core.runtime.Platform;
+import org.osgi.framework.FrameworkUtil;
 
 public final class ClientMetadata {
     private ClientMetadata() {
         // Prevent instantiation
     }
-    
-    private static final String osName = System.getProperty("os.name");
-    private static final String osVersion = System.getProperty("os.version");
-    private static final String ideName = Platform.getProduct().getName();
-    private static final String ideVersion = Platform.getProduct().getDefiningBundle().getVersion().toString();
-    
+
+    private static final String OS_NAME = System.getProperty("os.name");
+    private static final String OS_VERSION = System.getProperty("os.version");
+    private static final String IDE_NAME = Platform.getProduct().getName();
+    private static final String IDE_VERSION = Platform.getProduct().getDefiningBundle().getVersion().toString();
+    public static final String PLUGIN_NAME = FrameworkUtil.getBundle(ClientMetadata.class).getSymbolicName();
+    public static final String PLUGIN_VERSION = FrameworkUtil.getBundle(ClientMetadata.class).getVersion().toString();
+
     public static String getOSName() {
-        return osName;
+        return OS_NAME;
     }
-    
+
     public static String getOSVersion() {
-        return osVersion;
+        return OS_VERSION;
     }
-    
+
     public static String getIdeName() {
-        return ideName;
+        return IDE_NAME;
     }
-    
+
     public static String getIdeVersion() {
-        return ideVersion;
+        return IDE_VERSION;
+    }
+
+    public static String getPluginName() {
+        return PLUGIN_NAME;
+    }
+
+    public static String getPluginVersion() {
+        return PLUGIN_VERSION;
     }
 }

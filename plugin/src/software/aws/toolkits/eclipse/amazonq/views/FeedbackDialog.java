@@ -32,27 +32,27 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public class FeedbackDialog extends Dialog {
-    
-    private static final String title = "Share Feedback";
-    private static final int maxCharLimit = 2000;
+
+    private static final String TITLE = "Share Feedback";
+    private static final int MAX_CHAR_LIMIT = 2000;
     private Composite container;
     private Text commentBox;
     private Font magnifiedFont;
     private Image loadedImage;
     private Label characterRemainingLabel;
     private Sentiment selectedSentiment = Sentiment.POSITIVE;
-    
+
     public class CustomRadioButton extends Composite {
         private Label iconLabel;
         private Label textLabel;
         private Button radioButton;
 
-        public CustomRadioButton(Composite parent, Image image, String text, int style) {
+        public CustomRadioButton(final Composite parent, final Image image, final String text, final int style) {
             super(parent, style);
-            
+
             Composite contentComposite = new Composite(parent, SWT.NONE);
             contentComposite.setLayout(new GridLayout(1, false));
-            
+
             iconLabel = new Label(contentComposite, SWT.NONE);
             iconLabel.setImage(image);
             iconLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
@@ -65,21 +65,21 @@ public class FeedbackDialog extends Dialog {
             radioButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
         }
 
-        public Button getRadioButton() {
+        public final Button getRadioButton() {
             return radioButton;
         }
     }
-    
+
     enum Sentiment {
         POSITIVE,
         NEGATIVE
     }
-    
-    public FeedbackDialog(Shell parentShell) {
+
+    public FeedbackDialog(final Shell parentShell) {
         super(parentShell);
     }
-    
-    private Image loadImage(String imagePath) {
+
+    private Image loadImage(final String imagePath) {
         Image loadedImage = null;
         try {
             URL imageUrl = PluginUtils.getResource(imagePath);
@@ -93,23 +93,23 @@ public class FeedbackDialog extends Dialog {
         }
         return loadedImage;
     }
-    
+
     @Override
-    protected void createButtonsForButtonBar(Composite parent) {
+    protected final void createButtonsForButtonBar(final Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, "Share", true);
         createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
     }
-    
+
     @Override
-    protected void okPressed() {
+    protected final void okPressed() {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
         // TODO: to remove the info log post call to telemetry feedback api implementation
         PluginLogger.info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
         super.okPressed();
     }
-    
-    private Font magnifyFontSize(Font originalFont, int fontSize) {
+
+    private Font magnifyFontSize(final Font originalFont, final int fontSize) {
         FontData[] fontData = originalFont.getFontData();
         for (int i = 0; i < fontData.length; i++) {
             fontData[i].setHeight(fontSize);
@@ -122,218 +122,196 @@ public class FeedbackDialog extends Dialog {
         this.magnifiedFont = magnifiedFont;
         return magnifiedFont;
     }
-    
-    private void handleTextModified(ModifyEvent event) {
+
+    private void handleTextModified(final ModifyEvent event) {
         Text text = (Text) event.widget;
-        if(text.getText().length() > maxCharLimit) {
-            text.setText(text.getText().substring(0, maxCharLimit));
-            text.setSelection(maxCharLimit); // Move the caret to the end of the text
+        if (text.getText().length() > MAX_CHAR_LIMIT) {
+            text.setText(text.getText().substring(0, MAX_CHAR_LIMIT));
+            text.setSelection(MAX_CHAR_LIMIT); // Move the caret to the end of the text
         }
         updateCharacterRemainingCount();
     }
 
     @Override
-    protected Control createDialogArea(Composite parent) {
+    protected final Control createDialogArea(final Composite parent) {
         container = (Composite) super.createDialogArea(parent);
         container.setLayout(new GridLayout(1, false));
-       
+
+        createHeaderSection(container);
+        createJoinUsOnGithubSection(container);
+        createReportRequestContributeSection(container);
+        createShareFeedbackSection(container);
+        createQuestionSection(container);
+
+        return container;
+    }
+
+    private void createHeaderSection(final Composite container) {
         Composite headlineContainer = new Composite(container, SWT.NONE);
         RowLayout rowLayout = new RowLayout();
         rowLayout.spacing = 0; // to reduce space between two labels
         headlineContainer.setLayout(rowLayout);
-        Label lookingForHelpLabel = new Label(headlineContainer, SWT.NONE);
-        lookingForHelpLabel.setText("Looking for help? View the");
-        lookingForHelpLabel.setFont(magnifyFontSize(lookingForHelpLabel.getFont(), 14));
-        
-        Label gettingStartedReferenceLabel = new Label(headlineContainer, SWT.NONE);
-        gettingStartedReferenceLabel.setText("Getting Started Guide");
-        gettingStartedReferenceLabel.setFont(magnifyFontSize(gettingStartedReferenceLabel.getFont(), 14));
-        gettingStartedReferenceLabel.setForeground(headlineContainer.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        gettingStartedReferenceLabel.setCursor(headlineContainer.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        gettingStartedReferenceLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(MouseEvent e) {
-                PluginUtils.openWebpage("https://aws.amazon.com/q/getting-started/");
-            }
-        });
-        
-        Label orSearchOurTextLabel = new Label(headlineContainer, SWT.NONE);
-        orSearchOurTextLabel.setText("or search our");
-        orSearchOurTextLabel.setFont(magnifyFontSize(orSearchOurTextLabel.getFont(), 14));
-        
-        Label documentationReferenceLabel = new Label(headlineContainer, SWT.NONE);
-        documentationReferenceLabel.setText("Documentation");
-        documentationReferenceLabel.setFont(magnifyFontSize(documentationReferenceLabel.getFont(), 14));
-        documentationReferenceLabel.setForeground(headlineContainer.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        documentationReferenceLabel.setCursor(headlineContainer.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        documentationReferenceLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(MouseEvent e) {
-                PluginUtils.openWebpage("https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html");
-            }
-        });
-        
+
+        createLabelWithFontSize(headlineContainer, "Looking for help? View the", 14);
+        createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/");
+        createLabelWithFontSize(headlineContainer, "or search our", 14);
+        createLinkLabel(headlineContainer, "Documentation", 14, "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html");
+    }
+
+    private void createJoinUsOnGithubSection(final Composite container) {
         Composite joinUsOnGithubContainer = new Composite(container, SWT.NONE);
         GridLayout joinUsOnGithubLayout = new GridLayout(2, false);
         joinUsOnGithubLayout.horizontalSpacing = 5;
         joinUsOnGithubContainer.setLayout(joinUsOnGithubLayout);
         joinUsOnGithubContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        
-        Label joinUsGithubLabel = new Label(joinUsOnGithubContainer, SWT.NONE);
-        joinUsGithubLabel.setText("Join us on GitHub");
-        GridData joinGithubLayout = new GridData(SWT.FILL, SWT.CENTER, false, false);
-        joinUsGithubLabel.setLayoutData(joinGithubLayout);
-        joinUsGithubLabel.setFont(magnifyFontSize(joinUsGithubLabel.getFont(), 14));
-        
-        Label separatorLabel = new Label(joinUsOnGithubContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
-        GridData separatorGithubLayout = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        separatorLabel.setLayoutData(separatorGithubLayout);
 
+        createLabelWithFontSize(joinUsOnGithubContainer, "Join us on GitHub", 14);
+        createSeparator(joinUsOnGithubContainer);
+    }
+
+    private void createReportRequestContributeSection(final Composite container) {
         Composite reportRequestContributeContainer = new Composite(container, SWT.NONE);
         GridLayout reportRequestContributeContainerLayout = new GridLayout(2, false);
         reportRequestContributeContainerLayout.horizontalSpacing = 10;
         reportRequestContributeContainerLayout.marginLeft = 10;
         reportRequestContributeContainer.setLayout(reportRequestContributeContainerLayout);
-        
-        Label reportIssueImageLabel = new Label(reportRequestContributeContainer, SWT.NONE);
-        reportIssueImageLabel.setImage(loadImage("icons/ReportAnIssue.png"));
 
-        String bodyMessageForReportIssueOrRequestFeature = String.format(
-        "--- \n"
-        + "Toolkit: Amazon Q for %s\n"
-        + "OS: %s %s\n"
-        + "IDE: %s %s", ClientMetadata.getIdeName(), ClientMetadata.getOSName(),
-        ClientMetadata.getOSVersion(), ClientMetadata.getIdeName(), 
-        ClientMetadata.getIdeVersion()).stripIndent();
-        
-        Label reportIssue = new Label(reportRequestContributeContainer, SWT.NONE);
-        reportIssue.setText("Report an issue");
-        reportIssue.setForeground(reportRequestContributeContainer.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        reportIssue.setCursor(reportRequestContributeContainer.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        reportIssue.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(MouseEvent e) {
-                PluginUtils.openWebpage(String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", bodyMessageForReportIssueOrRequestFeature));
-            }
-        });
-        
-        Label requestFeatureImageLabel = new Label(reportRequestContributeContainer, SWT.NONE);
-        requestFeatureImageLabel.setImage(loadImage("icons/RequestFeature.png"));
-        
-        Label requestFeature = new Label(reportRequestContributeContainer, SWT.NONE);
-        requestFeature.setText("Request a feature");
-        requestFeature.setForeground(reportRequestContributeContainer.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        requestFeature.setCursor(reportRequestContributeContainer.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        requestFeature.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(MouseEvent e) {
-                PluginUtils.openWebpage(String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", bodyMessageForReportIssueOrRequestFeature));
-            }
-        });
-        
-        Label viewSourceCodeLabel = new Label(reportRequestContributeContainer, SWT.NONE);
-        viewSourceCodeLabel.setImage(loadImage("icons/ViewCode.png"));
-        
-        Label viewSourceCode = new Label(reportRequestContributeContainer, SWT.NONE);
-        viewSourceCode.setText("View source code and contribute");
-        viewSourceCode.setForeground(reportRequestContributeContainer.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        viewSourceCode.setCursor(reportRequestContributeContainer.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        viewSourceCode.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(MouseEvent e) {
-                PluginUtils.openWebpage("https://github.com/aws/amazon-q-eclipse/");
-            }
-        });
-        
+        createImageLabel(reportRequestContributeContainer, "icons/ReportAnIssue.png");
+        createLinkLabel(reportRequestContributeContainer, "Report an issue", SWT.NONE,
+            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()));
+
+        createImageLabel(reportRequestContributeContainer, "icons/RequestFeature.png");
+        createLinkLabel(reportRequestContributeContainer, "Request a feature", SWT.NONE,
+            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()));
+
+        createImageLabel(reportRequestContributeContainer, "icons/ViewCode.png");
+        createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE, "https://github.com/aws/amazon-q-eclipse/");
+    }
+
+    private void createShareFeedbackSection(final Composite container) {
         Composite shareFeedbackTextContainer = new Composite(container, SWT.NONE);
         GridLayout shareFeedbackTextContainerLayout = new GridLayout(2, false);
         shareFeedbackTextContainerLayout.horizontalSpacing = 5;
         shareFeedbackTextContainer.setLayout(shareFeedbackTextContainerLayout);
         shareFeedbackTextContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        
-        Label shareFeedbackLabel = new Label(shareFeedbackTextContainer, SWT.NONE);
-        shareFeedbackLabel.setText("Share feedback");
-        shareFeedbackLabel.setFont(magnifyFontSize(shareFeedbackLabel.getFont(), 14));
-        shareFeedbackLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-        
-        Label separatorForShareFeedbackLabel = new Label(shareFeedbackTextContainer, SWT.SEPARATOR | SWT.HORIZONTAL);
-        separatorForShareFeedbackLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false)); 
-        
+
+        createLabelWithFontSize(shareFeedbackTextContainer, "Share feedback", 14);
+        createSeparator(shareFeedbackTextContainer);
+    }
+
+    private void createQuestionSection(final Composite container) {
         Composite questionsContainer = new Composite(container, SWT.NONE);
         GridLayout questionsContainerLayout = new GridLayout(1, false);
         questionsContainerLayout.marginLeft = 10;
         questionsContainer.setLayout(questionsContainerLayout);
         GridData questionsContainerLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
         questionsContainer.setLayoutData(questionsContainerLayoutData);
-        
-        Label ratingQuestionLabel = new Label(questionsContainer, SWT.NONE);
-        ratingQuestionLabel.setText("How satisified are you with the AWS Toolkit?");
-        
+
+        createLabel(questionsContainer, "How satisified are you with the AWS Toolkit?");
+
         Composite sentimentContainer = new Composite(questionsContainer, SWT.NONE);
         RowLayout sentimentContainerLayout = new RowLayout(SWT.HORIZONTAL);
         sentimentContainerLayout.spacing = 0;
         sentimentContainer.setLayout(sentimentContainerLayout);
-        CustomRadioButton happySentimentButton = new CustomRadioButton(sentimentContainer, loadImage("icons/HappyFace.png"), "Satisfied", SWT.NONE);
-        happySentimentButton.getRadioButton().setSelection(true);
-        CustomRadioButton frownSentimentButton = new CustomRadioButton(sentimentContainer, loadImage("icons/FrownyFace.png"), "Unsatisfied", SWT.NONE);
-        happySentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                frownSentimentButton.getRadioButton().setSelection(false);
-                selectedSentiment = Sentiment.POSITIVE;
-            }
-        });
-        frownSentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                happySentimentButton.getRadioButton().setSelection(false);
-                selectedSentiment = Sentiment.NEGATIVE;
-            }
-        });
-        
-        Label feedbackQuestionLabel = new Label(questionsContainer, SWT.NONE);
-        feedbackQuestionLabel.setText("What do you like about the AWS Toolkit? What can we improve?");
-        
-        
+        createCustomRadioButton(sentimentContainer, "icons/HappyFace.png", "Satisfied", SWT.NONE, true);
+        createCustomRadioButton(sentimentContainer, "icons/FrownyFace.png", "Unsatisfied", SWT.NONE, false);
+
+        createLabel(questionsContainer, "What do you like about the AWS Toolkit? What can we improve?");
+
         commentBox = new Text(questionsContainer, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
         GridData commentBoxLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
         commentBoxLayout.heightHint = 200;
         commentBoxLayout.widthHint = 0;
         commentBox.setLayoutData(commentBoxLayout);
         commentBox.addModifyListener(this::handleTextModified);
-        
+
         characterRemainingLabel = new Label(questionsContainer, SWT.NONE);
         characterRemainingLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         updateCharacterRemainingCount();
-    
-        return container;
     }
-    
+
+    private void createLabel(final Composite parent, final String text) {
+        Label label = new Label(parent, SWT.NONE);
+        label.setText(text);
+    }
+
+    private void createLabelWithFontSize(final Composite parent, final String text, final int fontSize) {
+        Label label = new Label(parent, SWT.NONE);
+        label.setText(text);
+        label.setFont(magnifyFontSize(label.getFont(), fontSize));
+    }
+
+    private void createLinkLabel(final Composite parent, final String text, final int fontSize, final String url) {
+        Label label = new Label(parent, SWT.NONE);
+        label.setText(text);
+        label.setFont(magnifyFontSize(label.getFont(), fontSize));
+        label.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_BLUE));
+        label.setCursor(parent.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDown(final MouseEvent e) {
+                PluginUtils.openWebpage(url);
+            }
+        });
+    }
+
+    private void createImageLabel(final Composite parent, final String imagePath) {
+        Label label = new Label(parent, SWT.NONE);
+        label.setImage(loadImage(imagePath));
+    }
+
+    private void createSeparator(final Composite parent) {
+        Label separatorLabel = new Label(parent, SWT.SEPARATOR | SWT.HORIZONTAL);
+        GridData separatorGithubLayout = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        separatorLabel.setLayoutData(separatorGithubLayout);
+    }
+
+    private void createCustomRadioButton(final Composite parent, final String imagePath, final String text, final int style, final boolean isSelected) {
+        CustomRadioButton button = new CustomRadioButton(parent, loadImage(imagePath), text, style);
+        button.getRadioButton().setSelection(isSelected);
+        button.getRadioButton().addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(final SelectionEvent e) {
+                // Handle button selection
+            }
+        });
+    }
+
+    private String getBodyMessageForReportIssueOrRequestFeature() {
+        return String.format(
+            "--- \n"
+            + "Toolkit: Amazon Q for %s\n"
+            + "OS: %s %s\n"
+            + "IDE: %s %s", ClientMetadata.getIdeName(), ClientMetadata.getOSName(),
+            ClientMetadata.getOSVersion(), ClientMetadata.getIdeName(),
+            ClientMetadata.getIdeVersion()).stripIndent();
+    }
+
     private void updateCharacterRemainingCount() {
         int currentLength = commentBox.getText().length();
-        int remainingCharacters = maxCharLimit - currentLength;
+        int remainingCharacters = MAX_CHAR_LIMIT - currentLength;
         characterRemainingLabel.setText(remainingCharacters + " characters remaining");
     }
 
     @Override
-    protected void configureShell(Shell newShell) {
+    protected final void configureShell(final Shell newShell) {
         super.configureShell(newShell);
-        newShell.setText(title);
+        newShell.setText(TITLE);
     }
 
     @Override
-    protected Point getInitialSize() {
+    protected final Point getInitialSize() {
         return new Point(800, 600);
     }
-    
+
     @Override
-    public boolean close() {  
+    public final boolean close() {
         disposeAllComponents(container);
         disposeIndependentElements();
         return super.close();
     }
-    
-    private void disposeAllComponents(Composite container) {
+
+    private void disposeAllComponents(final Composite container) {
         for (Control control : container.getChildren()) {
             if (control instanceof Composite) {
                 disposeAllComponents((Composite) control);
@@ -342,8 +320,8 @@ public class FeedbackDialog extends Dialog {
             }
         }
     }
-    
-    public void disposeIndependentElements() {
+
+    public final void disposeIndependentElements() {
         if (this.loadedImage != null && !this.loadedImage.isDisposed()) {
             this.loadedImage.dispose();
         }

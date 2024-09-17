@@ -46,6 +46,7 @@ public final class QInvocationSession extends QResource {
     private Stack<Character> closingBrackets = new Stack<>();
     private boolean isLastKeyNewLine = false;
     private int[] headOffsetAtLine = new int[500];
+    private boolean hasBeenTypedahead = false;
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -307,6 +308,28 @@ public final class QInvocationSession extends QResource {
         return details.get(index).getSuggestion();
     }
 
+    public void decrementCurrentSuggestionIndex() {
+        if (suggestionsContext != null) {
+            suggestionsContext.decrementIndex();
+            getViewer().getTextWidget().redraw();
+        }
+    }
+
+    public void incrementCurentSuggestionIndex() {
+        if (suggestionsContext != null) {
+            suggestionsContext.incrementIndex();
+            getViewer().getTextWidget().redraw();
+        }
+    }
+
+    public void setHasBeenTypedahead(final boolean hasBeenTypedahead) {
+        this.hasBeenTypedahead = hasBeenTypedahead;
+    }
+
+    public boolean hasBeenTypedahead() {
+        return hasBeenTypedahead;
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
@@ -319,6 +342,7 @@ public final class QInvocationSession extends QResource {
         leadingWhitespaceSkipped = 0;
         isLastKeyNewLine = false;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
+        hasBeenTypedahead = false;
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);

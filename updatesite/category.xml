@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/software.aws.toolkits.eclipse.amazonq.aws-plugin-q-feature_1.0.0.qualifier.jar" id="aws-plugin-q-feature" version="1.0.0.qualifier">
+   <feature url="features/software.aws.toolkits.eclipse.amazonq.amazon-q-eclipse-feature_1.0.0.qualifier.jar" id="amazon-q-eclipse-feature" version="1.0.0.qualifier">
       <category name="software.aws.toolkits.eclipse"/>
    </feature>
    <category-def name="software.aws.toolkits.eclipse" label="software.aws.toolkits.eclipse">

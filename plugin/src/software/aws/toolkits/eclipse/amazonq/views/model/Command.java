@@ -1,5 +1,4 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views.model;
 
@@ -8,12 +7,12 @@ import java.util.Optional;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public enum Command {
-	// QChat 
-	CHAT_READY("aws/chat/ready"),
-	CHAT_TAB_ADD("aws/chat/tabAdd"),
-	TELEMETRY_EVENT("telemetry/event"),
-	
-	// Auth
+    // QChat
+    CHAT_READY("aws/chat/ready"),
+    CHAT_TAB_ADD("aws/chat/tabAdd"),
+    TELEMETRY_EVENT("telemetry/event"),
+
+    // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
     CANCEL_LOGIN("cancelLogin");
 
@@ -29,8 +28,12 @@ public enum Command {
                 return Optional.ofNullable(command);
             }
         }
-        
+
         PluginLogger.info("Unregistered command parsed: " + value);
         return Optional.empty();
+    }
+
+    public String toString() {
+        return commandString;
     }
 }

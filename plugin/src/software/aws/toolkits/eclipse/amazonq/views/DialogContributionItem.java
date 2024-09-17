@@ -17,20 +17,20 @@ public class DialogContributionItem extends ContributionItem {
     private String menuItemName;
     private Image icon;
 
-    public DialogContributionItem(Dialog dialog, String menuItemName, Image icon) {
+    public DialogContributionItem(final Dialog dialog, final String menuItemName, final Image icon) {
         this.dialog = dialog;
         this.menuItemName = menuItemName;
         this.icon = icon;
     }
 
     @Override
-    public void fill(Menu menu, int index) {
+    public final void fill(final Menu menu, final int index) {
         MenuItem menuItem = new MenuItem(menu, SWT.NONE, index);
         menuItem.setText(this.menuItemName);
         menuItem.setImage(this.icon);
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
-            public void widgetSelected(SelectionEvent e) {
+            public void widgetSelected(final SelectionEvent e) {
                 dialog.open();
             }
         });

@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: aws-plugin-q
+Bundle-Name: amazon-q-eclipse
 Bundle-RequiredExecutionEnvironment: JavaSE-17
-Bundle-SymbolicName: aws-plugin-q;singleton:=true
+Bundle-SymbolicName: amazon-q-eclipse;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Automatic-Module-Name: aws.plugin.q
+Automatic-Module-Name: amazon.q.eclipse
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  org.eclipse.ui;bundle-version="3.205.100",
@@ -42,9 +42,7 @@ Bundle-Classpath: .,
  target/dependency/j2objc-annotations-3.0.0.jar,
  target/dependency/jackson-annotations-2.17.1.jar,
  target/dependency/jackson-core-2.17.1.jar,
- target/dependency/jackson-core-2.17.2.jar,
  target/dependency/jackson-databind-2.17.1.jar,
- target/dependency/jackson-databind-2.17.2.jar,
  target/dependency/jakarta.annotation-api-2.1.1.jar,
  target/dependency/jakarta.inject-api-2.0.1.jar,
  target/dependency/jna-5.14.0.jar,

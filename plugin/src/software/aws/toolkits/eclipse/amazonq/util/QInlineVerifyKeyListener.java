@@ -164,7 +164,6 @@ public final class QInlineVerifyKeyListener implements VerifyKeyListener {
                         break;
                     }
                 }
-
                 leadingWhitespaceSkipped += newWs;
                 qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped);
             }

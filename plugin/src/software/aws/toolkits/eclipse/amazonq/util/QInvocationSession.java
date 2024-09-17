@@ -322,7 +322,7 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    public void setHasBeenTypedahead(boolean hasBeenTypedahead) {
+    public void setHasBeenTypedahead(final boolean hasBeenTypedahead) {
         this.hasBeenTypedahead = hasBeenTypedahead;
     }
 

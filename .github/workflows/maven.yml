@@ -29,6 +29,11 @@ jobs:
       run: |
         cd plugin/webview
         npm run build-ui  
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-ui-artifacts
+        path: plugin/webview/build/
     - name: Setup Maven Action
       uses: s4u/setup-maven-action@v1.14.0
       with:
@@ -36,5 +41,10 @@ jobs:
         java-version: 17
         java-distribution: temurin
         maven-version: 3.9.8
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-ui-artifacts
+        path: plugin/webview/build
     - name: Build with Maven
       run: mvn -B package --file pom.xml

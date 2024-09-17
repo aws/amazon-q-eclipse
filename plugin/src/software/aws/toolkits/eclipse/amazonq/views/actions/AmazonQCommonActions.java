@@ -33,6 +33,7 @@ public class AmazonQCommonActions {
 
     private void fillLocalPullDown(final IMenuManager manager) {
         manager.add(changeThemeAction);
+        manager.add(feedbackDialogContributionItem.getDialogContributionItem());
         manager.add(signoutAction);
     }
 

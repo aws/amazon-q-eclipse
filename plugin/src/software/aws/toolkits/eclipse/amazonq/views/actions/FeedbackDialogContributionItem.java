@@ -12,7 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.views.DialogContributionItem;
 import software.aws.toolkits.eclipse.amazonq.views.FeedbackDialog;
 
 public class FeedbackDialogContributionItem implements AuthStatusChangedListener {
-    private static final String shareFeedbackMenuItemText = "Share Feedback";
+    private static final String SHARE_FEEDBACK_MENU_ITEM_TEXT = "Share Feedback";
     
     @Inject
     private Shell shell;
@@ -24,7 +24,7 @@ public class FeedbackDialogContributionItem implements AuthStatusChangedListener
         this.viewSite = viewSite;
         feedbackDialogContributionItem = new DialogContributionItem(
                 new FeedbackDialog(shell),
-                shareFeedbackMenuItemText,
+                SHARE_FEEDBACK_MENU_ITEM_TEXT,
                 PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_LCL_LINKTO_HELP)
         );
     }
@@ -35,6 +35,10 @@ public class FeedbackDialogContributionItem implements AuthStatusChangedListener
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
         });
+    }
+    
+    public DialogContributionItem getDialogContributionItem() {
+        return feedbackDialogContributionItem;
     }
 
     @Override

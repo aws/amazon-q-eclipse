@@ -1,74 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="optional" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
-		<attributes>
-			<attribute name="test" value="true"/>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="optional" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry excluding="main/resources/|test/resources/" kind="src" path="src"/>
-	<classpathentry kind="lib" path="target/dependency/animal-sniffer-annotations-1.9.jar"/>
-	<classpathentry kind="lib" path="target/dependency/batik-constants-1.17.jar"/>
-	<classpathentry kind="lib" path="target/dependency/batik-css-1.17.jar"/>
-	<classpathentry kind="lib" path="target/dependency/batik-i18n-1.17.jar"/>
-	<classpathentry kind="lib" path="target/dependency/batik-shared-resources-1.17.jar"/>
-	<classpathentry kind="lib" path="target/dependency/batik-util-1.17.jar"/>
-	<classpathentry kind="lib" path="target/dependency/bcpg-jdk18on-1.78.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/bcprov-jdk18on-1.78.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/bcutil-jdk18on-1.78.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/checker-qual-3.42.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/commons-codec-1.15.jar"/>
-	<classpathentry kind="lib" path="target/dependency/commons-io-2.16.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/commons-logging-1.2.jar"/>
-	<classpathentry kind="lib" path="target/dependency/error_prone_annotations-2.27.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/failureaccess-1.0.2.jar"/>
-	<classpathentry kind="lib" path="target/dependency/gson-2.11.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/guava-33.2.0-jre.jar"/>
-	<classpathentry kind="lib" path="target/dependency/httpclient-4.5.13.jar"/>
-	<classpathentry kind="lib" path="target/dependency/httpcore-4.4.13.jar"/>
-	<classpathentry kind="lib" path="target/dependency/icu4j-75.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/j2objc-annotations-3.0.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jackson-annotations-2.17.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jackson-core-2.17.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jackson-databind-2.17.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jakarta.annotation-api-2.1.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jakarta.inject-api-2.0.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jna-5.14.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jna-platform-5.14.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jsoup-1.17.2.jar"/>
-	<classpathentry kind="lib" path="target/dependency/jsr305-3.0.2.jar"/>
-	<classpathentry kind="lib" path="target/dependency/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.apache.felix.scr-2.2.10.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.eclipse.lsp4j.jsonrpc-0.23.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.eclipse.lsp4j-0.23.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.namespace.extender-1.0.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.namespace.implementation-1.0.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.service.component-1.5.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.service.event-1.4.1.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.service.prefs-1.1.2.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.util.function-1.2.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/org.osgi.util.promise-1.3.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/osgi.annotation-8.1.0.jar"/>
-	<classpathentry kind="lib" path="target/dependency/xml-apis-ext-1.3.04.jar"/>
-	<classpathentry kind="lib" path="target/dependency/xmlgraphics-commons-2.9.jar"/>
-	<classpathentry kind="lib" path="target/dependency/xz-1.9.jar"/>
-	<classpathentry kind="output" path="target/classes"/>
+    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
+        <attributes>
+            <attribute name="module" value="true"/>
+        </attributes>
+    </classpathentry>
+    <classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+    <classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+        <attributes>
+            <attribute name="maven.pomderived" value="true"/>
+        </attributes>
+    </classpathentry>
+    <classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
+        <attributes>
+            <attribute name="maven.pomderived" value="true"/>
+            <attribute name="optional" value="true"/>
+        </attributes>
+    </classpathentry>
+    <classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
+        <attributes>
+            <attribute name="test" value="true"/>
+            <attribute name="maven.pomderived" value="true"/>
+            <attribute name="optional" value="true"/>
+        </attributes>
+    </classpathentry>
+    <classpathentry excluding="main/resources/|test/resources/" kind="src" path="src"/>
+    <classpathentry kind="output" path="target/classes"/>
 </classpath>

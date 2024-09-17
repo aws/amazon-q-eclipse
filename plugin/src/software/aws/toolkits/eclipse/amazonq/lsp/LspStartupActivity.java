@@ -43,13 +43,12 @@ public class LspStartupActivity implements IStartup {
             }
         };
         job.schedule();
-        
-        if(PluginStore.get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
+        if (PluginStore.get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
             this.launchWebview();
         }
     }
-    
-    private final void launchWebview() {
+
+    private void launchWebview() {
         IWorkbench workbench = PlatformUI.getWorkbench();
         workbench.getDisplay().asyncExec(new Runnable() {
             public void run() {
@@ -62,7 +61,7 @@ public class LspStartupActivity implements IStartup {
                     }
                 } catch (PartInitException e) {
                     PluginLogger.warn("Error occurred during auto loading of plugin", e);
-                }                    
+                }
             }
         });
     }

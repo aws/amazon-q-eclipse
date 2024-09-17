@@ -110,7 +110,7 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
 
     /**
      * Disposes of the resources associated with this view.
-     * 
+     *
      * This method is called when the view is closed. It removes the authentication
      * status change listener and the selection listener from the page.
      */

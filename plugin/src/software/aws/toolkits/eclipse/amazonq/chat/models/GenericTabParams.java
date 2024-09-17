@@ -6,4 +6,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record GenericTabParams(
         @JsonProperty("tabId") String tabId
-) {}
+) { }
+

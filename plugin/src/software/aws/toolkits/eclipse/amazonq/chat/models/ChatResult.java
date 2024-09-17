@@ -4,11 +4,11 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record ChatResult (
+public record ChatResult(
     @JsonProperty("body") String body,
     @JsonProperty("messageId") String messageId,
     @JsonProperty("canBeVoted") Boolean canBeVoted,
     @JsonProperty("relatedContent") RelatedContent relatedContent,
     @JsonProperty("followUp") FollowUp followUp,
     @JsonProperty("codeReference") ReferenceTrackerInformation[] codeReference
-) {};
+) { };

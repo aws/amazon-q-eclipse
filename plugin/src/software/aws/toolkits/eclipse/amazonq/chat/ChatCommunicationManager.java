@@ -7,21 +7,21 @@ import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
-public class ChatCommunicationManager {
-    
+public final class ChatCommunicationManager {
+
     private final JsonHandler jsonHandler;
     private final ChatMessageProvider chatMessageProivder;
-    
+
     public ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProivder = new ChatMessageProvider();
     }
 
-    public void sendMessageToChatServerAsync(Command command, Object params) {
-        
+    public void sendMessageToChatServerAsync(final Command command, final Object params) {
+
            String jsonParams = jsonHandler.serialize(params);
-           
-           switch(command) {
+
+           switch (command) {
                case CHAT_TAB_ADD:
                    GenericTabParams tabParams = jsonHandler.deserialize(jsonParams, GenericTabParams.class);
                    chatMessageProivder.sendTabAdd(tabParams);

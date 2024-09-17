@@ -11,19 +11,19 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public class AmazonQChatViewActionHandler implements ViewActionHandler {
-    ChatCommunicationManager chatCommunicationManager;
-    
+    private ChatCommunicationManager chatCommunicationManager;
+
     public AmazonQChatViewActionHandler() {
         chatCommunicationManager = new ChatCommunicationManager();
     }
-    
+
     @Override
-    public final void handleCommand(ParsedCommand parsedCommand, final Browser browser) {
+    public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
         Command command = parsedCommand.getCommand();
         Object params = parsedCommand.getParams();
-        
+
         PluginLogger.info(command + " being processed by ActionHandler");
-        
+
         switch (command) {
             case CHAT_READY:
                 break;

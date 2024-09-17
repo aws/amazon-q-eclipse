@@ -10,10 +10,10 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
-public class ChatMessageProvider {
-    
+public final class ChatMessageProvider {
+
     private AmazonQLspServer amazonQLspServer;
-    
+
     public ChatMessageProvider() {
         try {
             amazonQLspServer = LspProvider.getAmazonQServer().get();
@@ -21,8 +21,8 @@ public class ChatMessageProvider {
             PluginLogger.error("Error occurred while retrieving Amazon Q LSP server. Failed to instantiate ChatMessageProvider.");
         }
     }
-    
-    public void sendTabAdd(GenericTabParams tabParams) {
+
+    public void sendTabAdd(final GenericTabParams tabParams) {
          try {
              PluginLogger.info("Sending " + Command.CHAT_TAB_ADD + " message to Amazon Q LSP server");
              amazonQLspServer.tabAdd(tabParams).get();

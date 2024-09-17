@@ -19,7 +19,7 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/textDocument/inlineCompletionWithReferences")
     CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(InlineCompletionParams params);
-    
+
     @JsonNotification("aws/chat/tabAdd")
     CompletableFuture<ChatResult> tabAdd(GenericTabParams params);
 

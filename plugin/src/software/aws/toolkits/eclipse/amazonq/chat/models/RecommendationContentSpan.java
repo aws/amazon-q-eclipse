@@ -7,4 +7,4 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record RecommendationContentSpan(
     @JsonProperty("start") Integer start,
     @JsonProperty("end") Integer end
-){};
+) { };

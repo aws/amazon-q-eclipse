@@ -7,7 +7,7 @@ public class ParsedCommand {
     private final Command command;
     private final Object params;
 
-	public ParsedCommand(Command command, Object params) {
+    public ParsedCommand(final Command command, final Object params) {
         this.command = command;
         this.params = params;
     }

@@ -10,4 +10,4 @@ public record ReferenceTrackerInformation(
     @JsonProperty("url") String url,
     @JsonProperty("recommendationContentSpan") RecommendationContentSpan recommendationContentSpan,
     @JsonProperty("information") String information
-){};
+) { };

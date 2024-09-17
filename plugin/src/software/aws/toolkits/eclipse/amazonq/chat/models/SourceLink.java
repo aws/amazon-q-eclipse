@@ -8,4 +8,4 @@ public record SourceLink(
         @JsonProperty("title") String title,
         @JsonProperty("url") String url,
         @JsonProperty("body") String body
-){};
+) { };

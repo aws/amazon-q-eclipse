@@ -10,4 +10,5 @@ public record ChatItemAction(
         @JsonProperty("disabled") Boolean disabled,
         @JsonProperty("description") String description,
         @JsonProperty("type") String type
-){};
+) { };
+

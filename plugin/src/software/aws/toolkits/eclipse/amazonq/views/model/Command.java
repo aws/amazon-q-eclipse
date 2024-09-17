@@ -32,7 +32,7 @@ public enum Command {
         PluginLogger.info("Unregistered command parsed: " + value);
         return Optional.empty();
     }
-    
+
     public String toString() {
         return commandString;
     }

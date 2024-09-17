@@ -6,10 +6,8 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -21,6 +19,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public class AmazonQChatWebview extends AmazonQView {
 
@@ -28,11 +27,16 @@ public class AmazonQChatWebview extends AmazonQView {
 
     @Inject
     private Shell shell;
+    private Browser browser;
+    private AmazonQCommonActions amazonQCommonActions;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
 
     public AmazonQChatWebview() {
+        browser = getBrowser();
+        amazonQCommonActions = getAmazonQCommonActions();
+
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new AmazonQChatViewActionHandler();
     }
@@ -40,7 +44,7 @@ public class AmazonQChatWebview extends AmazonQView {
     @Override
     public final void createPartControl(final Composite parent) {
         setupAmazonQView(parent, true);
-        
+
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);
         }, ThreadingUtils::executeAsyncTask);
@@ -139,7 +143,7 @@ public class AmazonQChatWebview extends AmazonQView {
     }
 
     @Override
-    protected void handleAuthStatusChange(final boolean isLoggedIn) {
+    protected final void handleAuthStatusChange(final boolean isLoggedIn) {
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
             if (!isLoggedIn) {

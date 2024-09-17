@@ -11,16 +11,16 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.views.DialogContributionItem;
 import software.aws.toolkits.eclipse.amazonq.views.FeedbackDialog;
 
-public class FeedbackDialogContributionItem implements AuthStatusChangedListener {
+public final class FeedbackDialogContributionItem implements AuthStatusChangedListener {
     private static final String SHARE_FEEDBACK_MENU_ITEM_TEXT = "Share Feedback";
-    
+
     @Inject
     private Shell shell;
     private IViewSite viewSite;
-    
-    DialogContributionItem feedbackDialogContributionItem;
-    
-    public FeedbackDialogContributionItem(IViewSite viewSite) {
+
+    private DialogContributionItem feedbackDialogContributionItem;
+
+    public FeedbackDialogContributionItem(final IViewSite viewSite) {
         this.viewSite = viewSite;
         feedbackDialogContributionItem = new DialogContributionItem(
                 new FeedbackDialog(shell),
@@ -28,7 +28,7 @@ public class FeedbackDialogContributionItem implements AuthStatusChangedListener
                 PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_LCL_LINKTO_HELP)
         );
     }
-    
+
     public void updateVisibility(final boolean isLoggedIn) {
         feedbackDialogContributionItem.setVisible(isLoggedIn);
         Display.getDefault().asyncExec(() -> {
@@ -36,13 +36,13 @@ public class FeedbackDialogContributionItem implements AuthStatusChangedListener
             viewSite.getActionBars().getMenuManager().update(true);
         });
     }
-    
+
     public DialogContributionItem getDialogContributionItem() {
         return feedbackDialogContributionItem;
     }
 
     @Override
-    public void onAuthStatusChanged(boolean isLoggedIn) {
+    public void onAuthStatusChanged(final boolean isLoggedIn) {
         updateVisibility(isLoggedIn);
     }
 }

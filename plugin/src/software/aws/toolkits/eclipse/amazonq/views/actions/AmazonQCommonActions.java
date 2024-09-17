@@ -7,19 +7,31 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
 
-public class AmazonQCommonActions {
-    
-    public ChangeThemeAction changeThemeAction;
-    public SignoutAction signoutAction;
-    public FeedbackDialogContributionItem feedbackDialogContributionItem;
-    
-    public AmazonQCommonActions(final boolean isLoggedIn, IViewSite viewSite) {
+public final class AmazonQCommonActions {
+
+    private ChangeThemeAction changeThemeAction;
+    private SignoutAction signoutAction;
+    private FeedbackDialogContributionItem feedbackDialogContributionItem;
+
+    public AmazonQCommonActions(final boolean isLoggedIn, final IViewSite viewSite) {
         createActions(isLoggedIn, viewSite);
         contributeToActionBars(viewSite);
         updateActionVisibility(isLoggedIn, viewSite);
     }
-    
-    private void createActions(final boolean isLoggedIn, IViewSite viewSite) {
+
+    public ChangeThemeAction getChangeThemeAction() {
+        return changeThemeAction;
+    }
+
+    public SignoutAction getSignoutAction() {
+        return signoutAction;
+    }
+
+    public FeedbackDialogContributionItem getFeedbackDialogContributionAction() {
+        return feedbackDialogContributionItem;
+    }
+
+    private void createActions(final boolean isLoggedIn, final IViewSite viewSite) {
         changeThemeAction = new ChangeThemeAction();
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
@@ -45,5 +57,5 @@ public class AmazonQCommonActions {
         signoutAction.updateVisibility(isLoggedIn);
         feedbackDialogContributionItem.updateVisibility(isLoggedIn);
     }
-    
+
 }

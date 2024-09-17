@@ -22,21 +22,20 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart implements ISelectionListener {
-    
-    private static final Set<String> amazonQViews = Set.of(
+
+    private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
             AmazonQChatWebview.ID
         );
 
-    
-    protected Browser browser;
-    protected AmazonQCommonActions amazonQCommonActions;
-    
+    private Browser browser;
+    private AmazonQCommonActions amazonQCommonActions;
     private AuthStatusChangedListener authStatusChangedListener;
-    
-    public static void showView(String viewId) {    
-        if (!amazonQViews.contains(viewId)) {
-            PluginLogger.error("Failed to show view. You must add the view " + viewId + " to amazonQViews Set");
+
+    public static void showView(final String viewId) {
+        if (!AMAZON_Q_VIEWS
+        .contains(viewId)) {
+            PluginLogger.error("Failed to show view. You must add the view " + viewId + " to AMAZON_Q_VIEWS Set");
             return;
         }
 
@@ -53,7 +52,7 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
             // Hide all other Amazon Q Views
             IViewReference[] viewReferences = page.getViewReferences();
             for (IViewReference viewRef : viewReferences) {
-                if (amazonQViews.contains(viewRef.getId()) && !viewRef.getId().equalsIgnoreCase(viewId)) {
+                if (AMAZON_Q_VIEWS.contains(viewRef.getId()) && !viewRef.getId().equalsIgnoreCase(viewId)) {
                     try {
                         page.hideView(viewRef);
                     } catch (Exception e) {
@@ -64,15 +63,23 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         }
     }
 
-    protected abstract void handleAuthStatusChange(final boolean isLoggedIn);
-    
-    protected void setupAmazonQView(final Composite parent, final boolean isLoggedIn) {
+    public final Browser getBrowser() {
+        return browser;
+    }
+
+    public final AmazonQCommonActions getAmazonQCommonActions() {
+        return amazonQCommonActions;
+    }
+
+    protected abstract void handleAuthStatusChange(boolean isLoggedIn);
+
+    protected final void setupAmazonQView(final Composite parent, final boolean isLoggedIn) {
         setupBrowser(parent);
         setupActions(isLoggedIn);
         setupAuthStatusListeners();
         setupSelectionListener();
     }
-    
+
     private void setupBrowser(final Composite parent) {
         browser = new Browser(parent, SWT.NATIVE);
         Display display = Display.getCurrent();
@@ -81,26 +88,32 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         browser.setBackground(black);
         parent.setBackground(black);
     }
-    
+
     private void setupActions(final boolean isLoggedIn) {
         amazonQCommonActions = new AmazonQCommonActions(isLoggedIn, getViewSite());
     }
-    
+
     private void setupAuthStatusListeners() {
         authStatusChangedListener = this::handleAuthStatusChange;
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.signoutAction);
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.feedbackDialogContributionItem);
+        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
+        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
     }
-    
+
     private void setupSelectionListener() {
         getSite().getPage().addSelectionListener(this);
     }
-    
+
     @Override
     public final void setFocus() {
         browser.setFocus();
     }
-    
+
+    /**
+     * Disposes of the resources associated with this view.
+     * 
+     * This method is called when the view is closed. It removes the authentication
+     * status change listener and the selection listener from the page.
+     */
     @Override
     public void dispose() {
         AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);

@@ -9,10 +9,8 @@ import java.net.URL;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -20,37 +18,41 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import jakarta.inject.Inject;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public class ToolkitLoginWebview extends AmazonQView {
+public final class ToolkitLoginWebview extends AmazonQView {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
 
     @Inject
     private Shell shell;
+    private Browser browser;
+    private AmazonQCommonActions amazonQCommonActions;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
 
     public ToolkitLoginWebview() {
+        browser = getBrowser();
+        amazonQCommonActions = getAmazonQCommonActions();
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new LoginViewActionHandler();
     }
 
     @Override
-    public final void createPartControl(final Composite parent) {
+    public void createPartControl(final Composite parent) {
         setupAmazonQView(parent, true);
-        
+
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);
         }, ThreadingUtils::executeAsyncTask);
 
         BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
         browser.addDisposeListener(e -> prefsFunction.dispose());
-        
+
 
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
             @Override
@@ -124,7 +126,7 @@ public class ToolkitLoginWebview extends AmazonQView {
     }
 
     @Override
-    public final void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
+    public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
         if (selection.isEmpty()) {
             return;
         }

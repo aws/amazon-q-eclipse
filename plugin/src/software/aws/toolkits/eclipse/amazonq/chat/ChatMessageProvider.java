@@ -36,7 +36,7 @@ public final class ChatMessageProvider {
             throw new AmazonQPluginException(e);
         }
     }
-    
+
     public ChatResult sendChatPrompt(final ChatRequestParams chatRequestParams) {
         try {
             PluginLogger.info("Sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server");
@@ -48,7 +48,7 @@ public final class ChatMessageProvider {
         }
         return null;
     }
-    
+
     public void sendChatReady() {
         PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");
         amazonQLspServer.chatReady();

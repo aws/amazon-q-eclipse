@@ -38,5 +38,6 @@ public final class ChatCommunicationManager {
                default:
                    throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());
            }
+           return null;
     }
 }

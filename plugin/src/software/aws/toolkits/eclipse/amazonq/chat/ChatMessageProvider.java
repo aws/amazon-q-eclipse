@@ -36,6 +36,11 @@ public final class ChatMessageProvider {
             throw new AmazonQPluginException(e);
         }
     }
+    
+    public void sendChatReady() {
+        PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");
+        amazonQLspServer.chatReady();
+    }
 
     public void sendChatReady() {
         try {

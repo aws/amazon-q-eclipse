@@ -75,7 +75,7 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
 
     protected final void setupAmazonQView(final Composite parent, final boolean isLoggedIn) {
         setupBrowser(parent);
-        setupActions(isLoggedIn);
+        setupActions(browser, isLoggedIn);
         setupAuthStatusListeners();
         setupSelectionListener();
     }
@@ -89,8 +89,8 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         parent.setBackground(black);
     }
 
-    private void setupActions(final boolean isLoggedIn) {
-        amazonQCommonActions = new AmazonQCommonActions(isLoggedIn, getViewSite());
+    private void setupActions(final Browser browser, final boolean isLoggedIn) {
+        amazonQCommonActions = new AmazonQCommonActions(browser, isLoggedIn, getViewSite());
     }
 
     private void setupAuthStatusListeners() {

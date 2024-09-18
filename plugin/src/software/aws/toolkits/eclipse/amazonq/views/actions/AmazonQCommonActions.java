@@ -6,6 +6,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.swt.browser.Browser;
 
 public final class AmazonQCommonActions {
 
@@ -13,8 +14,8 @@ public final class AmazonQCommonActions {
     private SignoutAction signoutAction;
     private FeedbackDialogContributionItem feedbackDialogContributionItem;
 
-    public AmazonQCommonActions(final boolean isLoggedIn, final IViewSite viewSite) {
-        createActions(isLoggedIn, viewSite);
+    public AmazonQCommonActions(final Browser browser, final boolean isLoggedIn, final IViewSite viewSite) {
+        createActions(browser, isLoggedIn, viewSite);
         contributeToActionBars(viewSite);
         updateActionVisibility(isLoggedIn, viewSite);
     }
@@ -31,8 +32,8 @@ public final class AmazonQCommonActions {
         return feedbackDialogContributionItem;
     }
 
-    private void createActions(final boolean isLoggedIn, final IViewSite viewSite) {
-        changeThemeAction = new ChangeThemeAction();
+    private void createActions(final Browser browser, final boolean isLoggedIn, final IViewSite viewSite) {
+        changeThemeAction = new ChangeThemeAction(browser);
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
     }

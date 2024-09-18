@@ -21,7 +21,10 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(InlineCompletionParams params);
 
     @JsonNotification("aws/chat/tabAdd")
-    CompletableFuture<ChatResult> tabAdd(GenericTabParams params);
+    void tabAdd(GenericTabParams params);
+    
+    @JsonNotification("aws/chat/ready")
+    void chatReady();
 
     @JsonRequest("aws/credentials/token/update")
     CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);

@@ -21,7 +21,7 @@ public final class ChatMessageProvider {
             PluginLogger.error("Error occurred while retrieving Amazon Q LSP server. Failed to instantiate ChatMessageProvider.");
         }
     }
-    
+
     public void sendChatReady() {
         PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");
         amazonQLspServer.chatReady();

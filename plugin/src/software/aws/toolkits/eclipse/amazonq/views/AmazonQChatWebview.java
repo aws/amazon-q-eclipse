@@ -34,9 +34,6 @@ public class AmazonQChatWebview extends AmazonQView {
     private final ViewActionHandler actionHandler;
 
     public AmazonQChatWebview() {
-        browser = getBrowser();
-        amazonQCommonActions = getAmazonQCommonActions();
-
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new AmazonQChatViewActionHandler();
     }
@@ -44,6 +41,8 @@ public class AmazonQChatWebview extends AmazonQView {
     @Override
     public final void createPartControl(final Composite parent) {
         setupAmazonQView(parent, true);
+        browser = getBrowser();
+        amazonQCommonActions = getAmazonQCommonActions();
 
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);

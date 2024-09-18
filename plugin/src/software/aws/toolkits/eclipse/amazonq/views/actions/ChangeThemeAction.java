@@ -10,7 +10,8 @@ public final class ChangeThemeAction extends Action {
     private Browser browser;
     private boolean darkMode = Display.isSystemDarkTheme();
 
-    public ChangeThemeAction() {
+    public ChangeThemeAction(final Browser browser) {
+        this.browser = browser;
         setText("Change Color");
         setToolTipText("Change the color");
         setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_SYNCED));

@@ -36,8 +36,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private final ViewActionHandler actionHandler;
 
     public ToolkitLoginWebview() {
-        browser = getBrowser();
-        amazonQCommonActions = getAmazonQCommonActions();
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new LoginViewActionHandler();
     }
@@ -45,6 +43,8 @@ public final class ToolkitLoginWebview extends AmazonQView {
     @Override
     public void createPartControl(final Composite parent) {
         setupAmazonQView(parent, true);
+        browser = getBrowser();
+        amazonQCommonActions = getAmazonQCommonActions();
 
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);

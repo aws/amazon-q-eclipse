@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import org.eclipse.swt.browser.Browser;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
@@ -25,6 +26,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         PluginLogger.info(command + " being processed by ActionHandler");
 
         switch (command) {
+            case CHAT_SEND_PROMPT:
+                ChatResult chatResult = chatCommunicationManager.sendMessageToChatServerAsync(command, params);
+                PluginLogger.info("Chat result: " + chatResult);
+                break;
             case CHAT_READY:
                 chatCommunicationManager.sendMessageToChatServerAsync(command, params);
                 break;

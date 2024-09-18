@@ -2,6 +2,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
@@ -17,11 +19,15 @@ public final class ChatCommunicationManager {
         this.chatMessageProvider = new ChatMessageProvider();
     }
 
-    public void sendMessageToChatServerAsync(final Command command, final Object params) {
+    public ChatResult sendMessageToChatServerAsync(final Command command, final Object params) {
 
            String jsonParams = jsonHandler.serialize(params);
 
            switch (command) {
+               case CHAT_SEND_PROMPT:
+                   ChatRequestParams chatRequestParams = jsonHandler.deserialize(jsonParams, ChatRequestParams.class);
+                   ChatResult result = chatMessageProvider.sendChatPrompt(chatRequestParams);
+                   return result;
                case CHAT_READY:
                    chatMessageProvider.sendChatReady();
                    break;
@@ -32,5 +38,6 @@ public final class ChatCommunicationManager {
                default:
                    PluginLogger.error("Unhandled chat command: " + command.toString());
            }
+           return null;
     }
 }

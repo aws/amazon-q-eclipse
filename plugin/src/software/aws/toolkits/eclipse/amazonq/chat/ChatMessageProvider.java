@@ -4,6 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.ExecutionException;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
@@ -21,7 +23,19 @@ public final class ChatMessageProvider {
             PluginLogger.error("Error occurred while retrieving Amazon Q LSP server. Failed to instantiate ChatMessageProvider.");
         }
     }
-
+    
+    public ChatResult sendChatPrompt(final ChatRequestParams chatRequestParams) {
+        try {
+            PluginLogger.info("Sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server");
+            ChatResult chatResult = amazonQLspServer.sendChatPrompt(chatRequestParams).get();
+            return chatResult;
+        } catch (InterruptedException | ExecutionException e) {
+            PluginLogger.error("Error occurred while sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server", e);
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     public void sendChatReady() {
         PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");
         amazonQLspServer.chatReady();

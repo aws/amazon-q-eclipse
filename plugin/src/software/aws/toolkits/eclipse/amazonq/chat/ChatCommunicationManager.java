@@ -10,11 +10,11 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 public final class ChatCommunicationManager {
 
     private final JsonHandler jsonHandler;
-    private final ChatMessageProvider chatMessageProivder;
+    private final ChatMessageProvider chatMessageProvider;
 
     public ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
-        this.chatMessageProivder = new ChatMessageProvider();
+        this.chatMessageProvider = new ChatMessageProvider();
     }
 
     public void sendMessageToChatServerAsync(final Command command, final Object params) {
@@ -22,9 +22,12 @@ public final class ChatCommunicationManager {
            String jsonParams = jsonHandler.serialize(params);
 
            switch (command) {
+               case CHAT_READY:
+                   chatMessageProvider.sendChatReady();
+                   break;
                case CHAT_TAB_ADD:
                    GenericTabParams tabParams = jsonHandler.deserialize(jsonParams, GenericTabParams.class);
-                   chatMessageProivder.sendTabAdd(tabParams);
+                   chatMessageProvider.sendTabAdd(tabParams);
                    break;
                default:
                    PluginLogger.error("Unhandled chat command: " + command.toString());

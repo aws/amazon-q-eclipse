@@ -26,6 +26,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         switch (command) {
             case CHAT_READY:
+                chatCommunicationManager.sendMessageToChatServerAsync(command, params);
                 break;
             case CHAT_TAB_ADD:
                 chatCommunicationManager.sendMessageToChatServerAsync(command, params);

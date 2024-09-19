@@ -37,23 +37,6 @@ public final class ChatMessageProvider {
         }
     }
 
-    public ChatResult sendChatPrompt(final ChatRequestParams chatRequestParams) {
-        try {
-            PluginLogger.info("Sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server");
-            ChatResult chatResult = amazonQLspServer.sendChatPrompt(chatRequestParams).get();
-            return chatResult;
-        } catch (InterruptedException | ExecutionException e) {
-            PluginLogger.error("Error occurred while sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server", e);
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public void sendChatReady() {
-        PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");
-        amazonQLspServer.chatReady();
-    }
-
     public void sendChatReady() {
         try {
             PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");

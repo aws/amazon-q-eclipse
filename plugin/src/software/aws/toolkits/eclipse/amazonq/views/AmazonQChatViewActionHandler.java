@@ -7,6 +7,7 @@ import org.eclipse.swt.browser.Browser;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
@@ -39,8 +40,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case TELEMETRY_EVENT:
                 break;
             default:
-                PluginLogger.info("Unhandled command: " + parsedCommand.getCommand());
-                break;
+                throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
         }
     }
 }

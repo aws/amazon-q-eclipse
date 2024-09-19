@@ -55,7 +55,7 @@ public class AmazonQChatWebview extends AmazonQView {
        new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
-                ThreadingUtils.executeAsyncTask(() -> { 
+                ThreadingUtils.executeAsyncTask(() -> {
                     try {
                         commandParser.parseCommand(arguments)
                             .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));

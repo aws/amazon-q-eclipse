@@ -64,11 +64,12 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
     }
 
     /**
-     * Sends a message to the webview
-     * 
-     * See handlers in Flare chat-client: https://github.com/aws/language-servers/blob/9226fb4ed10dc54f1719b14a5b1dac1807641f79/chat-client/src/client/chat.ts#L67-L101
+     * Sends a message to the webview.
+     *
+     * See handlers in Flare chat-client:
+     * https://github.com/aws/language-servers/blob/9226fb4ed10dc54f1719b14a5b1dac1807641f79/chat-client/src/client/chat.ts#L67-L101
      */
-    private void sendMessageToUI(Browser browser, ChatUIInboundCommand command) {
+    private void sendMessageToUI(final Browser browser, final ChatUIInboundCommand command) {
         String message = this.jsonHandler.serialize(command);
         String script = "window.postMessage(" + message + ");";
         browser.getDisplay().asyncExec(() -> {

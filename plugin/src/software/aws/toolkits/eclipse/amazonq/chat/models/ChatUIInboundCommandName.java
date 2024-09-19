@@ -10,14 +10,14 @@ public enum ChatUIInboundCommandName {
     InsertToCursorPosition("insertToCursorPosition"),
     AuthFollowUpClicked("authFollowUpClicked"),
     GenericCommand("genericCommand");
-    
+
     private final String commandString;
-    
-    ChatUIInboundCommandName(String commandString) {
+
+    ChatUIInboundCommandName(final String commandString) {
         this.commandString = commandString;
     }
-    
+
     public String toString() {
         return commandString;
     }
-} 
+}

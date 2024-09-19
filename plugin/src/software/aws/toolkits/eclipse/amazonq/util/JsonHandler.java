@@ -32,4 +32,9 @@ public final class JsonHandler {
         }
         return null;
     }
+
+    public <T> T convertObject(Object obj, Class<T> cls) {
+        T castedObj = jsonHandler.deserialize(jsonHandler.serialize(obj), cls);
+        return castedObj;
+    }
 }

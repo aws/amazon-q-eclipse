@@ -28,8 +28,11 @@ public final class AmazonQCodeReferenceView extends ViewPart {
         }
 
         QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
+
         qInvocationSessionInstance.registerCallbackForCodeReference((item, startLine) -> {
             var references = item.getReferences();
+            var editor = qInvocationSessionInstance.getEditor();
+            String fqfn = editor.getTitle();
             if (references != null && references.length > 0) {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm:ss a");
@@ -38,7 +41,7 @@ public final class AmazonQCodeReferenceView extends ViewPart {
                 for (var reference : references) {
                     String itemToShow = String.format(CR_TEMPLATE, formattedDateTime, item.getInsertText(),
                             reference.getLicenseName(), reference.getReferenceUrl(),
-                            "Still have to figure out how to get FQFN", startLine, startLine + suggestionTextDepth);
+                            fqfn, startLine, startLine + suggestionTextDepth);
                     int boldStart = textArea.getCharCount();
                     int boldLength = itemToShow.split("\n", 2)[0].length();
 

@@ -27,8 +27,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
     /*
      * Handles the command message received from the webview
-     * - Forwards requests to the ChatCommunicationManager which handles message sending to LSP
-     * - Forwards responses to the UI using the sendMessageToUI method producing an event that is consumed by Flare chat-client
      */
     @Override
     public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
@@ -39,7 +37,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         switch (command) {
             case CHAT_SEND_PROMPT:
-                ChatResult chatResult = chatCommunicationManager.sendMessageToChatServerAsync(command, params);
+                ChatResult chatResult = chatCommunicationManager.sendMessageToChatServer(command, params);
 
                 ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
                 ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
@@ -48,13 +46,13 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                     chatResult,
                     false
                 );
-                sendMessageToUI(browser, chatUIInboundCommand);
+                chatCommunicationManager.sendMessageToChatUI(browser, chatUIInboundCommand);
                 break;
             case CHAT_READY:
-                chatCommunicationManager.sendMessageToChatServerAsync(command, params);
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_TAB_ADD:
-                chatCommunicationManager.sendMessageToChatServerAsync(command, params);
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case TELEMETRY_EVENT:
                 break;
@@ -63,17 +61,4 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         }
     }
 
-    /**
-     * Sends a message to the webview.
-     *
-     * See handlers in Flare chat-client:
-     * https://github.com/aws/language-servers/blob/9226fb4ed10dc54f1719b14a5b1dac1807641f79/chat-client/src/client/chat.ts#L67-L101
-     */
-    private void sendMessageToUI(final Browser browser, final ChatUIInboundCommand command) {
-        String message = this.jsonHandler.serialize(command);
-        String script = "window.postMessage(" + message + ");";
-        browser.getDisplay().asyncExec(() -> {
-            browser.evaluate(script);
-        });
-    }
 }

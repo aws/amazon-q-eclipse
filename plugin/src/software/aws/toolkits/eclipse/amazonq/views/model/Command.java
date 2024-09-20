@@ -10,6 +10,7 @@ public enum Command {
     // QChat
     CHAT_READY("aws/chat/ready"),
     CHAT_TAB_ADD("aws/chat/tabAdd"),
+    CHAT_SEND_PROMPT("aws/chat/sendChatPrompt"),
     TELEMETRY_EVENT("telemetry/event"),
 
     // Auth

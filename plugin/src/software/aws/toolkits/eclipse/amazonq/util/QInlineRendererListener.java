@@ -3,13 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-//import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-//import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Point;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
-//import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.isLastLine;
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.shouldIndentNextLineVertically;
 
 import java.util.Arrays;
 
@@ -65,15 +64,12 @@ public class QInlineRendererListener implements PaintListener {
         if (!remainder.isEmpty()) {
             // For last line case doesn't need to indent next line vertically
             var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-            // Felix: Not really sure what this does and it is throwing under certain
-            // circumstance
-            // Will confirm with Andrew before adding this back in / modifying it.
-//            if (!isLastLine(widget, caretLine + 1)) {
-//                // when showing the suggestion need to add next line indent
-//                Point textExtent = gc.stringExtent(" ");
-//                int height = textExtent.y * suggestionParts[1].split("\\R").length;
-//                widget.setLineVerticalIndent(caretLine + 1, height);
-//            }
+            if (shouldIndentNextLineVertically(widget, caretLine)) {
+                // when showing the suggestion need to add next line indent
+                Point textExtent = gc.stringExtent(" ");
+                int height = textExtent.y * remainder.split("\\R").length;
+                qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height, textExtent.y);
+            }
 
             int lineHt = widget.getLineHeight();
             int fontHt = gc.getFontMetrics().getHeight();

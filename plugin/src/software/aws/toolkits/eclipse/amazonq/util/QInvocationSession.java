@@ -11,6 +11,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.texteditor.ITextEditor;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
@@ -19,6 +20,7 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
@@ -47,6 +49,7 @@ public final class QInvocationSession extends QResource {
     private boolean isLastKeyNewLine = false;
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
+    private Runnable unsetVerticalIndent; 
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -329,6 +332,12 @@ public final class QInvocationSession extends QResource {
     public boolean hasBeenTypedahead() {
         return hasBeenTypedahead;
     }
+    
+    public void setVerticalIndent(int line, int height, int originalHeight) {
+    	var widget = viewer.getTextWidget();
+        widget.setLineVerticalIndent(line, height);
+        unsetVerticalIndent = () -> { widget.setLineVerticalIndent(line, originalHeight); };
+    }
 
     // Additional methods for the session can be added here
     @Override
@@ -347,6 +356,10 @@ public final class QInvocationSession extends QResource {
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
         widget.removeVerifyKeyListener(verifyKeyListener);
+        if (unsetVerticalIndent != null) {
+        	unsetVerticalIndent.run();
+        	unsetVerticalIndent = null;
+        }
         paintListener = null;
         caretListener = null;
         verifyKeyListener = null;

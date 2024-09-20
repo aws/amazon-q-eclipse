@@ -55,12 +55,14 @@ public class AmazonQChatWebview extends AmazonQView {
        new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
-                try {
-                    commandParser.parseCommand(arguments)
-                        .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
-                } catch (Exception e) {
-                    PluginLogger.error("Error processing message from Browser", e);
-                }
+                ThreadingUtils.executeAsyncTask(() -> {
+                    try {
+                        commandParser.parseCommand(arguments)
+                            .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+                    } catch (Exception e) {
+                        PluginLogger.error("Error processing message from Browser", e);
+                    }
+                });
                 return null;
             }
         };

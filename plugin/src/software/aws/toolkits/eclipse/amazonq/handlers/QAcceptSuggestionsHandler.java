@@ -24,7 +24,7 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
         var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
         Display display = widget.getDisplay();
-        display.syncExec(() -> this.insertSuggestion(suggestion));
+        display.syncExec(() -> this.insertSuggestion(suggestion.getInsertText()));
         return null;
     }
 
@@ -39,6 +39,7 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
 
             QInvocationSession.getInstance().transitionToDecisionMade();
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
+            QInvocationSession.getInstance().executeCallbackForCodeReference();
             QInvocationSession.getInstance().end();
         } catch (BadLocationException e) {
             PluginLogger.error(e.toString());

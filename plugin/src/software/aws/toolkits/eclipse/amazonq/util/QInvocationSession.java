@@ -47,6 +47,7 @@ public final class QInvocationSession extends QResource {
     private boolean isLastKeyNewLine = false;
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
+    private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -84,7 +85,8 @@ public final class QInvocationSession extends QResource {
             invocationTimeInMs = System.currentTimeMillis();
             System.out.println("Session started.");
 
-            var listeners = widget.getTypedListeners(SWT.Paint, QInlineRendererListener.class).collect(Collectors.toList());
+            var listeners = widget.getTypedListeners(SWT.Paint, QInlineRendererListener.class)
+                    .collect(Collectors.toList());
             System.out.println("Current listeners for " + widget);
             listeners.forEach(System.out::println);
             if (listeners.isEmpty()) {
@@ -109,7 +111,8 @@ public final class QInvocationSession extends QResource {
         var session = QInvocationSession.getInstance();
 
         try {
-            var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(), session.getInvocationOffset());
+            var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
+                    session.getInvocationOffset());
 
             ThreadingUtils.executeAsyncTask(() -> {
                 try {
@@ -120,9 +123,8 @@ public final class QInvocationSession extends QResource {
                         AuthUtils.updateToken().get();
                     }
 
-                    List<String> newSuggestions = LspProvider.getAmazonQServer().get().inlineCompletionWithReferences(params)
-                            .thenApply(result -> result.getItems().stream().map(InlineCompletionItem::getInsertText).collect(Collectors.toList()))
-                            .get();
+                    List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
+                            .inlineCompletionWithReferences(params).thenApply(result -> result.getItems()).get();
 
                     Display.getDefault().asyncExec(() -> {
                         if (newSuggestions == null || newSuggestions.isEmpty()) {
@@ -130,7 +132,8 @@ public final class QInvocationSession extends QResource {
                             return;
                         }
 
-                        suggestionsContext.getDetails().addAll(newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
+                        suggestionsContext.getDetails().addAll(
+                                newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
 
                         suggestionsContext.setCurrentIndex(0);
 
@@ -289,7 +292,7 @@ public final class QInvocationSession extends QResource {
         return headOffsetAtLine[lineNum];
     }
 
-    public String getCurrentSuggestion() {
+    public InlineCompletionItem getCurrentSuggestion() {
         if (suggestionsContext == null) {
             PluginLogger.warn("QSuggestion context is null");
             return null;
@@ -305,7 +308,7 @@ public final class QInvocationSession extends QResource {
             throw new IllegalStateException("QSuggestion showing discarded suggestions");
         }
 
-        return details.get(index).getSuggestion();
+        return details.get(index).getInlineCompletionItem();
     }
 
     public void decrementCurrentSuggestionIndex() {
@@ -328,6 +331,19 @@ public final class QInvocationSession extends QResource {
 
     public boolean hasBeenTypedahead() {
         return hasBeenTypedahead;
+    }
+
+    public void registerCallbackForCodeReference(final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
+        this.codeReferenceAcceptanceCallback = codeReferenceAcceptanceCallback;
+    }
+
+    public void executeCallbackForCodeReference() {
+        if (codeReferenceAcceptanceCallback != null) {
+            var selectedSuggestion = getCurrentSuggestion();
+            var widget = viewer.getTextWidget();
+            int startLine = widget.getLineAtOffset(invocationOffset);
+            codeReferenceAcceptanceCallback.onCallback(selectedSuggestion, startLine);
+        }
     }
 
     // Additional methods for the session can be added here
@@ -356,4 +372,3 @@ public final class QInvocationSession extends QResource {
         viewer = null;
     }
 }
-

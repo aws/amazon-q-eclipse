@@ -17,6 +17,7 @@ import org.eclipse.ui.dialogs.PreferencesUtil;
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -54,8 +55,12 @@ public class AmazonQChatWebview extends AmazonQView {
        new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
-                commandParser.parseCommand(arguments)
+                try {
+                    commandParser.parseCommand(arguments)
                         .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+                } catch (Exception e) {
+                    PluginLogger.error("Error processing message from Browser", e);
+                }
                 return null;
             }
         };

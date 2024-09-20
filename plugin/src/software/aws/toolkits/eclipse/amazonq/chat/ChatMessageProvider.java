@@ -22,12 +22,13 @@ public final class ChatMessageProvider {
         }
     }
 
+    public void sendChatReady() {
+        PluginLogger.info("Sending " + Command.CHAT_READY + " message to Amazon Q LSP server");
+        amazonQLspServer.chatReady();
+    }
+
     public void sendTabAdd(final GenericTabParams tabParams) {
-         try {
-             PluginLogger.info("Sending " + Command.CHAT_TAB_ADD + " message to Amazon Q LSP server");
-             amazonQLspServer.tabAdd(tabParams).get();
-         } catch (InterruptedException | ExecutionException e) {
-             PluginLogger.error("Error occurred while sending message to Amazon Q LSP server for command " + Command.CHAT_TAB_ADD);
-         }
+        PluginLogger.info("Sending " + Command.CHAT_TAB_ADD + " message to Amazon Q LSP server");
+        amazonQLspServer.tabAdd(tabParams);
     }
 }

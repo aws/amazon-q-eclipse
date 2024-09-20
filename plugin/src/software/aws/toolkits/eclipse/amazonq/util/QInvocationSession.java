@@ -221,15 +221,6 @@ public final class QInvocationSession extends QResource {
         state = QInvocationSessionState.DECISION_MADE;
         
         unsetVerticalIndent();
-
-        // Clear previous next line indent in certain cases (always for now?)
-        // From Felix: Not really sure when or where this is needed, disabling for now.
-        // This is throwing under certain circumstances with IllegalArgument
-//         var widget = viewer.getTextWidget();
-//         var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-//         if (!isLastLine(widget, caretLine + 1)) {
-//         widget.setLineVerticalIndent(caretLine + 1, 0);
-//         }
     }
 
     public void setCaretMovementReason(final CaretMovementReason reason) {

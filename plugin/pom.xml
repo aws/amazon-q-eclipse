@@ -296,7 +296,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm run build-ui</id>
+                        <id>build login-ui</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
@@ -305,7 +305,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm install auth-module</id>
+                        <id>build auth-module</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>

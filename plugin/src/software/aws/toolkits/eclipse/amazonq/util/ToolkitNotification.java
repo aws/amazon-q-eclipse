@@ -16,26 +16,27 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 
-public final class NotificationHelper extends AbstractNotificationPopup {
+public final class ToolkitNotification extends AbstractNotificationPopup {
 
     private final String title;
     private final String description;
-    private final NotificationType notificationType;
+    private Image infoIcon;
 
-    public NotificationHelper(final Display display, final String title, final String description, final NotificationType notificationType) {
+    public ToolkitNotification(final Display display, final String title, final String description) {
         super(display);
         this.title = title;
         this.description = description;
-        this.notificationType = notificationType;
     }
 
     private Image getInfoIcon() {
         ISharedImages sharedImages = PlatformUI.getWorkbench().getSharedImages();
         ImageDescriptor imageDescriptor = sharedImages.getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK);
-        return imageDescriptor.createImage();
+        this.infoIcon = imageDescriptor.createImage();
+        return this.infoIcon;
     }
 
-    private void showStandardNotification(final Composite parent) {
+    @Override
+    protected void createContentArea(final Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(2, false));
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -50,13 +51,6 @@ public final class NotificationHelper extends AbstractNotificationPopup {
     }
 
     @Override
-    protected void createContentArea(final Composite parent) {
-        if (this.notificationType.equals(NotificationType.CUSTOMIZATION_CHANGED)) {
-            showStandardNotification(parent);
-        }
-    }
-
-    @Override
     protected String getPopupShellTitle() {
         return this.title;
     }
@@ -64,5 +58,13 @@ public final class NotificationHelper extends AbstractNotificationPopup {
     @Override
     protected Point getInitialSize() {
         return new Point(60, 20);
+    }
+
+    @Override
+    public boolean close() {
+        if (this.infoIcon != null && !this.infoIcon.isDisposed()) {
+            this.infoIcon.dispose();
+        }
+        return super.close();
     }
 }

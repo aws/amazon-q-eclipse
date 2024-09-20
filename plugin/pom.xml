@@ -77,6 +77,26 @@
             <version>1.15</version>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>aws-json-protocol</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cognitoidentity</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -194,6 +214,7 @@
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>
                             <linkXRef>false</linkXRef>
+                            <includes>src/**/*.java</includes>
                         </configuration>
                         <goals>
                             <goal>check</goal>
@@ -272,6 +293,49 @@
                                 <argument>install</argument>
                             </arguments>
                             <workingDirectory>${project.basedir}/auth</workingDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>codegen-maven-plugin</artifactId>
+                <version>${aws.java.sdk.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-telemetry-client</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <codeGenResources>${project.basedir}/codegen-resources/</codeGenResources>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <writeIntermediateModel>false</writeIntermediateModel>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>move-generated-files</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <move todir="${project.build.directory}/generated-sources/">
+                                    <fileset dir="${project.build.directory}/generated-sources/sdk/">
+                                        <include name="**/*.*" />
+                                    </fileset>
+                                </move>
+                                <delete dir="${project.build.directory}/generated-sources/sdk/" />
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

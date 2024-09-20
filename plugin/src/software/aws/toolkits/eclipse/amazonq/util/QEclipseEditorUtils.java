@@ -63,8 +63,8 @@ public final class QEclipseEditorUtils {
         return asTextViewer(editor);
     }
 
-    public static boolean shouldIndentNextLineVertically(final StyledText textWidget, final int line) {
-        return line + 1 < textWidget.getLineCount() - 1;
+    public static boolean shouldIndentVertically(final StyledText textWidget, final int zeroIndexedLine) {
+        return zeroIndexedLine + 1 < textWidget.getLineCount();
     }
 
 

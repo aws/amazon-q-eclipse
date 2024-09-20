@@ -219,15 +219,17 @@ public final class QInvocationSession extends QResource {
             return;
         }
         state = QInvocationSessionState.DECISION_MADE;
+        
+        unsetVerticalIndent();
 
         // Clear previous next line indent in certain cases (always for now?)
         // From Felix: Not really sure when or where this is needed, disabling for now.
         // This is throwing under certain circumstances with IllegalArgument
-        // var widget = viewer.getTextWidget();
-        // var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-        // if (!isLastLine(widget, caretLine + 1)) {
-        // widget.setLineVerticalIndent(caretLine + 1, 0);
-        // }
+//         var widget = viewer.getTextWidget();
+//         var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+//         if (!isLastLine(widget, caretLine + 1)) {
+//         widget.setLineVerticalIndent(caretLine + 1, 0);
+//         }
     }
 
     public void setCaretMovementReason(final CaretMovementReason reason) {
@@ -333,10 +335,21 @@ public final class QInvocationSession extends QResource {
         return hasBeenTypedahead;
     }
     
-    public void setVerticalIndent(int line, int height, int originalHeight) {
+    public void setVerticalIndent(int line, int height) {
+    	System.out.println("set vertical indent called for line " + line);
     	var widget = viewer.getTextWidget();
         widget.setLineVerticalIndent(line, height);
-        unsetVerticalIndent = () -> { widget.setLineVerticalIndent(line, originalHeight); };
+        unsetVerticalIndent = () -> {
+        	var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+        	widget.setLineVerticalIndent(caretLine + 1, 0); 
+        };
+    }
+    
+    public void unsetVerticalIndent() {
+    	if (unsetVerticalIndent != null) {
+        	unsetVerticalIndent.run();
+        	unsetVerticalIndent = null;
+        }
     }
 
     // Additional methods for the session can be added here
@@ -356,10 +369,6 @@ public final class QInvocationSession extends QResource {
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
         widget.removeVerifyKeyListener(verifyKeyListener);
-        if (unsetVerticalIndent != null) {
-        	unsetVerticalIndent.run();
-        	unsetVerticalIndent = null;
-        }
         paintListener = null;
         caretListener = null;
         verifyKeyListener = null;

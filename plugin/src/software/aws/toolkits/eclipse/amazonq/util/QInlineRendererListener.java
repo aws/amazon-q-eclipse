@@ -8,7 +8,7 @@ import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Point;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
-import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.shouldIndentNextLineVertically;
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.shouldIndentVertically;
 
 import java.util.Arrays;
 
@@ -60,22 +60,25 @@ public class QInlineRendererListener implements PaintListener {
             gc.drawText(renderHeadIndex >= 0 ? firstLine.substring(renderHeadIndex) : firstLine, xLoc, location.y, true);
         }
 
-        // Draw other lines inline
-        if (!remainder.isEmpty()) {
-            // For last line case doesn't need to indent next line vertically
-            var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-            if (shouldIndentNextLineVertically(widget, caretLine)) {
-                // when showing the suggestion need to add next line indent
-                Point textExtent = gc.stringExtent(" ");
-                int height = textExtent.y * remainder.split("\\R").length;
-                qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height, textExtent.y);
-            }
+		// Draw other lines inline
+		if (!remainder.isEmpty()) {
+			// For last line case doesn't need to indent next line vertically
+			var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+			if (shouldIndentVertically(widget, caretLine)
+					&& qInvocationSessionInstance.isPreviewingSuggestions()) {
+				// when showing the suggestion need to add next line indent
+				Point textExtent = gc.stringExtent(" ");
+				int height = textExtent.y * remainder.split("\\R").length;
+				qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
+			}
 
-            int lineHt = widget.getLineHeight();
+			int lineHt = widget.getLineHeight();
             int fontHt = gc.getFontMetrics().getHeight();
             int x = widget.getLeftMargin();
             int y = location.y + lineHt * 2 - fontHt;
             gc.drawText(remainder, x, y, true);
+        } else {
+        	qInvocationSessionInstance.unsetVerticalIndent();
         }
     }
 

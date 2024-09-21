@@ -10,14 +10,14 @@
         <relativePath>../</relativePath>
     </parent>
 
-    <groupId>software.aws.toolkits.eclipse</groupId>
     <artifactId>amazon-q-eclipse</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <packaging>eclipse-plugin</packaging>
 
     <properties>
         <tycho.version>4.0.8</tycho.version>
         <aws.java.sdk.version>2.25.33</aws.java.sdk.version>
+        <node.version>v20.9.0</node.version>
+        <npm.version>10.1.0</npm.version>
     </properties>
 
     <repositories>
@@ -169,6 +169,23 @@
                             <goal>run</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>move-generated-files</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <move todir="${project.build.directory}/generated-sources/">
+                                    <fileset dir="${project.build.directory}/generated-sources/sdk/">
+                                        <include name="**/*.*" />
+                                    </fileset>
+                                </move>
+                                <delete dir="${project.build.directory}/generated-sources/sdk/" />
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -210,10 +227,8 @@
                         <phase>validate</phase>
                         <configuration>
                             <configLocation>checkstyle.xml</configLocation>
-                            <encoding>UTF-8</encoding>
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>
-                            <linkXRef>false</linkXRef>
                             <includes>src/**/*.java</includes>
                         </configuration>
                         <goals>
@@ -262,37 +277,41 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.4.0</version>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.0</version>
+                <configuration>
+                    <workingDirectory>${project.basedir}/webview</workingDirectory>
+                    <installDirectory>${project.basedir}/node</installDirectory>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>build-toolkit-ui</id>
-                        <phase>generate-resources</phase>
+                        <id>install-node-and-npm</id>
                         <goals>
-                            <goal>exec</goal>
+                            <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>run</argument>
-                                <argument>build-ui</argument>
-                            </arguments>
-                            <workingDirectory>${project.basedir}/webview</workingDirectory>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>install-auth-module</id>
-                        <phase>generate-resources</phase>
+                        <id>build login-ui</id>
                         <goals>
-                            <goal>exec</goal>
+                            <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <executable>npm</executable>
-                            <arguments>
-                                <argument>install</argument>
-                            </arguments>
+                            <arguments>run build-ui</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>build auth-module</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
                             <workingDirectory>${project.basedir}/auth</workingDirectory>
+                            <arguments>install</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -315,30 +334,6 @@
                     <outputDirectory>${project.build.directory}</outputDirectory>
                     <writeIntermediateModel>false</writeIntermediateModel>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>move-generated-files</id>
-                        <phase>process-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <move todir="${project.build.directory}/generated-sources/">
-                                    <fileset dir="${project.build.directory}/generated-sources/sdk/">
-                                        <include name="**/*.*" />
-                                    </fileset>
-                                </move>
-                                <delete dir="${project.build.directory}/generated-sources/sdk/" />
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

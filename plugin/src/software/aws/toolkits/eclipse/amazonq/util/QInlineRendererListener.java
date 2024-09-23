@@ -48,10 +48,6 @@ public class QInlineRendererListener implements PaintListener {
             offsetAtCurrentLine = qInvocationSessionInstance.getHeadOffsetAtLine(lineOffset);
         }
 
-        if (true) {
-
-        }
-
         int renderHeadIndex = currentOffset - offsetAtCurrentLine;
         String[] remainderArray = Arrays.copyOfRange(suggestionParts, currentLineInSuggestion + 1,
                 suggestionParts.length);

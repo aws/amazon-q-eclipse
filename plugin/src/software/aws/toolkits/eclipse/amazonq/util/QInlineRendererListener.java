@@ -48,39 +48,43 @@ public class QInlineRendererListener implements PaintListener {
             offsetAtCurrentLine = qInvocationSessionInstance.getHeadOffsetAtLine(lineOffset);
         }
 
+        if (true) {
+
+        }
+
         int renderHeadIndex = currentOffset - offsetAtCurrentLine;
-        String[] remainderArray = Arrays.copyOfRange(suggestionParts, currentLineInSuggestion + 1, suggestionParts.length);
+        String[] remainderArray = Arrays.copyOfRange(suggestionParts, currentLineInSuggestion + 1,
+                suggestionParts.length);
         String remainder = String.join("\n", remainderArray);
 
         // Draw first line inline
-        String firstLine = renderHeadIndex >= 0
-                ? suggestionParts[currentLineInSuggestion].trim() : suggestionParts[currentLineInSuggestion];
+        String firstLine = renderHeadIndex >= 0 ? suggestionParts[currentLineInSuggestion].trim()
+                : suggestionParts[currentLineInSuggestion];
         int xLoc = renderHeadIndex >= 0 ? location.x : widget.getLeftMargin();
         if (renderHeadIndex < firstLine.length()) {
-            gc.drawText(renderHeadIndex >= 0 ? firstLine.substring(renderHeadIndex) : firstLine, xLoc, location.y, true);
+            gc.drawText(renderHeadIndex >= 0 ? firstLine.substring(renderHeadIndex) : firstLine, xLoc, location.y,
+                    true);
         }
 
-		// Draw other lines inline
-		if (!remainder.isEmpty()) {
-			// For last line case doesn't need to indent next line vertically
-			var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-			if (shouldIndentVertically(widget, caretLine)
-					&& qInvocationSessionInstance.isPreviewingSuggestions()) {
-				// when showing the suggestion need to add next line indent
-				Point textExtent = gc.stringExtent(" ");
-				int height = textExtent.y * remainder.split("\\R").length;
-				qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
-			}
+        // Draw other lines inline
+        if (!remainder.isEmpty()) {
+            // For last line case doesn't need to indent next line vertically
+            var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+            if (shouldIndentVertically(widget, caretLine) && qInvocationSessionInstance.isPreviewingSuggestions()) {
+                // when showing the suggestion need to add next line indent
+                Point textExtent = gc.stringExtent(" ");
+                int height = textExtent.y * remainder.split("\\R").length;
+                qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
+            }
 
-			int lineHt = widget.getLineHeight();
+            int lineHt = widget.getLineHeight();
             int fontHt = gc.getFontMetrics().getHeight();
             int x = widget.getLeftMargin();
             int y = location.y + lineHt * 2 - fontHt;
             gc.drawText(remainder, x, y, true);
         } else {
-        	qInvocationSessionInstance.unsetVerticalIndent();
+            qInvocationSessionInstance.unsetVerticalIndent();
         }
     }
 
 }
-

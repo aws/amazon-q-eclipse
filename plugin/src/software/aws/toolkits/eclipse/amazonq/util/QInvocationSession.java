@@ -8,7 +8,6 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
@@ -41,9 +40,9 @@ public final class QInvocationSession extends QResource {
     private long invocationTimeInMs = -1L;
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
-    private VerifyKeyListener verifyKeyListener = null;
+    private QInlineVerifyListener inputListener = null;
     private int leadingWhitespaceSkipped = 0;
-    private Stack<Character> closingBrackets = new Stack<>();
+    private Stack<String> closingBrackets = new Stack<>();
     private boolean isLastKeyNewLine = false;
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
@@ -94,8 +93,9 @@ public final class QInvocationSession extends QResource {
                 widget.addPaintListener(paintListener);
             }
 
-            verifyKeyListener = new QInlineVerifyKeyListener(widget);
-            widget.addVerifyKeyListener(verifyKeyListener);
+            inputListener = new QInlineVerifyListener(widget);
+            widget.addVerifyListener(inputListener);
+            widget.addVerifyKeyListener(inputListener);
 
             caretListener = new QInlineCaretListener(widget);
             widget.addCaretListener(caretListener);
@@ -268,7 +268,7 @@ public final class QInvocationSession extends QResource {
         return caretMovementReason;
     }
 
-    public Stack<Character> getClosingBrackets() {
+    public Stack<String> getClosingBrackets() {
         return closingBrackets;
     }
 
@@ -360,10 +360,11 @@ public final class QInvocationSession extends QResource {
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
-        widget.removeVerifyKeyListener(verifyKeyListener);
+        widget.removeVerifyListener(inputListener);
+        widget.removeVerifyKeyListener(inputListener);
         paintListener = null;
         caretListener = null;
-        verifyKeyListener = null;
+        inputListener = null;
         invocationOffset = -1;
         invocationTimeInMs = -1L;
         editor = null;

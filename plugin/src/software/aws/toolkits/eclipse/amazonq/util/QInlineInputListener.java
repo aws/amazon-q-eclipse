@@ -12,10 +12,12 @@ import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 
-public final class QInlineVerifyListener implements VerifyListener, VerifyKeyListener {
+public final class QInlineInputListener implements VerifyListener, VerifyKeyListener {
 	private StyledText widget = null;
+	private int distanceTraversed = 0;
+	private boolean isLastKeyBackspace = false;
 
-	public QInlineVerifyListener(final StyledText widget) {
+	public QInlineInputListener(final StyledText widget) {
 		this.widget = widget;
 	}
 
@@ -32,18 +34,86 @@ public final class QInlineVerifyListener implements VerifyListener, VerifyKeyLis
 		// - If the caret has been moved due to traversals (i.e. arrow keys or mouse
 		// click) we would want to end the invocation session since that signifies the
 		// user no longer has the intent for text input at its original location.
-		// - And if the caret has been moved due to typing, we will need to determine if
-		// it's appropriate to perform a "typeahead".
 		if (event.keyCode == SWT.ARROW_UP || event.keyCode == SWT.ARROW_DOWN || event.keyCode == SWT.ARROW_LEFT
 				|| event.keyCode == SWT.ARROW_RIGHT) {
 			qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOVEMENT_KEY);
+			return;
 		} else {
 			qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
+		}
+		
+		// Here we examine all other relevant keystrokes that may be relevant to the preview's lifetime: 
+		// - CR (new line)
+		// - BS (backspace)
+		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
+		switch (event.keyCode) {
+		case SWT.CR:
+			distanceTraversed++;
+			char currentCharInSuggestion = currentSuggestion.charAt(distanceTraversed);
+			if (currentCharInSuggestion != '\n' && currentCharInSuggestion != '\r') {
+				qInvocationSessionInstance.transitionToDecisionMade();
+				qInvocationSessionInstance.end();
+				return;
+			}
+			qInvocationSessionInstance.setIsLastKeyNewLine(true);
+			// We would also need to consider scenarios where the suggestion contains
+			// formatting whitespace.
+			// Should we come across them, we would need to do the following:
+			// - Examine if the last key registered was a CR, if it isn't we treat it as
+			// normal and examine the input verbatim
+			// - Otherwise, we shall skip ahead until the first non-whitespace text in
+			// the suggestion and increment `leadingWhitespaceSkipped` accordingly.
+			if (distanceTraversed < currentSuggestion.length() - 1
+					&& Character.isWhitespace(currentSuggestion.charAt(distanceTraversed + 1))
+					&& currentSuggestion.charAt(distanceTraversed + 1) != '\n'
+					&& currentSuggestion.charAt(distanceTraversed + 1) != '\r') {
+				int newWs = 0;
+				while (Character.isWhitespace(currentSuggestion.charAt(distanceTraversed + 1 + newWs))) {
+					newWs++;
+					if ((distanceTraversed + 1 + newWs) > currentSuggestion.length()) {
+						break;
+					}
+				}
+				int leadingWhitespaceSkipped = qInvocationSessionInstance.getLeadingWhitespaceSkipped();
+				leadingWhitespaceSkipped += newWs;
+				qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped);
+			}
+			break;
+		case SWT.BS:
+			// If we are traversing backwards, we need to undo the adjustments we had done
+			// for the following items as we come across them:
+			// - whitespace
+			// - brackets (?)
+			distanceTraversed--;
+			if (distanceTraversed < -1) {
+				qInvocationSessionInstance.transitionToDecisionMade();
+				qInvocationSessionInstance.end();
+				return;
+			}
+			isLastKeyBackspace = true;
+			int leadingWhitespaceSkipped = qInvocationSessionInstance.getLeadingWhitespaceSkipped();
+			int currentOffset = widget.getCaretOffset();
+			if (currentOffset - 1 <= qInvocationSessionInstance
+					.getHeadOffsetAtLine(widget.getLineAtOffset(currentOffset))) {
+				qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped - 1);
+				return;
+			}
+			break;
+		case SWT.ESC:
+			qInvocationSessionInstance.transitionToDecisionMade();
+			qInvocationSessionInstance.end();
+			break;
+		default:
 		}
 	}
 
 	@Override
 	public void verifyText(final VerifyEvent event) {
+	    if (isLastKeyBackspace) {
+	        isLastKeyBackspace = false;
+	        return;
+	    }
+
 		var qInvocationSessionInstance = QInvocationSession.getInstance();
 		if (qInvocationSessionInstance == null
 				|| qInvocationSessionInstance.getState() != QInvocationSessionState.SUGGESTION_PREVIEWING) {
@@ -112,77 +182,30 @@ public final class QInlineVerifyListener implements VerifyListener, VerifyKeyLis
 			qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped);
 			qInvocationSessionInstance.setIsLastKeyNewLine(false);
 		}
-		int distanceTraversed = currentOffset - invocationOffset + leadingWhitespaceSkipped
+		int distanceTraversed = currentOffset - invocationOffset
 				- distanceAdjustedForAutoClosingBrackets;
+		this.distanceTraversed = distanceTraversed;
 
-		// If we are traversing backwards, we need to undo the adjustments we had done
-		// for the following items as we come across them:
-		// - whitespace
-		// - brackets (?)
-		if (event.keyCode == SWT.BS && distanceTraversed > 0 && currentOffset - 1 <= qInvocationSessionInstance
-				.getHeadOffsetAtLine(widget.getLineAtOffset(currentOffset))) {
-			qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped - 1);
-			return;
-		}
-		System.out.println("Distance traversed: " + distanceTraversed);
+		System.out.println("=========================\nDistance traversed: " + distanceTraversed);
 		System.out.println("Leading whitespace skipped: " + leadingWhitespaceSkipped);
 		System.out.println("Distance adjusted for auto closing brackets: " + distanceAdjustedForAutoClosingBrackets);
 		System.out.println("text typed: " + event.text);
+		System.out.println("current char in suggestion: " + currentSuggestion.charAt(distanceTraversed));
 		System.out.println("Current caret offset: " + currentOffset);
 		System.out.println("Is auto closing brackets enabled: " + isAutoClosingEnabled);
 
-		// Terminate the session under the right conditions. These are:
-		// - If what has been typed does not match what has been suggested (we are going
-		// to assume the user does not want the suggestion)
-		// We are excluding modifier keys that do not produce text on the screen (e.g.
-		// shift, ctrl, option).
-		// - If the caret position has exceeded the invocation offset leftwards.
-		// - If the caret position has exceeded that of the end of the suggestion.
-		// - If the user has typehead to the end of the suggest (we would not just
-		// terminate the
-		if (event.text == "\0" || event.keyCode == SWT.ESC) {
-			// We have ESC mapped to reject command. We'll let the command take care of it.
-			return;
-		}
-		if (distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0) {
-			qInvocationSessionInstance.transitionToDecisionMade();
-			qInvocationSessionInstance.end();
-			return;
-		}
-
-		String currentCharInSuggestion = String.valueOf(currentSuggestion.charAt(distanceTraversed));
-		System.out.println("Current char in suggestion: " + currentCharInSuggestion);
-		if ((distanceTraversed <= 0 && event.keyCode == SWT.BS) || distanceTraversed > currentSuggestion.length()
-				|| ((event.keyCode != SWT.BS && event.keyCode != SWT.CR) && !currentCharInSuggestion.equals(event.text))
-				|| (event.keyCode == SWT.CR && (currentCharInSuggestion != "\n" && currentCharInSuggestion != "\r"))) {
+		boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
+		if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, event.text)) {
 			qInvocationSessionInstance.transitionToDecisionMade();
 			qInvocationSessionInstance.end();
 		}
-
-		if (event.keyCode == SWT.CR) {
-			qInvocationSessionInstance.setIsLastKeyNewLine(true);
-		}
-
-		// We would also need to consider scenarios where the suggestion contains
-		// formatting whitespace.
-		// Should we come across them, we would need to do the following:
-		// - Examine if the last key registered was a CR, if it isn't we treat it as
-		// normal and examine the input verbatim
-		// - Otherwise, we shall skip ahead until the first non-whitespace text in
-		// the suggestion and increment `leadingWhitespaceSkipped` accordingly.
-		if (event.keyCode == SWT.CR && distanceTraversed < currentSuggestion.length() - 1
-				&& Character.isWhitespace(currentSuggestion.charAt(distanceTraversed + 1))
-				&& currentSuggestion.charAt(distanceTraversed + 1) != '\n'
-				&& currentSuggestion.charAt(distanceTraversed + 1) != '\r') {
-			int newWs = 0;
-			while (Character.isWhitespace(currentSuggestion.charAt(distanceTraversed + 1 + newWs))) {
-				newWs++;
-				if ((distanceTraversed + 1 + newWs) > currentSuggestion.length()) {
-					break;
-				}
-			}
-			leadingWhitespaceSkipped += newWs;
-			qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped);
+	}
+	
+	private boolean isInputAMatch(String currentSuggestion, int startIdx, String input) {
+		if (input.length() > 1) {
+			return currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
+		} else {
+			return String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
 		}
 	}
 }

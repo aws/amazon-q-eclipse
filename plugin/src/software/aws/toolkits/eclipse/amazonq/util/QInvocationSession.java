@@ -40,7 +40,7 @@ public final class QInvocationSession extends QResource {
     private long invocationTimeInMs = -1L;
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
-    private QInlineVerifyListener inputListener = null;
+    private QInlineInputListener inputListener = null;
     private int leadingWhitespaceSkipped = 0;
     private Stack<String> closingBrackets = new Stack<>();
     private boolean isLastKeyNewLine = false;
@@ -93,7 +93,7 @@ public final class QInvocationSession extends QResource {
                 widget.addPaintListener(paintListener);
             }
 
-            inputListener = new QInlineVerifyListener(widget);
+            inputListener = new QInlineInputListener(widget);
             widget.addVerifyListener(inputListener);
             widget.addVerifyKeyListener(inputListener);
 

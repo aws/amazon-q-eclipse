@@ -8,6 +8,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
+/**
+ * ChatPartialResultManager is responsible for maintaining a mapping between
+ * partial result tokens and the associated ChatMessage objects. It is implemented 
+ * as a singleton to centralize control of all partial results in the plugin.
+ * 
+ * $/progress notifications are caught and handled in the AmazonQLspClientImpl 
+ * notifyProgress method. Within a progress notification, we are provided ProgressParams
+ * containing a token and a partial result object. The tokenToChatMessage map in
+ * this class allows us to find the original ChatMessage associated with the token.
+ *
+ * @see AmazonQLspClientImpl#notifyProgress(ProgressParams)
+ */
 public class ChatPartialResultManager {
     private static ChatPartialResultManager instance;
     private final Map<String, ChatMessage> tokenToChatMessageMap;

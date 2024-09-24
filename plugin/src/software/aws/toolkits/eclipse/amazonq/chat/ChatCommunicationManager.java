@@ -14,6 +14,11 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
+/**
+ * ChatCommunicationManager is responsible for managing communication between
+ * the Amazon Q Eclipse Plugin and the LSP server as well as communication
+ * between the Amazon Q Eclipse Plugin and the webview.
+ */
 public final class ChatCommunicationManager {
 
     private final JsonHandler jsonHandler;
@@ -61,11 +66,17 @@ public final class ChatCommunicationManager {
         });
     }
     
-    public boolean isProcessingChatMessage(String partialResultToken) {
+    /*
+     * Checks if a partial result is being processed with the provided token.
+     */
+    public boolean isProcessingPartialChatMessage(String partialResultToken) {
         return chatPartialResultManager.hasKey(partialResultToken);
     }
     
-    public ChatMessage getChatMessage(String partialResultToken) {
+    /*
+     * Gets the partial chat message using the provided token.
+     */
+    public ChatMessage getPartialChatMessage(String partialResultToken) {
         return chatPartialResultManager.getValue(partialResultToken);
     }
 }

@@ -35,6 +35,11 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         return CompletableFuture.completedFuture(metadata);
     }
 
+    /*
+     * Handles the progress notifications received from the LSP server.
+     * - Process partial results for Chat messages if provided token is maintained by chatPartialResultManager
+     * - Other notifications are ignored at this time.
+     */
     @Override
     public final CompletableFuture<List<Object>> configuration(final ConfigurationParams configurationParams) {
         if (configurationParams.getItems().size() == 0) {
@@ -56,14 +61,13 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
 	public void notifyProgress(final ProgressParams params) {
-		PluginLogger.info("Notify Progress caught...");
-		
+        AmazonQChatViewActionHandler chatActionHandler = new AmazonQChatViewActionHandler();
+        
 		ThreadingUtils.executeAsyncTask(() -> {
             try {
-                AmazonQChatViewActionHandler chatActionHandler = new AmazonQChatViewActionHandler();
-                chatActionHandler.handleProgressNotification(params);;
+                chatActionHandler.handlePartialResultProgressNotification(params);;
             } catch (Exception e) {
-                PluginLogger.error("Error processing message from Browser", e);
+                PluginLogger.error("Error processing partial result progress notification", e);
             }
         });
 	}

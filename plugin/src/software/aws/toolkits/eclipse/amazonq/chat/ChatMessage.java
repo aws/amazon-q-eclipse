@@ -35,6 +35,10 @@ public class ChatMessage {
         return chatRequestParams;
     }
     
+    public String getPartialResultToken() {
+        return chatRequestParams.getPartialResultToken();
+    }
+    
     public ChatResult sendChatMessageWithProgress() {
         try {
             String partialResultToken = UUID.randomUUID().toString();

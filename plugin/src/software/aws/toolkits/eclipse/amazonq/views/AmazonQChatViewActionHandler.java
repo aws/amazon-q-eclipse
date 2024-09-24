@@ -3,6 +3,8 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 
+import java.util.Objects;
+
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.swt.browser.Browser;
 
@@ -66,39 +68,39 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
     
     
     /*
-     * Handles chat progress notifications from the Amazon Q LSP server. Sends a chat prompt message to the webview.
+     * Handles chat progress notifications from the Amazon Q LSP server. Sends a partial chat prompt message to the webview.
      */
-    public final void handleProgressNotification(ProgressParams params) {
+    public final void handlePartialResultProgressNotification(ProgressParams params) {
         String token = ProgressNotficationUtils.getToken(params);
 
-        if (!chatCommunicationManager.isProcessingChatMessage(token)) {
-            PluginLogger.info("Not processing - not a partial result token");
+        // Check to ensure progress notification is a partial result for chat 
+        if (!chatCommunicationManager.isProcessingPartialChatMessage(token)) {
+            return;
+        }
+
+        // Check to ensure Object is sent in params
+        if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
+            String e = "Error occurred while handling partial result notification: expected Object value";
+            throw new AmazonQPluginException(e);
+        }
+
+        ChatResult chatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
+        ChatMessage chatMessage = chatCommunicationManager.getPartialChatMessage(token);
+        Browser browser = chatMessage.getBrowser();
+        
+        // Check to ensure the body has content in order to keep displaying the spinner while loading
+        if (chatResult.body() == null && chatResult.body().length() == 0) {
             return;
         }
         
-        if (params.getValue().isLeft()) {
-            String e = "Error occurred while handling partial result notification: Expected Object not WorkDoneProgressNotification value for partial result token " + token;
-            throw new AmazonQPluginException(e);
-        }
+        Boolean isPartialResult = true;
+        ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+            ChatUIInboundCommandName.ChatPrompt.toString(),
+            chatMessage.getChatRequestParams().getTabId(),
+            chatResult,
+            isPartialResult
+        );
         
-        PluginLogger.info("Handling progress notification");
-        
-        ChatResult chatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
-        ChatMessage chatMessage = chatCommunicationManager.getChatMessage(token);
-        Browser browser = chatMessage.getBrowser();
-        
-        // Sending a response would clear the loading indicator, so we should ensure that there is content first for a good UX
-        // (Note: Response is accumulative)
-        if (chatResult.body() != null && chatResult.body().length() > 0) {
-            ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                    ChatUIInboundCommandName.ChatPrompt.toString(),
-                    chatMessage.getChatRequestParams().getTabId(),
-                    chatResult,
-                    true
-                );
-            
-            chatCommunicationManager.sendMessageToChatUI(browser, chatUIInboundCommand);
-        }
-        
+        chatCommunicationManager.sendMessageToChatUI(browser, chatUIInboundCommand);
     }
 }

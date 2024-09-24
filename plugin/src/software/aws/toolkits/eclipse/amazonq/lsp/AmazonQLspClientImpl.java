@@ -11,11 +11,13 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
+import org.eclipse.lsp4j.ProgressParams;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -49,4 +51,8 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         return CompletableFuture.completedFuture(output);
     }
 
+    @Override
+	public void notifyProgress(final ProgressParams params) {
+		PluginLogger.info("Notify Progress message caught: " + params.toString());
+	}
 }

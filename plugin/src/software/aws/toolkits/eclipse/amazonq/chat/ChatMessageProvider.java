@@ -3,6 +3,7 @@
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.UUID;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
@@ -28,6 +29,9 @@ public final class ChatMessageProvider {
 
     public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
         try {
+            String partialResultToken = UUID.randomUUID().toString();
+            chatRequestParams.setPartialResultToken(partialResultToken);
+
             PluginLogger.info("Sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server");
             return amazonQLspServer.sendChatPrompt(chatRequestParams);
         } catch (Exception e) {

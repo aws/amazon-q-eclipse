@@ -38,10 +38,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 				|| event.keyCode == SWT.ARROW_RIGHT) {
 			qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOVEMENT_KEY);
 			return;
-		} else {
-			qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
 		}
-		
+
+		qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
+
 		// Here we examine all other relevant keystrokes that may be relevant to the preview's lifetime: 
 		// - CR (new line)
 		// - BS (backspace)
@@ -56,34 +56,8 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 				return;
 			}
 			qInvocationSessionInstance.setIsLastKeyNewLine(true);
-			// We would also need to consider scenarios where the suggestion contains
-			// formatting whitespace.
-			// Should we come across them, we would need to do the following:
-			// - Examine if the last key registered was a CR, if it isn't we treat it as
-			// normal and examine the input verbatim
-			// - Otherwise, we shall skip ahead until the first non-whitespace text in
-			// the suggestion and increment `leadingWhitespaceSkipped` accordingly.
-			if (distanceTraversed < currentSuggestion.length() - 1
-					&& Character.isWhitespace(currentSuggestion.charAt(distanceTraversed + 1))
-					&& currentSuggestion.charAt(distanceTraversed + 1) != '\n'
-					&& currentSuggestion.charAt(distanceTraversed + 1) != '\r') {
-				int newWs = 0;
-				while (Character.isWhitespace(currentSuggestion.charAt(distanceTraversed + 1 + newWs))) {
-					newWs++;
-					if ((distanceTraversed + 1 + newWs) > currentSuggestion.length()) {
-						break;
-					}
-				}
-				int leadingWhitespaceSkipped = qInvocationSessionInstance.getLeadingWhitespaceSkipped();
-				leadingWhitespaceSkipped += newWs;
-				qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped);
-			}
-			break;
+			return;
 		case SWT.BS:
-			// If we are traversing backwards, we need to undo the adjustments we had done
-			// for the following items as we come across them:
-			// - whitespace
-			// - brackets (?)
 			distanceTraversed--;
 			if (distanceTraversed < -1) {
 				qInvocationSessionInstance.transitionToDecisionMade();
@@ -91,20 +65,19 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 				return;
 			}
 			isLastKeyBackspace = true;
-			int leadingWhitespaceSkipped = qInvocationSessionInstance.getLeadingWhitespaceSkipped();
-			int currentOffset = widget.getCaretOffset();
-			if (currentOffset - 1 <= qInvocationSessionInstance
-					.getHeadOffsetAtLine(widget.getLineAtOffset(currentOffset))) {
-				qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped - 1);
-				return;
-			}
-			break;
+			return;
 		case SWT.ESC:
 			qInvocationSessionInstance.transitionToDecisionMade();
 			qInvocationSessionInstance.end();
-			break;
+			return;
 		default:
 		}
+		
+		// We also have to process inputs for open brackets. 
+		// Open brackets are special in eclipse SWT in that they *do not* trigger a call to `verifyText`.
+		// Thus we would have to process them here.
+		
+		
 	}
 
 	@Override
@@ -168,26 +141,12 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
 		int distanceAdjustedForAutoClosingBrackets = (isAutoClosingEnabled
 				&& (isInputOpeningBracket || isInputClosingBracket)) ? 1 : 0;
-		// Note that distanceTraversed here is the zero-based index
-		// We need to subtract from leading whitespace skipped the indent the editor had
-		// placed the caret after at the new line.
-		int newLineOffset = 0;
-		boolean isLastKeyNewLine = qInvocationSessionInstance.isLastKeyNewLine();
-		int leadingWhitespaceSkipped = qInvocationSessionInstance.getLeadingWhitespaceSkipped();
 		int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
-		if (isLastKeyNewLine) {
-			int currentLineInEditor = widget.getLineAtOffset(currentOffset);
-			newLineOffset = currentOffset - widget.getOffsetAtLine(currentLineInEditor);
-			leadingWhitespaceSkipped -= newLineOffset;
-			qInvocationSessionInstance.setLeadingWhitespaceSkipped(leadingWhitespaceSkipped);
-			qInvocationSessionInstance.setIsLastKeyNewLine(false);
-		}
 		int distanceTraversed = currentOffset - invocationOffset
 				- distanceAdjustedForAutoClosingBrackets;
 		this.distanceTraversed = distanceTraversed;
 
 		System.out.println("=========================\nDistance traversed: " + distanceTraversed);
-		System.out.println("Leading whitespace skipped: " + leadingWhitespaceSkipped);
 		System.out.println("Distance adjusted for auto closing brackets: " + distanceAdjustedForAutoClosingBrackets);
 		System.out.println("text typed: " + event.text);
 		System.out.println("current char in suggestion: " + currentSuggestion.charAt(distanceTraversed));

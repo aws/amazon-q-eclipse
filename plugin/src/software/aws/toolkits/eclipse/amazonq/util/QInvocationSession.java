@@ -41,9 +41,7 @@ public final class QInvocationSession extends QResource {
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
-    private int leadingWhitespaceSkipped = 0;
     private Stack<String> closingBrackets = new Stack<>();
-    private boolean isLastKeyNewLine = false;
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
     private Runnable unsetVerticalIndent;
@@ -229,14 +227,6 @@ public final class QInvocationSession extends QResource {
         this.caretMovementReason = reason;
     }
 
-    public void setLeadingWhitespaceSkipped(final int numSkipped) {
-        this.leadingWhitespaceSkipped = numSkipped;
-    }
-
-    public void setIsLastKeyNewLine(final boolean isLastKeyNewLine) {
-        this.isLastKeyNewLine = isLastKeyNewLine;
-    }
-
     public void setHeadOffsetAtLine(final int lineNum, final int offSet) throws IllegalArgumentException {
         if (lineNum >= headOffsetAtLine.length || lineNum < 0) {
             throw new IllegalArgumentException("Problematic index given");
@@ -270,14 +260,6 @@ public final class QInvocationSession extends QResource {
 
     public Stack<String> getClosingBrackets() {
         return closingBrackets;
-    }
-
-    public int getLeadingWhitespaceSkipped() {
-        return leadingWhitespaceSkipped;
-    }
-
-    public boolean isLastKeyNewLine() {
-        return isLastKeyNewLine;
     }
 
     public int getHeadOffsetAtLine(final int lineNum) throws IllegalArgumentException {
@@ -353,8 +335,6 @@ public final class QInvocationSession extends QResource {
         inlineTextFont.dispose();
         inlineTextFont = null;
         closingBrackets = null;
-        leadingWhitespaceSkipped = 0;
-        isLastKeyNewLine = false;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();

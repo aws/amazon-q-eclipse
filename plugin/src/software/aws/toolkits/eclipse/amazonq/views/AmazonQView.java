@@ -2,7 +2,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-
 import java.util.Set;
 
 import org.eclipse.swt.SWT;
@@ -10,7 +9,6 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
@@ -21,7 +19,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public abstract class AmazonQView extends ViewPart implements ISelectionListener {
+public abstract class AmazonQView extends ViewPart {
 
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
@@ -77,7 +75,6 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         setupBrowser(parent);
         setupActions(browser, isLoggedIn);
         setupAuthStatusListeners();
-        setupSelectionListener();
     }
 
     private void setupBrowser(final Composite parent) {
@@ -99,10 +96,6 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
         AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
     }
 
-    private void setupSelectionListener() {
-        getSite().getPage().addSelectionListener(this);
-    }
-
     @Override
     public final void setFocus() {
         browser.setFocus();
@@ -117,7 +110,6 @@ public abstract class AmazonQView extends ViewPart implements ISelectionListener
     @Override
     public void dispose() {
         AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
-        getSite().getPage().removeSelectionListener(this);
         super.dispose();
     }
 

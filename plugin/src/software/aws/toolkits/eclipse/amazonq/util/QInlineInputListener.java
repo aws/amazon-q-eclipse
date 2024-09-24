@@ -50,22 +50,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 		// Here we examine all other relevant keystrokes that may be relevant to the preview's lifetime: 
 		// - CR (new line)
 		// - BS (backspace)
-		int distanceTraversed = widget.getCaretOffset() - qInvocationSessionInstance.getInvocationOffset();
 		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
 		switch (event.keyCode) {
-		case SWT.CR:
-			char currentCharInSuggestion = currentSuggestion.charAt(distanceTraversed);
-			if (currentCharInSuggestion != '\n' && currentCharInSuggestion != '\r') {
-				qInvocationSessionInstance.transitionToDecisionMade();
-				qInvocationSessionInstance.end();
-				return;
-			}
-			return;
 		case SWT.BS:
-		    // The distance traversed is the index at which the key was registered. 
-		    // In other words, to get the distance traversed after the fact, we need to subtract one from it. 
-		    System.out.println("Distance traversed (from verify key): " + distanceTraversed);
-			if (distanceTraversed - 1 < 0) {
+			if (--distanceTraversed < 0) {
 				qInvocationSessionInstance.transitionToDecisionMade();
 				qInvocationSessionInstance.end();
 				return;
@@ -85,32 +73,68 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         }
         
         // If auto cloising of brackets are enabled, SWT will treat the open bracket differently.
-        // Input of the open brackets will not trigger a call to verifyText. 
+        // Input of the brackets will not trigger a call to verifyText. 
         // Thus we have to do the typeahead verification here. 
 		switch (event.character) {
         case '<':
-            if (currentSuggestion.charAt(distanceTraversed) != '<') {
+            if (currentSuggestion.charAt(distanceTraversed++) != '<') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
+                qInvocationSessionInstance.transitionToDecisionMade();
+                qInvocationSessionInstance.end();
+                return;
+            }
+            return;
+        case '>':
+            if (currentSuggestion.charAt(distanceTraversed++) != '>') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
                 qInvocationSessionInstance.transitionToDecisionMade();
                 qInvocationSessionInstance.end();
                 return;
             }
             return;
         case '(':
-            if (currentSuggestion.charAt(distanceTraversed) != '(') {
+            if (currentSuggestion.charAt(distanceTraversed++) != '(') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
+                qInvocationSessionInstance.transitionToDecisionMade();
+                qInvocationSessionInstance.end();
+                return;
+            }
+            return;
+        case ')':
+            if (currentSuggestion.charAt(distanceTraversed++) != ')') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
                 qInvocationSessionInstance.transitionToDecisionMade();
                 qInvocationSessionInstance.end();
                 return;
             }
             return;
         case '[':
-            if (currentSuggestion.charAt(distanceTraversed) != '[') {
+            if (currentSuggestion.charAt(distanceTraversed++) != '[') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
+                qInvocationSessionInstance.transitionToDecisionMade();
+                qInvocationSessionInstance.end();
+                return;
+            }
+            return;
+        case ']':
+            if (currentSuggestion.charAt(distanceTraversed++) != ']') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
                 qInvocationSessionInstance.transitionToDecisionMade();
                 qInvocationSessionInstance.end();
                 return;
             }
             return;
         case '{':
-            if (currentSuggestion.charAt(distanceTraversed) != '{') {
+            if (currentSuggestion.charAt(distanceTraversed++) != '{') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
+                qInvocationSessionInstance.transitionToDecisionMade();
+                qInvocationSessionInstance.end();
+                return;
+            }
+            return;
+        case '}':
+            if (currentSuggestion.charAt(distanceTraversed++) != '}') {
+                System.out.println("bracket mismatched\ntyped: " + event.character + "\nsuggestion: " + currentSuggestion.charAt(distanceTraversed));
                 qInvocationSessionInstance.transitionToDecisionMade();
                 qInvocationSessionInstance.end();
                 return;
@@ -143,10 +167,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 		qInvocationSessionInstance
 				.setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
 
-		int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
-		int distanceTraversed = currentOffset - invocationOffset;
-		this.distanceTraversed = distanceTraversed;
-
 		System.out.println("=========================\nDistance traversed: " + distanceTraversed);
 		System.out.println("text typed: " + event.text);
 		System.out.println("current char in suggestion: " + currentSuggestion.charAt(distanceTraversed));
@@ -162,10 +182,13 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 	}
 	
 	private boolean isInputAMatch(String currentSuggestion, int startIdx, String input) {
+	    boolean res;
 		if (input.length() > 1) {
-			return currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
+			res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
 		} else {
-			return String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
+			res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
 		}
+		distanceTraversed += input.length();
+		return res;
 	}
 }

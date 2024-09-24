@@ -6,6 +6,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import org.eclipse.swt.browser.Browser;
+
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
@@ -28,7 +30,7 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
+    public CompletableFuture<ChatResult>  sendChatPrompt(Browser browser, final ChatRequestParams chatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer, chatRequestParams);
         return chatMessage.sendChatMessageWithProgress();
     }

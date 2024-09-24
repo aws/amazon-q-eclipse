@@ -10,10 +10,10 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public class ChatPartialResultManager {
     private static ChatPartialResultManager instance;
-    private final Map<String, ChatMessage> partialResultTokenMap;
+    private final Map<String, ChatMessage> tokenToChatMessageMap;
     
     private ChatPartialResultManager() {
-        partialResultTokenMap = new ConcurrentHashMap<String, ChatMessage>();
+        tokenToChatMessageMap = new ConcurrentHashMap<String, ChatMessage>();
     }
     
     public static synchronized ChatPartialResultManager getInstance() {
@@ -23,20 +23,19 @@ public class ChatPartialResultManager {
         return instance;
     }
     
-    public void setPartialResultTokenMapEntry(String token, ChatMessage chatMessage) {
-        partialResultTokenMap.put(token, chatMessage);
+    public void setMapEntry(String token, ChatMessage chatMessage) {
+        tokenToChatMessageMap.put(token, chatMessage);
     }
     
-    public void deletePartialResultTokenMapEntry(String token) {
-        partialResultTokenMap.remove(token);
+    public void deleteMapEntry(String token) {
+        tokenToChatMessageMap.remove(token);
     }
-
-    public Boolean shouldHandlePartialResult(String token) {
-        return token != null && partialResultTokenMap.containsKey(token);
+    
+    public ChatMessage getValue(String token) {
+        return tokenToChatMessageMap.getOrDefault(token, null);
     }
-
-    public void handlePartialResult(ChatCommunicationManager chatCommunicationManager, ChatResult chatResult){
-        PluginLogger.info("Handling partial result...: " + chatResult.toString());
+    
+    public Boolean hasKey(String token) {
+        return tokenToChatMessageMap.containsKey(token);
     }
-
 }

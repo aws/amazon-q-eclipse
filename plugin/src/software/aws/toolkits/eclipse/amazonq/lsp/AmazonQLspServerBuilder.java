@@ -28,8 +28,6 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
         return super.wrapMessageConsumer((Message message) -> {
-            PluginLogger.info("Raw Message Received...");
-            
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 initParams.setClientInfo(new ClientInfo(ClientMetadata.getPluginName(), ClientMetadata.getPluginVersion()));

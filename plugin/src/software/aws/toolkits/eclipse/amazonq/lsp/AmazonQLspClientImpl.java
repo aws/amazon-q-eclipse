@@ -19,6 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.AmazonQChatViewActionHandler;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -55,7 +57,14 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     @Override
 	public void notifyProgress(final ProgressParams params) {
 		PluginLogger.info("Notify Progress caught...");
-		ChatCommunicationManager chatCommunicationManager = new ChatCommunicationManager();
-		chatCommunicationManager.handleProgressNotification(params);
+		
+		ThreadingUtils.executeAsyncTask(() -> {
+            try {
+                AmazonQChatViewActionHandler chatActionHandler = new AmazonQChatViewActionHandler();
+                chatActionHandler.handleProgressNotification(params);;
+            } catch (Exception e) {
+                PluginLogger.error("Error processing message from Browser", e);
+            }
+        });
 	}
 }

@@ -191,7 +191,7 @@ public class CustomizationDialog extends Dialog {
         container.setLayout(gridLayout);
         container.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
         Label heading = createLabelWithFontSize(container, "Select an Amazon Q customization", 18);
-        boldFont(heading.getFont());
+        heading.setFont(boldFont(heading.getFont()));
         Boolean isDefaultAmazonQFoundationSelected = this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
         CustomRadioButton defaultAmazonQFoundationButton = createCustomRadioButton(container, "Amazon Q foundation (Default)", 
         		"Receive suggestions from Amazon Q base model.", SWT.NONE, isDefaultAmazonQFoundationSelected);
@@ -244,7 +244,7 @@ public class CustomizationDialog extends Dialog {
 
     @Override
     protected final Point getInitialSize() {
-        return new Point(600, 450);
+        return new Point(550, 400);
     }
 
     @Override

@@ -36,7 +36,6 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
             var insertOffset = widget.getCaretOffset();
             doc.replace(insertOffset, 0, suggestion);
             widget.setCaretOffset(insertOffset + suggestion.length());
-
             QInvocationSession.getInstance().transitionToDecisionMade();
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
             QInvocationSession.getInstance().executeCallbackForCodeReference();

@@ -13,6 +13,7 @@ public final class AmazonQCommonActions {
     private ChangeThemeAction changeThemeAction;
     private SignoutAction signoutAction;
     private FeedbackDialogContributionItem feedbackDialogContributionItem;
+    private CustomizationDialogContributionItem customizationDialogContributionItem;
 
     public AmazonQCommonActions(final Browser browser, final boolean isLoggedIn, final IViewSite viewSite) {
         createActions(browser, isLoggedIn, viewSite);
@@ -32,10 +33,15 @@ public final class AmazonQCommonActions {
         return feedbackDialogContributionItem;
     }
 
+    public CustomizationDialogContributionItem getCustomizationDialogContributionAction() {
+        return customizationDialogContributionItem;
+    }
+
     private void createActions(final Browser browser, final boolean isLoggedIn, final IViewSite viewSite) {
         changeThemeAction = new ChangeThemeAction(browser);
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
+        customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
     }
 
     private void contributeToActionBars(final IViewSite viewSite) {
@@ -46,6 +52,7 @@ public final class AmazonQCommonActions {
 
     private void fillLocalPullDown(final IMenuManager manager) {
         manager.add(changeThemeAction);
+        manager.add(customizationDialogContributionItem);
         manager.add(feedbackDialogContributionItem.getDialogContributionItem());
         manager.add(signoutAction);
     }
@@ -57,6 +64,7 @@ public final class AmazonQCommonActions {
     public void updateActionVisibility(final boolean isLoggedIn, final IViewSite viewSite) {
         signoutAction.updateVisibility(isLoggedIn);
         feedbackDialogContributionItem.updateVisibility(isLoggedIn);
+        customizationDialogContributionItem.updateVisibility(isLoggedIn);
     }
 
 }

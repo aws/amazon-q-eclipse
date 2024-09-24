@@ -4,7 +4,11 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.swt.browser.Browser;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
@@ -19,10 +23,15 @@ public final class ChatCommunicationManager {
 
     private final JsonHandler jsonHandler;
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
+    private final ChatPartialResultManager chatPartialResultManager;
+    private Gson gson;
+    
 
     public ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProvider = ChatMessageProvider.createAsync();
+        this.chatPartialResultManager = ChatPartialResultManager.getInstance();
+        this.gson = new Gson();
     }
 
     public CompletableFuture<ChatResult> sendMessageToChatServer(final Command command, final Object params) {
@@ -56,5 +65,41 @@ public final class ChatCommunicationManager {
             browser.evaluate(script);
         });
     }
+    
+    /*
+     * Handles progress notifications from the Amazon Q LSP server. Sends a chat prompt message to the webview.
+     */
+    public void handleProgressNotification(ProgressParams params) {
+        String token;
+        
+        // Convert token to String
+        if (params.getToken().isLeft()) {
+            token = params.getToken().getLeft();
+        } else {
+            token = params.getToken().getRight().toString();
+        }
 
+        if (!chatPartialResultManager.shouldHandlePartialResult(token)) {
+            PluginLogger.info("Not a partial result notification");
+            return;
+        }
+        
+        if (params.getValue().isLeft()) {
+            PluginLogger.info("Expected object not WorkDoneProgressNotifcation");
+            return;
+        }
+        
+        Object value = params.getValue().getRight();
+        
+        if (!(value instanceof JsonElement)) {
+            PluginLogger.info("Value is not the expected JsonElement");
+            return;
+        }
+            
+        ChatResult chatResult = gson.fromJson(((JsonElement)value), ChatResult.class);
+        
+        // ChatResult chatResult = jsonHandler.convertObject(paramsObject, ChatResult.class);
+        
+        chatPartialResultManager.handlePartialResult(this, chatResult);
+    }
 }

@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -53,6 +54,8 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
 	public void notifyProgress(final ProgressParams params) {
-		PluginLogger.info("Notify Progress message caught: " + params.toString());
+		PluginLogger.info("Notify Progress caught...");
+		ChatCommunicationManager chatCommunicationManager = new ChatCommunicationManager();
+		chatCommunicationManager.handleProgressNotification(params);
 	}
 }

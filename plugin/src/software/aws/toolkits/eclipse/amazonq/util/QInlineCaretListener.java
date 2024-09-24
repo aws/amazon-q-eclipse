@@ -24,11 +24,7 @@ public final class QInlineCaretListener implements CaretListener {
             return;
         }
 
-        // There are instances where the caret movement was induced by sources other than user input
-        // Under these instances, it is observed that the caret would revert back to a position that was last
-        // placed by the user in the same rendering cycle.
-        // We want to preserve the preview state and prevent it from terminating by these non-user instructed movements
-        if (event.caretOffset != widget.getCaretOffset() && qInvocationSessionInstance.isPreviewingSuggestions()) {
+        if (qInvocationSessionInstance.isPreviewingSuggestions()) {
             qInvocationSessionInstance.transitionToDecisionMade();
             qInvocationSessionInstance.end();
         }

@@ -31,6 +31,7 @@ public class CustomizationDialog extends Dialog {
     public static final String CUSTOMIZATION_STORAGE_INTERNAL_KEY = "aws.q.customization.eclipse";
     private static final String CUSTOMIZATION_STORAGE_LSP_KEY = "aws.q.customization";
     private Composite container;
+    private Combo combo;
     private Font magnifiedFont;
     private Font boldFont;
     private List<Customization> customizationsResponse;
@@ -155,7 +156,7 @@ public class CustomizationDialog extends Dialog {
     	layout.marginLeft = 15;
         contentComposite.setLayout(layout);
         contentComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        Combo combo = new Combo(contentComposite, SWT.READ_ONLY);
+        combo = new Combo(contentComposite, SWT.READ_ONLY);
         GridData comboGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
         comboGridData.horizontalAlignment = GridData.FILL;
         comboGridData.grabExcessHorizontalSpace = true;
@@ -172,6 +173,9 @@ public class CustomizationDialog extends Dialog {
         	}
         }
         combo.select(defaultSelectedDropdownIndex);
+        if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
+        	combo.setEnabled(false);
+        }
         combo.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -203,6 +207,7 @@ public class CustomizationDialog extends Dialog {
             	customizationButton.getRadioButton().setSelection(false);
             	responseSelection = ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT;
             	selectedCustomisationArn = null;
+            	combo.setEnabled(false);
             }
         });
         customizationButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
@@ -210,6 +215,7 @@ public class CustomizationDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
             	defaultAmazonQFoundationButton.getRadioButton().setSelection(false);
             	responseSelection = ResponseSelection.CUSTOMIZATION;
+            	combo.setEnabled(true);
             }
         });
         createDropdownForCustomizations(container);

@@ -102,7 +102,7 @@ public class AmazonQChatWebview extends AmazonQView {
 
     @Override
     protected final void handleAuthStatusChange(final boolean isLoggedIn) {
-        var browser = super.getBrowser();
+        var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
             if (!isLoggedIn) {

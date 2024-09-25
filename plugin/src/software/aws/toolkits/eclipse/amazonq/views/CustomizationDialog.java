@@ -65,7 +65,7 @@ public class CustomizationDialog extends Dialog {
             
             subtextLabel = createLabelWithFontSize(contentComposite, subText, 16);
             subtextLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
-            subtextLabel.setForeground(contentComposite.getDisplay().getSystemColor(SWT.COLOR_GRAY));
+            subtextLabel.setForeground(contentComposite.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
         }
 
         public final Button getRadioButton() {
@@ -194,7 +194,7 @@ public class CustomizationDialog extends Dialog {
         GridLayout gridLayout = new GridLayout(1, false);
         container.setLayout(gridLayout);
         container.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
-        Label heading = createLabelWithFontSize(container, "Select an Amazon Q customization", 18);
+        Label heading = createLabelWithFontSize(container, "Select an Amazon Q Customization", 18);
         heading.setFont(boldFont(heading.getFont()));
         Boolean isDefaultAmazonQFoundationSelected = this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
         CustomRadioButton defaultAmazonQFoundationButton = createCustomRadioButton(container, "Amazon Q foundation (Default)", 

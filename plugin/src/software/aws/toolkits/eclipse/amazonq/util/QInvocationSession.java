@@ -44,6 +44,7 @@ public final class QInvocationSession extends QResource {
     private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
+    private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Runnable unsetVerticalIndent;
 
     // Private constructor to prevent instantiation
@@ -121,10 +122,8 @@ public final class QInvocationSession extends QResource {
                         AuthUtils.updateToken().get();
                     }
 
-                    List<String> newSuggestions = LspProvider.getAmazonQServer().get()
-                            .inlineCompletionWithReferences(params).thenApply(result -> result.getItems().stream()
-                                    .map(InlineCompletionItem::getInsertText).collect(Collectors.toList()))
-                            .get();
+                    List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
+                            .inlineCompletionWithReferences(params).thenApply(result -> result.getItems()).get();
 
                     Display.getDefault().asyncExec(() -> {
                         if (newSuggestions == null || newSuggestions.isEmpty()) {
@@ -269,7 +268,7 @@ public final class QInvocationSession extends QResource {
         return headOffsetAtLine[lineNum];
     }
 
-    public String getCurrentSuggestion() {
+    public InlineCompletionItem getCurrentSuggestion() {
         if (suggestionsContext == null) {
             PluginLogger.warn("QSuggestion context is null");
             return null;
@@ -285,7 +284,7 @@ public final class QInvocationSession extends QResource {
             throw new IllegalStateException("QSuggestion showing discarded suggestions");
         }
 
-        return details.get(index).getSuggestion();
+        return details.get(index).getInlineCompletionItem();
     }
 
     public void decrementCurrentSuggestionIndex() {
@@ -310,6 +309,19 @@ public final class QInvocationSession extends QResource {
         return hasBeenTypedahead;
     }
 
+    public void registerCallbackForCodeReference(final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
+        this.codeReferenceAcceptanceCallback = codeReferenceAcceptanceCallback;
+    }
+
+    public void executeCallbackForCodeReference() {
+        if (codeReferenceAcceptanceCallback != null) {
+            var selectedSuggestion = getCurrentSuggestion();
+            var widget = viewer.getTextWidget();
+            int startLine = widget.getLineAtOffset(invocationOffset);
+            codeReferenceAcceptanceCallback.onCallback(selectedSuggestion, startLine);
+        }
+    }
+  
     public void setVerticalIndent(int line, int height) {
         var widget = viewer.getTextWidget();
         widget.setLineVerticalIndent(line, height);

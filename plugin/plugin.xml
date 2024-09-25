@@ -24,6 +24,14 @@
             category="amazonq"
             inject="true">
         </view>
+        <view
+              category="amazonq"
+              class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+              icon="icons/AmazonQ.png"
+              id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+              name="Amazon Q Code Reference"
+              restorable="true">
+        </view>
     </extension>
 
     <extension

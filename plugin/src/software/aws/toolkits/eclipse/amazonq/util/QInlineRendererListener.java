@@ -29,7 +29,7 @@ public class QInlineRendererListener implements PaintListener {
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
 
         var location = widget.getLocationAtOffset(widget.getCaretOffset());
-        var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
+        var suggestion = QInvocationSession.getInstance().getCurrentSuggestion().getInsertText();
         int invocationOffset = QInvocationSession.getInstance().getInvocationOffset();
         var suggestionParts = suggestion.split("\\R");
 

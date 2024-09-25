@@ -3,18 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import org.eclipse.jface.preference.PreferenceDialog;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.dialogs.PreferencesUtil;
-
-import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
@@ -26,9 +17,6 @@ public class AmazonQChatWebview extends AmazonQView {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
-    @Inject
-    private Shell shell;
-    private Browser browser;
     private AmazonQCommonActions amazonQCommonActions;
 
     private final ViewCommandParser commandParser;
@@ -42,15 +30,12 @@ public class AmazonQChatWebview extends AmazonQView {
     @Override
     public final void createPartControl(final Composite parent) {
         setupAmazonQView(parent, true);
-        browser = getBrowser();
+        var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
 
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);
         }, ThreadingUtils::executeAsyncTask);
-
-        BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
-        browser.addDisposeListener(e -> prefsFunction.dispose());
 
        new BrowserFunction(browser, "ideCommand") {
             @Override
@@ -66,26 +51,6 @@ public class AmazonQChatWebview extends AmazonQView {
                 return null;
             }
         };
-    }
-
-    private class OpenPreferenceFunction extends BrowserFunction {
-        private Runnable function;
-
-        OpenPreferenceFunction(final Browser browser, final String name, final Runnable function) {
-            super(browser, name);
-            this.function = function;
-        }
-
-        @Override
-        public Object function(final Object[] arguments) {
-            function.run();
-            return getName() + " executed!";
-        }
-    }
-
-    private void openPreferences() {
-        PreferenceDialog dialog = PreferencesUtil.createPreferenceDialogOn(shell, null, null, null);
-        dialog.open();
     }
 
     private String getContent() {
@@ -136,20 +101,8 @@ public class AmazonQChatWebview extends AmazonQView {
     }
 
     @Override
-    public final void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
-        if (selection.isEmpty()) {
-            return;
-        }
-        if (selection instanceof IStructuredSelection) {
-            browser.execute("setSelection(\"" + part.getTitle() + "::"
-                    + ((IStructuredSelection) selection).getFirstElement().getClass().getSimpleName() + "\");");
-        } else {
-            browser.execute("setSelection(\"Something was selected in part " + part.getTitle() + "\");");
-        }
-    }
-
-    @Override
     protected final void handleAuthStatusChange(final boolean isLoggedIn) {
+        var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
             if (!isLoggedIn) {

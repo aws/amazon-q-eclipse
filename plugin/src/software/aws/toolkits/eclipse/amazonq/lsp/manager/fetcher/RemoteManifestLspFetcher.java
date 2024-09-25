@@ -35,7 +35,6 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
     private static final int TIMEOUT_SECONDS = 10;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
 
-
     private final String manifestUrl;
     private final VersionRange versionRange;
     private final boolean integrityChecking;

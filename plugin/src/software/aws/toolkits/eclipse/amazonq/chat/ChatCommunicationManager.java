@@ -3,6 +3,7 @@
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.UUID;
 
 import org.eclipse.swt.browser.Browser;
 
@@ -17,18 +18,27 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 /**
  * ChatCommunicationManager is responsible for managing communication between
  * the Amazon Q Eclipse Plugin and the LSP server as well as communication
- * between the Amazon Q Eclipse Plugin and the webview.
+ * between the Amazon Q Eclipse Plugin and the webview. It is implemented 
+ * as a singleton to centralize control of all communication in the plugin.
  */
 public final class ChatCommunicationManager {
+    private static ChatCommunicationManager instance;
 
     private final JsonHandler jsonHandler;
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultManager chatPartialResultManager;
 
-    public ChatCommunicationManager() {
+    private ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProvider = ChatMessageProvider.createAsync();
         this.chatPartialResultManager = ChatPartialResultManager.getInstance();
+    }
+
+    public static synchronized ChatCommunicationManager getInstance() {
+        if (instance == null) {
+            instance = new ChatCommunicationManager();
+        }
+        return instance;
     }
 
     public CompletableFuture<ChatResult> sendMessageToChatServer(final Command command, final Object params) {
@@ -67,17 +77,30 @@ public final class ChatCommunicationManager {
     }
     
     /*
-     * Checks if a partial result is being processed with the provided token.
-     */
-    public boolean isProcessingPartialChatMessage(String partialResultToken) {
-        return chatPartialResultManager.hasKey(partialResultToken);
-    }
-    
-    /*
      * Gets the partial chat message using the provided token.
      */
     public ChatMessage getPartialChatMessage(String partialResultToken) {
-        return chatPartialResultManager.getValue(partialResultToken);
+        return chatPartialResultMap.getValue(partialResultToken);
+    }
+    
+    /*
+     * Adds an entry to the partialResultToken to ChatMessage map.
+     */
+    public String addPartialChatMessage(ChatMessage chatMessage) {
+        String partialResultToken = UUID.randomUUID().toString();
+        
+        // Indicator for the server to send partial result notifications
+        chatMessage.getChatRequestParams().setPartialResultToken(partialResultToken);
+        
+        chatPartialResultMap.setEntry(partialResultToken, chatMessage);
+        return partialResultToken;
+    }
+    
+    /*
+     * Removes an entry from the partialResultToken to ChatMessage map.
+     */
+    public void removePartialChatMessage(String partialResultToken) {
+        chatPartialResultMap.removeEntry(partialResultToken);
     }
 }
 

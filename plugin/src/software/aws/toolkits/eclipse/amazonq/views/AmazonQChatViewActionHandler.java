@@ -26,7 +26,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
     public AmazonQChatViewActionHandler() {
         this.jsonHandler = new JsonHandler();
-        chatCommunicationManager = new ChatCommunicationManager();
+        chatCommunicationManager = ChatCommunicationManager.getInstance();
     }
 
     /*
@@ -72,9 +72,9 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
      */
     public final void handlePartialResultProgressNotification(ProgressParams params) {
         String token = ProgressNotficationUtils.getToken(params);
+        ChatMessage chatMessage = chatCommunicationManager.getPartialChatMessage(token);
 
-        // Check to ensure progress notification is a partial result for chat 
-        if (!chatCommunicationManager.isProcessingPartialChatMessage(token)) {
+        if (chatMessage == null) {
             return;
         }
 
@@ -84,12 +84,11 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             throw new AmazonQPluginException(e);
         }
 
-        ChatResult chatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
-        ChatMessage chatMessage = chatCommunicationManager.getPartialChatMessage(token);
+        ChatResult partialChatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
         Browser browser = chatMessage.getBrowser();
         
         // Check to ensure the body has content in order to keep displaying the spinner while loading
-        if (chatResult.body() == null && chatResult.body().length() == 0) {
+        if (partialChatResult.body() == null || partialChatResult.body().length() == 0) {
             return;
         }
         
@@ -97,7 +96,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
             ChatUIInboundCommandName.ChatPrompt.toString(),
             chatMessage.getChatRequestParams().getTabId(),
-            chatResult,
+            partialChatResult,
             isPartialResult
         );
         

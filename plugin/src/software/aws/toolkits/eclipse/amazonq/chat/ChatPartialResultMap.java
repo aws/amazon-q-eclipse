@@ -9,37 +9,29 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 /**
- * ChatPartialResultManager is responsible for maintaining a mapping between
- * partial result tokens and the associated ChatMessage objects. It is implemented 
- * as a singleton to centralize control of all partial results in the plugin.
+ * ChatPartialResultMap is responsible for maintaining a mapping between
+ * partial result tokens and the associated ChatMessage objects.
  * 
  * $/progress notifications are caught and handled in the AmazonQLspClientImpl 
  * notifyProgress method. Within a progress notification, we are provided ProgressParams
  * containing a token and a partial result object. The tokenToChatMessage map in
- * this class allows us to find the original ChatMessage associated with the token.
+ * this class allows us to find the associated ChatMessage associated with the token.
  *
  * @see AmazonQLspClientImpl#notifyProgress(ProgressParams)
  */
-public class ChatPartialResultManager {
-    private static ChatPartialResultManager instance;
+public class ChatPartialResultMap {
+    
     private final Map<String, ChatMessage> tokenToChatMessageMap;
     
-    private ChatPartialResultManager() {
+    public ChatPartialResultMap() {
         tokenToChatMessageMap = new ConcurrentHashMap<String, ChatMessage>();
     }
     
-    public static synchronized ChatPartialResultManager getInstance() {
-        if (instance == null) {
-            instance = new ChatPartialResultManager();
-        }
-        return instance;
-    }
-    
-    public void setMapEntry(String token, ChatMessage chatMessage) {
+    public void setEntry(String token, ChatMessage chatMessage) {
         tokenToChatMessageMap.put(token, chatMessage);
     }
     
-    public void deleteMapEntry(String token) {
+    public void removeEntry(String token) {
         tokenToChatMessageMap.remove(token);
     }
     

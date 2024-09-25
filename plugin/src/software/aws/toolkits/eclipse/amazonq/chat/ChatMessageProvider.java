@@ -2,7 +2,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
@@ -15,25 +15,24 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 public final class ChatMessageProvider {
 
-    private AmazonQLspServer amazonQLspServer;
+    private final AmazonQLspServer amazonQLspServer;
 
-    public ChatMessageProvider() {
-        try {
-            amazonQLspServer = LspProvider.getAmazonQServer().get();
-        } catch (InterruptedException | ExecutionException e) {
-            PluginLogger.error("Error occurred while retrieving Amazon Q LSP server. Failed to instantiate ChatMessageProvider.", e);
-            throw new AmazonQPluginException(e);
-        }
+    public static CompletableFuture<ChatMessageProvider> createAsync() {
+        return LspProvider.getAmazonQServer()
+                .thenApply(ChatMessageProvider::new);
     }
 
-    public ChatResult sendChatPrompt(final ChatRequestParams chatRequestParams) {
+    private ChatMessageProvider(AmazonQLspServer amazonQLspServer) {
+        this.amazonQLspServer = amazonQLspServer;
+    }
+
+    public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
         try {
             PluginLogger.info("Sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server");
-            ChatResult chatResult = amazonQLspServer.sendChatPrompt(chatRequestParams).get();
-            return chatResult;
-        } catch (InterruptedException | ExecutionException e) {
+            return amazonQLspServer.sendChatPrompt(chatRequestParams);
+        } catch (Exception e) {
             PluginLogger.error("Error occurred while sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server", e);
-            throw new AmazonQPluginException(e);
+            return CompletableFuture.failedFuture(new AmazonQPluginException(e));
         }
     }
 
@@ -56,4 +55,5 @@ public final class ChatMessageProvider {
             throw new AmazonQPluginException(e);
         }
     }
+
 }

@@ -50,7 +50,7 @@ public class CustomizationDialog extends Dialog {
 
         public CustomRadioButton(final Composite parent, final String text, final String subText, final int style) {
             super(parent, style);
-            Composite contentComposite = new Composite(parent, SWT.NONE);
+            Composite contentComposite = new Composite(parent, SWT.FILL);
             GridLayout gridLayout = new GridLayout(2, false);
             contentComposite.setLayout(gridLayout);
             contentComposite.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
@@ -153,9 +153,9 @@ public class CustomizationDialog extends Dialog {
     private void createDropdownForCustomizations(final Composite parent) {
     	Composite contentComposite = new Composite(parent, SWT.NONE);
     	GridLayout layout = new GridLayout(1, false);
-    	layout.marginLeft = 15;
+    	layout.marginLeft = 18;
         contentComposite.setLayout(layout);
-        contentComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        contentComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         combo = new Combo(contentComposite, SWT.READ_ONLY);
         GridData comboGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
         comboGridData.horizontalAlignment = GridData.FILL;
@@ -192,6 +192,10 @@ public class CustomizationDialog extends Dialog {
     protected final Control createDialogArea(final Composite parent) {
         container = (Composite) super.createDialogArea(parent);
         GridLayout gridLayout = new GridLayout(1, false);
+        gridLayout.marginLeft = 10;
+        gridLayout.marginRight = 10;
+        gridLayout.marginTop = 10;
+        gridLayout.marginBottom = 10;
         container.setLayout(gridLayout);
         container.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
         Label heading = createLabelWithFontSize(container, "Select an Amazon Q Customization", 18);
@@ -250,7 +254,7 @@ public class CustomizationDialog extends Dialog {
 
     @Override
     protected final Point getInitialSize() {
-        return new Point(550, 400);
+        return new Point(600, 450);
     }
 
     @Override

@@ -190,21 +190,15 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             return;
         }
 
-		// In effect, we would need to fulfill the following responsibilities.
-		// - We identify whether text is being entered and update a state that
-		// accessible by other listeners.
-		// - We shall also examine said text to see if it matches the beginning of the
-		// suggestion (if there is one) so we can fulfill "typeahead" functionality.
-		// Here we conduct typeahead logic
 		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
 		int currentOffset = widget.getCaretOffset();
 		qInvocationSessionInstance
 				.setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
 
-		System.out.println("=========================\nDistance traversed: " + distanceTraversed);
-		System.out.println("text typed: " + event.text);
-		System.out.println("Current caret offset: " + currentOffset);
-		System.out.println("Is auto closing brackets enabled: " + isAutoClosingEnabled);
+//		System.out.println("=========================\nDistance traversed: " + distanceTraversed);
+//		System.out.println("text typed: " + event.text);
+//		System.out.println("Current caret offset: " + currentOffset);
+//		System.out.println("Is auto closing brackets enabled: " + isAutoClosingEnabled);
 
 		boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
 		if (!isOutOfBounds) {
@@ -221,8 +215,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 	private boolean isInputAMatch(String currentSuggestion, int startIdx, String input) {
 	    boolean res;
 		if (input.length() > 1) {
-		    System.out.println("Suggestion: " + currentSuggestion.substring(startIdx, startIdx + input.length()).replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r"));
-		    System.out.println("Adjusted input: " + input.replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r"));
 			res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
 			System.out.println("This is a match: " + res);
 		} else {

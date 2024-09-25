@@ -57,7 +57,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 		// Here we examine all other relevant keystrokes that may be relevant to the preview's lifetime: 
 		// - CR (new line)
 		// - BS (backspace)
-		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
+		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
 		switch (event.keyCode) {
 		case SWT.CR:
             if (lastKeyStrokeType == LastKeyStrokeType.OPEN_CURLY && isAutoClosingEnabled) {
@@ -190,7 +190,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             return;
         }
 
-		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
+		String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
 		int currentOffset = widget.getCaretOffset();
 		qInvocationSessionInstance
 				.setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);

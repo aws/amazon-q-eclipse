@@ -44,7 +44,7 @@ public final class QInlineVerifyKeyListener implements VerifyKeyListener {
             qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
 
             // Here we conduct typeahead logic
-            String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().trim();
+            String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
             int currentOffset = widget.getCaretOffset();
             qInvocationSessionInstance
                     .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);

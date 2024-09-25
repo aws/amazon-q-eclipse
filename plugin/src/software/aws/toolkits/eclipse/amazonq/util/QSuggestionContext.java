@@ -3,17 +3,19 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
+
 public final class QSuggestionContext {
-    private String suggestion;
+    private InlineCompletionItem inlineCompletionItem;
     private QSuggestionState state;
 
-    public QSuggestionContext(final String suggestion) {
-        this.suggestion = suggestion;
+    public QSuggestionContext(final InlineCompletionItem inlineCompletionItem) {
+        this.inlineCompletionItem = inlineCompletionItem;
         state = QSuggestionState.UNSEEN;
     }
 
-    public String getSuggestion() {
-        return suggestion;
+    public InlineCompletionItem getInlineCompletionItem() {
+        return inlineCompletionItem;
     }
 
     public QSuggestionState getState() {

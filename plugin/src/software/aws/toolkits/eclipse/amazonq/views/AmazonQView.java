@@ -104,11 +104,11 @@ public abstract class AmazonQView extends ViewPart {
         amazonQCommonActions = new AmazonQCommonActions(browser, isLoggedIn, getViewSite());
     }
 
-    private void setupAuthStatusListeners() {
-        authStatusChangedListener = this::handleAuthStatusChange;
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
-    }
+	private void setupAuthStatusListeners() {
+		authStatusChangedListener = this::handleAuthStatusChange;
+		AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
+		AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
+	}
 
 	/**
 	 * Sets up virtual host mapping for the given path using jetty server
@@ -158,16 +158,16 @@ public abstract class AmazonQView extends ViewPart {
 		browser.setFocus();
 	}
 
-    /**
-     * Disposes of the resources associated with this view.
-     *
-     * This method is called when the view is closed. It removes the authentication
-     * status change listener and the selection listener from the page.
-     */
-    @Override
-    public void dispose() {
-        AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
-        super.dispose();
-    }
+	/**
+	 * Disposes of the resources associated with this view.
+	 *
+	 * This method is called when the view is closed. It removes the authentication
+	 * status change listener and the selection listener from the page.
+	 */
+	@Override
+	public void dispose() {
+		AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
+		super.dispose();
+	}
 
 }

@@ -121,11 +121,9 @@ public final class CustomizationDialog extends Dialog {
         	// TODO: Add the logic to trigger notification to LSP server regarding change of configuration
         	PluginStore.put(CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
         	Map<String, Object> updatedSettings = new HashMap<>();
-        	updatedSettings.put("aws.q", new HashMap<String, String>() {
-        		{
-        			put("customization", CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-        		}
-        	});
+        	Map<String, String> internalMap = new HashMap<>();
+        	internalMap.put("customization", this.selectedCustomisationArn);
+        	updatedSettings.put("aws.q", internalMap);
         	customizationUtil.triggerChangeConfigurationNotification(updatedSettings);
         }
         super.okPressed();

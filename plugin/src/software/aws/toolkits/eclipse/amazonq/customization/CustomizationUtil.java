@@ -23,7 +23,7 @@ public class CustomizationUtil {
             throw new AmazonQPluginException(e);
         }
     }
-	
+
 	public void triggerChangeConfigurationNotification(final Map<String, Object> settings) {
         try {
             PluginLogger.info("Sending configuration update notification to Amazon Q LSP server");

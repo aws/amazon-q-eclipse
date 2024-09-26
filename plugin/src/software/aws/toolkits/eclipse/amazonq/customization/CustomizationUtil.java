@@ -24,14 +24,14 @@ public class CustomizationUtil {
         }
     }
 
-	public void triggerChangeConfigurationNotification(final Map<String, Object> settings) {
-        try {
-            PluginLogger.info("Sending configuration update notification to Amazon Q LSP server");
-            amazonQLspServer.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams(settings));
-        } catch (Exception e) {
-            PluginLogger.error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
-            throw new AmazonQPluginException(e);
-        }
-	}
+    public void triggerChangeConfigurationNotification(final Map<String, Object> settings) {
+    	try {
+    		PluginLogger.info("Sending configuration update notification to Amazon Q LSP server");
+    		amazonQLspServer.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams(settings));
+    	} catch (Exception e) {
+    		PluginLogger.error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
+    		throw new AmazonQPluginException(e);
+    	}
+    }
 
 }

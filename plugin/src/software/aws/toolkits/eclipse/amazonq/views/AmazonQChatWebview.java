@@ -57,16 +57,16 @@ public class AmazonQChatWebview extends AmazonQView {
     }
 
     private String getContent() {
-    	String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
+        String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
-       
+
         server = setupVirtualServer(jsDirectoryPath);
         if (server == null) {
-        	return "Failed to load JS";
+            return "Failed to load JS";
         }
-        
-        var chatJsPath = server.getURI().toString()+"amazonq-ui.js";
+
+        var chatJsPath = server.getURI().toString() + "amazonq-ui.js";
         return String.format("<!DOCTYPE html>\n"
                 + "<html lang=\"en\">\n"
                 + "<head>\n"
@@ -74,7 +74,8 @@ public class AmazonQChatWebview extends AmazonQView {
                 + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
                 + "    <meta \n"
                 + "          http-equiv=\"\"Content-Security-Policy\"\" \n"
-                + "          content=\"\"default-src 'none'; script-src %s 'unsafe-inline'; style-src {javascriptFilePath} 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;\"\"\n"
+                + "          content=\"\"default-src 'none'; script-src %s 'unsafe-inline'; style-src {javascriptFilePath} 'unsafe-inline';"
+                + " img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;\"\"\n"
                 + "        >"
                 + "    <title>Chat UI</title>\n"
                 + "    %s\n"
@@ -129,11 +130,10 @@ public class AmazonQChatWebview extends AmazonQView {
             }
         });
     }
-    
+
     @Override
-    public void dispose() {
+    public final void dispose() {
         stopVirtualServer(server);
         super.dispose();
     }
-
 }

@@ -57,7 +57,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
             if (!isLoggedIn) {
-            	browser.setText(getContent());
+                browser.setText(getContent());
             } else {
                 browser.setText("Signed in");
                 AmazonQView.showView(AmazonQChatWebview.ID);
@@ -70,13 +70,13 @@ public final class ToolkitLoginWebview extends AmazonQView {
             URL jsFile = PluginUtils.getResource("webview/build/assets/js/getStart.js");
             var jsParent = Path.of(jsFile.toURI()).getParent();
             var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
-           
+
             server = setupVirtualServer(jsDirectoryPath);
             if (server == null) {
-            	return "Failed to load JS";
+                return "Failed to load JS";
             }
-            var loginJsPath = server.getURI().toString()+"getStart.js";
-        
+            var loginJsPath = server.getURI().toString() + "getStart.js";
+
             return String.format("<!DOCTYPE html>\n"
                     + "<html>\n"
                     + "    <head>\n"
@@ -101,7 +101,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
             return "Failed to load JS";
         }
     }
-    
+
     @Override
     public void dispose() {
         stopVirtualServer(server);

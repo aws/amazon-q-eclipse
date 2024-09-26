@@ -111,18 +111,17 @@ public abstract class AmazonQView extends ViewPart {
     }
 
     /**
-     * Sets up virtual host mapping for the given path using jetty server
-     * 
+     * Sets up virtual host mapping for the given path using Jetty server.
      * @param jsPath
      * @return server launched
      */
-    protected Server setupVirtualServer(String jsPath) {
+    protected Server setupVirtualServer(final String jsPath) {
         Server server = null;
         try {
             server = new Server(0);
             var servletContext = new ContextHandler();
             servletContext.setContextPath("/");
-            servletContext.addVirtualHosts(new String[] { "localhost" });
+            servletContext.addVirtualHosts(new String[] {"localhost"});
 
             var handler = new ResourceHandler();
 
@@ -143,7 +142,7 @@ public abstract class AmazonQView extends ViewPart {
         }
     }
 
-    protected void stopVirtualServer(Server server) {
+    protected final void stopVirtualServer(final Server server) {
         if (server != null) {
             try {
                 server.stop();

@@ -60,7 +60,7 @@ public final class DefaultLspManager implements LspManager {
         }
     }
 
-    private static void makeExecutable(final Path filePath, PluginPlatform platform) throws IOException {
+    private static void makeExecutable(final Path filePath, final PluginPlatform platform) throws IOException {
         // don't set file permissions for windows as it has issues using the executable
         // otherwise
         if (platform == PluginPlatform.WINDOWS) {

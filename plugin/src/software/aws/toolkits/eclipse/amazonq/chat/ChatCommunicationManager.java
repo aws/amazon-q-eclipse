@@ -13,25 +13,27 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 /**
- * ChatCommunicationManager is responsible for managing communication between
- * the Amazon Q Eclipse Plugin and the LSP server as well as communication
- * between the Amazon Q Eclipse Plugin and the webview. It is implemented 
- * as a singleton to centralize control of all communication in the plugin.
+ * ChatCommunicationManager is a central component of the Amazon Q Eclipse Plugin that
+ * acts as a bridge between the plugin's UI and the LSP server. It is also responsible 
+ * for managing communication between the plugin and the webview used for displaying 
+ * chat conversations. It is implemented as a singleton to centralize control of all 
+ * communication in the plugin.
  */
 public final class ChatCommunicationManager {
     private static ChatCommunicationManager instance;
 
     private final JsonHandler jsonHandler;
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
-    private final ChatPartialResultManager chatPartialResultManager;
+    private final ChatPartialResultMap chatPartialResultMap;
 
     private ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProvider = ChatMessageProvider.createAsync();
-        this.chatPartialResultManager = ChatPartialResultManager.getInstance();
+        this.chatPartialResultMap = new ChatPartialResultMap();
     }
 
     public static synchronized ChatCommunicationManager getInstance() {
@@ -41,13 +43,13 @@ public final class ChatCommunicationManager {
         return instance;
     }
 
-    public CompletableFuture<ChatResult> sendMessageToChatServer(final Command command, final Object params) {
+    public CompletableFuture<ChatResult> sendMessageToChatServer(final Browser browser, final Command command, final Object params) {
         return chatMessageProvider.thenCompose(chatMessageProvider -> {
             try {
                 switch (command) {
                     case CHAT_SEND_PROMPT:
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                        return chatMessageProvider.sendChatPrompt(chatRequestParams);
+                        return chatMessageProvider.sendChatPrompt(browser, chatRequestParams);
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
                         return CompletableFuture.completedFuture(null);
@@ -68,7 +70,7 @@ public final class ChatCommunicationManager {
     public void sendMessageToChatUI(final Browser browser, final ChatUIInboundCommand command) {
         // Mynah-ui will not render the partial result if null values are included. Must serialize with ignoreNulls set to True.
         Boolean ignoreNull = true;
-        String message = this.jsonHandler.serialize(command, ignoreNull);
+        String message = jsonHandler.serialize(command, ignoreNull);
         
         String script = "window.postMessage(" + message + ");";
         browser.getDisplay().asyncExec(() -> {

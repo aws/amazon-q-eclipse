@@ -6,18 +6,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspClientImpl;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 /**
- * ChatPartialResultMap is responsible for maintaining a mapping between
- * partial result tokens and the associated ChatMessage objects.
- * 
- * $/progress notifications are caught and handled in the AmazonQLspClientImpl 
- * notifyProgress method. Within a progress notification, we are provided ProgressParams
- * containing a token and a partial result object. The tokenToChatMessage map in
- * this class allows us to find the associated ChatMessage associated with the token.
+ * ChatPartialResultMap is a utility class responsible for managing the mapping between
+ * partial result tokens and their corresponding ChatMessage objects in the Amazon Q plugin for Eclipse.
  *
- * @see AmazonQLspClientImpl#notifyProgress(ProgressParams)
+ * The Language Server Protocol (LSP) server sends progress notifications during long-running operations,
+ * such as processing chat requests. These notifications include a token that identifies the specific operation
+ * and a partial result object containing the progress information.
+ *
+ * This class maintains a concurrent map (tokenToChatMessageMap) that associates each token with
+ * its respective ChatMessage object. This mapping is crucial for correctly updating the chat UI
+ * with the latest progress information as it becomes available from the LSP server.
+ *
+ * The progress notifications are handled by the {@link AmazonQLspClientImpl#notifyProgress(ProgressParams)}
+ * method, which retrieves the corresponding ChatMessage object from the tokenToChatMessageMap using
+ * the token provided in the ProgressParams. The ChatMessage can then be updated with the partial result.
  */
 public class ChatPartialResultMap {
     

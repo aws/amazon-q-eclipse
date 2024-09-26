@@ -11,6 +11,7 @@ import org.eclipse.swt.browser.Browser;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatMessage;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -41,12 +42,12 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         switch (command) {
             case CHAT_SEND_PROMPT:
-                chatCommunicationManager.sendMessageToChatServer(command, params)
+                chatCommunicationManager.sendMessageToChatServer(browser, command, params)
                     .thenAccept(chatResult -> {
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
                         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                             ChatUIInboundCommandName.ChatPrompt.toString(),
-                            chatRequestParams.tabId(),
+                            chatRequestParams.getTabId(),
                             chatResult,
                             false
                         );

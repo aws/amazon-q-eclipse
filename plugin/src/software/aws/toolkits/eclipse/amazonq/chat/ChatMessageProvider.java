@@ -31,7 +31,7 @@ public final class ChatMessageProvider {
     }
 
     public CompletableFuture<ChatResult>  sendChatPrompt(Browser browser, final ChatRequestParams chatRequestParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer, chatRequestParams);
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer, browser, chatRequestParams);
         return chatMessage.sendChatMessageWithProgress();
     }
 

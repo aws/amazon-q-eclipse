@@ -64,26 +64,28 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private String getContent() {
         try {
             URL jsFile = PluginUtils.getResource("webview/build/assets/js/getStart.js");
-            return String.format("<!DOCTYPE html>\n"
-                    + "<html>\n"
-                    + "    <head>\n"
-                    + "        <title>AWS Q</title>\n"
-                    + "    </head>\n"
-                    + "    <body class=\"jb-light\">\n"
-                    + "        <div id=\"app\"></div>\n"
-                    + "        <script type=\"text/javascript\" src=\"%s\"></script>\n"
-                    + "        <script>\n"
-                    + "            window.addEventListener('DOMContentLoaded', function() {\n"
-                    + "                const ideApi = {\n"
-                    + "                    postMessage(message) {\n"
-                    + "                        ideCommand(JSON.stringify(message));\n"
-                    + "                    }\n"
-                    + "                };\n"
-                    + "                window.ideApi = ideApi;\n"
-                    + "            });\n"
-                    + "        </script>\n"
-                    + "    </body>\n"
-                    + "</html>", jsFile.toString());
+            return String.format("""
+                    <!DOCTYPE html>
+                    <html>
+                        <head>
+                            <title>AWS Q</title>
+                        </head>
+                        <body class="jb-light">
+                            <div id="app"></div>
+                            <script type="text/javascript" src="%s"></script>
+                            <script>
+                                window.addEventListener('DOMContentLoaded', function() {
+                                    const ideApi = {
+                                        postMessage(message) {
+                                            ideCommand(JSON.stringify(message));
+                                        }
+                                    };
+                                    window.ideApi = ideApi;
+                                });
+                            </script>
+                        </body>
+                    </html>
+                    """, jsFile.toString());
         } catch (IOException e) {
             return "Failed to load JS";
         }

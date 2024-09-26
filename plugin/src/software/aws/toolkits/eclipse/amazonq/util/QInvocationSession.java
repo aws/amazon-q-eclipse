@@ -339,8 +339,8 @@ public final class QInvocationSession extends QResource {
             codeReferenceAcceptanceCallback.onCallback(selectedSuggestion, startLine);
         }
     }
-  
-    public void setVerticalIndent(int line, int height) {
+
+    public void setVerticalIndent(final int line, final int height) {
         var widget = viewer.getTextWidget();
         widget.setLineVerticalIndent(line, height);
         unsetVerticalIndent = () -> {

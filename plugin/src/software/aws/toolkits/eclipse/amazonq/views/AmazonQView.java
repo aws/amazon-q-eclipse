@@ -97,7 +97,7 @@ public abstract class AmazonQView extends ViewPart {
         if (platform == PluginPlatform.WINDOWS) {
             return SWT.EDGE;
         }
-        return SWT.NATIVE;
+        return SWT.WEBKIT;
     }
 
     private void setupActions(final Browser browser, final boolean isLoggedIn) {

@@ -72,7 +72,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
             var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
            
             server = setupVirtualServer(jsDirectoryPath);
-            if(server == null) {
+            if (server == null) {
             	return "Failed to load JS";
             }
             var loginJsPath = server.getURI().toString()+"getStart.js";

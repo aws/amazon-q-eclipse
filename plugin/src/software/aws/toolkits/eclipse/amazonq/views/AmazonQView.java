@@ -91,13 +91,13 @@ public abstract class AmazonQView extends ViewPart {
         browser.setBackground(black);
         parent.setBackground(black);
     }
-    
+
     private int getBrowserStyle() {
-    	var platform = PluginUtils.getPlatform();
-    	if(platform == PluginPlatform.WINDOWS) {
-    		return SWT.EDGE;
-    	}
-    	return SWT.NATIVE;
+        var platform = PluginUtils.getPlatform();
+        if (platform == PluginPlatform.WINDOWS) {
+            return SWT.EDGE;
+        }
+        return SWT.NATIVE;
     }
 
     private void setupActions(final Browser browser, final boolean isLoggedIn) {

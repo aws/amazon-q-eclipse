@@ -221,16 +221,15 @@
                         <version>10.17.0</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                </configuration>
                 <executions>
                     <execution>
                         <id>checkstyle-validation</id>
                         <phase>validate</phase>
-                        <configuration>
-                            <configLocation>checkstyle.xml</configLocation>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>true</failsOnError>
-                            <includes>src/**/*.java</includes>
-                        </configuration>
                         <goals>
                             <goal>check</goal>
                         </goals>

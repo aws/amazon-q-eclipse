@@ -67,54 +67,59 @@ public class AmazonQChatWebview extends AmazonQView {
         }
 
         var chatJsPath = server.getURI().toString() + "amazonq-ui.js";
-        return String.format("<!DOCTYPE html>\n"
-                + "<html lang=\"en\">\n"
-                + "<head>\n"
-                + "    <meta charset=\"UTF-8\">\n"
-                + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                + "    <meta \n"
-                + "          http-equiv=\"\"Content-Security-Policy\"\" \n"
-                + "          content=\"\"default-src 'none'; script-src %s 'unsafe-inline'; style-src {javascriptFilePath} 'unsafe-inline';"
-                + " img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;\"\"\n"
-                + "        >"
-                + "    <title>Chat UI</title>\n"
-                + "    %s\n"
-                + "</head>\n"
-                + "<body>\n"
-                + "    %s\n"
-                + "</body>\n"
-                + "</html>", chatJsPath, generateCss(), generateJS(chatJsPath));
+        return String.format("""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta 
+                        http-equiv="Content-Security-Policy" 
+                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;"
+                    >
+                    <title>Chat UI</title>
+                    %s
+                </head>
+                <body>
+                    %s
+                </body>
+                </html>
+                """, chatJsPath, generateCss(), generateJS(chatJsPath));
     }
 
     private String generateCss() {
-        return "<style>\n"
-                + "        body,\n"
-                + "        html {\n"
-                + "            background-color: var(--mynah-color-bg);\n"
-                + "            color: var(--mynah-color-text-default);\n"
-                + "            height: 100vh;\n"
-                + "            width: 100%%;\n"
-                + "            overflow: hidden;\n"
-                + "            margin: 0;\n"
-                + "            padding: 0;\n"
-                + "        }\n"
-                + "        textarea:placeholder-shown {\n"
-                + "            line-height: 1.5rem;\n"
-                + "        }"
-                + "    </style>";
+        return """
+                <style>
+                    body,
+                    html {
+                        background-color: var(--mynah-color-bg);
+                        color: var(--mynah-color-text-default);
+                        height: 100vh;
+                        width: 100%%;
+                        overflow: hidden;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    textarea:placeholder-shown {
+                        line-height: 1.5rem;
+                    }
+                </style>
+                """;
     }
 
     private String generateJS(final String jsEntrypoint) {
-        return String.format("<script type=\"text/javascript\" src=\"%s\" defer onload=\"init()\"></script>\n"
-                + "    <script type=\"text/javascript\">\n"
-                + "        const init = () => {\n"
-                + "            amazonQChat.createChat({\n"
-                + "               postMessage: (message) => {\n"
-                + "                    ideCommand(JSON.stringify(message));\n"
-                + "               }\n"
-                + "         });\n"
-                + "        }\n"
-                + "    </script>", jsEntrypoint);
+        return String.format("""
+                <script type="text/javascript" src="%s" defer onload="init()"></script>
+                <script type="text/javascript">
+                    const init = () => {
+                        amazonQChat.createChat({
+                           postMessage: (message) => {
+                                ideCommand(JSON.stringify(message));
+                           }
+                        });
+                    }
+                </script>
+                """, jsEntrypoint);
     }
 
     @Override

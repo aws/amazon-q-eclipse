@@ -67,7 +67,8 @@ public class AmazonQChatWebview extends AmazonQView {
                 <body>
                     %s
                 </body>
-                </html>""", generateCss(), generateJS(jsFile));
+                </html>
+                """, generateCss(), generateJS(jsFile));
     }
 
     private String generateCss() {

@@ -64,7 +64,8 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                 lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY_FOLLOWED_BY_NEW_LINE;
                 // we need to unset the vertical indent prior to new line otherwise the line inserted by
                 // eclipse with the closing curly braces would inherit the extra vertical indent. 
-                qInvocationSessionInstance.unsetVerticalIndent();
+                int line = widget.getLineAtOffset(widget.getCaretOffset());
+                qInvocationSessionInstance.unsetVerticalIndent(line + 1);
             } else {
                 lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
             }
@@ -201,9 +202,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 //		System.out.println("Is auto closing brackets enabled: " + isAutoClosingEnabled);
 
 		boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
-		if (!isOutOfBounds) {
-		    System.out.println("current char in suggestion: " + currentSuggestion.charAt(distanceTraversed));
-		}
+//		if (!isOutOfBounds) {
+//		    System.out.println("current char in suggestion: " + currentSuggestion.charAt(distanceTraversed));
+//		}
 		if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
 			qInvocationSessionInstance.transitionToDecisionMade();
 			qInvocationSessionInstance.end();
@@ -216,7 +217,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 	    boolean res;
 		if (input.length() > 1) {
 			res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
-			System.out.println("This is a match: " + res);
 		} else {
 			res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
 		}

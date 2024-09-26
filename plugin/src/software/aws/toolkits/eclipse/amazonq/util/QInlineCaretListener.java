@@ -8,9 +8,11 @@ import org.eclipse.swt.custom.StyledText;
 
 public final class QInlineCaretListener implements CaretListener {
     private StyledText widget = null;
+    private int previousLine = -1;
 
     public QInlineCaretListener(final StyledText widget) {
         this.widget = widget;
+        this.previousLine = widget.getLineAtOffset(widget.getCaretOffset());
     }
 
     @Override
@@ -21,13 +23,16 @@ public final class QInlineCaretListener implements CaretListener {
         // We want to ignore caret movements induced by text editing
         if (caretMovementReason == CaretMovementReason.TEXT_INPUT) {
             qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.UNEXAMINED);
+            previousLine = widget.getLineAtOffset(widget.getCaretOffset());
             return;
         }
 
         if (qInvocationSessionInstance.isPreviewingSuggestions()) {
-            qInvocationSessionInstance.transitionToDecisionMade();
+            qInvocationSessionInstance.transitionToDecisionMade(previousLine + 1);
             qInvocationSessionInstance.end();
+            return;
         }
+
+        previousLine = widget.getCaretOffset();
     }
 }
-

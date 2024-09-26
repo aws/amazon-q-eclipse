@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextViewer;
@@ -45,7 +46,7 @@ public final class QInvocationSession extends QResource {
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
     private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
-    private Runnable unsetVerticalIndent;
+    private Consumer<Integer> unsetVerticalIndent;
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -214,12 +215,17 @@ public final class QInvocationSession extends QResource {
     }
 
     public void transitionToDecisionMade() {
+        var widget = viewer.getTextWidget();
+        var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+        transitionToDecisionMade(caretLine + 1);
+    }
+
+    public void transitionToDecisionMade(int line) {
         if (state != QInvocationSessionState.SUGGESTION_PREVIEWING) {
             return;
         }
         state = QInvocationSessionState.DECISION_MADE;
-
-        unsetVerticalIndent();
+        unsetVerticalIndent(line);
     }
 
     public void setCaretMovementReason(final CaretMovementReason reason) {
@@ -325,15 +331,14 @@ public final class QInvocationSession extends QResource {
     public void setVerticalIndent(int line, int height) {
         var widget = viewer.getTextWidget();
         widget.setLineVerticalIndent(line, height);
-        unsetVerticalIndent = () -> {
-            var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-            widget.setLineVerticalIndent(caretLine + 1, 0);
+        unsetVerticalIndent = (caretLine) -> {
+            widget.setLineVerticalIndent(caretLine, 0);
         };
     }
 
-    public void unsetVerticalIndent() {
+    public void unsetVerticalIndent(int caretLine) {
         if (unsetVerticalIndent != null) {
-            unsetVerticalIndent.run();
+            unsetVerticalIndent.accept(caretLine);
             unsetVerticalIndent = null;
         }
     }

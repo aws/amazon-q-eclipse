@@ -104,70 +104,70 @@ public abstract class AmazonQView extends ViewPart {
         amazonQCommonActions = new AmazonQCommonActions(browser, isLoggedIn, getViewSite());
     }
 
-	private void setupAuthStatusListeners() {
-		authStatusChangedListener = this::handleAuthStatusChange;
-		AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
-		AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
-	}
+    private void setupAuthStatusListeners() {
+        authStatusChangedListener = this::handleAuthStatusChange;
+        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
+        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
+    }
 
-	/**
-	 * Sets up virtual host mapping for the given path using jetty server
-	 * 
-	 * @param jsPath
-	 * @return server launched
-	 */
-	protected Server setupVirtualServer(String jsPath) {
-		Server server = null;
-		try {
-			server = new Server(0);
-			var servletContext = new ContextHandler();
-			servletContext.setContextPath("/");
-			servletContext.addVirtualHosts(new String[] { "localhost" });
+    /**
+     * Sets up virtual host mapping for the given path using jetty server
+     * 
+     * @param jsPath
+     * @return server launched
+     */
+    protected Server setupVirtualServer(String jsPath) {
+        Server server = null;
+        try {
+            server = new Server(0);
+            var servletContext = new ContextHandler();
+            servletContext.setContextPath("/");
+            servletContext.addVirtualHosts(new String[] { "localhost" });
 
-			var handler = new ResourceHandler();
+            var handler = new ResourceHandler();
 
-			ResourceFactory resourceFactory = ResourceFactory.of(server);
-			handler.setBaseResource(resourceFactory.newResource(jsPath));
-			handler.setDirAllowed(true);
-			servletContext.setHandler(handler);
+            ResourceFactory resourceFactory = ResourceFactory.of(server);
+            handler.setBaseResource(resourceFactory.newResource(jsPath));
+            handler.setDirAllowed(true);
+            servletContext.setHandler(handler);
 
-			server.setHandler(servletContext);
-			server.start();
+            server.setHandler(servletContext);
+            server.start();
 
-			return server;
+            return server;
 
-		} catch (Exception e) {
-			stopVirtualServer(server);
-			PluginLogger.error("Error occurred while attempting to start a virtual server for " + jsPath, e);
-			return null;
-		}
-	}
+        } catch (Exception e) {
+            stopVirtualServer(server);
+            PluginLogger.error("Error occurred while attempting to start a virtual server for " + jsPath, e);
+            return null;
+        }
+    }
 
-	protected void stopVirtualServer(Server server) {
-		if (server != null) {
-			try {
-				server.stop();
-			} catch (Exception e) {
-				PluginLogger.error("Error occurred when attempting to stop the virtual server", e);
-			}
-		}
-	}
+    protected void stopVirtualServer(Server server) {
+        if (server != null) {
+            try {
+                server.stop();
+            } catch (Exception e) {
+                PluginLogger.error("Error occurred when attempting to stop the virtual server", e);
+            }
+        }
+    }
 
-	@Override
-	public final void setFocus() {
-		browser.setFocus();
-	}
+    @Override
+    public final void setFocus() {
+        browser.setFocus();
+    }
 
-	/**
-	 * Disposes of the resources associated with this view.
-	 *
-	 * This method is called when the view is closed. It removes the authentication
-	 * status change listener and the selection listener from the page.
-	 */
-	@Override
-	public void dispose() {
-		AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
-		super.dispose();
-	}
+    /**
+     * Disposes of the resources associated with this view.
+     *
+     * This method is called when the view is closed. It removes the authentication
+     * status change listener and the selection listener from the page.
+     */
+    @Override
+    public void dispose() {
+        AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
+        super.dispose();
+    }
 
 }

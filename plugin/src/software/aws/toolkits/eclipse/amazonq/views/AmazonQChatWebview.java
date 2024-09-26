@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.nio.file.Path;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
@@ -58,12 +57,12 @@ public class AmazonQChatWebview extends AmazonQView {
     }
 
     private String getContent() {
-        String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
+    	String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
        
         server = setupVirtualServer(jsDirectoryPath);
-        if(server == null) {
+        if (server == null) {
         	return "Failed to load JS";
         }
         

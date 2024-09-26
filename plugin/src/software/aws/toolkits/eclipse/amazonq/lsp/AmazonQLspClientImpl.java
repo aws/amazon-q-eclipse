@@ -37,7 +37,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     /*
      * Handles the progress notifications received from the LSP server.
-     * - Process partial results for Chat messages if provided token is maintained by chatPartialResultManager
+     * - Process partial results for Chat messages if provided token is maintained by ChatCommunicationManager
      * - Other notifications are ignored at this time.
      */
     @Override

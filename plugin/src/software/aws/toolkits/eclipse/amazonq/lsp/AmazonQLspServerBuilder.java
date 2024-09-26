@@ -13,7 +13,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ClientMetadata;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 

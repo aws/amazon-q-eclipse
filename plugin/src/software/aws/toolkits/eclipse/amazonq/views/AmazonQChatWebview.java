@@ -3,6 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.nio.file.Path;
+
+import org.eclipse.jetty.server.Server;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -18,6 +21,7 @@ public class AmazonQChatWebview extends AmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
     private AmazonQCommonActions amazonQCommonActions;
+    private Server server;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -55,18 +59,31 @@ public class AmazonQChatWebview extends AmazonQView {
 
     private String getContent() {
         String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
+        var jsParent = Path.of(jsFile).getParent();
+        var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+       
+        server = setupVirtualServer(jsDirectoryPath);
+        if(server == null) {
+        	return "Failed to load JS";
+        }
+        
+        var chatJsPath = server.getURI().toString()+"amazonq-ui.js";
         return String.format("<!DOCTYPE html>\n"
                 + "<html lang=\"en\">\n"
                 + "<head>\n"
                 + "    <meta charset=\"UTF-8\">\n"
                 + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                + "    <meta \n"
+                + "          http-equiv=\"\"Content-Security-Policy\"\" \n"
+                + "          content=\"\"default-src 'none'; script-src %s 'unsafe-inline'; style-src {javascriptFilePath} 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;\"\"\n"
+                + "        >"
                 + "    <title>Chat UI</title>\n"
                 + "    %s\n"
                 + "</head>\n"
                 + "<body>\n"
                 + "    %s\n"
                 + "</body>\n"
-                + "</html>", generateCss(), generateJS(jsFile));
+                + "</html>", chatJsPath, generateCss(), generateJS(chatJsPath));
     }
 
     private String generateCss() {
@@ -112,6 +129,12 @@ public class AmazonQChatWebview extends AmazonQView {
                 browser.setText(getContent());
             }
         });
+    }
+    
+    @Override
+    public void dispose() {
+        stopVirtualServer(server);
+        super.dispose();
     }
 
 }

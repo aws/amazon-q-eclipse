@@ -18,7 +18,9 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  com.google.gson;bundle-version="2.11.0",
  org.eclipse.ui.ide;bundle-version="3.22.200",
  org.eclipse.ui.workbench.texteditor;bundle-version="3.17.400",
- org.eclipse.mylyn.commons.ui;bundle-version="4.2.0"
+ org.eclipse.mylyn.commons.ui;bundle-version="4.2.0",
+ org.eclipse.jetty.server;bundle-version="12.0.9",
+ org.eclipse.jetty.util;bundle-version="12.0.9"
 Bundle-Classpath: .,
  target/dependency/animal-sniffer-annotations-1.9.jar,
  target/dependency/annotations-2.25.33.jar,

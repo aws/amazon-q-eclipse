@@ -51,7 +51,7 @@ public final class DefaultLspManager implements LspManager {
                 throw new RuntimeException("Could not find node executable or LSP file in the downloaded contents");
             }
 
-            makeExecutable(nodeExecutable);
+            makeExecutable(nodeExecutable, platform);
 
             return new LspInstallation(nodeExecutable, lspJs);
         } catch (Exception e) {
@@ -60,7 +60,11 @@ public final class DefaultLspManager implements LspManager {
         }
     }
 
-    private static void makeExecutable(final Path filePath) throws IOException {
+    private static void makeExecutable(final Path filePath, PluginPlatform platform) throws IOException {
+    	// don't set file permissions for windows as it has issues using the executable otherwise
+    	if(platform == PluginPlatform.WINDOWS) {
+    		return;
+    	}
         var permissions = new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
                 PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
                 PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE));

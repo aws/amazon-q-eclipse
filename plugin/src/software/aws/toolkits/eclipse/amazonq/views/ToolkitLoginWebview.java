@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views;
+import org.eclipse.jetty.server.Server;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
@@ -19,6 +22,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
 
     private AmazonQCommonActions amazonQCommonActions;
+    private Server server;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -53,7 +57,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
             if (!isLoggedIn) {
-                browser.setText(getContent());
+            	browser.setText(getContent());
             } else {
                 browser.setText("Signed in");
                 AmazonQView.showView(AmazonQChatWebview.ID);
@@ -64,6 +68,15 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private String getContent() {
         try {
             URL jsFile = PluginUtils.getResource("webview/build/assets/js/getStart.js");
+            var jsParent = Path.of(jsFile.toURI()).getParent();
+            var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+           
+            server = setupVirtualServer(jsDirectoryPath);
+            if(server == null) {
+            	return "Failed to load JS";
+            }
+            var loginJsPath = server.getURI().toString()+"getStart.js";
+        
             return String.format("<!DOCTYPE html>\n"
                     + "<html>\n"
                     + "    <head>\n"
@@ -83,10 +96,15 @@ public final class ToolkitLoginWebview extends AmazonQView {
                     + "            });\n"
                     + "        </script>\n"
                     + "    </body>\n"
-                    + "</html>", jsFile.toString());
-        } catch (IOException e) {
+                    + "</html>", loginJsPath);
+        } catch (IOException | URISyntaxException e) {
             return "Failed to load JS";
         }
     }
-
+    
+    @Override
+    public void dispose() {
+        stopVirtualServer(server);
+        super.dispose();
+    }
 }

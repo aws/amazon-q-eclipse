@@ -4,6 +4,10 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Set;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Color;
@@ -17,6 +21,8 @@ import org.eclipse.ui.part.ViewPart;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart {
@@ -78,12 +84,20 @@ public abstract class AmazonQView extends ViewPart {
     }
 
     private void setupBrowser(final Composite parent) {
-        browser = new Browser(parent, SWT.NATIVE);
+        browser = new Browser(parent, getBrowserStyle());
         Display display = Display.getCurrent();
         Color black = display.getSystemColor(SWT.COLOR_BLACK);
 
         browser.setBackground(black);
         parent.setBackground(black);
+    }
+    
+    private int getBrowserStyle() {
+    	var platform = PluginUtils.getPlatform();
+    	if(platform == PluginPlatform.WINDOWS) {
+    		return SWT.EDGE;
+    	}
+    	return SWT.NATIVE;
     }
 
     private void setupActions(final Browser browser, final boolean isLoggedIn) {
@@ -96,9 +110,51 @@ public abstract class AmazonQView extends ViewPart {
         AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
     }
 
-    @Override
+    /**
+     *  Sets up virtual host mapping for the given path using jetty server
+     * @param jsPath
+     * @return server launched
+     */
+    protected Server setupVirtualServer(String jsPath) {
+    	Server server = null;
+   	 	try {
+            server = new Server(0);
+            var servletContext = new ContextHandler();
+            servletContext.setContextPath("/");
+            servletContext.addVirtualHosts(new String[]{"localhost"});
+
+            var handler = new ResourceHandler();
+           
+            ResourceFactory resourceFactory = ResourceFactory.of(server);
+            handler.setBaseResource(resourceFactory.newResource(jsPath));
+            handler.setDirAllowed(true);
+            servletContext.setHandler(handler);
+            
+        	server.setHandler(servletContext);
+			server.start();
+			
+			return server;
+	
+		} catch (Exception e) {
+			stopVirtualServer(server);
+			PluginLogger.error("Error occurred while attempting to start a virtual server for " + jsPath, e);
+			return null;
+		}
+   }
+
+    protected void stopVirtualServer(Server server) {
+    	if(server != null) {
+        	try {
+				server.stop();
+			} catch (Exception e) {	
+				PluginLogger.error("Error occurred when attempting to stop the virtual server", e);
+			}
+        }
+	}
+
+	@Override
     public final void setFocus() {
-        browser.setFocus();
+		browser.setFocus();
     }
 
     /**

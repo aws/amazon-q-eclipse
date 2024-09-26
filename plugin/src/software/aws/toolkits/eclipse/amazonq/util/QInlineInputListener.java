@@ -11,6 +11,7 @@ import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 
 public final class QInlineInputListener implements VerifyListener, VerifyKeyListener {
+
     private StyledText widget = null;
     private int distanceTraversed = 0;
     private boolean isAutoClosingEnabled = true;
@@ -101,6 +102,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                 return;
             }
             lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+            bracketsToHide++;
             return;
         case '>':
             if (currentSuggestion.charAt(distanceTraversed++) != '>') {
@@ -213,4 +215,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         }
         return res;
     }
+	public int getBracketsToHide() {
+	    return bracketsToHide;
+	}
+	
+	public void resetBracketsToHide() {
+	    bracketsToHide = 0;
+	}
 }

@@ -342,6 +342,14 @@ public final class QInvocationSession extends QResource {
             unsetVerticalIndent = null;
         }
     }
+    
+    public int getBracketsToHide() {
+        return inputListener.getBracketsToHide();
+    }
+    
+    public void resetBracketsToHide() {
+        inputListener.resetBracketsToHide();
+    }
 
     // Additional methods for the session can be added here
     @Override

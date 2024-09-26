@@ -3,9 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Display;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.shouldIndentVertically;
@@ -81,6 +84,22 @@ public class QInlineRendererListener implements PaintListener {
         } else {
             int line = widget.getLineAtOffset(widget.getCaretOffset());
             qInvocationSessionInstance.unsetVerticalIndent(line + 1);
+        }
+        
+        // Format user buffer
+        int bracketsToHide = qInvocationSessionInstance.getBracketsToHide();
+        if (bracketsToHide > 0) {
+            widget.setRedraw(false);
+            Display.getDefault().syncExec(() -> {
+//            qInvocationSessionInstance.resetBracketsToHide();
+                Color backgroundColor = widget.getBackground();
+                StyleRange styleRange = new StyleRange();
+                styleRange.start = widget.getCaretOffset();
+                styleRange.length = bracketsToHide;
+                styleRange.foreground = backgroundColor;
+                widget.setStyleRange(styleRange);
+                widget.setRedraw(true);
+            });
         }
     }
 

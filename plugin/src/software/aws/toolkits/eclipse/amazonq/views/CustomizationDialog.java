@@ -3,7 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -22,6 +25,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
@@ -36,6 +40,7 @@ public final class CustomizationDialog extends Dialog {
     private List<Customization> customizationsResponse;
     private ResponseSelection responseSelection;
     private String selectedCustomisationArn;
+    private final CustomizationUtil customizationUtil;
 
     public enum ResponseSelection {
         AMAZON_Q_FOUNDATION_DEFAULT,
@@ -74,6 +79,7 @@ public final class CustomizationDialog extends Dialog {
 
     public CustomizationDialog(final Shell parentShell) {
         super(parentShell);
+        customizationUtil = new CustomizationUtil();
     }
 
     public void setCustomisationResponse(final List<Customization> customizationsResponse) {
@@ -112,8 +118,15 @@ public final class CustomizationDialog extends Dialog {
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
             PluginStore.remove(CUSTOMIZATION_STORAGE_INTERNAL_KEY);
         } else {
-            // TODO: Add the logic to trigger notification to LSP server regarding change of configuration
-            PluginStore.put(CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
+        	// TODO: Add the logic to trigger notification to LSP server regarding change of configuration
+        	PluginStore.put(CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
+        	Map<String, Object> updatedSettings = new HashMap<>();
+        	updatedSettings.put("aws.q", new HashMap<String, String>() {
+        		{
+        			put("customization", CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+        		}
+        	});
+        	customizationUtil.triggerChangeConfigurationNotification(updatedSettings);
         }
         super.okPressed();
     }

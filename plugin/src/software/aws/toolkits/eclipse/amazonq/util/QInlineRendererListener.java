@@ -85,22 +85,22 @@ public class QInlineRendererListener implements PaintListener {
             int line = widget.getLineAtOffset(widget.getCaretOffset());
             qInvocationSessionInstance.unsetVerticalIndent(line + 1);
         }
-        
+
         // Format user buffer
-        int bracketsToHide = qInvocationSessionInstance.getBracketsToHide();
-        if (bracketsToHide > 0) {
-            widget.setRedraw(false);
-            Display.getDefault().syncExec(() -> {
-//            qInvocationSessionInstance.resetBracketsToHide();
-                Color backgroundColor = widget.getBackground();
-                StyleRange styleRange = new StyleRange();
-                styleRange.start = widget.getCaretOffset();
-                styleRange.length = bracketsToHide;
-                styleRange.foreground = backgroundColor;
-                widget.setStyleRange(styleRange);
-                widget.setRedraw(true);
-            });
-        }
+//        int bracketsToHide = qInvocationSessionInstance.getBracketsToHide();
+//        if (bracketsToHide > 0) {
+//            System.out.println("Brackets to hide: " + bracketsToHide);
+//            Display.getDefault().syncExec(() -> {
+//                Color backgroundColor = widget.getBackground();
+//                StyleRange styleRange = new StyleRange();
+//                styleRange.start = currentOffset;
+//                styleRange.length = bracketsToHide;
+//                styleRange.foreground = backgroundColor;
+////                widget.setStyleRange(styleRange);
+//                widget.replaceStyleRanges(currentOffset, 2, new StyleRange[] { styleRange });
+////                qInvocationSessionInstance.resetBracketsToHide();
+//            });
+//        }
     }
 
 }

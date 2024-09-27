@@ -14,8 +14,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
     private StyledText widget = null;
     private int distanceTraversed = 0;
-    private boolean isAutoClosingEnabled = true;
+    private boolean isAutoClosingEnabled = false;
     private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+    private boolean isBracesSetToAutoClose = false; 
+    private boolean isBracketsSetToAutoClose = false;
 
     private enum LastKeyStrokeType {
         NORMAL_INPUT, BACKSPACE, NORMAL_BRACKET, CURLY_BRACES, OPEN_CURLY, OPEN_CURLY_FOLLOWED_BY_NEW_LINE,
@@ -26,8 +28,17 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         // This needs to be defaulted to true. This key is only present in the
         // preference store if it is set to false.
         // Therefore if you can't find it, it has been set to true.
-        this.isAutoClosingEnabled = preferences.getBoolean("closeBrackets", true);
+        isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
+        isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
+        preferences.putBoolean("closeBraces", false);
+        preferences.putBoolean("closeBrackets", false);
         this.widget = widget;
+    }
+    
+    public void revertBracketSettings() {
+    	IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+    	preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
+        preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
     }
 
     @Override
@@ -102,7 +113,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                 return;
             }
             lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            bracketsToHide++;
             return;
         case '>':
             if (currentSuggestion.charAt(distanceTraversed++) != '>') {
@@ -209,17 +219,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         boolean res;
         if (input.length() > 1) {
             res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
-            System.out.println("This is a match: " + res);
         } else {
             res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
         }
         return res;
     }
-	public int getBracketsToHide() {
-	    return bracketsToHide;
-	}
-	
-	public void resetBracketsToHide() {
-	    bracketsToHide = 0;
-	}
 }

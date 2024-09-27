@@ -26,13 +26,13 @@ import org.eclipse.swt.widgets.Shell;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationDialog extends Dialog {
 
     private static final String TITLE = "Amazon Q Customization";
-    public static final String CUSTOMIZATION_STORAGE_INTERNAL_KEY = "aws.q.customization.eclipse";
     private Composite container;
     private Combo combo;
     private Font magnifiedFont;
@@ -40,7 +40,6 @@ public final class CustomizationDialog extends Dialog {
     private List<Customization> customizationsResponse;
     private ResponseSelection responseSelection;
     private String selectedCustomisationArn;
-    private final CustomizationUtil customizationUtil;
 
     public enum ResponseSelection {
         AMAZON_Q_FOUNDATION_DEFAULT,
@@ -79,7 +78,6 @@ public final class CustomizationDialog extends Dialog {
 
     public CustomizationDialog(final Shell parentShell) {
         super(parentShell);
-        customizationUtil = new CustomizationUtil();
     }
 
     public void setCustomisationResponse(final List<Customization> customizationsResponse) {
@@ -116,15 +114,14 @@ public final class CustomizationDialog extends Dialog {
     protected void okPressed() {
         PluginLogger.info(String.format("Select pressed with responseSelection:%s and selectedArn:%s", this.responseSelection, this.selectedCustomisationArn));
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
-            PluginStore.remove(CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+        	PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
         } else {
-        	// TODO: Add the logic to trigger notification to LSP server regarding change of configuration
-        	PluginStore.put(CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
+        	PluginStore.put(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
         	Map<String, Object> updatedSettings = new HashMap<>();
         	Map<String, String> internalMap = new HashMap<>();
-        	internalMap.put("customization", this.selectedCustomisationArn);
-        	updatedSettings.put("aws.q", internalMap);
-        	customizationUtil.triggerChangeConfigurationNotification(updatedSettings);
+        	internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.selectedCustomisationArn);
+        	updatedSettings.put(Constants.LSP_CONFIGURATION_KEY, internalMap);
+        	CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings);
         }
         super.okPressed();
     }

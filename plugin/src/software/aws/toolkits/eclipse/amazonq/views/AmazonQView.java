@@ -3,11 +3,6 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Set;
-
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Color;
@@ -108,48 +103,6 @@ public abstract class AmazonQView extends ViewPart {
         authStatusChangedListener = this::handleAuthStatusChange;
         AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
         AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
-    }
-
-    /**
-     * Sets up virtual host mapping for the given path using Jetty server.
-     * @param jsPath
-     * @return server launched
-     */
-    protected Server setupVirtualServer(final String jsPath) {
-        Server server = null;
-        try {
-            server = new Server(0);
-            var servletContext = new ContextHandler();
-            servletContext.setContextPath("/");
-            servletContext.addVirtualHosts(new String[] {"localhost"});
-
-            var handler = new ResourceHandler();
-
-            ResourceFactory resourceFactory = ResourceFactory.of(server);
-            handler.setBaseResource(resourceFactory.newResource(jsPath));
-            handler.setDirAllowed(true);
-            servletContext.setHandler(handler);
-
-            server.setHandler(servletContext);
-            server.start();
-
-            return server;
-
-        } catch (Exception e) {
-            stopVirtualServer(server);
-            PluginLogger.error("Error occurred while attempting to start a virtual server for " + jsPath, e);
-            return null;
-        }
-    }
-
-    protected final void stopVirtualServer(final Server server) {
-        if (server != null) {
-            try {
-                server.stop();
-            } catch (Exception e) {
-                PluginLogger.error("Error occurred when attempting to stop the virtual server", e);
-            }
-        }
     }
 
     @Override

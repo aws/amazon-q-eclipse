@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.nio.file.Path;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -13,6 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public class AmazonQChatWebview extends AmazonQView {
@@ -20,7 +20,7 @@ public class AmazonQChatWebview extends AmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
     private AmazonQCommonActions amazonQCommonActions;
-    private Server server;
+    private WebviewAssetServer webviewAssetServer;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -61,21 +61,23 @@ public class AmazonQChatWebview extends AmazonQView {
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
 
-        server = setupVirtualServer(jsDirectoryPath);
-        if (server == null) {
+        webviewAssetServer = new WebviewAssetServer();
+        var result = webviewAssetServer.resolve(jsDirectoryPath);
+        if (!result) {
             return "Failed to load JS";
         }
 
-        var chatJsPath = server.getURI().toString() + "amazonq-ui.js";
+        var chatJsPath = webviewAssetServer.getUri() + "amazonq-ui.js";
         return String.format("""
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <meta 
-                        http-equiv="Content-Security-Policy" 
-                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;"
+                    <meta
+                        http-equiv="Content-Security-Policy"
+                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
+                        img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;"
                     >
                     <title>Chat UI</title>
                     %s
@@ -84,7 +86,7 @@ public class AmazonQChatWebview extends AmazonQView {
                     %s
                 </body>
                 </html>
-                """, chatJsPath, generateCss(), generateJS(chatJsPath));
+                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath));
     }
 
     private String generateCss() {
@@ -138,7 +140,9 @@ public class AmazonQChatWebview extends AmazonQView {
 
     @Override
     public final void dispose() {
-        stopVirtualServer(server);
+        if (webviewAssetServer != null) {
+            webviewAssetServer.stop();
+        }
         super.dispose();
     }
 }

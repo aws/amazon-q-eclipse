@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views;
-import org.eclipse.jetty.server.Server;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -15,6 +14,7 @@ import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public final class ToolkitLoginWebview extends AmazonQView {
@@ -22,7 +22,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
 
     private AmazonQCommonActions amazonQCommonActions;
-    private Server server;
+    private WebviewAssetServer webviewAssetServer;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -71,11 +71,12 @@ public final class ToolkitLoginWebview extends AmazonQView {
             var jsParent = Path.of(jsFile.toURI()).getParent();
             var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
 
-            server = setupVirtualServer(jsDirectoryPath);
-            if (server == null) {
+            webviewAssetServer = new WebviewAssetServer();
+            var result = webviewAssetServer.resolve(jsDirectoryPath);
+            if (!result) {
                 return "Failed to load JS";
             }
-            var loginJsPath = server.getURI().toString() + "getStart.js";
+            var loginJsPath = webviewAssetServer.getUri() + "getStart.js";
 
             return String.format("""
                     <!DOCTYPE html>
@@ -106,7 +107,9 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void dispose() {
-        stopVirtualServer(server);
+        if (webviewAssetServer != null) {
+            webviewAssetServer.stop();
+        }
         super.dispose();
     }
 }

@@ -15,7 +15,7 @@ public class QInlineSuggestionNormalSegment implements IQInlineSuggestionSegment
 
 	public QInlineSuggestionNormalSegment(int startCaretPosition, int endCaretPosition, int lineInSuggestion,
 			String text) {
-		this.text = text;
+		this.text = text.replace('(', ' ').replace(')', ' ');
 		this.startCaretOffset = startCaretPosition;
 		this.endCaretOffset = endCaretPosition;
 		this.lineInSuggestion = lineInSuggestion;

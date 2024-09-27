@@ -357,7 +357,7 @@ public final class QInvocationSession extends QResource {
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
-        inputListener.revertBracketSettings();
+        inputListener.beforeRemoval();
         widget.removeVerifyListener(inputListener);
         widget.removeVerifyKeyListener(inputListener);
         paintListener = null;

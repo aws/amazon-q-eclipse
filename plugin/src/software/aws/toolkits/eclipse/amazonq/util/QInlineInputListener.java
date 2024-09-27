@@ -2,6 +2,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.SWT;
@@ -16,13 +19,22 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     private int distanceTraversed = 0;
     private boolean isAutoClosingEnabled = false;
     private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-    private boolean isBracesSetToAutoClose = false; 
+    private boolean isBracesSetToAutoClose = false;
     private boolean isBracketsSetToAutoClose = false;
+    private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
 
     private enum LastKeyStrokeType {
         NORMAL_INPUT, BACKSPACE, NORMAL_BRACKET, CURLY_BRACES, OPEN_CURLY, OPEN_CURLY_FOLLOWED_BY_NEW_LINE,
     }
 
+    /**
+     * During instantiation we would need to perform the following to prime the listeners for typeahead: 
+     * - Note that the settings for auto closing brackets (and braces).  
+     * - Set these auto closing settings to false. 
+     * - Analyze the buffer in current suggestions for bracket pairs.
+     * 
+     * @param widget
+     */
     public QInlineInputListener(final StyledText widget) {
         IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
         // This needs to be defaulted to true. This key is only present in the
@@ -33,10 +45,45 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         preferences.putBoolean("closeBraces", false);
         preferences.putBoolean("closeBrackets", false);
         this.widget = widget;
+        onNewSuggestion();
     }
     
-    public void revertBracketSettings() {
+    /**
+     * A routine to prime the class for typeahead related information. These are: 
+     * - Where each bracket pairs are. 
+     * 
+     * This is to be called on instantiation as well as when new suggestion has been toggled to. 
+     */
+    public void onNewSuggestion() {
+    	lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+    	var qInvocationSessionInstance = QInvocationSession.getInstance();
+    	if (qInvocationSessionInstance == null) {
+    		return;
+    	}
+    	String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
+    	suggestionSegments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(currentSuggestion);
+    }
+    
+    public List<IQInlineSuggestionSegment> getSegments() {
+    	return suggestionSegments;
+    }
+
+    /**
+     * Here we need to perform the following before the listener gets removed: 
+     * - If the auto closing of brackets was enabled originally, we should add these closed brackets back into the buffer. 
+     * - Revert the settings back to their original states. 
+     */
+    public void beforeRemoval() {
     	IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+
+    	if (isBracketsSetToAutoClose) {
+    		// TODO: put the brackets back to where they belong
+    	}
+
+    	if (isBracesSetToAutoClose) {
+    		// TODO: put the braces back to where they belong
+    	}
+
     	preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
         preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
     }

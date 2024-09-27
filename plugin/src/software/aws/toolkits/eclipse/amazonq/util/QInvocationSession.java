@@ -220,7 +220,7 @@ public final class QInvocationSession extends QResource {
         transitionToDecisionMade(caretLine + 1);
     }
 
-    public void transitionToDecisionMade(int line) {
+    public void transitionToDecisionMade(final int line) {
         if (state != QInvocationSessionState.SUGGESTION_PREVIEWING) {
             return;
         }
@@ -336,7 +336,7 @@ public final class QInvocationSession extends QResource {
         };
     }
 
-    public void unsetVerticalIndent(int caretLine) {
+    public void unsetVerticalIndent(final int caretLine) {
         if (unsetVerticalIndent != null) {
             unsetVerticalIndent.accept(caretLine);
             unsetVerticalIndent = null;

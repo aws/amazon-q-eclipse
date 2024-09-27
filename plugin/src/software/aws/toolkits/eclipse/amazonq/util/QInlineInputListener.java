@@ -59,7 +59,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             if (lastKeyStrokeType == LastKeyStrokeType.OPEN_CURLY && isAutoClosingEnabled) {
                 lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY_FOLLOWED_BY_NEW_LINE;
                 // we need to unset the vertical indent prior to new line otherwise the line inserted by
-                // eclipse with the closing curly braces would inherit the extra vertical indent. 
+                // eclipse with the closing curly braces would inherit the extra vertical indent.
                 int line = widget.getLineAtOffset(widget.getCaretOffset());
                 qInvocationSessionInstance.unsetVerticalIndent(line + 1);
             } else {

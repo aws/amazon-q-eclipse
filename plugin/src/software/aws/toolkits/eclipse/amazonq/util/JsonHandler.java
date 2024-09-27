@@ -23,21 +23,6 @@ public final class JsonHandler {
         }
         return serializedObj;
     }
-    
-    public String serialize(final Object obj, Boolean ignoreNull) {
-        String serializedObj = null;
-        try {
-            ObjectMapper mapper = objectMapper.copy();
-            if (ignoreNull) {
-                mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            }
-            serializedObj = mapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            PluginLogger.error("Error occurred while serializing object: " + obj.toString(), e);
-            return null;
-        }
-        return serializedObj;
-    }
 
     public <T> T deserialize(final String jsonString, final Class<T> cls) {
         try {

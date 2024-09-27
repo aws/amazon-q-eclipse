@@ -68,9 +68,7 @@ public final class ChatCommunicationManager {
     }
 
     public void sendMessageToChatUI(final Browser browser, final ChatUIInboundCommand command) {
-        // Mynah-ui will not render the partial result if null values are included. Must serialize with ignoreNulls set to True.
-        Boolean ignoreNull = true;
-        String message = jsonHandler.serialize(command, ignoreNull);
+        String message = jsonHandler.serialize(command);
         
         String script = "window.postMessage(" + message + ");";
         browser.getDisplay().asyncExec(() -> {

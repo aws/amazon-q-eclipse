@@ -81,8 +81,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         // Check to ensure Object is sent in params
         if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
-            String e = "Error occurred while handling partial result notification: expected Object value";
-            throw new AmazonQPluginException(e);
+            throw new AmazonQPluginException("Error occurred while handling partial result notification: expected Object value");
         }
 
         ChatResult partialChatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
@@ -93,12 +92,11 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             return;
         }
         
-        Boolean isPartialResult = true;
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
             ChatUIInboundCommandName.ChatPrompt.toString(),
             chatMessage.getChatRequestParams().getTabId(),
             partialChatResult,
-            isPartialResult
+            true
         );
         
         chatCommunicationManager.sendMessageToChatUI(browser, chatUIInboundCommand);

@@ -22,7 +22,7 @@ public final class ChatMessageProvider {
                 .thenApply(ChatMessageProvider::new);
     }
 
-    private ChatMessageProvider(AmazonQLspServer amazonQLspServer) {
+    private ChatMessageProvider(final AmazonQLspServer amazonQLspServer) {
         this.amazonQLspServer = amazonQLspServer;
     }
 

@@ -76,7 +76,7 @@ public class QInlineRendererListener implements PaintListener {
             int lineHt = widget.getLineHeight();
             int fontHt = gc.getFontMetrics().getHeight();
             int x = widget.getLeftMargin();
-            int y = location.y + lineHt * 2 - fontHt;            
+            int y = location.y + lineHt * 2 - fontHt;
             gc.drawText(remainder, x, y, true);
         } else {
             int line = widget.getLineAtOffset(widget.getCaretOffset());

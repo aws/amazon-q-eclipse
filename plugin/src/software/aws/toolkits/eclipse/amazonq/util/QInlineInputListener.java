@@ -45,7 +45,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         preferences.putBoolean("closeBraces", false);
         preferences.putBoolean("closeBrackets", false);
         this.widget = widget;
-        onNewSuggestion();
     }
     
     /**
@@ -61,7 +60,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     		return;
     	}
     	String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
-    	suggestionSegments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(currentSuggestion);
+    	suggestionSegments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(qInvocationSessionInstance);
     }
     
     public List<IQInlineSuggestionSegment> getSegments() {
@@ -138,96 +137,98 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             qInvocationSessionInstance.end();
             return;
         default:
+        	lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+        	return;
         }
 
         // If auto closing of brackets are not enabled we can just treat them as normal
         // inputs
         // Another scenario
-        if (!isAutoClosingEnabled) {
-            return;
-        }
+//        if (!isAutoClosingEnabled) {
+//            return;
+//        }
 
         // If auto cloising of brackets are enabled, SWT will treat the open bracket
         // differently.
         // Input of the brackets will not trigger a call to verifyText.
         // Thus we have to do the typeahead verification here.
         // Note that '{' is excluded because
-        switch (event.character) {
-        case '<':
-            if (currentSuggestion.charAt(distanceTraversed++) != '<') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            return;
-        case '>':
-            if (currentSuggestion.charAt(distanceTraversed++) != '>') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            return;
-        case '(':
-            if (currentSuggestion.charAt(distanceTraversed++) != '(') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            return;
-        case ')':
-            if (currentSuggestion.charAt(distanceTraversed++) != ')') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            return;
-        case '[':
-            if (currentSuggestion.charAt(distanceTraversed++) != '[') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            return;
-        case ']':
-            if (currentSuggestion.charAt(distanceTraversed++) != ']') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-            return;
-        case '{':
-            if (currentSuggestion.charAt(distanceTraversed++) != '{') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY;
-            return;
-        case '}':
-            if (currentSuggestion.charAt(distanceTraversed++) != '}') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.CURLY_BRACES;
-            return;
-        case '"':
-            if (currentSuggestion.charAt(distanceTraversed++) != '"') {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-        default:
-        }
-
-        lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+//        switch (event.character) {
+//        case '<':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '<') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//            return;
+//        case '>':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '>') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//            return;
+//        case '(':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '(') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//            return;
+//        case ')':
+//            if (currentSuggestion.charAt(distanceTraversed++) != ')') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//            return;
+//        case '[':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '[') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//            return;
+//        case ']':
+//            if (currentSuggestion.charAt(distanceTraversed++) != ']') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//            return;
+//        case '{':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '{') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY;
+//            return;
+//        case '}':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '}') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.CURLY_BRACES;
+//            return;
+//        case '"':
+//            if (currentSuggestion.charAt(distanceTraversed++) != '"') {
+//                qInvocationSessionInstance.transitionToDecisionMade();
+//                qInvocationSessionInstance.end();
+//                return;
+//            }
+//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
+//        default:
+//        }
+//
+//        lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
     }
 
     @Override
@@ -250,17 +251,20 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
         String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
         int currentOffset = widget.getCaretOffset();
-        qInvocationSessionInstance
-                .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
+		qInvocationSessionInstance
+				.setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
 
-        boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
-        if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-            qInvocationSessionInstance.transitionToDecisionMade();
-            qInvocationSessionInstance.end();
-            return;
-        }
-        distanceTraversed += input.length();
-    }
+		boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
+		if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
+			System.out.println("Text typed: " + input);
+			System.out.println("Text in suggestion: "
+					+ currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length()));
+			qInvocationSessionInstance.transitionToDecisionMade();
+			qInvocationSessionInstance.end();
+			return;
+		}
+		distanceTraversed += input.length();
+	}
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {
         boolean res;

@@ -5,5 +5,5 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import org.eclipse.swt.graphics.GC;
 
 public interface IQInlineSuggestionSegment {
-    public void render(GC gc, int currentCaretPosition);
+	public void render(GC gc, int currentCaretOffset);
 }

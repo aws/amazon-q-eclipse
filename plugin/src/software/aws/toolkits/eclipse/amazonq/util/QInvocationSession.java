@@ -136,10 +136,12 @@ public final class QInvocationSession extends QResource {
                                 newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
 
                         suggestionsContext.setCurrentIndex(0);
+                        session.primeListeners();
 
                         // TODO: remove print
                         // Update the UI with the results
-                        System.out.println("Suggestions: " + newSuggestions);
+						System.out.println("Suggestions: " + newSuggestions.stream()
+								.map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
                         System.out.println("Total suggestion number: " + newSuggestions.size());
 
                         transitionToPreviewingState();
@@ -341,6 +343,14 @@ public final class QInvocationSession extends QResource {
             unsetVerticalIndent.accept(caretLine);
             unsetVerticalIndent = null;
         }
+    }
+    
+    public List<IQInlineSuggestionSegment> getSegments() {
+    	return inputListener.getSegments();
+    }
+    
+    public void primeListeners() {
+    	inputListener.onNewSuggestion();
     }
 
     // Additional methods for the session can be added here

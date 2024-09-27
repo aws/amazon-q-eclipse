@@ -4,6 +4,8 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,14 +15,15 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public class AuthLspConnectionProvider extends AbstractLspConnectionProvider {
 
-    public AuthLspConnectionProvider() throws IOException {
+    public AuthLspConnectionProvider() throws IOException, URISyntaxException {
         super();
         var authJs = PluginUtils.getResource("auth/packages/server/dist/index.js");
+        var authJsPath = Path.of(authJs.toURI()).toString();
         var lspManager = LspManagerProvider.getInstance();
 
         List<String> commands = new ArrayList<>();
         commands.add(lspManager.getLspInstallation().nodeExecutable().toString());
-        commands.add(authJs.getPath());
+        commands.add(authJsPath);
         commands.add("--nolazy");
         commands.add("--inspect=5599");
         commands.add("--stdio");

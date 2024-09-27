@@ -3,7 +3,6 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Set;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Color;
@@ -17,6 +16,8 @@ import org.eclipse.ui.part.ViewPart;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart {
@@ -78,12 +79,20 @@ public abstract class AmazonQView extends ViewPart {
     }
 
     private void setupBrowser(final Composite parent) {
-        browser = new Browser(parent, SWT.NATIVE);
+        browser = new Browser(parent, getBrowserStyle());
         Display display = Display.getCurrent();
         Color black = display.getSystemColor(SWT.COLOR_BLACK);
 
         browser.setBackground(black);
         parent.setBackground(black);
+    }
+
+    private int getBrowserStyle() {
+        var platform = PluginUtils.getPlatform();
+        if (platform == PluginPlatform.WINDOWS) {
+            return SWT.EDGE;
+        }
+        return SWT.WEBKIT;
     }
 
     private void setupActions(final Browser browser, final boolean isLoggedIn) {

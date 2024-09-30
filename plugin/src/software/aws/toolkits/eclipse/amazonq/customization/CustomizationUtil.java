@@ -9,7 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
-public class CustomizationUtil {
+public final class CustomizationUtil {
 
     private CustomizationUtil() {
         // to avoid initiation
@@ -18,7 +18,8 @@ public class CustomizationUtil {
     public static void triggerChangeConfigurationNotification(final Map<String, Object> settings) {
         try {
             PluginLogger.info("Sending configuration update notification to Amazon Q LSP server");
-            LspProvider.getAmazonQServer().thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams(settings)));
+            LspProvider.getAmazonQServer()
+            .thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams(settings)));
         } catch (Exception e) {
             PluginLogger.error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
             throw new AmazonQPluginException(e);

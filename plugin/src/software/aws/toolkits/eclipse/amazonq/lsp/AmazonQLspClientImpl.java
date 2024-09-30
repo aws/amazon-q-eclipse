@@ -31,20 +31,20 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     }
 
     @Override
-	public CompletableFuture<List<Object>> configuration(ConfigurationParams configurationParams) {
-    	if (configurationParams.getItems().size() == 0) return CompletableFuture.completedFuture(null);
-    	List<Object> output = new ArrayList<>();
-    	configurationParams.getItems().forEach(item -> {
-    		if (item.getSection().equals(Constants.LSP_CONFIGURATION_KEY)) {
-    			String customizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-    			Map<String, String> customization = new HashMap<>();
-    			customization.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, customizationArn);
-    			output.add(customization);
-    		} else {
-    			output.add(null);
-    		}
-    	});
-    	return CompletableFuture.completedFuture(output);
+    public CompletableFuture<List<Object>> configuration(ConfigurationParams configurationParams) {
+        if (configurationParams.getItems().size() == 0) return CompletableFuture.completedFuture(null);
+        List<Object> output = new ArrayList<>();
+        configurationParams.getItems().forEach(item -> {
+            if (item.getSection().equals(Constants.LSP_CONFIGURATION_KEY)) {
+                String customizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                Map<String, String> customization = new HashMap<>();
+                customization.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, customizationArn);
+                output.add(customization);
+            } else {
+                output.add(null);
+            }
+        });
+        return CompletableFuture.completedFuture(output);
     }
 
 }

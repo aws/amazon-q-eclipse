@@ -28,6 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationDialog extends Dialog {
@@ -121,7 +122,7 @@ public final class CustomizationDialog extends Dialog {
         	Map<String, String> internalMap = new HashMap<>();
         	internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.selectedCustomisationArn);
         	updatedSettings.put(Constants.LSP_CONFIGURATION_KEY, internalMap);
-        	CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings);
+        	ThreadingUtils.executeAsyncTask( () -> CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings));
         }
         super.okPressed();
     }

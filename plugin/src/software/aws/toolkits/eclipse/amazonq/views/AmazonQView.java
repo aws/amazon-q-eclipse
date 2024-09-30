@@ -103,6 +103,7 @@ public abstract class AmazonQView extends ViewPart {
         authStatusChangedListener = this::handleAuthStatusChange;
         AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
         AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
+        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getCustomizationDialogContributionAction());
     }
 
     @Override

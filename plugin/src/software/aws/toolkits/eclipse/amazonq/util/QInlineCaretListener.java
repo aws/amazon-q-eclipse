@@ -8,9 +8,11 @@ import org.eclipse.swt.custom.StyledText;
 
 public final class QInlineCaretListener implements CaretListener {
     private StyledText widget = null;
+    private int previousLine = -1;
 
     public QInlineCaretListener(final StyledText widget) {
         this.widget = widget;
+        this.previousLine = widget.getLineAtOffset(widget.getCaretOffset());
     }
 
     @Override
@@ -21,17 +23,16 @@ public final class QInlineCaretListener implements CaretListener {
         // We want to ignore caret movements induced by text editing
         if (caretMovementReason == CaretMovementReason.TEXT_INPUT) {
             qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.UNEXAMINED);
+            previousLine = widget.getLineAtOffset(widget.getCaretOffset());
             return;
         }
 
-        // There are instances where the caret movement was induced by sources other than user input
-        // Under these instances, it is observed that the caret would revert back to a position that was last
-        // placed by the user in the same rendering cycle.
-        // We want to preserve the preview state and prevent it from terminating by these non-user instructed movements
-        if (event.caretOffset != widget.getCaretOffset() && qInvocationSessionInstance.isPreviewingSuggestions()) {
-            qInvocationSessionInstance.transitionToDecisionMade();
+        if (qInvocationSessionInstance.isPreviewingSuggestions()) {
+            qInvocationSessionInstance.transitionToDecisionMade(previousLine + 1);
             qInvocationSessionInstance.end();
+            return;
         }
+
+        previousLine = widget.getCaretOffset();
     }
 }
-

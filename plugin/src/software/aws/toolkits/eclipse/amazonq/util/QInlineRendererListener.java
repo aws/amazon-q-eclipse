@@ -79,7 +79,8 @@ public class QInlineRendererListener implements PaintListener {
             int y = location.y + lineHt * 2 - fontHt;
             gc.drawText(remainder, x, y, true);
         } else {
-            qInvocationSessionInstance.unsetVerticalIndent();
+            int line = widget.getLineAtOffset(widget.getCaretOffset());
+            qInvocationSessionInstance.unsetVerticalIndent(line + 1);
         }
     }
 

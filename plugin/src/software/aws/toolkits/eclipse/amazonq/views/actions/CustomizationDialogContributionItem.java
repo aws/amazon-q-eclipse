@@ -63,17 +63,17 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-            	CustomizationDialog dialog = new CustomizationDialog(shell);
-            	// TODO: This mock will be replaced by an actual call to LSP
-            	dialog.setCustomisationResponse(getCustomizations());
-            	String storedCustomizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-            	if (StringUtils.isBlank(storedCustomizationArn)) {
-                	dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
-                	dialog.setSelectedCustomizationArn(null);
-            	} else {
-            		dialog.setResponseSelection(ResponseSelection.CUSTOMIZATION);
-            		dialog.setSelectedCustomizationArn(storedCustomizationArn);
-            	}
+                CustomizationDialog dialog = new CustomizationDialog(shell);
+                // TODO: This mock will be replaced by an actual call to LSP
+                dialog.setCustomisationResponse(getCustomizations());
+                String storedCustomizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                if (StringUtils.isBlank(storedCustomizationArn)) {
+                    dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
+                    dialog.setSelectedCustomizationArn(null);
+                } else {
+                    dialog.setResponseSelection(ResponseSelection.CUSTOMIZATION);
+                    dialog.setSelectedCustomizationArn(storedCustomizationArn);
+                }
                 dialog.open();
             }
         });

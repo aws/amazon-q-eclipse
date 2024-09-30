@@ -115,14 +115,14 @@ public final class CustomizationDialog extends Dialog {
     protected void okPressed() {
         PluginLogger.info(String.format("Select pressed with responseSelection:%s and selectedArn:%s", this.responseSelection, this.selectedCustomisationArn));
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
-        	PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+            PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
         } else {
-        	PluginStore.put(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
-        	Map<String, Object> updatedSettings = new HashMap<>();
-        	Map<String, String> internalMap = new HashMap<>();
-        	internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.selectedCustomisationArn);
-        	updatedSettings.put(Constants.LSP_CONFIGURATION_KEY, internalMap);
-        	ThreadingUtils.executeAsyncTask( () -> CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings));
+            PluginStore.put(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
+            Map<String, Object> updatedSettings = new HashMap<>();
+            Map<String, String> internalMap = new HashMap<>();
+            internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.selectedCustomisationArn);
+            updatedSettings.put(Constants.LSP_CONFIGURATION_KEY, internalMap);
+            ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings));
         }
         super.okPressed();
     }

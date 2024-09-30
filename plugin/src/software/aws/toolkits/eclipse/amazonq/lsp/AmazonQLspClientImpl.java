@@ -31,8 +31,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     }
 
     @Override
-    public CompletableFuture<List<Object>> configuration(ConfigurationParams configurationParams) {
-        if (configurationParams.getItems().size() == 0) return CompletableFuture.completedFuture(null);
+    public final CompletableFuture<List<Object>> configuration(final ConfigurationParams configurationParams) {
+        if (configurationParams.getItems().size() == 0) {
+            return CompletableFuture.completedFuture(null);
+        }
         List<Object> output = new ArrayList<>();
         configurationParams.getItems().forEach(item -> {
             if (item.getSection().equals(Constants.LSP_CONFIGURATION_KEY)) {

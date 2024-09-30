@@ -4,10 +4,10 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 public final class Constants {
-	
-	private Constants() {
-		// to avoid initiation
-	}
+
+    private Constants() {
+        // to avoid initiation
+    }
 
     public static final String CUSTOMIZATION_STORAGE_INTERNAL_KEY = "aws.q.customization.eclipse";
     public static final String LSP_CUSTOMIZATION_CONFIGURATION_KEY = "customization";

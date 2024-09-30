@@ -8,7 +8,6 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextViewer;
@@ -41,14 +41,12 @@ public final class QInvocationSession extends QResource {
     private long invocationTimeInMs = -1L;
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
-    private VerifyKeyListener verifyKeyListener = null;
-    private int leadingWhitespaceSkipped = 0;
-    private Stack<Character> closingBrackets = new Stack<>();
-    private boolean isLastKeyNewLine = false;
+    private QInlineInputListener inputListener = null;
+    private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
     private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
-    private Runnable unsetVerticalIndent;
+    private Consumer<Integer> unsetVerticalIndent;
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -95,8 +93,9 @@ public final class QInvocationSession extends QResource {
                 widget.addPaintListener(paintListener);
             }
 
-            verifyKeyListener = new QInlineVerifyKeyListener(widget);
-            widget.addVerifyKeyListener(verifyKeyListener);
+            inputListener = new QInlineInputListener(widget);
+            widget.addVerifyListener(inputListener);
+            widget.addVerifyKeyListener(inputListener);
 
             caretListener = new QInlineCaretListener(widget);
             widget.addCaretListener(caretListener);
@@ -216,24 +215,21 @@ public final class QInvocationSession extends QResource {
     }
 
     public void transitionToDecisionMade() {
+        var widget = viewer.getTextWidget();
+        var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+        transitionToDecisionMade(caretLine + 1);
+    }
+
+    public void transitionToDecisionMade(final int line) {
         if (state != QInvocationSessionState.SUGGESTION_PREVIEWING) {
             return;
         }
         state = QInvocationSessionState.DECISION_MADE;
-
-        unsetVerticalIndent();
+        unsetVerticalIndent(line);
     }
 
     public void setCaretMovementReason(final CaretMovementReason reason) {
         this.caretMovementReason = reason;
-    }
-
-    public void setLeadingWhitespaceSkipped(final int numSkipped) {
-        this.leadingWhitespaceSkipped = numSkipped;
-    }
-
-    public void setIsLastKeyNewLine(final boolean isLastKeyNewLine) {
-        this.isLastKeyNewLine = isLastKeyNewLine;
     }
 
     public void setHeadOffsetAtLine(final int lineNum, final int offSet) throws IllegalArgumentException {
@@ -267,16 +263,8 @@ public final class QInvocationSession extends QResource {
         return caretMovementReason;
     }
 
-    public Stack<Character> getClosingBrackets() {
+    public Stack<String> getClosingBrackets() {
         return closingBrackets;
-    }
-
-    public int getLeadingWhitespaceSkipped() {
-        return leadingWhitespaceSkipped;
-    }
-
-    public boolean isLastKeyNewLine() {
-        return isLastKeyNewLine;
     }
 
     public int getHeadOffsetAtLine(final int lineNum) throws IllegalArgumentException {
@@ -339,19 +327,18 @@ public final class QInvocationSession extends QResource {
             codeReferenceAcceptanceCallback.onCallback(selectedSuggestion, startLine);
         }
     }
-  
-    public void setVerticalIndent(int line, int height) {
+
+    public void setVerticalIndent(final int line, final int height) {
         var widget = viewer.getTextWidget();
         widget.setLineVerticalIndent(line, height);
-        unsetVerticalIndent = () -> {
-            var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-            widget.setLineVerticalIndent(caretLine + 1, 0);
+        unsetVerticalIndent = (caretLine) -> {
+            widget.setLineVerticalIndent(caretLine, 0);
         };
     }
 
-    public void unsetVerticalIndent() {
+    public void unsetVerticalIndent(final int caretLine) {
         if (unsetVerticalIndent != null) {
-            unsetVerticalIndent.run();
+            unsetVerticalIndent.accept(caretLine);
             unsetVerticalIndent = null;
         }
     }
@@ -365,17 +352,16 @@ public final class QInvocationSession extends QResource {
         inlineTextFont.dispose();
         inlineTextFont = null;
         closingBrackets = null;
-        leadingWhitespaceSkipped = 0;
-        isLastKeyNewLine = false;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
-        widget.removeVerifyKeyListener(verifyKeyListener);
+        widget.removeVerifyListener(inputListener);
+        widget.removeVerifyKeyListener(inputListener);
         paintListener = null;
         caretListener = null;
-        verifyKeyListener = null;
+        inputListener = null;
         invocationOffset = -1;
         invocationTimeInMs = -1L;
         editor = null;

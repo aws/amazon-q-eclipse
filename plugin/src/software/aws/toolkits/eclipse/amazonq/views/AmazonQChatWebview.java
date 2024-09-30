@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.nio.file.Path;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -11,6 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public class AmazonQChatWebview extends AmazonQView {
@@ -18,6 +20,7 @@ public class AmazonQChatWebview extends AmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
     private AmazonQCommonActions amazonQCommonActions;
+    private WebviewAssetServer webviewAssetServer;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -55,49 +58,70 @@ public class AmazonQChatWebview extends AmazonQView {
 
     private String getContent() {
         String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
-        return String.format("<!DOCTYPE html>\n"
-                + "<html lang=\"en\">\n"
-                + "<head>\n"
-                + "    <meta charset=\"UTF-8\">\n"
-                + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                + "    <title>Chat UI</title>\n"
-                + "    %s\n"
-                + "</head>\n"
-                + "<body>\n"
-                + "    %s\n"
-                + "</body>\n"
-                + "</html>", generateCss(), generateJS(jsFile));
+        var jsParent = Path.of(jsFile).getParent();
+        var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+
+        webviewAssetServer = new WebviewAssetServer();
+        var result = webviewAssetServer.resolve(jsDirectoryPath);
+        if (!result) {
+            return "Failed to load JS";
+        }
+
+        var chatJsPath = webviewAssetServer.getUri() + "amazonq-ui.js";
+        return String.format("""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta
+                        http-equiv="Content-Security-Policy"
+                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
+                        img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;"
+                    >
+                    <title>Chat UI</title>
+                    %s
+                </head>
+                <body>
+                    %s
+                </body>
+                </html>
+                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath));
     }
 
     private String generateCss() {
-        return "<style>\n"
-                + "        body,\n"
-                + "        html {\n"
-                + "            background-color: var(--mynah-color-bg);\n"
-                + "            color: var(--mynah-color-text-default);\n"
-                + "            height: 100vh;\n"
-                + "            width: 100%%;\n"
-                + "            overflow: hidden;\n"
-                + "            margin: 0;\n"
-                + "            padding: 0;\n"
-                + "        }\n"
-                + "        textarea:placeholder-shown {\n"
-                + "            line-height: 1.5rem;\n"
-                + "        }"
-                + "    </style>";
+        return """
+                <style>
+                    body,
+                    html {
+                        background-color: var(--mynah-color-bg);
+                        color: var(--mynah-color-text-default);
+                        height: 100vh;
+                        width: 100%%;
+                        overflow: hidden;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    textarea:placeholder-shown {
+                        line-height: 1.5rem;
+                    }
+                </style>
+                """;
     }
 
     private String generateJS(final String jsEntrypoint) {
-        return String.format("<script type=\"text/javascript\" src=\"%s\" defer onload=\"init()\"></script>\n"
-                + "    <script type=\"text/javascript\">\n"
-                + "        const init = () => {\n"
-                + "            amazonQChat.createChat({\n"
-                + "               postMessage: (message) => {\n"
-                + "                    ideCommand(JSON.stringify(message));\n"
-                + "               }\n"
-                + "         });\n"
-                + "        }\n"
-                + "    </script>", jsEntrypoint);
+        return String.format("""
+                <script type="text/javascript" src="%s" defer onload="init()"></script>
+                <script type="text/javascript">
+                    const init = () => {
+                        amazonQChat.createChat({
+                           postMessage: (message) => {
+                                ideCommand(JSON.stringify(message));
+                           }
+                        });
+                    }
+                </script>
+                """, jsEntrypoint);
     }
 
     @Override
@@ -114,4 +138,11 @@ public class AmazonQChatWebview extends AmazonQView {
         });
     }
 
+    @Override
+    public final void dispose() {
+        if (webviewAssetServer != null) {
+            webviewAssetServer.stop();
+        }
+        super.dispose();
+    }
 }

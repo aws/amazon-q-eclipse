@@ -23,6 +23,7 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
         var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
+        QInvocationSession.getInstance().transitionToDecisionMade();
         Display display = widget.getDisplay();
         display.syncExec(() -> this.insertSuggestion(suggestion.getInsertText()));
         return null;
@@ -36,7 +37,6 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
             var insertOffset = widget.getCaretOffset();
             doc.replace(insertOffset, 0, suggestion);
             widget.setCaretOffset(insertOffset + suggestion.length());
-            QInvocationSession.getInstance().transitionToDecisionMade();
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
             QInvocationSession.getInstance().executeCallbackForCodeReference();
             QInvocationSession.getInstance().end();

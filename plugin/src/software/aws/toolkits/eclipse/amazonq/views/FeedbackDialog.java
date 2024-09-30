@@ -217,16 +217,16 @@ public class FeedbackDialog extends Dialog {
         CustomRadioButton negativeSentimentButton = createCustomRadioButton(sentimentContainer, "icons/FrownyFace.png", "Unsatisfied", SWT.NONE, false);
         positiveSentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
             @Override
-            public void widgetSelected(SelectionEvent e) {
-            	negativeSentimentButton.getRadioButton().setSelection(false);
-            	selectedSentiment = Sentiment.POSITIVE;
+            public void widgetSelected(final SelectionEvent e) {
+                negativeSentimentButton.getRadioButton().setSelection(false);
+                selectedSentiment = Sentiment.POSITIVE;
             }
         });
         negativeSentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
             @Override
-            public void widgetSelected(SelectionEvent e) {
-            	positiveSentimentButton.getRadioButton().setSelection(false);
-            	selectedSentiment = Sentiment.NEGATIVE;
+            public void widgetSelected(final SelectionEvent e) {
+                positiveSentimentButton.getRadioButton().setSelection(false);
+                selectedSentiment = Sentiment.NEGATIVE;
             }
         });
 
@@ -280,7 +280,8 @@ public class FeedbackDialog extends Dialog {
         separatorLabel.setLayoutData(separatorGithubLayout);
     }
 
-    private CustomRadioButton createCustomRadioButton(final Composite parent, final String imagePath, final String text, final int style, final boolean isSelected) {
+    private CustomRadioButton createCustomRadioButton(final Composite parent, final String imagePath,
+            final String text, final int style, final boolean isSelected) {
         CustomRadioButton button = new CustomRadioButton(parent, loadImage(imagePath), text, style);
         button.getRadioButton().setSelection(isSelected);
         return button;

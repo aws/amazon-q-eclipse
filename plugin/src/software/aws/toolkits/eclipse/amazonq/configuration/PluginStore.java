@@ -28,7 +28,7 @@ public final class PluginStore {
     }
 
     public static void remove(final String key) {
-    	PREFERENCES.remove(key);
+        PREFERENCES.remove(key);
     }
 
 }

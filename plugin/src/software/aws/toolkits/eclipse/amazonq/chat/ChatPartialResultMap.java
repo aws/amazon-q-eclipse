@@ -5,9 +5,6 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
-import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspClientImpl;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 /**
  * ChatPartialResultMap is a utility class responsible for managing the mapping between
@@ -25,27 +22,27 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
  * method, which retrieves the corresponding ChatMessage object from the tokenToChatMessageMap using
  * the token provided in the ProgressParams. The ChatMessage can then be updated with the partial result.
  */
-public class ChatPartialResultMap {
-    
+public final class ChatPartialResultMap {
+
     private final Map<String, ChatMessage> tokenToChatMessageMap;
-    
+
     public ChatPartialResultMap() {
         tokenToChatMessageMap = new ConcurrentHashMap<String, ChatMessage>();
     }
-    
-    public void setEntry(String token, ChatMessage chatMessage) {
+
+    public void setEntry(final String token, final ChatMessage chatMessage) {
         tokenToChatMessageMap.put(token, chatMessage);
     }
-    
-    public void removeEntry(String token) {
+
+    public void removeEntry(final String token) {
         tokenToChatMessageMap.remove(token);
     }
-    
-    public ChatMessage getValue(String token) {
+
+    public ChatMessage getValue(final String token) {
         return tokenToChatMessageMap.getOrDefault(token, null);
     }
-    
-    public Boolean hasKey(String token) {
+
+    public Boolean hasKey(final String token) {
         return tokenToChatMessageMap.containsKey(token);
     }
 }

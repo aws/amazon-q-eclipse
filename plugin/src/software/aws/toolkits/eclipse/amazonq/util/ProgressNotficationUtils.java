@@ -8,12 +8,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 
-public class ProgressNotficationUtils {
+public final class ProgressNotficationUtils {
+    private ProgressNotficationUtils() {
+        // Prevent instantiation
+    }
+
     /*
      * Get the token from the ProgressParams value
      * @return The token as a String
      */
-    public static String getToken(ProgressParams params) {
+    public static String getToken(final ProgressParams params) {
         String token;
 
         if (params.getToken().isLeft()) {
@@ -30,7 +34,7 @@ public class ProgressNotficationUtils {
      * @param cls The class of the object to be deserialized
      * @return The deserialized object, or null if the value is not a JsonElement
      */
-    public static <T> T getObject(ProgressParams params, Class<T> cls) {
+    public static <T> T getObject(final ProgressParams params, final Class<T> cls) {
         Object val = params.getValue().getRight();
 
         if (!(val instanceof JsonElement)) {

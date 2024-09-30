@@ -66,12 +66,12 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
         }
     }
-    
-    
+
+
     /*
      * Handles chat progress notifications from the Amazon Q LSP server. Sends a partial chat prompt message to the webview.
      */
-    public final void handlePartialResultProgressNotification(ProgressParams params) {
+    public final void handlePartialResultProgressNotification(final ProgressParams params) {
         String token = ProgressNotficationUtils.getToken(params);
         ChatMessage chatMessage = chatCommunicationManager.getPartialChatMessage(token);
 
@@ -86,19 +86,19 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         ChatResult partialChatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
         Browser browser = chatMessage.getBrowser();
-        
+
         // Check to ensure the body has content in order to keep displaying the spinner while loading
         if (partialChatResult.body() == null || partialChatResult.body().length() == 0) {
             return;
         }
-        
+
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
             ChatUIInboundCommandName.ChatPrompt.toString(),
             chatMessage.getChatRequestParams().getTabId(),
             partialChatResult,
             true
         );
-        
+
         chatCommunicationManager.sendMessageToChatUI(browser, chatUIInboundCommand);
     }
 }

@@ -18,9 +18,9 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 /**
  * ChatCommunicationManager is a central component of the Amazon Q Eclipse Plugin that
- * acts as a bridge between the plugin's UI and the LSP server. It is also responsible 
- * for managing communication between the plugin and the webview used for displaying 
- * chat conversations. It is implemented as a singleton to centralize control of all 
+ * acts as a bridge between the plugin's UI and the LSP server. It is also responsible
+ * for managing communication between the plugin and the webview used for displaying
+ * chat conversations. It is implemented as a singleton to centralize control of all
  * communication in the plugin.
  */
 public final class ChatCommunicationManager {
@@ -69,37 +69,37 @@ public final class ChatCommunicationManager {
 
     public void sendMessageToChatUI(final Browser browser, final ChatUIInboundCommand command) {
         String message = jsonHandler.serialize(command);
-        
+
         String script = "window.postMessage(" + message + ");";
         browser.getDisplay().asyncExec(() -> {
             browser.evaluate(script);
         });
     }
-    
+
     /*
      * Gets the partial chat message using the provided token.
      */
-    public ChatMessage getPartialChatMessage(String partialResultToken) {
+    public ChatMessage getPartialChatMessage(final String partialResultToken) {
         return chatPartialResultMap.getValue(partialResultToken);
     }
-    
+
     /*
      * Adds an entry to the partialResultToken to ChatMessage map.
      */
-    public String addPartialChatMessage(ChatMessage chatMessage) {
+    public String addPartialChatMessage(final ChatMessage chatMessage) {
         String partialResultToken = UUID.randomUUID().toString();
-        
+
         // Indicator for the server to send partial result notifications
         chatMessage.getChatRequestParams().setPartialResultToken(partialResultToken);
-        
+
         chatPartialResultMap.setEntry(partialResultToken, chatMessage);
         return partialResultToken;
     }
-    
+
     /*
      * Removes an entry from the partialResultToken to ChatMessage map.
      */
-    public void removePartialChatMessage(String partialResultToken) {
+    public void removePartialChatMessage(final String partialResultToken) {
         chatPartialResultMap.removeEntry(partialResultToken);
     }
 }

@@ -60,15 +60,15 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     }
 
     @Override
-	public void notifyProgress(final ProgressParams params) {
+    public final void notifyProgress(final ProgressParams params) {
         AmazonQChatViewActionHandler chatActionHandler = new AmazonQChatViewActionHandler();
-        
-		ThreadingUtils.executeAsyncTask(() -> {
+
+        ThreadingUtils.executeAsyncTask(() -> {
             try {
-                chatActionHandler.handlePartialResultProgressNotification(params);;
+                chatActionHandler.handlePartialResultProgressNotification(params);
             } catch (Exception e) {
                 PluginLogger.error("Error processing partial result progress notification", e);
             }
         });
-	}
+    }
 }

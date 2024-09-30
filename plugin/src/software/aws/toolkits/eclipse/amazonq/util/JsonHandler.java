@@ -4,7 +4,6 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 public final class JsonHandler {
     private final ObjectMapper objectMapper;

@@ -4,14 +4,14 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ChatRequestParams { 
+public final class ChatRequestParams {
     private final String tabId;
     private final ChatPrompt prompt;
     private String partialResultToken;
-    
+
     public ChatRequestParams(
-        @JsonProperty("tabId") String tabId, 
-        @JsonProperty("prompt") ChatPrompt prompt
+        @JsonProperty("tabId") final String tabId,
+        @JsonProperty("prompt") final ChatPrompt prompt
     ) {
         this.tabId = tabId;
         this.prompt = prompt;
@@ -29,7 +29,7 @@ public class ChatRequestParams {
         return partialResultToken;
     }
 
-    public void setPartialResultToken(String partialResultToken) {
+    public void setPartialResultToken(final String partialResultToken) {
         this.partialResultToken = partialResultToken;
     }
 }

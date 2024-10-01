@@ -18,6 +18,7 @@ import jakarta.inject.Inject;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
@@ -65,7 +66,7 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
                 CustomizationDialog dialog = new CustomizationDialog(shell);
                 // TODO: This mock will be replaced by an actual call to LSP
                 dialog.setCustomisationResponse(getCustomizations());
-                String storedCustomizationArn = PluginStore.get(CustomizationDialog.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                String storedCustomizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
                 if (StringUtils.isBlank(storedCustomizationArn)) {
                     dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
                     dialog.setSelectedCustomizationArn(null);

@@ -5,6 +5,8 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -17,8 +19,11 @@ import org.eclipse.ui.IViewSite;
 import jakarta.inject.Inject;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
@@ -50,9 +55,12 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
 
     private List<Customization> getCustomizations() {
         List<Customization> customizations = new ArrayList<>();
-        customizations.add(new Customization("customization-arn-1", "Customization 1", "Code Whisperer customization 1"));
-        customizations.add(new Customization("customization-arn-2", "Customization 2", "Code Whisperer customization 2"));
-        customizations.add(new Customization("customization-arn-3", "Customization 3", "Code Whisperer customization 3"));
+        try {
+            customizations = CustomizationUtil.listCustomizations().get();
+        } catch (InterruptedException | ExecutionException e) {
+            PluginLogger.error("Error occurred in getCustomizations", e);
+            throw new AmazonQPluginException(e);
+        }
         return customizations;
     }
 
@@ -64,7 +72,6 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 CustomizationDialog dialog = new CustomizationDialog(shell);
-                // TODO: This mock will be replaced by an actual call to LSP
                 dialog.setCustomisationResponse(getCustomizations());
                 String storedCustomizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
                 if (StringUtils.isBlank(storedCustomizationArn)) {

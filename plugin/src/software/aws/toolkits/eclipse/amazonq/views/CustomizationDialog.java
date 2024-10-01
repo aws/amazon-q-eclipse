@@ -115,7 +115,7 @@ public final class CustomizationDialog extends Dialog {
         PluginLogger.info(String.format("Select pressed with responseSelection:%s and selectedArn:%s", this.responseSelection, this.selectedCustomisationArn));
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
             PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-        } else {
+        } else if (this.selectedCustomisationArn != null) {
             PluginStore.put(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
             Map<String, Object> updatedSettings = new HashMap<>();
             Map<String, String> internalMap = new HashMap<>();

@@ -11,6 +11,9 @@ public enum Command {
     CHAT_READY("aws/chat/ready"),
     CHAT_TAB_ADD("aws/chat/tabAdd"),
     CHAT_SEND_PROMPT("aws/chat/sendChatPrompt"),
+    CHAT_LINK_CLICK("aws/chat/linkClick"),
+    CHAT_INFO_LINK_CLICK("aws/chat/infoLinkClick"),
+    CHAT_SOURCE_LINK_CLICK("aws/chat/sourceLinkClick"),
     TELEMETRY_EVENT("telemetry/event"),
 
     // Auth

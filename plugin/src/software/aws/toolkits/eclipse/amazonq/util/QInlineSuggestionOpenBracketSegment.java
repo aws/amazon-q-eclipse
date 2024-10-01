@@ -2,28 +2,26 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
-
 import org.eclipse.swt.graphics.GC;
 
-public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSegment {
+public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
     private QInlineSuggestionCloseBracketSegment closeBracket;
     public char symbol;
+    public String indent;
     public int caretOffset;
-    private int idxInLine;
-    private int lineInSuggestion;
+    private boolean isResolved = true;
 
-    public QInlineSuggestionOpenBracketSegment(int caretOffset, int lineInSuggestion, int idxInLine, char symbol) {
+    public QInlineSuggestionOpenBracketSegment(int caretOffset, String indent, char symbol) {
         this.caretOffset = caretOffset;
         this.symbol = symbol;
-        this.lineInSuggestion = lineInSuggestion;
-        this.idxInLine = idxInLine;
+        this.indent = indent;
     }
 
-    public void pairUp(QInlineSuggestionCloseBracketSegment closeBracket) {
-        this.closeBracket = closeBracket;
+    @Override
+    public void pairUp(IQInlineBracket closeBracket) {
+        this.closeBracket = (QInlineSuggestionCloseBracketSegment) closeBracket;
         if (!closeBracket.hasPairedUp()) {
-            closeBracket.pairUp(this);
+            closeBracket.pairUp((IQInlineBracket) this);
         }
     }
 
@@ -46,31 +44,81 @@ public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSe
         }
     }
 
+    public void setResolve(boolean isResolved) {
+        this.isResolved = isResolved;
+    }
+
     public boolean hasPairedUp() {
         return closeBracket != null;
     }
 
     @Override
     public void render(GC gc, int currentCaretOffset) {
-        if (currentCaretOffset > caretOffset) {
-            return;
-        }
-        var qInvocationSessionInstance = QInvocationSession.getInstance();
-        if (qInvocationSessionInstance == null) {
-            return;
-        }
-        var widget = qInvocationSessionInstance.getViewer().getTextWidget();
+        // We never separates open brackets from the lines from which they came.
+        // This is because there is never a need to highlight open brackets.
+        return;
+    }
 
-        int x, y;
-        int invocationLine = widget.getLineAtOffset(qInvocationSessionInstance.getInvocationOffset());
-        int lineHt = widget.getLineHeight();
-        int fontHt = gc.getFontMetrics().getHeight();
-        int fontWd = (int) gc.getFontMetrics().getAverageCharacterWidth();
-        y = (invocationLine + lineInSuggestion + 1) * lineHt - fontHt;
-        x = widget.getLeftMargin() + fontWd * idxInLine;
+    @Override
+    public void onTypeOver() {
+        isResolved = false;
+    }
 
-        gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
-        gc.setFont(qInvocationSessionInstance.getInlineTextFont());
-        gc.drawText(String.valueOf(symbol), x, y, true);
+    @Override
+    public void onDelete() {
+        isResolved = true;
+    }
+
+    @Override
+    public String getAutoCloseContent(boolean isBracketSetToAutoClose, boolean isBracesSetToAutoClose,
+            boolean isStringSetToAutoClose) {
+        if (isResolved) {
+            return null;
+        }
+
+        switch (symbol) {
+        case '<':
+            if (!isBracketSetToAutoClose) {
+                return null;
+            }
+            return ">";
+        case '{':
+            if (!isBracesSetToAutoClose) {
+                return null;
+            }
+            return "\n" + indent + "}";
+        case '(':
+            if (!isBracketSetToAutoClose) {
+                return null;
+            }
+            return ")";
+        case '"':
+            if (!isStringSetToAutoClose) {
+                return null;
+            }
+            return "\"";
+        case '\'':
+            if (!isStringSetToAutoClose) {
+                return null;
+            }
+            return "'";
+        case '[':
+            if (!isBracketSetToAutoClose) {
+                return null;
+            }
+            return "]";
+        default:
+            return null;
+        }
+    }
+
+    @Override
+    public int getRelevantOffset() {
+        return caretOffset;
+    }
+
+    @Override
+    public char getSymbol() {
+        return symbol;
     }
 }

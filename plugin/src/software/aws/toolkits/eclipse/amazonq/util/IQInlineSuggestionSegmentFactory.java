@@ -32,11 +32,21 @@ public class IQInlineSuggestionSegmentFactory {
                 sb = new StringBuilder(currentLine);
             }
 
+            String currentIndent;
+            if (i == 0) {
+                int currentLineInDoc = widget.getLineAtOffset(currentOffset);
+                String content = widget.getLine(currentLineInDoc);
+                int leadingWhitespacePosition = !content.isEmpty() ? idxOfFirstNonwhiteSpace(content) : 0;
+                currentIndent = content.substring(0, leadingWhitespacePosition);
+            } else {
+                int leadingWhitespacePosition = idxOfFirstNonwhiteSpace(currentLine);
+                currentIndent = currentLine.substring(0, leadingWhitespacePosition);
+            }
             for (int j = 0; j < currentLine.length(); j++) {
                 char c = currentLine.charAt(j);
                 switch (getBracketType(unresolvedBrackets, suggestion, distanceTraversed + j)) {
                 case OPEN:
-                    var openBracket = new QInlineSuggestionOpenBracketSegment(startOffset + j, i, j, c);
+                    var openBracket = new QInlineSuggestionOpenBracketSegment(startOffset + j, currentIndent, c);
                     unresolvedBrackets.push(openBracket);
                     break;
                 case CLOSE:
@@ -48,6 +58,7 @@ public class IQInlineSuggestionSegmentFactory {
                             top.pairUp(closeBracket);
                             sb.setCharAt(j, ' ');
                             res.add(closeBracket);
+                            res.add(top);
                         }
                     }
                     break;
@@ -102,5 +113,14 @@ public class IQInlineSuggestionSegmentFactory {
             return false;
         }
         return true;
+    }
+    
+    private static int idxOfFirstNonwhiteSpace(String input) {
+        for (int i = 0; i < input.length(); i++) {
+            if (input.charAt(i) != ' ' && input.charAt(i) != '\t') {
+                return i;
+            }
+        }
+        return input.length();
     }
 }

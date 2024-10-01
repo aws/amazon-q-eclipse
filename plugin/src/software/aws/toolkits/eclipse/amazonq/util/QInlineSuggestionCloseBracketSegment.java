@@ -9,7 +9,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Display;
 
-public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment {
+public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
     private QInlineSuggestionOpenBracketSegment openBracket;
     public char symbol;
     public int caretOffset;
@@ -24,13 +24,15 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
         this.text = text;
     }
 
-    public void pairUp(QInlineSuggestionOpenBracketSegment openBracket) {
-        this.openBracket = openBracket;
+    @Override
+    public void pairUp(IQInlineBracket openBracket) {
+        this.openBracket = (QInlineSuggestionOpenBracketSegment) openBracket;
         if (!openBracket.hasPairedUp()) {
             this.openBracket.pairUp(this);
         }
     }
 
+    @Override
     public boolean hasPairedUp() {
         return openBracket != null;
     }
@@ -69,5 +71,32 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
             gc.setFont(qInvocationSessionInstance.getInlineTextFont());
         }
         gc.drawText(String.valueOf(symbol), x, y, true);
+    }
+
+    @Override
+    public void onTypeOver() {
+        openBracket.setResolve(true);
+    }
+
+    @Override
+    public void onDelete() {
+        openBracket.setResolve(true);
+    }
+
+    @Override
+    public String getAutoCloseContent(boolean isBracketSetToAutoClose, boolean isBracesSetToAutoClose,
+            boolean isStringSetToAutoClose) {
+        // This is a noop for close brackets
+        return null;
+    }
+
+    @Override
+    public int getRelevantOffset() {
+        return caretOffset;
+    }
+
+    @Override
+    public char getSymbol() {
+        return symbol;
     }
 }

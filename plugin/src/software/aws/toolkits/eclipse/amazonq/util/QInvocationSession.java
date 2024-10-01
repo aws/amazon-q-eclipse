@@ -298,6 +298,7 @@ public final class QInvocationSession extends QResource {
     public void decrementCurrentSuggestionIndex() {
         if (suggestionsContext != null) {
             suggestionsContext.decrementIndex();
+            primeListeners();
             getViewer().getTextWidget().redraw();
         }
     }
@@ -305,6 +306,7 @@ public final class QInvocationSession extends QResource {
     public void incrementCurentSuggestionIndex() {
         if (suggestionsContext != null) {
             suggestionsContext.incrementIndex();
+            primeListeners();
             getViewer().getTextWidget().redraw();
         }
     }
@@ -368,10 +370,10 @@ public final class QInvocationSession extends QResource {
         closingBrackets = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
+        inputListener.beforeRemoval();
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
-        inputListener.beforeRemoval();
         widget.removeVerifyListener(inputListener);
         widget.removeVerifyKeyListener(inputListener);
         paintListener = null;

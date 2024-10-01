@@ -28,11 +28,10 @@ public final class QInlineCaretListener implements CaretListener {
         }
 
         if (qInvocationSessionInstance.isPreviewingSuggestions()) {
+            System.out.println("current offset " + widget.getCaretOffset());
             qInvocationSessionInstance.transitionToDecisionMade(previousLine + 1);
             qInvocationSessionInstance.end();
             return;
         }
-
-        previousLine = widget.getCaretOffset();
     }
 }

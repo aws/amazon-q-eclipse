@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
@@ -20,20 +22,21 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     private int numSuggestionLines = 0;
     private boolean isAutoClosingEnabled = false;
     private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-    private boolean isBracesSetToAutoClose = false;
     private boolean isBracketsSetToAutoClose = false;
+    private boolean isBracesSetToAutoClose = false;
     private boolean isStringSetToAutoClose = false;
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
+    private IQInlineBracket[] brackets;
 
     private enum LastKeyStrokeType {
         NORMAL_INPUT, BACKSPACE, NORMAL_BRACKET, CURLY_BRACES, OPEN_CURLY, OPEN_CURLY_FOLLOWED_BY_NEW_LINE,
     }
 
     /**
-     * During instantiation we would need to perform the following to prime the listeners for typeahead: 
-     * - Note that the settings for auto closing brackets (and braces).  
-     * - Set these auto closing settings to false. 
-     * - Analyze the buffer in current suggestions for bracket pairs.
+     * During instantiation we would need to perform the following to prime the
+     * listeners for typeahead: - Note that the settings for auto closing brackets
+     * (and braces). - Set these auto closing settings to false. - Analyze the
+     * buffer in current suggestions for bracket pairs.
      * 
      * @param widget
      */
@@ -50,44 +53,88 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         preferences.putBoolean("closeStrings", false);
         this.widget = widget;
     }
-    
+
     /**
-     * A routine to prime the class for typeahead related information. These are: 
-     * - Where each bracket pairs are. 
+     * A routine to prime the class for typeahead related information. These are: -
+     * Where each bracket pairs are.
      * 
-     * This is to be called on instantiation as well as when new suggestion has been toggled to. 
+     * This is to be called on instantiation as well as when new suggestion has been
+     * toggled to.
      */
     public void onNewSuggestion() {
-    	lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-    	var qInvocationSessionInstance = QInvocationSession.getInstance();
-    	if (qInvocationSessionInstance == null) {
-    		return;
-    	}
-    	numSuggestionLines = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().split("\\R").length;
-    	suggestionSegments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(qInvocationSessionInstance);
+        lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+        var qInvocationSessionInstance = QInvocationSession.getInstance();
+        if (qInvocationSessionInstance == null) {
+            return;
+        }
+        numSuggestionLines = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().split("\\R").length;
+        List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory
+                .getSegmentsFromSuggestion(qInvocationSessionInstance);
+        brackets = new IQInlineBracket[qInvocationSessionInstance.getCurrentSuggestion().getInsertText().length()];
+        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
+        for (var segment : segments) {
+            if (segment instanceof IQInlineBracket) {
+                int offset = ((IQInlineBracket) segment).getRelevantOffset();
+                int idxInSuggestion = offset - invocationOffset;
+                if (((IQInlineBracket) segment).getSymbol() == '{') {
+                    int firstNewLineAfter = qInvocationSessionInstance.getCurrentSuggestion().getInsertText()
+                            .indexOf('\n', idxInSuggestion);
+                    brackets[firstNewLineAfter] = (IQInlineBracket) segment;
+                } else {
+                    brackets[idxInSuggestion] = (IQInlineBracket) segment;
+                }
+                // We only add close brackets to be rendered separately
+                if (segment instanceof QInlineSuggestionCloseBracketSegment) {
+                    suggestionSegments.add(segment);
+                }
+            } else {
+                suggestionSegments.add(segment);
+            }
+        }
     }
-    
+
     public List<IQInlineSuggestionSegment> getSegments() {
-    	return suggestionSegments;
+        return suggestionSegments;
+    }
+
+    public String getAutoCloseContent() {
+        return null;
     }
 
     /**
-     * Here we need to perform the following before the listener gets removed: 
-     * - If the auto closing of brackets was enabled originally, we should add these closed brackets back into the buffer. 
-     * - Revert the settings back to their original states. 
+     * Here we need to perform the following before the listener gets removed: - If
+     * the auto closing of brackets was enabled originally, we should add these
+     * closed brackets back into the buffer. - Revert the settings back to their
+     * original states.
      */
     public void beforeRemoval() {
-    	IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+        var qSes = QInvocationSession.getInstance();
+        if (qSes == null || !qSes.isPreviewingSuggestions()) {
+            return;
+        }
+        String toAppend = "";
+        for (int i = brackets.length - 1; i >= 0; i--) {
+            var bracket = brackets[i];
+            if (bracket == null) {
+                continue;
+            }
+            String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
+                    isStringSetToAutoClose);
+            if (autoCloseContent == null) {
+                continue;
+            }
+            toAppend += autoCloseContent;
+        }
 
-    	if (isBracketsSetToAutoClose) {
-    		// TODO: put the brackets back to where they belong
-    	}
+        IDocument doc = qSes.getViewer().getDocument();
+        try {
+            doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
+        } catch (BadLocationException e) {
+            PluginLogger.error(e.toString());
+        }
 
-    	if (isBracesSetToAutoClose) {
-    		// TODO: put the braces back to where they belong
-    	}
-
-    	preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
+        IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+        preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
         preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
         preferences.putBoolean("closeStrings", isStringSetToAutoClose);
     }
@@ -121,8 +168,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         case SWT.CR:
             if (lastKeyStrokeType == LastKeyStrokeType.OPEN_CURLY && isAutoClosingEnabled) {
                 lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY_FOLLOWED_BY_NEW_LINE;
-                // we need to unset the vertical indent prior to new line otherwise the line inserted by
-                // eclipse with the closing curly braces would inherit the extra vertical indent.
+                // we need to unset the vertical indent prior to new line otherwise the line
+                // inserted by
+                // eclipse with the closing curly braces would inherit the extra vertical
+                // indent.
                 int line = widget.getLineAtOffset(widget.getCaretOffset());
                 qInvocationSessionInstance.unsetVerticalIndent(line + 1);
             } else {
@@ -135,6 +184,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                 qInvocationSessionInstance.end();
                 return;
             }
+            var bracket = brackets[distanceTraversed];
+            if (bracket != null) {
+                bracket.onDelete();
+            }
             lastKeyStrokeType = LastKeyStrokeType.BACKSPACE;
             return;
         case SWT.ESC:
@@ -142,98 +195,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             qInvocationSessionInstance.end();
             return;
         default:
-        	lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-        	return;
+            lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+            return;
         }
-
-        // If auto closing of brackets are not enabled we can just treat them as normal
-        // inputs
-        // Another scenario
-//        if (!isAutoClosingEnabled) {
-//            return;
-//        }
-
-        // If auto cloising of brackets are enabled, SWT will treat the open bracket
-        // differently.
-        // Input of the brackets will not trigger a call to verifyText.
-        // Thus we have to do the typeahead verification here.
-        // Note that '{' is excluded because
-//        switch (event.character) {
-//        case '<':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '<') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//            return;
-//        case '>':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '>') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//            return;
-//        case '(':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '(') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//            return;
-//        case ')':
-//            if (currentSuggestion.charAt(distanceTraversed++) != ')') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//            return;
-//        case '[':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '[') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//            return;
-//        case ']':
-//            if (currentSuggestion.charAt(distanceTraversed++) != ']') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//            return;
-//        case '{':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '{') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY;
-//            return;
-//        case '}':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '}') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.CURLY_BRACES;
-//            return;
-//        case '"':
-//            if (currentSuggestion.charAt(distanceTraversed++) != '"') {
-//                qInvocationSessionInstance.transitionToDecisionMade();
-//                qInvocationSessionInstance.end();
-//                return;
-//            }
-//            lastKeyStrokeType = LastKeyStrokeType.NORMAL_BRACKET;
-//        default:
-//        }
-//
-//        lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
     }
 
     @Override
@@ -256,17 +220,28 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
         String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
         int currentOffset = widget.getCaretOffset();
-		qInvocationSessionInstance
-				.setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
+        qInvocationSessionInstance
+                .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
 
-		boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
-		if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-			qInvocationSessionInstance.transitionToDecisionMade();
-			qInvocationSessionInstance.end();
-			return;
-		}
-		distanceTraversed += input.length();
-	}
+        boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
+        if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
+//            System.out.println("input is: "
+//                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+//            System.out.println("suggestion is: "
+//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length() + 1)
+//                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+            qInvocationSessionInstance.transitionToDecisionMade();
+            qInvocationSessionInstance.end();
+            return;
+        }
+        for (int i = distanceTraversed; i < distanceTraversed + input.length() + 1; i++) {
+            var bracket = brackets[i];
+            if (bracket != null) {
+                bracket.onTypeOver();
+            }
+        }
+        distanceTraversed += input.length();
+    }
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {
         boolean res;
@@ -277,7 +252,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         }
         return res;
     }
-    
+
     public int getNumSuggestionLines() {
         return numSuggestionLines;
     }

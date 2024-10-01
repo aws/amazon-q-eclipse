@@ -54,7 +54,11 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case CHAT_LINK_CLICK:
             case CHAT_SOURCE_LINK_CLICK:
                 InfoLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params, InfoLinkClickParams.class);
-                handleExternalLinkClick(infoLinkClickParams.getLink());
+                var link = infoLinkClickParams.getLink();
+                if (link == null || link.isEmpty()) {
+                    throw new IllegalArgumentException("Link parameter cannot be null or empty");
+                }
+                handleExternalLinkClick(link);
                 break;
             case CHAT_READY:
                 chatCommunicationManager.sendMessageToChatServer(command, params);

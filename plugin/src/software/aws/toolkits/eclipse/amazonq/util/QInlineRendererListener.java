@@ -31,13 +31,14 @@ public class QInlineRendererListener implements PaintListener {
 		var invocationLine = widget.getLineAtOffset(qInvocationSessionInstance.getInvocationOffset());
 		var segments = qInvocationSessionInstance.getSegments();
 		var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+		int numSuggestionLines = qInvocationSessionInstance.getNumSuggestionLines();
 
 		if (caretLine == invocationLine && shouldIndentVertically(widget, caretLine)
 				&& qInvocationSessionInstance.isPreviewingSuggestions()) {
 			Point textExtent = gc.stringExtent(" ");
-			int height = textExtent.y * (segments.size() - 1);
+			int height = textExtent.y * (numSuggestionLines - 1);
 			qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
-		} else if (caretLine + 1 == (invocationLine + segments.size())) {
+		} else if (caretLine + 1 == (invocationLine + numSuggestionLines)) {
 			qInvocationSessionInstance.unsetVerticalIndent(caretLine + 1);
 		}
 

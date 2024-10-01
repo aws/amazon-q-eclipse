@@ -6,9 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.widgets.Display;
-
 public class IQInlineSuggestionSegmentFactory {
     private enum BracketType {
         OPEN, CLOSE, NADA;
@@ -34,20 +31,18 @@ public class IQInlineSuggestionSegmentFactory {
                                                                  // something more robust
                 sb = new StringBuilder(currentLine);
             }
-            
-            System.out.println("At line: " + i);
+
             for (int j = 0; j < currentLine.length(); j++) {
                 char c = currentLine.charAt(j);
                 switch (getBracketType(unresolvedBrackets, suggestion, distanceTraversed + j)) {
                 case OPEN:
-                    var openBracket = new QInlineSuggestionOpenBracketSegment(startOffset + j, i, j,
-                            c);
+                    var openBracket = new QInlineSuggestionOpenBracketSegment(startOffset + j, i, j, c);
                     unresolvedBrackets.push(openBracket);
                     break;
                 case CLOSE:
                     if (!unresolvedBrackets.isEmpty()) {
-                        var closeBracket = new QInlineSuggestionCloseBracketSegment(startOffset + j,
-                                i, currentLine.substring(0, j), c);
+                        var closeBracket = new QInlineSuggestionCloseBracketSegment(startOffset + j, i,
+                                currentLine.substring(0, j), c);
                         var top = unresolvedBrackets.pop();
                         if (top.isAMatch(closeBracket)) {
                             top.pairUp(closeBracket);
@@ -69,22 +64,43 @@ public class IQInlineSuggestionSegmentFactory {
 
     private static BracketType getBracketType(Stack<QInlineSuggestionOpenBracketSegment> unresolvedBrackets,
             String input, int idx) {
-        char c = input.charAt(idx);
-        if (isCloseBracket(c)) {
+        if (isCloseBracket(input, idx, unresolvedBrackets)) {
             // TODO: enrich logic here to eliminate false positive
             return BracketType.CLOSE;
-        } else if (isOpenBracket(c)) {
+        } else if (isOpenBracket(input, idx)) {
             // TODO: enrich logic here to eliminate false positive
             return BracketType.OPEN;
         }
         return BracketType.NADA;
     }
 
-    private static boolean isCloseBracket(char c) {
-        return c == ')' || c == ']' || c == '}' || c == '>';
+    private static boolean isCloseBracket(String input, int idx,
+            Stack<QInlineSuggestionOpenBracketSegment> unresolvedBrackets) {
+        char c = input.charAt(idx);
+        boolean isBracket = c == ')' || c == ']' || c == '}' || c == '>' || c == '"' || c == '\'';
+        if (!isBracket) {
+            return false;
+        }
+        if (c == '"' || c == '\'') {
+            return !unresolvedBrackets.isEmpty() && unresolvedBrackets.peek().symbol == c;
+        }
+        // TODO: enrich this check to eliminate false positives
+        if (idx > 0 && Character.isWhitespace(input.charAt(idx - 1)) && c == '>') {
+            return false;
+        }
+        return true;
     }
 
-    private static boolean isOpenBracket(char c) {
-        return c == '(' || c == '[' || c == '{' || c == '<';
+    private static boolean isOpenBracket(String input, int idx) {
+        char c = input.charAt(idx);
+        boolean isBracket = c == '(' || c == '[' || c == '{' || c == '<' || c == '"' || c == '\'';
+        if (!isBracket) {
+            return false;
+        }
+        // TODO: enrich this check to eliminate false postives
+        if (idx > 0 && Character.isWhitespace(input.charAt(idx - 1)) && c == '<') {
+            return false;
+        }
+        return true;
     }
 }

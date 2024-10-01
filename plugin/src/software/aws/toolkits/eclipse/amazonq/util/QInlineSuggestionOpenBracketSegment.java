@@ -5,12 +5,11 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Point;
 
 public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSegment {
     private QInlineSuggestionCloseBracketSegment closeBracket;
     public char symbol;
-    private int caretOffset;
+    public int caretOffset;
     private int idxInLine;
     private int lineInSuggestion;
 

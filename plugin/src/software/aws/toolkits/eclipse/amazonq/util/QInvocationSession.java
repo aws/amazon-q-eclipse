@@ -349,6 +349,10 @@ public final class QInvocationSession extends QResource {
     	return inputListener.getSegments();
     }
     
+    public int getNumSuggestionLines() {
+        return inputListener.getNumSuggestionLines();
+    }
+    
     public void primeListeners() {
     	inputListener.onNewSuggestion();
     }

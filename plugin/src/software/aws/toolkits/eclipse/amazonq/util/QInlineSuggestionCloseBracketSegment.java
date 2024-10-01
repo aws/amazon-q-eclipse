@@ -5,13 +5,14 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Display;
 
 public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment {
     private QInlineSuggestionOpenBracketSegment openBracket;
     public char symbol;
-    private int caretOffset;
+    public int caretOffset;
     private int lineInSuggestion;
     private String text;
     private Color color = new Color(Display.getCurrent(), 255, 0, 0);
@@ -46,14 +47,27 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
         var widget = qInvocationSessionInstance.getViewer().getTextWidget();
 
         int x, y;
-        int invocationLine = widget.getLineAtOffset(qInvocationSessionInstance.getInvocationOffset());
+        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
+        int invocationLine = widget.getLineAtOffset(invocationOffset);
         int lineHt = widget.getLineHeight();
         int fontHt = gc.getFontMetrics().getHeight();
+        // educated guess:
+        int endPadding = gc.getAdvanceWidth(symbol) / 4;
         y = (invocationLine + lineInSuggestion + 1) * lineHt - fontHt;
-        x = gc.textExtent(text).x;
+        x = gc.textExtent(text).x + endPadding;
+        if (lineInSuggestion == 0) {
+            x += widget.getLocationAtOffset(invocationOffset).x;
+        }
 
-        gc.setForeground(color);
-        gc.setFont(qInvocationSessionInstance.getInlineTextFont());
+        if (currentCaretOffset > openBracket.caretOffset) {
+            Font typedFont = widget.getFont();
+//            Color typedColor = widget.getForeground();
+            gc.setForeground(color);
+            gc.setFont(typedFont);
+        } else {
+            gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
+            gc.setFont(qInvocationSessionInstance.getInlineTextFont());
+        }
         gc.drawText(String.valueOf(symbol), x, y, true);
     }
 }

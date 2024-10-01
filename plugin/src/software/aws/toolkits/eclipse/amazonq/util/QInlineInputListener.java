@@ -17,10 +17,12 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
     private StyledText widget = null;
     private int distanceTraversed = 0;
+    private int numSuggestionLines = 0;
     private boolean isAutoClosingEnabled = false;
     private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
     private boolean isBracesSetToAutoClose = false;
     private boolean isBracketsSetToAutoClose = false;
+    private boolean isStringSetToAutoClose = false;
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
 
     private enum LastKeyStrokeType {
@@ -42,8 +44,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         // Therefore if you can't find it, it has been set to true.
         isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
         isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
+        isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
         preferences.putBoolean("closeBraces", false);
         preferences.putBoolean("closeBrackets", false);
+        preferences.putBoolean("closeStrings", false);
         this.widget = widget;
     }
     
@@ -59,7 +63,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     	if (qInvocationSessionInstance == null) {
     		return;
     	}
-    	String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
+    	numSuggestionLines = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().split("\\R").length;
     	suggestionSegments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(qInvocationSessionInstance);
     }
     
@@ -85,6 +89,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
     	preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
         preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
+        preferences.putBoolean("closeStrings", isStringSetToAutoClose);
     }
 
     @Override
@@ -256,9 +261,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
 		boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
 		if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-			System.out.println("Text typed: " + input);
-			System.out.println("Text in suggestion: "
-					+ currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length()));
 			qInvocationSessionInstance.transitionToDecisionMade();
 			qInvocationSessionInstance.end();
 			return;
@@ -274,5 +276,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
         }
         return res;
+    }
+    
+    public int getNumSuggestionLines() {
+        return numSuggestionLines;
     }
 }

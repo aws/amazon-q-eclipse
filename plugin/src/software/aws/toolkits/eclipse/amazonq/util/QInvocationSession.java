@@ -127,7 +127,8 @@ public final class QInvocationSession extends QResource {
                             .inlineCompletionWithReferences(params).thenApply(result -> result.getItems()).get();
 
                     Display.getDefault().asyncExec(() -> {
-                        if (newSuggestions == null || newSuggestions.isEmpty()) {
+                        if (newSuggestions == null || newSuggestions.isEmpty() || session
+                                .getInvocationOffset() != session.getViewer().getTextWidget().getCaretOffset()) {
                             end();
                             return;
                         }

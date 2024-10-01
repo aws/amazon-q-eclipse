@@ -7,40 +7,39 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HexFormat;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
-public class LspEncryption {
-    
+public final class LspEncryption {
+
     private static LspEncryption instance;
     private String key;
-    
+
     private LspEncryption() {
         key = generateRandomKey();
     }
-    
+
     public static synchronized LspEncryption getInstance() {
         if (instance == null) {
             instance = new LspEncryption();
-        } 
+        }
         return instance;
     }
-    
-    public String encrypt(String message) {
+
+    public String encrypt(final String message) {
         // TODO
         return "";
     }
-    
-    public String decrypt(String encryptedMessage) {
+
+    public String decrypt(final String encryptedMessage) {
         // TODO
         return "";
     }
-    
-    public void initializeEncrypedCommunication(OutputStream serverStdin) throws IOException {
+
+    public void initializeEncrypedCommunication(final OutputStream serverStdin) throws IOException {
         String message = String.format("{\"version\": \"1.0\",\"key\":\"%s\",\"mode\":\"JWT\"}", base64Encode(key));
         sendMessageToServer(serverStdin, message);
     }
 
-    private String base64Encode(String str) {
+    private String base64Encode(final String str) {
         byte[] encodedBytes = Base64.getEncoder().encode(str.getBytes(StandardCharsets.UTF_8));
         return new String(encodedBytes, StandardCharsets.UTF_8);
     }
@@ -52,10 +51,9 @@ public class LspEncryption {
 
         return HexFormat.of().formatHex(randomBytes);
     }
-    
-    private void sendMessageToServer(OutputStream serverStdin, String message) throws IOException {
+
+    private void sendMessageToServer(final OutputStream serverStdin, final String message) throws IOException {
         if (serverStdin != null) {
-            PluginLogger.info("Sending message: " + message);
             serverStdin.write((message + "\n").getBytes());
             serverStdin.flush();
         } else {

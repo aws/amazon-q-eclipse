@@ -5,11 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -45,12 +41,9 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
         OutputStream outputStream = getOutputStream();
 
-        PluginLogger.info("Initializing encrypted communication with amazon Q Lsp Server...");
+        PluginLogger.info("Initializing encrypted communication with Amazon Q Lsp Server");
 
         LspEncryption lspEncryption = LspEncryption.getInstance();
         lspEncryption.initializeEncrypedCommunication(outputStream);
     }
-
-    
-
 }

@@ -28,7 +28,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     private IQInlineBracket[] brackets;
 
     private enum LastKeyStrokeType {
-        NORMAL_INPUT, BACKSPACE, NORMAL_BRACKET, CURLY_BRACES, OPEN_CURLY,
+        NORMAL_INPUT, BACKSPACE,
     }
 
     /**

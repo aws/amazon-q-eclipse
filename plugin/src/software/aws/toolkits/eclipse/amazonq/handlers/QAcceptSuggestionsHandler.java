@@ -31,12 +31,14 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
 
     private void insertSuggestion(final String suggestion) {
         try {
-            var viewer = QInvocationSession.getInstance().getViewer();
+            var qSes = QInvocationSession.getInstance();
+            var viewer = qSes.getViewer();
             IDocument doc = viewer.getDocument();
             var widget = viewer.getTextWidget();
             var insertOffset = widget.getCaretOffset();
-            doc.replace(insertOffset, 0, suggestion);
-            widget.setCaretOffset(insertOffset + suggestion.length());
+            String adjustedSuggestion = suggestion.substring(widget.getCaretOffset() - qSes.getInvocationOffset());
+            doc.replace(insertOffset, 0, adjustedSuggestion);
+            widget.setCaretOffset(insertOffset + adjustedSuggestion.length());
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
             QInvocationSession.getInstance().executeCallbackForCodeReference();
             QInvocationSession.getInstance().end();

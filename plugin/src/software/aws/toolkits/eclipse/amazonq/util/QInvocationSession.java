@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
@@ -11,6 +13,9 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchListener;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
@@ -57,6 +62,25 @@ public final class QInvocationSession extends QResource {
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
+            IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+            boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
+            boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
+            boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+
+            PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
+                @Override
+                public boolean preShutdown(IWorkbench workbench, boolean forced) {
+                    preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
+                    preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
+                    preferences.putBoolean("closeStrings", isStringSetToAutoClose);
+                    return true;
+                }
+
+                @Override
+                public void postShutdown(IWorkbench workbench) {
+                    return;
+                }
+            });
         }
         return instance;
     }

@@ -121,4 +121,9 @@ public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSe
     public char getSymbol() {
         return symbol;
     }
+
+    @Override
+    public void dispose() {
+        // noop
+    }
 }

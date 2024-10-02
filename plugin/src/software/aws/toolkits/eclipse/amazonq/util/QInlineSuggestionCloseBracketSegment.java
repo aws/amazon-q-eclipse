@@ -4,10 +4,10 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.widgets.Display;
 
 public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
     private QInlineSuggestionOpenBracketSegment openBracket;
@@ -15,13 +15,22 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
     public int caretOffset;
     private int lineInSuggestion;
     private String text;
-    private Color color = new Color(Display.getCurrent(), 255, 0, 0);
+    private Font adjustedTypedFont;
 
     public QInlineSuggestionCloseBracketSegment(int caretOffset, int lineInSuggestion, String text, char symbol) {
         this.caretOffset = caretOffset;
         this.symbol = symbol;
         this.lineInSuggestion = lineInSuggestion;
         this.text = text;
+
+        var qInvocationSessionInstance = QInvocationSession.getInstance();
+        var widget = qInvocationSessionInstance.getViewer().getTextWidget();
+        Font typedFont = widget.getFont();
+        var fontData = typedFont.getFontData();
+        for (var fd : fontData) {
+            fd.setStyle(fd.getStyle() | SWT.BOLD);
+        }
+        adjustedTypedFont = new Font(widget.getDisplay(), fontData);
     }
 
     @Override
@@ -62,10 +71,9 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
         }
 
         if (currentCaretOffset > openBracket.caretOffset) {
-            Font typedFont = widget.getFont();
-//            Color typedColor = widget.getForeground();
-            gc.setForeground(color);
-            gc.setFont(typedFont);
+            Color typedColor = widget.getForeground();
+            gc.setForeground(typedColor);
+            gc.setFont(adjustedTypedFont);
         } else {
             gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
             gc.setFont(qInvocationSessionInstance.getInlineTextFont());
@@ -98,5 +106,10 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
     @Override
     public char getSymbol() {
         return symbol;
+    }
+
+    @Override
+    public void dispose() {
+        adjustedTypedFont.dispose();
     }
 }

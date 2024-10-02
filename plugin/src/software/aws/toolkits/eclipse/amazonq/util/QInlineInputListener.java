@@ -122,6 +122,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                 continue;
             }
             toAppend += autoCloseContent;
+            bracket.dispose();
         }
 
         IDocument doc = qSes.getViewer().getDocument();

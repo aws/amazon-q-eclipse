@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import software.amazon.awssdk.utils.StringUtils;
@@ -28,7 +29,9 @@ import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 
 public final class CustomizationDialog extends Dialog {
 
@@ -40,6 +43,7 @@ public final class CustomizationDialog extends Dialog {
     private List<Customization> customizationsResponse;
     private ResponseSelection responseSelection;
     private String selectedCustomisationArn;
+    private String selectedCustomizationName;
 
     public enum ResponseSelection {
         AMAZON_Q_FOUNDATION_DEFAULT,
@@ -104,6 +108,13 @@ public final class CustomizationDialog extends Dialog {
         return this.selectedCustomisationArn;
     }
 
+    private void showNotification(final String customizationName) {
+        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                Constants.IDE_CUSTOMIZATION_NOTIFICATION_TITLE,
+                String.format(Constants.IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE, customizationName));
+        notification.open();
+    }
+
     @Override
     protected void createButtonsForButtonBar(final Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, "Select", true);
@@ -115,6 +126,7 @@ public final class CustomizationDialog extends Dialog {
         PluginLogger.info(String.format("Select pressed with responseSelection:%s and selectedArn:%s", this.responseSelection, this.selectedCustomisationArn));
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
             PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+            Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
         } else if (this.selectedCustomisationArn != null) {
             PluginStore.put(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
             Map<String, Object> updatedSettings = new HashMap<>();
@@ -122,6 +134,7 @@ public final class CustomizationDialog extends Dialog {
             internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.selectedCustomisationArn);
             updatedSettings.put(Constants.LSP_CONFIGURATION_KEY, internalMap);
             ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings));
+            Display.getCurrent().asyncExec(() -> showNotification(String.format("%s customization", this.selectedCustomizationName)));
         }
         super.okPressed();
     }
@@ -176,7 +189,7 @@ public final class CustomizationDialog extends Dialog {
         int defaultSelectedDropdownIndex = -1;
         for (int index = 0; index < customizations.size(); index++) {
             addFormattedOption(combo, customizations.get(index).getName(), customizations.get(index).getDescription());
-            combo.setData(String.format("%s", index), customizations.get(index).getArn());
+            combo.setData(String.format("%s", index), customizations.get(index));
             if (this.responseSelection.equals(ResponseSelection.CUSTOMIZATION)
                     && StringUtils.isNotBlank(this.selectedCustomisationArn)
                     && this.selectedCustomisationArn.equals(customizations.get(index).getArn())) {
@@ -192,9 +205,10 @@ public final class CustomizationDialog extends Dialog {
             public void widgetSelected(final SelectionEvent e) {
                 int selectedIndex = combo.getSelectionIndex();
                 String selectedOption = combo.getItem(selectedIndex);
-                String selectedCustomizationArn = (String) combo.getData(String.valueOf(selectedIndex));
-                CustomizationDialog.this.selectedCustomisationArn = selectedCustomizationArn;
-                PluginLogger.info(String.format("Selected option:%s with arn:%s", selectedOption, selectedCustomizationArn));
+                Customization selectedCustomization = (Customization) combo.getData(String.valueOf(selectedIndex));
+                CustomizationDialog.this.selectedCustomisationArn = selectedCustomization.getArn();
+                CustomizationDialog.this.selectedCustomizationName = selectedCustomization.getName();
+                PluginLogger.info(String.format("Selected option:%s with arn:%s", selectedOption, selectedCustomization.getArn()));
             }
         });
     }

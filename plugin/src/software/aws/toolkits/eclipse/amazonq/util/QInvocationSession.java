@@ -181,8 +181,8 @@ public final class QInvocationSession extends QResource {
             System.out.println(element);
         }
         if (isActive()) {
-            state = QInvocationSessionState.INACTIVE;
             dispose();
+            state = QInvocationSessionState.INACTIVE;
             // End session logic here
             System.out.println("Session ended.");
         } else {

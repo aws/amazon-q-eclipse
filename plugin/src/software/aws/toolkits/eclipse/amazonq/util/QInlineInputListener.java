@@ -99,10 +99,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         return suggestionSegments;
     }
 
-    public String getAutoCloseContent() {
-        return null;
-    }
-
     /**
      * Here we need to perform the following before the listener gets removed: - If
      * the auto closing of brackets was enabled originally, we should add these
@@ -111,7 +107,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
      */
     public void beforeRemoval() {
         var qSes = QInvocationSession.getInstance();
-        if (qSes == null || !qSes.isPreviewingSuggestions()) {
+        if (qSes == null || !qSes.isActive() || brackets == null) {
             return;
         }
         String toAppend = "";
@@ -228,7 +224,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             qInvocationSessionInstance.end();
             return;
         }
-        for (int i = distanceTraversed; i < distanceTraversed + input.length() + 1; i++) {
+        for (int i = distanceTraversed; i < distanceTraversed + input.length(); i++) {
             var bracket = brackets[i];
             if (bracket != null) {
                 bracket.onTypeOver();

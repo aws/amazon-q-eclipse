@@ -14,8 +14,10 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 
-public final class QInlineInputListener implements VerifyListener, VerifyKeyListener {
+public final class QInlineInputListener implements VerifyListener, VerifyKeyListener, MouseListener {
 
     private StyledText widget = null;
     private int distanceTraversed = 0;
@@ -35,8 +37,8 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
      * During instantiation we would need to perform the following to prime the
      * listeners for typeahead:
      * <ul>
-     *      <li>Set these auto closing settings to false.</li>
-     *      <li>Analyze the buffer in current suggestions for bracket pairs.</li>
+     * <li>Set these auto closing settings to false.</li>
+     * <li>Analyze the buffer in current suggestions for bracket pairs.</li>
      * </ul>
      * 
      * @param widget
@@ -120,10 +122,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             }
             String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
                     isStringSetToAutoClose);
-            if (autoCloseContent == null) {
-                continue;
+            if (autoCloseContent != null) {
+                toAppend += autoCloseContent;
             }
-            toAppend += autoCloseContent;
             bracket.dispose();
         }
 
@@ -253,5 +254,29 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
     public int getNumSuggestionLines() {
         return numSuggestionLines;
+    }
+
+    @Override
+    public void mouseDoubleClick(MouseEvent e) {
+        return;
+    }
+
+    @Override
+    public void mouseDown(MouseEvent e) {
+        // For the most part setting status here is pointless (for now)
+        // This is because the only other component that is relying on CaretMovementReason
+        // (the CaretListener) is called _before_ the mouse listener
+        // For consistency sake, we'll stick with updating it now.
+        var qInvocationSessionInstance = QInvocationSession.getInstance();
+        qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOUSE);
+        int lastKnownLine = qInvocationSessionInstance.getLastKnownLine();
+        qInvocationSessionInstance.transitionToDecisionMade(lastKnownLine + 1);
+        qInvocationSessionInstance.end();
+        return;
+    }
+
+    @Override
+    public void mouseUp(MouseEvent e) {
+        return;
     }
 }

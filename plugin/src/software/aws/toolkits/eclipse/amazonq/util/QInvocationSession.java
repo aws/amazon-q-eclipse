@@ -96,6 +96,7 @@ public final class QInvocationSession extends QResource {
             inputListener = new QInlineInputListener(widget);
             widget.addVerifyListener(inputListener);
             widget.addVerifyKeyListener(inputListener);
+            widget.addMouseListener(inputListener);
 
             caretListener = new QInlineCaretListener(widget);
             widget.addCaretListener(caretListener);
@@ -141,8 +142,8 @@ public final class QInvocationSession extends QResource {
 
                         // TODO: remove print
                         // Update the UI with the results
-						System.out.println("Suggestions: " + newSuggestions.stream()
-								.map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
+                        System.out.println("Suggestions: " + newSuggestions.stream()
+                                .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
                         System.out.println("Total suggestion number: " + newSuggestions.size());
 
                         transitionToPreviewingState();
@@ -320,7 +321,8 @@ public final class QInvocationSession extends QResource {
         return hasBeenTypedahead;
     }
 
-    public void registerCallbackForCodeReference(final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
+    public void registerCallbackForCodeReference(
+            final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
         this.codeReferenceAcceptanceCallback = codeReferenceAcceptanceCallback;
     }
 
@@ -347,17 +349,21 @@ public final class QInvocationSession extends QResource {
             unsetVerticalIndent = null;
         }
     }
-    
+
     public List<IQInlineSuggestionSegment> getSegments() {
-    	return inputListener.getSegments();
+        return inputListener.getSegments();
     }
-    
+
     public int getNumSuggestionLines() {
         return inputListener.getNumSuggestionLines();
     }
-    
+
     public void primeListeners() {
-    	inputListener.onNewSuggestion();
+        inputListener.onNewSuggestion();
+    }
+
+    public int getLastKnownLine() {
+        return ((QInlineCaretListener) caretListener).getLastKnownLine();
     }
 
     // Additional methods for the session can be added here
@@ -377,6 +383,7 @@ public final class QInvocationSession extends QResource {
         widget.removeCaretListener(caretListener);
         widget.removeVerifyListener(inputListener);
         widget.removeVerifyKeyListener(inputListener);
+        widget.removeMouseListener(inputListener);
         paintListener = null;
         caretListener = null;
         inputListener = null;

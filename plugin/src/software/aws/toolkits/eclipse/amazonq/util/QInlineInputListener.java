@@ -20,7 +20,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     private StyledText widget = null;
     private int distanceTraversed = 0;
     private int numSuggestionLines = 0;
-    private boolean isAutoClosingEnabled = false;
     private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
     private boolean isBracketsSetToAutoClose = false;
     private boolean isBracesSetToAutoClose = false;
@@ -29,7 +28,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     private IQInlineBracket[] brackets;
 
     private enum LastKeyStrokeType {
-        NORMAL_INPUT, BACKSPACE, NORMAL_BRACKET, CURLY_BRACES, OPEN_CURLY, OPEN_CURLY_FOLLOWED_BY_NEW_LINE,
+        NORMAL_INPUT, BACKSPACE, NORMAL_BRACKET, CURLY_BRACES, OPEN_CURLY,
     }
 
     /**
@@ -163,30 +162,15 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         // preview's lifetime:
         // - CR (new line)
         // - BS (backspace)
-        String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
         switch (event.keyCode) {
         case SWT.CR:
-            if (lastKeyStrokeType == LastKeyStrokeType.OPEN_CURLY && isAutoClosingEnabled) {
-                lastKeyStrokeType = LastKeyStrokeType.OPEN_CURLY_FOLLOWED_BY_NEW_LINE;
-                // we need to unset the vertical indent prior to new line otherwise the line
-                // inserted by
-                // eclipse with the closing curly braces would inherit the extra vertical
-                // indent.
-                int line = widget.getLineAtOffset(widget.getCaretOffset());
-                qInvocationSessionInstance.unsetVerticalIndent(line + 1);
-            } else {
-                lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-            }
+            lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
             return;
         case SWT.BS:
-            if (--distanceTraversed < 0) {
+            if (distanceTraversed == 0) {
                 qInvocationSessionInstance.transitionToDecisionMade();
                 qInvocationSessionInstance.end();
                 return;
-            }
-            var bracket = brackets[distanceTraversed];
-            if (bracket != null) {
-                bracket.onDelete();
             }
             lastKeyStrokeType = LastKeyStrokeType.BACKSPACE;
             return;
@@ -202,13 +186,19 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
     @Override
     public void verifyText(final VerifyEvent event) {
-        String input = event.text;
         switch (lastKeyStrokeType) {
         case NORMAL_INPUT:
             break;
-        case OPEN_CURLY_FOLLOWED_BY_NEW_LINE:
-            input = '\n' + event.text.split("\\R")[1];
-            break;
+        case BACKSPACE:
+            int numCharDeleted = event.end - event.start;
+            for (int i = 1; i <= numCharDeleted; i++) {
+                var bracket = brackets[distanceTraversed + i];
+                if (bracket != null) {
+                    bracket.onDelete();
+                }
+            }
+            distanceTraversed -= numCharDeleted;
+            return;
         default:
             return;
         }
@@ -219,6 +209,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         }
 
         String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
+        String input = event.text;
         int currentOffset = widget.getCaretOffset();
         qInvocationSessionInstance
                 .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);

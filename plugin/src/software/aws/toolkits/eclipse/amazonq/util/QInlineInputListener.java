@@ -66,6 +66,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         if (qInvocationSessionInstance == null) {
             return;
         }
+        if (!suggestionSegments.isEmpty()) {
+            suggestionSegments.clear();
+        }
         numSuggestionLines = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().split("\\R").length;
         List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory
                 .getSegmentsFromSuggestion(qInvocationSessionInstance);

@@ -23,14 +23,10 @@ public class IQInlineSuggestionSegmentFactory {
             int startOffset, endOffset;
             String currentLine = suggestionLines[i];
             StringBuilder sb;
-            if (i == 0) {
-                startOffset = currentOffset;
-                sb = new StringBuilder(currentLine.trim());
-            } else {
-                startOffset = currentOffset + distanceTraversed; // this line might not exist yet so we need to think of
-                                                                 // something more robust
-                sb = new StringBuilder(currentLine);
-            }
+
+            startOffset = currentOffset + distanceTraversed; // this line might not exist yet so we need to think of
+                                                             // something more robust
+            sb = new StringBuilder(currentLine);
 
             String currentIndent;
             if (i == 0) {
@@ -117,7 +113,7 @@ public class IQInlineSuggestionSegmentFactory {
         }
         return true;
     }
-    
+
     private static int idxOfFirstNonwhiteSpace(String input) {
         for (int i = 0; i < input.length(); i++) {
             if (input.charAt(i) != ' ' && input.charAt(i) != '\t') {

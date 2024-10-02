@@ -216,7 +216,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             return;
         }
 
-        String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().trim();
+        String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
         String input = event.text;
         int currentOffset = widget.getCaretOffset();
         qInvocationSessionInstance

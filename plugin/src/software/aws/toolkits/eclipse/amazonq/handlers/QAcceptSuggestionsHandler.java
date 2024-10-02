@@ -36,7 +36,8 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
             IDocument doc = viewer.getDocument();
             var widget = viewer.getTextWidget();
             var insertOffset = widget.getCaretOffset();
-            String adjustedSuggestion = suggestion.substring(widget.getCaretOffset() - qSes.getInvocationOffset());
+            int startIdx = widget.getCaretOffset() - qSes.getInvocationOffset();
+            String adjustedSuggestion = suggestion.substring(startIdx);
             doc.replace(insertOffset, 0, adjustedSuggestion);
             widget.setCaretOffset(insertOffset + adjustedSuggestion.length());
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();

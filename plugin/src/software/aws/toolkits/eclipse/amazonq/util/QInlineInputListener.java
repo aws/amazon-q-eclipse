@@ -40,7 +40,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
      * <li>Set these auto closing settings to false.</li>
      * <li>Analyze the buffer in current suggestions for bracket pairs.</li>
      * </ul>
-     * 
+     *
      * @param widget
      */
     public QInlineInputListener(final StyledText widget) {
@@ -58,9 +58,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     /**
-     * A routine to prime the class for typeahead related information. These are: -
-     * Where each bracket pairs are.
-     * 
+     * A routine to prime the class for typeahead related information. These are:
+     * <ul>
+     * <li>Where each bracket pairs are.</li>
+     * </ul>
+     *
      * This is to be called on instantiation as well as when new suggestion has been
      * toggled to.
      */
@@ -104,10 +106,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     /**
-     * Here we need to perform the following before the listener gets removed: - If
-     * the auto closing of brackets was enabled originally, we should add these
-     * closed brackets back into the buffer. - Revert the settings back to their
-     * original states.
+     * Here we need to perform the following before the listener gets removed:
+     * <ul>
+     * <li>If the auto closing of brackets was enabled originally, we should add these closed brackets back into the buffer.</li>
+     * <li>Revert the settings back to their original states.</li>
+     * </ul>
      */
     public void beforeRemoval() {
         var qSes = QInvocationSession.getInstance();
@@ -257,14 +260,15 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     @Override
-    public void mouseDoubleClick(MouseEvent e) {
+    public void mouseDoubleClick(final MouseEvent e) {
         return;
     }
 
     @Override
-    public void mouseDown(MouseEvent e) {
+    public void mouseDown(final MouseEvent e) {
         // For the most part setting status here is pointless (for now)
-        // This is because the only other component that is relying on CaretMovementReason
+        // This is because the only other component that is relying on
+        // CaretMovementReason
         // (the CaretListener) is called _before_ the mouse listener
         // For consistency sake, we'll stick with updating it now.
         var qInvocationSessionInstance = QInvocationSession.getInstance();
@@ -276,7 +280,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     @Override
-    public void mouseUp(MouseEvent e) {
+    public void mouseUp(final MouseEvent e) {
         return;
     }
 }

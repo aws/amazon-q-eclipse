@@ -4,47 +4,47 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.eclipse.swt.graphics.GC;
 
-public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
+public final class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
     private QInlineSuggestionCloseBracketSegment closeBracket;
-    public char symbol;
-    public String indent;
-    public int caretOffset;
+    private char symbol;
+    private String indent;
+    private int caretOffset;
     private boolean isResolved = true;
 
-    public QInlineSuggestionOpenBracketSegment(int caretOffset, String indent, char symbol) {
+    public QInlineSuggestionOpenBracketSegment(final int caretOffset, final String indent, final char symbol) {
         this.caretOffset = caretOffset;
         this.symbol = symbol;
         this.indent = indent;
     }
 
     @Override
-    public void pairUp(IQInlineBracket closeBracket) {
+    public void pairUp(final IQInlineBracket closeBracket) {
         this.closeBracket = (QInlineSuggestionCloseBracketSegment) closeBracket;
         if (!closeBracket.hasPairedUp()) {
             closeBracket.pairUp((IQInlineBracket) this);
         }
     }
 
-    public boolean isAMatch(QInlineSuggestionCloseBracketSegment closeBracket) {
+    public boolean isAMatch(final QInlineSuggestionCloseBracketSegment closeBracket) {
         switch (symbol) {
         case '<':
-            return closeBracket.symbol == '>';
+            return closeBracket.getSymbol() == '>';
         case '{':
-            return closeBracket.symbol == '}';
+            return closeBracket.getSymbol() == '}';
         case '(':
-            return closeBracket.symbol == ')';
+            return closeBracket.getSymbol() == ')';
         case '"':
-            return closeBracket.symbol == '"';
+            return closeBracket.getSymbol() == '"';
         case '\'':
-            return closeBracket.symbol == '\'';
+            return closeBracket.getSymbol() == '\'';
         case '[':
-            return closeBracket.symbol == ']';
+            return closeBracket.getSymbol() == ']';
         default:
             return false;
         }
     }
 
-    public void setResolve(boolean isResolved) {
+    public void setResolve(final boolean isResolved) {
         this.isResolved = isResolved;
     }
 
@@ -53,7 +53,7 @@ public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSe
     }
 
     @Override
-    public void render(GC gc, int currentCaretOffset) {
+    public void render(final GC gc, final int currentCaretOffset) {
         // We never separates open brackets from the lines from which they came.
         // This is because there is never a need to highlight open brackets.
         return;
@@ -70,8 +70,8 @@ public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSe
     }
 
     @Override
-    public String getAutoCloseContent(boolean isBracketSetToAutoClose, boolean isBracesSetToAutoClose,
-            boolean isStringSetToAutoClose) {
+    public String getAutoCloseContent(final boolean isBracketSetToAutoClose, final boolean isBracesSetToAutoClose,
+            final boolean isStringSetToAutoClose) {
         if (isResolved) {
             return null;
         }
@@ -124,6 +124,6 @@ public class QInlineSuggestionOpenBracketSegment implements IQInlineSuggestionSe
 
     @Override
     public void dispose() {
-        // noop
+        return;
     }
 }

@@ -69,7 +69,7 @@ public final class QInvocationSession extends QResource {
 
             PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
                 @Override
-                public boolean preShutdown(IWorkbench workbench, boolean forced) {
+                public boolean preShutdown(final IWorkbench workbench, final boolean forced) {
                     preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
                     preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
                     preferences.putBoolean("closeStrings", isStringSetToAutoClose);
@@ -77,7 +77,7 @@ public final class QInvocationSession extends QResource {
                 }
 
                 @Override
-                public void postShutdown(IWorkbench workbench) {
+                public void postShutdown(final IWorkbench workbench) {
                     return;
                 }
             });

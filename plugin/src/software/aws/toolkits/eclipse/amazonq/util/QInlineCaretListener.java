@@ -35,7 +35,7 @@ public final class QInlineCaretListener implements CaretListener {
             return;
         }
     }
-    
+
     public int getLastKnownLine() {
         return previousLine;
     }

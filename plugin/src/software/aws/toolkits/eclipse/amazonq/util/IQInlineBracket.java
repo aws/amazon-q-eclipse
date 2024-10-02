@@ -5,18 +5,18 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import org.eclipse.ui.services.IDisposable;
 
 public interface IQInlineBracket extends IDisposable {
-    public void onTypeOver();
+    void onTypeOver();
 
-    public void onDelete();
+    void onDelete();
 
-    public void pairUp(IQInlineBracket partner);
+    void pairUp(IQInlineBracket partner);
 
-    public boolean hasPairedUp();
+    boolean hasPairedUp();
 
-    public String getAutoCloseContent(boolean isBracketSetToAutoClose, boolean isBracesSetToAutoClose,
+    String getAutoCloseContent(boolean isBracketSetToAutoClose, boolean isBracesSetToAutoClose,
             boolean isStringSetToAutoClose);
 
-    public int getRelevantOffset();
+    int getRelevantOffset();
 
-    public char getSymbol();
+    char getSymbol();
 }

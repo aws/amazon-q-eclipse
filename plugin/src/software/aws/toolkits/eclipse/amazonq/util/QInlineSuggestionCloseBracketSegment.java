@@ -9,15 +9,16 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 
-public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
+public final class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
     private QInlineSuggestionOpenBracketSegment openBracket;
-    public char symbol;
-    public int caretOffset;
+    private char symbol;
+    private int caretOffset;
     private int lineInSuggestion;
     private String text;
     private Font adjustedTypedFont;
 
-    public QInlineSuggestionCloseBracketSegment(int caretOffset, int lineInSuggestion, String text, char symbol) {
+    public QInlineSuggestionCloseBracketSegment(final int caretOffset, final int lineInSuggestion, final String text,
+            final char symbol) {
         this.caretOffset = caretOffset;
         this.symbol = symbol;
         this.lineInSuggestion = lineInSuggestion;
@@ -34,7 +35,7 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
     }
 
     @Override
-    public void pairUp(IQInlineBracket openBracket) {
+    public void pairUp(final IQInlineBracket openBracket) {
         this.openBracket = (QInlineSuggestionOpenBracketSegment) openBracket;
         if (!openBracket.hasPairedUp()) {
             this.openBracket.pairUp(this);
@@ -47,7 +48,7 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
     }
 
     @Override
-    public void render(GC gc, int currentCaretOffset) {
+    public void render(final GC gc, final int currentCaretOffset) {
         if (currentCaretOffset > caretOffset) {
             return;
         }
@@ -57,7 +58,8 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
         }
         var widget = qInvocationSessionInstance.getViewer().getTextWidget();
 
-        int x, y;
+        int x;
+        int y;
         int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
         int invocationLine = widget.getLineAtOffset(invocationOffset);
         int lineHt = widget.getLineHeight();
@@ -70,7 +72,7 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
             x += widget.getLocationAtOffset(invocationOffset).x;
         }
 
-        if (currentCaretOffset > openBracket.caretOffset) {
+        if (currentCaretOffset > openBracket.getRelevantOffset()) {
             Color typedColor = widget.getForeground();
             gc.setForeground(typedColor);
             gc.setFont(adjustedTypedFont);
@@ -92,8 +94,8 @@ public class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionS
     }
 
     @Override
-    public String getAutoCloseContent(boolean isBracketSetToAutoClose, boolean isBracesSetToAutoClose,
-            boolean isStringSetToAutoClose) {
+    public String getAutoCloseContent(final boolean isBracketSetToAutoClose, final boolean isBracesSetToAutoClose,
+            final boolean isStringSetToAutoClose) {
         // This is a noop for close brackets
         return null;
     }

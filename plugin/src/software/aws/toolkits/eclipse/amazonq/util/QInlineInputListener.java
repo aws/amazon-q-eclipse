@@ -33,9 +33,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
     /**
      * During instantiation we would need to perform the following to prime the
-     * listeners for typeahead: - Note that the settings for auto closing brackets
-     * (and braces). - Set these auto closing settings to false. - Analyze the
-     * buffer in current suggestions for bracket pairs.
+     * listeners for typeahead:
+     * <ul>
+     *      <li>Set these auto closing settings to false.</li>
+     *      <li>Analyze the buffer in current suggestions for bracket pairs.</li>
+     * </ul>
      * 
      * @param widget
      */
@@ -190,9 +192,14 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         case NORMAL_INPUT:
             break;
         case BACKSPACE:
+            var qInvocationSessionInstance = QInvocationSession.getInstance();
             int numCharDeleted = event.end - event.start;
+            if (numCharDeleted > distanceTraversed) {
+                qInvocationSessionInstance.transitionToDecisionMade();
+                qInvocationSessionInstance.end();
+            }
             for (int i = 1; i <= numCharDeleted; i++) {
-                var bracket = brackets[distanceTraversed + i];
+                var bracket = brackets[distanceTraversed - i];
                 if (bracket != null) {
                     bracket.onDelete();
                 }

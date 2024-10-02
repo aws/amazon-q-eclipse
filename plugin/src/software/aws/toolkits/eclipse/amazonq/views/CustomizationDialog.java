@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -127,7 +128,7 @@ public final class CustomizationDialog extends Dialog {
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
             PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
             Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
-        } else if (this.selectedCustomisationArn != null) {
+        } else if (StringUtils.isNotBlank(this.selectedCustomisationArn) && StringUtils.isNotBlank(this.selectedCustomizationName)) {
             PluginStore.put(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.selectedCustomisationArn);
             Map<String, Object> updatedSettings = new HashMap<>();
             Map<String, String> internalMap = new HashMap<>();

@@ -7,7 +7,7 @@ public final class SuggestionTextUtil {
     private SuggestionTextUtil() {
     }
 
-    public static String replaceSpacesWithTabs(String input, int tabSize) {
+    public static String replaceSpacesWithTabs(final String input, final int tabSize) {
         StringBuilder result = new StringBuilder();
         String[] lines = input.split("\\r?\\n");
 
@@ -37,7 +37,7 @@ public final class SuggestionTextUtil {
         return result.toString();
     }
 
-    private static String getTabsForSpaces(int numSpaces, int tabSize) {
+    private static String getTabsForSpaces(final int numSpaces, final int tabSize) {
         int numTabs = numSpaces / tabSize;
         StringBuilder tabs = new StringBuilder();
 

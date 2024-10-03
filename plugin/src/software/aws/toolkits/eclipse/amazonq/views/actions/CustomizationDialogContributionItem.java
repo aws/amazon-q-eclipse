@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.jface.action.ContributionItem;
@@ -17,7 +18,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
 import jakarta.inject.Inject;
-import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -73,13 +73,13 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
             public void widgetSelected(final SelectionEvent e) {
                 CustomizationDialog dialog = new CustomizationDialog(shell);
                 dialog.setCustomisationResponse(getCustomizations());
-                String storedCustomizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-                if (StringUtils.isBlank(storedCustomizationArn)) {
+                Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+                if (Objects.isNull(storedCustomization)) {
                     dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
-                    dialog.setSelectedCustomizationArn(null);
+                    dialog.setSelectedCustomization(null);
                 } else {
                     dialog.setResponseSelection(ResponseSelection.CUSTOMIZATION);
-                    dialog.setSelectedCustomizationArn(storedCustomizationArn);
+                    dialog.setSelectedCustomization(storedCustomization);
                 }
                 dialog.open();
             }

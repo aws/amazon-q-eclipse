@@ -3,13 +3,16 @@
 
 package software.aws.toolkits.eclipse.amazonq.configuration;
 
+import java.nio.charset.StandardCharsets;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import com.google.gson.Gson;
 
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public final class PluginStore {
     private static final Preferences PREFERENCES = Preferences.userRoot().node("software.aws.toolkits.eclipse");
+    private static final Gson GSON = new Gson();
     private PluginStore() {
         // Prevent instantiation
     }
@@ -31,4 +34,23 @@ public final class PluginStore {
         PREFERENCES.remove(key);
     }
 
+    public static <T> void putObject(final String key, final T value) {
+        String jsonValue = GSON.toJson(value);
+        byte[] byteValue = jsonValue.getBytes(StandardCharsets.UTF_8);
+        PREFERENCES.putByteArray(key, byteValue);
+        try {
+            PREFERENCES.flush();
+        } catch (BackingStoreException e) {
+            PluginLogger.warn(String.format("Error while saving entry to a preference store - key: %s, value: %s", key, value), e);
+        }
+    }
+
+    public static <T> T getObject(final String key, final Class<T> type) {
+        byte[] byteValue = PREFERENCES.getByteArray(key, null);
+        if (byteValue == null) {
+            return null;
+        }
+        String jsonValue = new String(byteValue, StandardCharsets.UTF_8);
+        return GSON.fromJson(jsonValue, type);
+    }
 }

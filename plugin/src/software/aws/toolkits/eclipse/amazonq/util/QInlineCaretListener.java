@@ -17,7 +17,6 @@ public final class QInlineCaretListener implements CaretListener {
 
     @Override
     public void caretMoved(final CaretEvent event) {
-        System.out.println("Caret listener ran");
         var qInvocationSessionInstance = QInvocationSession.getInstance();
         CaretMovementReason caretMovementReason = qInvocationSessionInstance.getCaretMovementReason();
 

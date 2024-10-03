@@ -43,6 +43,7 @@ public final class QInvocationSession extends QResource {
     private ITextViewer viewer = null;
     private Font inlineTextFont = null;
     private int invocationOffset = -1;
+    private int tabSize;
     private long invocationTimeInMs = -1L;
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
@@ -50,6 +51,7 @@ public final class QInvocationSession extends QResource {
     private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
+    private boolean isTabOnly = false;
     private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Consumer<Integer> unsetVerticalIndent;
 
@@ -66,6 +68,12 @@ public final class QInvocationSession extends QResource {
             boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
             boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
             boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+
+            // We'll also need tab sizes since suggestions do not take that into account
+            // and is only given in spaces
+            IEclipsePreferences tabPref = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.core");
+            instance.tabSize = tabPref.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
+            instance.isTabOnly = tabPref.getBoolean("use_tabs_only_for_leading_indentations", true);
 
             PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
                 @Override
@@ -149,7 +157,15 @@ public final class QInvocationSession extends QResource {
                     }
 
                     List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
-                            .inlineCompletionWithReferences(params).thenApply(result -> result.getItems()).get();
+                            .inlineCompletionWithReferences(params)
+                            .thenApply(result -> result.getItems().parallelStream().map(item -> {
+                                if (isTabOnly) {
+                                    String origText = item.getInsertText();
+                                    String sanitizedText = origText.replace("\n" + " ".repeat(tabSize), "\n\t");
+                                    item.setInsertText(sanitizedText);
+                                }
+                                return item;
+                            }).collect(Collectors.toList())).get();
 
                     Display.getDefault().asyncExec(() -> {
                         if (newSuggestions == null || newSuggestions.isEmpty() || session

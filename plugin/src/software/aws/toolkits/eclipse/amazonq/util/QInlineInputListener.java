@@ -230,7 +230,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 //            System.out.println("input is: "
 //                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
 //            System.out.println("suggestion is: "
-//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length() + 1)
+//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
 //                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             qInvocationSessionInstance.transitionToDecisionMade();
             qInvocationSessionInstance.end();

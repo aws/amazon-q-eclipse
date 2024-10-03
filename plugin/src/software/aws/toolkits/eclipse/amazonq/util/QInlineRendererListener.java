@@ -25,10 +25,10 @@ public class QInlineRendererListener implements PaintListener {
         var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
         int numSuggestionLines = qInvocationSessionInstance.getNumSuggestionLines();
 
-        if (caretLine == invocationLine && shouldIndentVertically(widget, caretLine)
+        if (shouldIndentVertically(widget, caretLine)
                 && qInvocationSessionInstance.isPreviewingSuggestions()) {
             Point textExtent = gc.stringExtent(" ");
-            int height = textExtent.y * (numSuggestionLines - 1);
+            int height = textExtent.y * (numSuggestionLines - (caretLine - invocationLine) - 1);
             qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
         } else if (caretLine + 1 == (invocationLine + numSuggestionLines)) {
             qInvocationSessionInstance.unsetVerticalIndent(caretLine + 1);

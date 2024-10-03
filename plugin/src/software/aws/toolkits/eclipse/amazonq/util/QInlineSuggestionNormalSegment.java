@@ -5,7 +5,6 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Point;
 
 public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionSegment {
     private int startCaretOffset;
@@ -35,18 +34,21 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
         int x;
         int y;
         String textToRender;
-        Point location = widget.getLocationAtOffset(currentCaretOffset);
         int invocationLine = widget.getLineAtOffset(qInvocationSessionInstance.getInvocationOffset());
         int lineHt = widget.getLineHeight();
         int fontHt = gc.getFontMetrics().getHeight();
         y = (invocationLine + lineInSuggestion + 1) * lineHt - fontHt;
 
-        if (currentCaretOffset < startCaretOffset) {
-            x = widget.getLeftMargin();
+        int idxInLine = currentCaretOffset - startCaretOffset;
+        if (lineInSuggestion == 0) {
+            x = widget.getLocationAtOffset(widget.getCaretOffset()).x;
+            textToRender = text.substring(idxInLine);
+        } else if (currentCaretOffset <= startCaretOffset) {
             textToRender = text;
+            x = widget.getLeftMargin();
         } else {
-            x = location.x;
-            textToRender = text.substring(currentCaretOffset - startCaretOffset);
+            x = gc.textExtent(text.substring(0, idxInLine)).x + gc.textExtent(" ").x / 4;
+            textToRender = text.substring(idxInLine);
         }
 
         gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);

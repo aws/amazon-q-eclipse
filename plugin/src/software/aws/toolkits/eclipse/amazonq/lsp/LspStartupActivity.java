@@ -15,6 +15,9 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
+import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
+import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 
@@ -36,6 +39,11 @@ public class LspStartupActivity implements IStartup {
 
                     var authServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.authServer");
                     LanguageServiceAccessor.startLanguageServer(authServerDefinition);
+
+                    var documentListener = new AutoTriggerDocumentListener();
+                    var autoTriggerPartListener = new AutoTriggerPartListener(documentListener);
+                    var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener(autoTriggerPartListener);
+                    autoTriggerTopLevelListener.onStart();
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
                 }

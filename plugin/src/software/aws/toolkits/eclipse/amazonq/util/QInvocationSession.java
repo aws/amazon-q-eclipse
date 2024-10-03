@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextViewer;
+import static software.aws.toolkits.eclipse.amazonq.util.SuggestionTextUtil.replaceSpacesWithTabs;
 
 public final class QInvocationSession extends QResource {
 
@@ -160,8 +161,8 @@ public final class QInvocationSession extends QResource {
                             .inlineCompletionWithReferences(params)
                             .thenApply(result -> result.getItems().parallelStream().map(item -> {
                                 if (isTabOnly) {
-                                    String origText = item.getInsertText();
-                                    String sanitizedText = origText.replace("\n" + " ".repeat(tabSize), "\n\t");
+                                    String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
+                                    System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
                                     item.setInsertText(sanitizedText);
                                 }
                                 return item;

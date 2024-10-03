@@ -2,54 +2,34 @@ package software.aws.toolkits.eclipse.amazonq.lsp.encryption;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.HexFormat;
-
+import java.security.NoSuchAlgorithmException;
 
 public final class LspEncryption {
 
     private static LspEncryption instance;
-    private String key;
+    private LspEncryptionKey lspEncryptionKey;
 
-    private LspEncryption() {
-        key = generateRandomKey();
+    private LspEncryption() throws NoSuchAlgorithmException {
+        lspEncryptionKey = new LspEncryptionKey();
     }
 
-    public static synchronized LspEncryption getInstance() {
+    public static synchronized LspEncryption getInstance() throws NoSuchAlgorithmException {
         if (instance == null) {
             instance = new LspEncryption();
         }
         return instance;
     }
 
-    public String encrypt(final String message) {
-        // TODO
-        return "";
-    }
-
-    public String decrypt(final String encryptedMessage) {
-        // TODO
-        return "";
-    }
-
     public void initializeEncrypedCommunication(final OutputStream serverStdin) throws IOException {
-        String message = String.format("{\"version\": \"1.0\",\"key\":\"%s\",\"mode\":\"JWT\"}", base64Encode(key));
+        // String message = String.format("{\"version\": \"1.0\",\"key\":\"%s\",\"mode\":\"JWT\"}", lspEncryptionKey.getKey());
+        String message = String.format("""
+                {\
+                    "version": "1.0", \
+                    "key": "%s", \
+                    "mode": "JWT" \
+                }\
+                """, lspEncryptionKey.getKey());
         sendMessageToServer(serverStdin, message);
-    }
-
-    private String base64Encode(final String str) {
-        byte[] encodedBytes = Base64.getEncoder().encode(str.getBytes(StandardCharsets.UTF_8));
-        return new String(encodedBytes, StandardCharsets.UTF_8);
-    }
-
-    private String generateRandomKey() {
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] randomBytes = new byte[128]; // 128 bytes = 256 hex characters
-        secureRandom.nextBytes(randomBytes);
-
-        return HexFormat.of().formatHex(randomBytes);
     }
 
     private void sendMessageToServer(final OutputStream serverStdin, final String message) throws IOException {

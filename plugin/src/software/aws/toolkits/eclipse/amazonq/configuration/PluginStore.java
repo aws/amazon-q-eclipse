@@ -27,4 +27,8 @@ public final class PluginStore {
         return PREFERENCES.get(key, null);
     }
 
+    public static void remove(final String key) {
+        PREFERENCES.remove(key);
+    }
+
 }

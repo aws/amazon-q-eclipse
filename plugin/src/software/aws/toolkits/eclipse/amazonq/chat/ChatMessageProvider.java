@@ -4,6 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.swt.browser.Browser;
+
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
@@ -26,14 +28,9 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
-        try {
-            PluginLogger.info("Sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server");
-            return amazonQLspServer.sendChatPrompt(chatRequestParams);
-        } catch (Exception e) {
-            PluginLogger.error("Error occurred while sending " + Command.CHAT_SEND_PROMPT + " message to Amazon Q LSP server", e);
-            return CompletableFuture.failedFuture(new AmazonQPluginException(e));
-        }
+    public CompletableFuture<ChatResult>  sendChatPrompt(final Browser browser, final ChatRequestParams chatRequestParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer, browser, chatRequestParams);
+        return chatMessage.sendChatMessageWithProgress();
     }
 
     public void sendChatReady() {

@@ -21,7 +21,6 @@ public final class LspEncryption {
     }
 
     public void initializeEncrypedCommunication(final OutputStream serverStdin) throws IOException {
-        // String message = String.format("{\"version\": \"1.0\",\"key\":\"%s\",\"mode\":\"JWT\"}", lspEncryptionKey.getKey());
         String message = String.format("""
                 {\
                     "version": "1.0", \
@@ -29,6 +28,7 @@ public final class LspEncryption {
                     "mode": "JWT" \
                 }\
                 """, lspEncryptionKey.getKey());
+        
         sendMessageToServer(serverStdin, message);
     }
 
@@ -37,7 +37,7 @@ public final class LspEncryption {
             serverStdin.write((message + "\n").getBytes());
             serverStdin.flush();
         } else {
-            throw new IllegalStateException("Server stdin is not available. Did you start the server?");
+            throw new IllegalStateException("Server stdin is not available.");
         }
     }
 }

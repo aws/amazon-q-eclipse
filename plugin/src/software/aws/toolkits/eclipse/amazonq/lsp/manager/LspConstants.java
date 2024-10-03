@@ -10,7 +10,7 @@ public final class LspConstants {
         // Prevent instantiation
     }
 
-    public static final String CW_MANIFEST_URL = "https://dtqjflaii39q2.cloudfront.net/codewhisperer/0/manifest.json";
+    public static final String CW_MANIFEST_URL = "https://aws-toolkit-language-servers.amazonaws.com/eclipse/0/manifest.json";
 
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
     public static final String NODE_EXECUTABLE_PREFIX = "node";

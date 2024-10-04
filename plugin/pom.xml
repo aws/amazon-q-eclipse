@@ -97,6 +97,11 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+		    <groupId>com.nimbusds</groupId>
+		    <artifactId>nimbus-jose-jwt</artifactId>
+		    <version>9.11</version>
+		</dependency>
     </dependencies>
     
     <build>

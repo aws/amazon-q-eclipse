@@ -1,39 +1,38 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.encryption;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.KeyLengthException;
-
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 
 public final class LspEncryptionManager {
 
     private static LspEncryptionManager instance;
     private LspEncryptionKey lspEncryptionKey;
 
-    private LspEncryptionManager() throws NoSuchAlgorithmException {
+    private LspEncryptionManager() {
         lspEncryptionKey = new LspEncryptionKey();
     }
 
-    public static synchronized LspEncryptionManager getInstance() throws NoSuchAlgorithmException {
+    public static synchronized LspEncryptionManager getInstance() {
         if (instance == null) {
-            instance = new LspEncryptionManager();
+            try {
+                instance = new LspEncryptionManager();
+            } catch (Exception e) {
+                throw new AmazonQPluginException("Failed to initialize LspEncryptionManager", e);
+            }
         }
         return instance;
     }
     
-    public String encode(Object data) {
-    	return LspJsonWebTokenHandler.encode(lspEncryptionKey.getKey(), data);
+    public String encrypt(Object data) {
+    	return LspJsonWebTokenHandler.encrypt(lspEncryptionKey.getKey(), data);
     }
     
-    public String decode(String jwt) {
-    	return LspJsonWebTokenHandler.decode(lspEncryptionKey.getKey(), jwt);
+    public String decrypt(String jwt) {
+    	return LspJsonWebTokenHandler.decrypt(lspEncryptionKey.getKey(), jwt);
     }
 
-    public void initializeEncrypedCommunication(final OutputStream serverStdin) throws IOException {
+    public void initializeEncrypedCommunication(final OutputStream serverStdin) {
     	// Ensure the message does not contain any newline characters. The server will process characters up
     	// to the first newline.
         String message = String.format("""
@@ -44,11 +43,11 @@ public final class LspEncryptionManager {
                 }\
                 """, lspEncryptionKey.getKeyAsBase64());
         
-        if (serverStdin != null) {
+        try{
             serverStdin.write((message + "\n").getBytes());
             serverStdin.flush();
-        } else {
-            throw new IllegalStateException("Server stdin is not available.");
+        } catch (Exception e) {
+            throw new AmazonQPluginException("Failed to initialize encrypted communication", e);
         }
     }
 }

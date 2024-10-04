@@ -12,6 +12,7 @@ import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
@@ -26,7 +27,7 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(InlineCompletionParams params);
 
     @JsonRequest("aws/chat/sendChatPrompt")
-    CompletableFuture<ChatResult> sendChatPrompt(ChatRequestParams chatRequestParams);
+    CompletableFuture<String> sendChatPrompt(EncryptedChatRequestParams encryptedChatRequestParams);
 
     @JsonRequest("aws/chat/sendChatQuickAction")
     CompletableFuture<ChatResult> sendQuickAction(QuickActionParams quickActionParams);

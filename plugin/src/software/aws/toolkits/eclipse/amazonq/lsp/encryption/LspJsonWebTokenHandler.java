@@ -16,7 +16,7 @@ import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 
 public final class LspJsonWebTokenHandler {
 	
-	public static String encode(final SecretKey encryptionKey, final Object data) {
+	public static String encrypt(final SecretKey encryptionKey, final Object data) {
 //        Integer minute = 60 * 1000;
 //        Long currentTime = System.currentTimeMillis();
 //        
@@ -38,7 +38,7 @@ public final class LspJsonWebTokenHandler {
 		}
     }
 
-    public static String decode(final SecretKey encryptionKey, final String jwt) {
+    public static String decrypt(final SecretKey encryptionKey, final String jwt) {
     	try {
     		JWEObject jweObject = JWEObject.parse(jwt);
 

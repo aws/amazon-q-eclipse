@@ -1,15 +1,16 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.encryption;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+
 public final class LspEncryptionKey {
     private SecretKey key;
 
-    public LspEncryptionKey() throws NoSuchAlgorithmException {
+    public LspEncryptionKey() {
         this.key = generateKey();
     }
     
@@ -25,9 +26,13 @@ public final class LspEncryptionKey {
     	return Base64.getEncoder().encodeToString(key.getEncoded());
     }
     
-    public static SecretKey generateKey() throws NoSuchAlgorithmException {
-        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-        keyGen.init(256);
-        return keyGen.generateKey();
+    public static SecretKey generateKey() {
+    	try {
+	        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+	        keyGen.init(256);
+	        return keyGen.generateKey();
+    	} catch (Exception e) {
+    		throw new AmazonQPluginException("Error occurred while generating lsp encryption key", e);
+    	}
     }
 }

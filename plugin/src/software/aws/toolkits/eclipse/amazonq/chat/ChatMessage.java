@@ -4,8 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
@@ -17,8 +17,8 @@ public final class ChatMessage {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
-        return amazonQLspServer.sendChatPrompt(chatRequestParams);
+    public CompletableFuture<String> sendChatPrompt(final EncryptedChatRequestParams encryptedChatRequestParams) {
+        return amazonQLspServer.sendChatPrompt(encryptedChatRequestParams);
     }
 
     public CompletableFuture<ChatResult> sendQuickAction(final QuickActionParams params) {

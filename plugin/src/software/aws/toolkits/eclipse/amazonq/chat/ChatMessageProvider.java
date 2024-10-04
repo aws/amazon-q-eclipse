@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
@@ -29,7 +30,7 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
+    public CompletableFuture<String> sendChatPrompt(final EncryptedChatRequestParams encryptedChatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
 
         var response = chatMessage.sendChatPrompt(chatRequestParams);

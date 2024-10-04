@@ -12,6 +12,7 @@ import org.eclipse.lsp4j.services.LanguageServer;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
@@ -23,6 +24,9 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/chat/sendChatPrompt")
     CompletableFuture<ChatResult> sendChatPrompt(ChatRequestParams chatRequestParams);
+
+    @JsonRequest("aws/chat/sendChatQuickAction")
+    CompletableFuture<ChatResult> sendQuickAction(QuickActionParams quickActionParams);
 
     @JsonNotification("aws/chat/tabAdd")
     void tabAdd(GenericTabParams params);

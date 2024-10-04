@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
@@ -25,6 +26,11 @@ public final class ChatMessageProvider {
     public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         return chatMessage.sendChatPrompt(chatRequestParams);
+    }
+
+    public CompletableFuture<ChatResult> sendQuickAction(final QuickActionParams quickActionParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.sendQuickAction(quickActionParams);
     }
 
     public void sendChatReady() {

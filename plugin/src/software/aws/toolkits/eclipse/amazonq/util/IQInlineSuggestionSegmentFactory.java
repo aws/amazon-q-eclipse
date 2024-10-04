@@ -12,7 +12,7 @@ public final class IQInlineSuggestionSegmentFactory {
     }
 
     private enum BracketType {
-        OPEN, CLOSE, NADA;
+        OPEN, CLOSE, NONE;
     }
 
     public static List<IQInlineSuggestionSegment> getSegmentsFromSuggestion(final QInvocationSession qSes) {
@@ -66,7 +66,7 @@ public final class IQInlineSuggestionSegmentFactory {
                         }
                     }
                     break;
-                case NADA:
+                case NONE:
                 default:
                     continue;
                 }
@@ -87,7 +87,7 @@ public final class IQInlineSuggestionSegmentFactory {
             // TODO: enrich logic here to eliminate false positive
             return BracketType.OPEN;
         }
-        return BracketType.NADA;
+        return BracketType.NONE;
     }
 
     private static boolean isCloseBracket(final String input, final int idx,

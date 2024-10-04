@@ -8,7 +8,10 @@ import org.eclipse.swt.browser.Browser;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryption;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public final class ChatMessage {
     private final Browser browser;
@@ -40,14 +43,33 @@ public final class ChatMessage {
         // from the LSP server. The progress notifications provide a token and a partial result Object - we are utilizing a token to
         // ChatMessage mapping to acquire the associated ChatMessage so we can formulate a message for the UI.
         String partialResultToken = chatCommunicationManager.addPartialChatMessage(this);
+        
+        // CompletableFuture<ChatResult> chatResult = sendEncryptedChatMessage(chatRequestParams)
+        // 		.thenApply(ChatResult.class::cast)
+        //         .thenApply(result -> {
+        //         	PluginLogger.info("Result: " + result.toString());
+        //             // The mapping entry no longer needs to be maintained once the final result is retrieved.
+        //             chatCommunicationManager.removePartialChatMessage(partialResultToken);
+        //             return result;
+        //         });
 
-        CompletableFuture<ChatResult> chatResult = amazonQLspServer.sendChatPrompt(chatRequestParams)
-            .thenApply(result -> {
-                // The mapping entry no longer needs to be maintained once the final result is retrieved.
-                chatCommunicationManager.removePartialChatMessage(partialResultToken);
-                return result;
-            });
+		try {
+			LspEncryption lspEncryption = LspEncryption.getInstance();
+			
+			String encryptedMessage = lspEncryption.encode(chatRequestParams);
+			
+			EncryptedChatRequestParams encryptedChatRequestParams = new EncryptedChatRequestParams(
+					encryptedMessage,
+					chatRequestParams.getPartialResultToken()
+			);
+		
 
-        return chatResult;
+	       String chatResult = amazonQLspServer.sendChatPrompt(encryptedChatRequestParams).get();
+	       PluginLogger.info("Chat Result: "+ chatResult);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+		}
+       	
+        return null;
     }
 }

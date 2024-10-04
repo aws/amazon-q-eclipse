@@ -2,15 +2,17 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.swt.browser.Browser;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryption;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -28,9 +30,25 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<ChatResult>  sendChatPrompt(final Browser browser, final ChatRequestParams chatRequestParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer, browser, chatRequestParams);
-        return chatMessage.sendChatMessageWithProgress();
+    public CompletableFuture<String> sendChatPrompt(final Browser browser, final ChatRequestParams chatRequestParams) {
+        try {
+			LspEncryption lspEncryption = LspEncryption.getInstance();
+			
+			String encryptedMessage = lspEncryption.encode(chatRequestParams);
+			
+			String partialResultToken = UUID.randomUUID().toString();
+			
+			EncryptedChatRequestParams encryptedChatRequestParams = new EncryptedChatRequestParams(
+					encryptedMessage,
+					partialResultToken
+			);
+
+		   PluginLogger.info("Right before Sending chat prompt message");
+	       return amazonQLspServer.sendChatPrompt(encryptedChatRequestParams);
+		} catch (Exception e) {
+			throw new AmazonQPluginException(e);
+			// TODO Auto-generated catch block
+		}
     }
 
     public void sendChatReady() {

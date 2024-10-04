@@ -44,17 +44,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         switch (command) {
             case CHAT_SEND_PROMPT:
-                chatCommunicationManager.sendMessageToChatServer(browser, command, params)
-                    .thenAccept(chatResult -> {
-                        ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                        ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                            ChatUIInboundCommandName.ChatPrompt.toString(),
-                            chatRequestParams.getTabId(),
-                            chatResult,
-                            false
-                        );
-                        chatCommunicationManager.sendMessageToChatUI(browser, chatUIInboundCommand);
-                    });
+                chatCommunicationManager.sendMessageToChatServer(browser, command, params);
                 break;
             case CHAT_INFO_LINK_CLICK:
             case CHAT_LINK_CLICK:

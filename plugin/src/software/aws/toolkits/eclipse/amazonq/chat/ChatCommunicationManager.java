@@ -3,6 +3,7 @@
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 import org.eclipse.swt.browser.Browser;
@@ -12,6 +13,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryption;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -43,13 +45,24 @@ public final class ChatCommunicationManager {
         return instance;
     }
 
-    public CompletableFuture<ChatResult> sendMessageToChatServer(final Browser browser, final Command command, final Object params) {
+    public CompletableFuture<String> sendMessageToChatServer(final Browser browser, final Command command, final Object params) {
         return chatMessageProvider.thenCompose(chatMessageProvider -> {
             try {
                 switch (command) {
                     case CHAT_SEND_PROMPT:
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                        return chatMessageProvider.sendChatPrompt(browser, chatRequestParams);
+                        chatMessageProvider.sendChatPrompt(browser, chatRequestParams)
+                        .thenApply(result -> { 
+                        	LspEncryption lspEncryption;
+							try {
+								lspEncryption = LspEncryption.getInstance();
+								String r = lspEncryption.decode(result);
+								PluginLogger.info("Retrieved final result from chat promopt: " + r);
+							} catch (NoSuchAlgorithmException e) {
+								throw new AmazonQPluginException(e);
+							}
+                        	return result;
+                        });
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
                         return CompletableFuture.completedFuture(null);

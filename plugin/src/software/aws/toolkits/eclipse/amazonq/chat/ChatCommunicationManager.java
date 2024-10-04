@@ -58,7 +58,7 @@ public final class ChatCommunicationManager {
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
                         return sendChatRequest(chatRequestParams.getTabId(), token -> {
                             chatRequestParams.setPartialResultToken(token);
-    
+
                             return chatMessageProvider.sendChatPrompt(chatRequestParams);
                         });
                     case CHAT_QUICK_ACTION:

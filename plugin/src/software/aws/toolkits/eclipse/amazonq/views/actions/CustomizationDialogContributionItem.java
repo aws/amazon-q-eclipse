@@ -18,6 +18,7 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 
 public final class CustomizationDialogContributionItem extends ContributionItem implements AuthStatusChangedListener {

@@ -119,10 +119,10 @@ public final class ChatCommunicationManager {
             // The mapping entry no longer needs to be maintained once the final result is
             // retrieved.
             removePartialChatMessage(partialResultToken);
-            
+
             String serializedData = lspEncryptionManager.decrypt(jwt);
             ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
-            
+
             // show chat response in Chat UI
             ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                     ChatUIInboundCommandName.ChatPrompt.toString(), tabId, result, false);

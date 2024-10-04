@@ -4,7 +4,6 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;

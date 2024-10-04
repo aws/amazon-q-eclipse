@@ -8,7 +8,7 @@ import org.eclipse.swt.custom.StyledText;
 
 public final class QInlineCaretListener implements CaretListener {
     private StyledText widget = null;
-    private int previousLine = -1;
+    private int previousLine;
 
     public QInlineCaretListener(final StyledText widget) {
         this.widget = widget;
@@ -27,12 +27,15 @@ public final class QInlineCaretListener implements CaretListener {
             return;
         }
 
-        if (qInvocationSessionInstance.isPreviewingSuggestions()) {
+        if (qInvocationSessionInstance.isPreviewingSuggestions()
+                && caretMovementReason != CaretMovementReason.UNEXAMINED) {
             qInvocationSessionInstance.transitionToDecisionMade(previousLine + 1);
             qInvocationSessionInstance.end();
             return;
         }
+    }
 
-        previousLine = widget.getCaretOffset();
+    public int getLastKnownLine() {
+        return previousLine;
     }
 }

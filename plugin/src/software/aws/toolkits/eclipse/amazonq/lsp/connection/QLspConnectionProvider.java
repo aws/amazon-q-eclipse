@@ -40,14 +40,14 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         super.start();
 
         PluginLogger.info("Initializing encrypted communication with Amazon Q Lsp Server");
-        
-		try {
-			LspEncryptionManager lspEncryption = LspEncryptionManager.getInstance();
-			OutputStream outputStream = getOutputStream();
-			
-			lspEncryption.initializeEncrypedCommunication(outputStream);
-		} catch (Exception e) {
-			PluginLogger.error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
-		}
+
+        try {
+            LspEncryptionManager lspEncryption = LspEncryptionManager.getInstance();
+            OutputStream outputStream = getOutputStream();
+
+            lspEncryption.initializeEncrypedCommunication(outputStream);
+        } catch (Exception e) {
+            PluginLogger.error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
+        }
     }
 }

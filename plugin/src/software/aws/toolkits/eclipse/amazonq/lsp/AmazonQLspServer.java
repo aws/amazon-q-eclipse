@@ -2,6 +2,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
@@ -12,9 +13,11 @@ import org.eclipse.lsp4j.services.LanguageServer;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public interface AmazonQLspServer extends LanguageServer {
 
@@ -33,4 +36,6 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonRequest("aws/credentials/token/update")
     CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);
 
+    @JsonRequest("aws/getConfigurationFromServer")
+    CompletableFuture<List<Customization>> getConfigurationFromServer(GetConfigurationFromServerParams params);
 }

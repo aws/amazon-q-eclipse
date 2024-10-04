@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -21,7 +19,6 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
-import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationDialogContributionItem extends ContributionItem implements AuthStatusChangedListener {
     private static final String CUSTOMIZATION_MENU_ITEM_TEXT = "Select Customization";
@@ -48,14 +45,6 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
         updateVisibility(isLoggedIn);
     }
 
-    private List<Customization> getCustomizations() {
-        List<Customization> customizations = new ArrayList<>();
-        customizations.add(new Customization("customization-arn-1", "Customization 1", "Code Whisperer customization 1"));
-        customizations.add(new Customization("customization-arn-2", "Customization 2", "Code Whisperer customization 2"));
-        customizations.add(new Customization("customization-arn-3", "Customization 3", "Code Whisperer customization 3"));
-        return customizations;
-    }
-
     @Override
     public void fill(final Menu menu, final int index) {
         MenuItem menuItem = new MenuItem(menu, SWT.NONE, index);
@@ -64,8 +53,6 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 CustomizationDialog dialog = new CustomizationDialog(shell);
-                // TODO: This mock will be replaced by an actual call to LSP
-                dialog.setCustomisationResponse(getCustomizations());
                 String storedCustomizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
                 if (StringUtils.isBlank(storedCustomizationArn)) {
                     dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);

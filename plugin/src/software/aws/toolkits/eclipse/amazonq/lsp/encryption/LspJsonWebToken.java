@@ -13,9 +13,9 @@ import com.nimbusds.jose.crypto.DirectEncrypter;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 
-public final class LspJsonWebTokenHandler {
+public final class LspJsonWebToken {
 
-    private LspJsonWebTokenHandler() {
+    private LspJsonWebToken() {
         // prevent instantiation
     }
 

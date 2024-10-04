@@ -25,11 +25,11 @@ public final class LspEncryptionManager {
     }
 
     public String encrypt(final Object data) {
-        return LspJsonWebTokenHandler.encrypt(lspEncryptionKey.getKey(), data);
+        return LspJsonWebToken.encrypt(lspEncryptionKey.getKey(), data);
     }
 
     public String decrypt(final String jwt) {
-        return LspJsonWebTokenHandler.decrypt(lspEncryptionKey.getKey(), jwt);
+        return LspJsonWebToken.decrypt(lspEncryptionKey.getKey(), jwt);
     }
 
     public void initializeEncrypedCommunication(final OutputStream serverStdin) {

@@ -168,7 +168,9 @@ public final class ChatCommunicationManager {
             throw new AmazonQPluginException("Error occurred while handling partial result notification: expected Object value");
         }
 
-        ChatResult partialChatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
+        String jwt = ProgressNotficationUtils.getObject(params, String.class);
+        String serializedData = lspEncryptionManager.decrypt(jwt);
+        ChatResult partialChatResult = jsonHandler.deserialize(serializedData, ChatResult.class);
 
         // Check to ensure the body has content in order to keep displaying the spinner while loading
         if (partialChatResult.body() == null || partialChatResult.body().length() == 0) {

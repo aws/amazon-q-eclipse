@@ -20,11 +20,6 @@ public final class LspJsonWebToken {
     }
 
     public static String encrypt(final SecretKey encryptionKey, final Object data) {
-        // Integer minute = 60 * 1000;
-        // Long currentTime = System.currentTimeMillis();
-        // Long notBefore = currentTime - minute;
-        // Long expiresOn = currentTime + minute;
-
         JsonHandler jsonHandler = new JsonHandler();
         String serializedData = jsonHandler.serialize(data);
 

@@ -3,11 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -19,11 +15,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
-import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
-import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
@@ -53,17 +46,6 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
         updateVisibility(isLoggedIn);
     }
 
-    private List<Customization> getCustomizations() {
-        List<Customization> customizations = new ArrayList<>();
-        try {
-            customizations = CustomizationUtil.listCustomizations().get();
-        } catch (InterruptedException | ExecutionException e) {
-            PluginLogger.error("Error occurred in getCustomizations", e);
-            throw new AmazonQPluginException(e);
-        }
-        return customizations;
-    }
-
     @Override
     public void fill(final Menu menu, final int index) {
         MenuItem menuItem = new MenuItem(menu, SWT.NONE, index);
@@ -72,7 +54,6 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 CustomizationDialog dialog = new CustomizationDialog(shell);
-                dialog.setCustomisationResponse(getCustomizations());
                 Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
                 if (Objects.isNull(storedCustomization)) {
                     dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);

@@ -77,7 +77,7 @@ public class AmazonQChatWebview extends AmazonQView {
                     <meta
                         http-equiv="Content-Security-Policy"
                         content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                        img-src 'self' data:; object-src 'none'; base-uri 'none'; upgrade-insecure-requests;"
+                        img-src 'self' data:; object-src 'none'; base-uri 'none';"
                     >
                     <title>Chat UI</title>
                     %s

@@ -12,7 +12,9 @@ import java.nio.file.Paths;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -97,5 +99,20 @@ public final class PluginUtils {
         } catch (Exception ex) {
             PluginLogger.warn("Error while trying to open an external web page:", ex);
         }
+    }
+
+    public static boolean showConfirmDialog(final String title, final String message) {
+        final boolean[] result = new boolean[] {false};
+        try {
+            Display.getDefault().syncExec(new Runnable() {
+                @Override
+                public void run() {
+                    result[0] = MessageDialog.openConfirm(Display.getDefault().getActiveShell(), title, message);
+                }
+            });
+        } catch (Exception ex) {
+            PluginLogger.error(ex.getMessage());
+        }
+        return result[0];
     }
 }

@@ -4,6 +4,7 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.io.OutputStream;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ public final class ChatCommunicationManager {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProvider = ChatMessageProvider.createAsync();
         this.chatPartialResultMap = new ChatPartialResultMap();
-        this.lspEncryptionManager = LspEncryptionManager.getInstance();
+        this.lspEncryptionManager = new LspEncryptionManager();
     }
 
     public static synchronized ChatCommunicationManager getInstance() {
@@ -185,6 +186,10 @@ public final class ChatCommunicationManager {
         );
 
         sendMessageToChatUI(chatUIInboundCommand);
+    }
+
+    public void initializeEncrypedCommunication(final OutputStream serverStdin) {
+        lspEncryptionManager.initializeEncrypedCommunication(serverStdin);
     }
 
     /*

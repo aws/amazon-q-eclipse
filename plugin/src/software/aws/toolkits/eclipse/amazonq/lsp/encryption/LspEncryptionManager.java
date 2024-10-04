@@ -6,22 +6,10 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 
 public final class LspEncryptionManager {
 
-    private static LspEncryptionManager instance;
     private LspEncryptionKey lspEncryptionKey;
 
-    private LspEncryptionManager() {
+    public LspEncryptionManager() {
         lspEncryptionKey = new LspEncryptionKey();
-    }
-
-    public static synchronized LspEncryptionManager getInstance() {
-        if (instance == null) {
-            try {
-                instance = new LspEncryptionManager();
-            } catch (Exception e) {
-                throw new AmazonQPluginException("Failed to initialize LspEncryptionManager", e);
-            }
-        }
-        return instance;
     }
 
     public String encrypt(final Object data) {

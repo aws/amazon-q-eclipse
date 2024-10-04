@@ -54,17 +54,17 @@ public final class ChatCommunicationManager {
         return chatMessageProvider.thenCompose(chatMessageProvider -> {
             try {
                 switch (command) {
-                case CHAT_SEND_PROMPT:
-                    ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                    return sendChatRequest(chatRequestParams.getTabId(), token -> {
-                        chatRequestParams.setPartialResultToken(token);
-
-                        return chatMessageProvider.sendChatPrompt(chatRequestParams);
-                    });
-                case CHAT_QUICK_ACTION:
-                    QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
-                    return sendChatRequest(quickActionParams.getTabId(), token -> {
-                        quickActionParams.setPartialResultToken(token);
+                    case CHAT_SEND_PROMPT:
+                        ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
+                        return sendChatRequest(chatRequestParams.getTabId(), token -> {
+                            chatRequestParams.setPartialResultToken(token);
+    
+                            return chatMessageProvider.sendChatPrompt(chatRequestParams);
+                        });
+                    case CHAT_QUICK_ACTION:
+                        QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
+                        return sendChatRequest(quickActionParams.getTabId(), token -> {
+                            quickActionParams.setPartialResultToken(token);
 
                         return chatMessageProvider.sendQuickAction(quickActionParams);
                     });

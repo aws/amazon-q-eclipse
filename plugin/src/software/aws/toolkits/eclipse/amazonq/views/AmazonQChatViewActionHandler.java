@@ -41,7 +41,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 break;
             case CHAT_QUICK_ACTION:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
-            break;
+                break;
             case CHAT_INFO_LINK_CLICK:
             case CHAT_LINK_CLICK:
             case CHAT_SOURCE_LINK_CLICK:

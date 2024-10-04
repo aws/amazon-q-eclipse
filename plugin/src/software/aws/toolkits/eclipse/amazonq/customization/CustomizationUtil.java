@@ -3,11 +3,19 @@
 
 package software.aws.toolkits.eclipse.amazonq.customization;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
+
+import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationUtil {
 
@@ -26,4 +34,17 @@ public final class CustomizationUtil {
         }
     }
 
+    public static CompletableFuture<List<Customization>> listCustomizations() {
+        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
+        params.setSection("aws.q");
+        return LspProvider.getAmazonQServer()
+                .thenCompose(server -> server.getConfigurationFromServer(params))
+                .thenApply(customizations -> customizations.stream()
+                    .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
+                    .collect(Collectors.toList()))
+                .exceptionally(throwable -> {
+                    PluginLogger.error("Error occurred while fetching the list of customizations", throwable);
+                    throw new AmazonQPluginException(throwable);
+               });
+    }
 }

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4e.LanguageClientImpl;
@@ -18,6 +19,7 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
@@ -42,9 +44,9 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         List<Object> output = new ArrayList<>();
         configurationParams.getItems().forEach(item -> {
             if (item.getSection().equals(Constants.LSP_CONFIGURATION_KEY)) {
-                String customizationArn = PluginStore.get(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
                 Map<String, String> customization = new HashMap<>();
-                customization.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, customizationArn);
+                customization.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, Objects.nonNull(storedCustomization) ? storedCustomization.getArn() : null);
                 output.add(customization);
             } else {
                 output.add(null);

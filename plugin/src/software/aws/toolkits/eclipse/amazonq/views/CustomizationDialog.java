@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
@@ -82,6 +84,10 @@ public final class CustomizationDialog extends Dialog {
 
         public Button getRadioButton() {
             return radioButton;
+        }
+
+        public Label getTextLabel() {
+            return textLabel;
         }
     }
 
@@ -269,10 +275,29 @@ public final class CustomizationDialog extends Dialog {
                 combo.setEnabled(false);
             }
         });
+        defaultAmazonQFoundationButton.getTextLabel().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDown(final MouseEvent e) {
+                customizationButton.getRadioButton().setSelection(false);
+                defaultAmazonQFoundationButton.getRadioButton().setSelection(true);
+                responseSelection = ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT;
+                setSelectedCustomization(null);
+                combo.setEnabled(false);
+            }
+        });
         customizationButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 defaultAmazonQFoundationButton.getRadioButton().setSelection(false);
+                responseSelection = ResponseSelection.CUSTOMIZATION;
+                combo.setEnabled(true);
+            }
+        });
+        customizationButton.getTextLabel().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDown(final MouseEvent e) {
+                defaultAmazonQFoundationButton.getRadioButton().setSelection(false);
+                customizationButton.getRadioButton().setSelection(true);
                 responseSelection = ResponseSelection.CUSTOMIZATION;
                 combo.setEnabled(true);
             }

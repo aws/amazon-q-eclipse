@@ -9,7 +9,9 @@ import java.util.prefs.Preferences;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public final class PluginStore {
+
     private static final Preferences PREFERENCES = Preferences.userRoot().node("software.aws.toolkits.eclipse");
+
     private PluginStore() {
         // Prevent instantiation
     }

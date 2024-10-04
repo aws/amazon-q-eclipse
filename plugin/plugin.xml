@@ -178,5 +178,17 @@
             class="software.aws.toolkits.eclipse.amazonq.lsp.LspStartupActivity">
         </startup>
     </extension>
+    <extension point="org.eclipse.ui.preferencePages">
+         <page
+             class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"
+             id="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"
+             name="Amazon Q">
+         </page>
+    </extension>
+    <extension point="org.eclipse.core.runtime.preferences">
+        <initializer
+            class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferenceInitializer">
+        </initializer>
+   </extension>
 
 </plugin>

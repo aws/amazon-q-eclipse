@@ -6,6 +6,7 @@ Bundle-SymbolicName: amazon-q-eclipse;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: amazon.q.eclipse
 Bundle-ActivationPolicy: lazy
+Bundle-Activator: software.aws.toolkits.eclipse.amazonq.plugin.Activator
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  org.eclipse.ui;bundle-version="3.205.100",
  org.eclipse.core.resources;bundle-version="3.20.100",
@@ -110,6 +111,7 @@ Bundle-Classpath: .,
  target/dependency/reactive-streams-1.0.4.jar,
  target/dependency/regions-2.25.33.jar,
  target/dependency/sdk-core-2.25.33.jar,
+ target/dependency/slf4j-api-1.7.30.jar,
  target/dependency/slf4j-api-2.0.13.jar,
  target/dependency/third-party-jackson-core-2.25.33.jar,
  target/dependency/utils-2.25.33.jar,

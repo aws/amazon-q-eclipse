@@ -23,27 +23,28 @@ public final class LspEncryptionManager {
         }
         return instance;
     }
-    
-    public String encrypt(Object data) {
-    	return LspJsonWebTokenHandler.encrypt(lspEncryptionKey.getKey(), data);
+
+    public String encrypt(final Object data) {
+        return LspJsonWebTokenHandler.encrypt(lspEncryptionKey.getKey(), data);
     }
-    
-    public String decrypt(String jwt) {
-    	return LspJsonWebTokenHandler.decrypt(lspEncryptionKey.getKey(), jwt);
+
+    public String decrypt(final String jwt) {
+        return LspJsonWebTokenHandler.decrypt(lspEncryptionKey.getKey(), jwt);
     }
 
     public void initializeEncrypedCommunication(final OutputStream serverStdin) {
-    	// Ensure the message does not contain any newline characters. The server will process characters up
-    	// to the first newline.
+        // Ensure the message does not contain any newline characters. The server will
+        // process characters up
+        // to the first newline.
         String message = String.format("""
                 {\
-                	"version": "1.0", \
+                    "version": "1.0", \
                     "key": "%s", \
                     "mode": "JWT" \
                 }\
                 """, lspEncryptionKey.getKeyAsBase64());
-        
-        try{
+
+        try {
             serverStdin.write((message + "\n").getBytes());
             serverStdin.flush();
         } catch (Exception e) {

@@ -13,9 +13,9 @@ public final class LspEncryptionKey {
     public LspEncryptionKey() {
         this.key = generateKey();
     }
-    
+
     public SecretKey getKey() {
-    	return key;
+        return key;
     }
 
     public String getKeyAsBase64() {
@@ -23,16 +23,16 @@ public final class LspEncryptionKey {
     }
 
     private String base64Encode(final SecretKey key) {
-    	return Base64.getEncoder().encodeToString(key.getEncoded());
+        return Base64.getEncoder().encodeToString(key.getEncoded());
     }
-    
+
     public static SecretKey generateKey() {
-    	try {
-	        KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-	        keyGen.init(256);
-	        return keyGen.generateKey();
-    	} catch (Exception e) {
-    		throw new AmazonQPluginException("Error occurred while generating lsp encryption key", e);
-    	}
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            keyGen.init(256);
+            return keyGen.generateKey();
+        } catch (Exception e) {
+            throw new AmazonQPluginException("Error occurred while generating lsp encryption key", e);
+        }
     }
 }

@@ -25,7 +25,6 @@ public final class ToolkitNotification extends AbstractNotificationPopup {
     private final String description;
     private Image infoIcon;
     private static CopyOnWriteArrayList<ToolkitNotification> activeNotifications = new CopyOnWriteArrayList<>();
-    private static Object lock = new Object();
     private static final int MAX_WIDTH = 400;
     private static final int MIN_HEIGHT = 100;
     private static final int PADDING_EDGE = 5;
@@ -81,9 +80,7 @@ public final class ToolkitNotification extends AbstractNotificationPopup {
         }
         getShell().setLocation(x, y);
         getShell().setSize(size);
-        synchronized (lock) {
-            activeNotifications.add(this);
-        }
+        activeNotifications.add(this);
     }
 
     private Rectangle getPrimaryClientArea() {
@@ -109,9 +106,7 @@ public final class ToolkitNotification extends AbstractNotificationPopup {
 
     @Override
     public boolean close() {
-        synchronized (lock) {
-            activeNotifications.remove(this);
-        }
+        activeNotifications.remove(this);
         repositionNotifications();
         if (this.infoIcon != null && !this.infoIcon.isDisposed()) {
             this.infoIcon.dispose();

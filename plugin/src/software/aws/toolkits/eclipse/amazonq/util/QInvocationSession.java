@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
@@ -11,6 +13,9 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchListener;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
@@ -23,6 +28,7 @@ import java.util.function.Consumer;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextViewer;
+import static software.aws.toolkits.eclipse.amazonq.util.SuggestionTextUtil.replaceSpacesWithTabs;
 
 public final class QInvocationSession extends QResource {
 
@@ -38,6 +44,7 @@ public final class QInvocationSession extends QResource {
     private ITextViewer viewer = null;
     private Font inlineTextFont = null;
     private int invocationOffset = -1;
+    private int tabSize;
     private long invocationTimeInMs = -1L;
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
@@ -45,6 +52,7 @@ public final class QInvocationSession extends QResource {
     private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
+    private boolean isTabOnly = false;
     private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Consumer<Integer> unsetVerticalIndent;
 
@@ -57,6 +65,31 @@ public final class QInvocationSession extends QResource {
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
+            IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+            boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
+            boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
+            boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+
+            // We'll also need tab sizes since suggestions do not take that into account
+            // and is only given in spaces
+            IEclipsePreferences tabPref = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.core");
+            instance.tabSize = tabPref.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
+            instance.isTabOnly = tabPref.getBoolean("use_tabs_only_for_leading_indentations", true);
+
+            PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
+                @Override
+                public boolean preShutdown(final IWorkbench workbench, final boolean forced) {
+                    preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
+                    preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
+                    preferences.putBoolean("closeStrings", isStringSetToAutoClose);
+                    return true;
+                }
+
+                @Override
+                public void postShutdown(final IWorkbench workbench) {
+                    return;
+                }
+            });
         }
         return instance;
     }
@@ -96,6 +129,7 @@ public final class QInvocationSession extends QResource {
             inputListener = new QInlineInputListener(widget);
             widget.addVerifyListener(inputListener);
             widget.addVerifyKeyListener(inputListener);
+            widget.addMouseListener(inputListener);
 
             caretListener = new QInlineCaretListener(widget);
             widget.addCaretListener(caretListener);
@@ -124,10 +158,19 @@ public final class QInvocationSession extends QResource {
                     }
 
                     List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
-                            .inlineCompletionWithReferences(params).thenApply(result -> result.getItems()).get();
+                            .inlineCompletionWithReferences(params)
+                            .thenApply(result -> result.getItems().parallelStream().map(item -> {
+                                if (isTabOnly) {
+                                    String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
+                                    System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
+                                    item.setInsertText(sanitizedText);
+                                }
+                                return item;
+                            }).collect(Collectors.toList())).get();
 
                     Display.getDefault().asyncExec(() -> {
-                        if (newSuggestions == null || newSuggestions.isEmpty()) {
+                        if (newSuggestions == null || newSuggestions.isEmpty() || session
+                                .getInvocationOffset() != session.getViewer().getTextWidget().getCaretOffset()) {
                             end();
                             return;
                         }
@@ -136,10 +179,12 @@ public final class QInvocationSession extends QResource {
                                 newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
 
                         suggestionsContext.setCurrentIndex(0);
+                        session.primeListeners();
 
                         // TODO: remove print
                         // Update the UI with the results
-                        System.out.println("Suggestions: " + newSuggestions);
+                        System.out.println("Suggestions: " + newSuggestions.stream()
+                                .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
                         System.out.println("Total suggestion number: " + newSuggestions.size());
 
                         transitionToPreviewingState();
@@ -178,8 +223,8 @@ public final class QInvocationSession extends QResource {
             System.out.println(element);
         }
         if (isActive()) {
-            state = QInvocationSessionState.INACTIVE;
             dispose();
+            state = QInvocationSessionState.INACTIVE;
             // End session logic here
             System.out.println("Session ended.");
         } else {
@@ -296,6 +341,7 @@ public final class QInvocationSession extends QResource {
     public void decrementCurrentSuggestionIndex() {
         if (suggestionsContext != null) {
             suggestionsContext.decrementIndex();
+            primeListeners();
             getViewer().getTextWidget().redraw();
         }
     }
@@ -303,6 +349,7 @@ public final class QInvocationSession extends QResource {
     public void incrementCurentSuggestionIndex() {
         if (suggestionsContext != null) {
             suggestionsContext.incrementIndex();
+            primeListeners();
             getViewer().getTextWidget().redraw();
         }
     }
@@ -315,7 +362,8 @@ public final class QInvocationSession extends QResource {
         return hasBeenTypedahead;
     }
 
-    public void registerCallbackForCodeReference(final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
+    public void registerCallbackForCodeReference(
+            final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
         this.codeReferenceAcceptanceCallback = codeReferenceAcceptanceCallback;
     }
 
@@ -343,6 +391,22 @@ public final class QInvocationSession extends QResource {
         }
     }
 
+    public List<IQInlineSuggestionSegment> getSegments() {
+        return inputListener.getSegments();
+    }
+
+    public int getNumSuggestionLines() {
+        return inputListener.getNumSuggestionLines();
+    }
+
+    public void primeListeners() {
+        inputListener.onNewSuggestion();
+    }
+
+    public int getLastKnownLine() {
+        return ((QInlineCaretListener) caretListener).getLastKnownLine();
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
@@ -354,11 +418,13 @@ public final class QInvocationSession extends QResource {
         closingBrackets = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
+        inputListener.beforeRemoval();
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         widget.removePaintListener(paintListener);
         widget.removeCaretListener(caretListener);
         widget.removeVerifyListener(inputListener);
         widget.removeVerifyKeyListener(inputListener);
+        widget.removeMouseListener(inputListener);
         paintListener = null;
         caretListener = null;
         inputListener = null;

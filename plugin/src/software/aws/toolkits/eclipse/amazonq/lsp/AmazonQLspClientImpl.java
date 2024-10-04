@@ -14,6 +14,7 @@ import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
@@ -21,7 +22,6 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import software.aws.toolkits.eclipse.amazonq.views.AmazonQChatViewActionHandler;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -36,11 +36,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         return CompletableFuture.completedFuture(metadata);
     }
 
-    /*
-     * Handles the progress notifications received from the LSP server.
-     * - Process partial results for Chat messages if provided token is maintained by ChatCommunicationManager
-     * - Other notifications are ignored at this time.
-     */
     @Override
     public final CompletableFuture<List<Object>> configuration(final ConfigurationParams configurationParams) {
         if (configurationParams.getItems().size() == 0) {
@@ -60,13 +55,18 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         return CompletableFuture.completedFuture(output);
     }
 
+    /*
+     * Handles the progress notifications received from the LSP server.
+     * - Process partial results for Chat messages if provided token is maintained by ChatCommunicationManager
+     * - Other notifications are ignored at this time.
+     */
     @Override
     public final void notifyProgress(final ProgressParams params) {
-        AmazonQChatViewActionHandler chatActionHandler = new AmazonQChatViewActionHandler();
+        var chatCommunicationManager = ChatCommunicationManager.getInstance();
 
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                chatActionHandler.handlePartialResultProgressNotification(params);
+                chatCommunicationManager.handlePartialResultProgressNotification(params);
             } catch (Exception e) {
                 PluginLogger.error("Error processing partial result progress notification", e);
             }

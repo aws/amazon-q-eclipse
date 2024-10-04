@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
@@ -42,10 +42,10 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         PluginLogger.info("Initializing encrypted communication with Amazon Q Lsp Server");
 
         try {
-            ChatCommunicationManager chatCommunicationManager = ChatCommunicationManager.getInstance();
+            LspEncryptionManager lspEncryption = LspEncryptionManager.getInstance();
             OutputStream serverStdIn = getOutputStream();
 
-            chatCommunicationManager.initializeEncrypedCommunication(serverStdIn);
+            lspEncryption.initializeEncrypedCommunication(serverStdIn);
         } catch (Exception e) {
             PluginLogger.error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
         }

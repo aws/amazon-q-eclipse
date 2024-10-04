@@ -4,9 +4,13 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.nio.file.Path;
+
+import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
@@ -15,7 +19,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public class AmazonQChatWebview extends AmazonQView {
+public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestListener {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
@@ -24,10 +28,12 @@ public class AmazonQChatWebview extends AmazonQView {
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
+    private ChatCommunicationManager chatCommunicationManager;
 
     public AmazonQChatWebview() {
         this.commandParser = new LoginViewCommandParser();
-        this.actionHandler = new AmazonQChatViewActionHandler();
+        this.chatCommunicationManager = ChatCommunicationManager.getInstance();
+        this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
     }
 
     @Override
@@ -35,6 +41,7 @@ public class AmazonQChatWebview extends AmazonQView {
         setupAmazonQView(parent, true);
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
+        chatCommunicationManager.setChatUiRequestListener(this);
 
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);
@@ -44,16 +51,20 @@ public class AmazonQChatWebview extends AmazonQView {
             @Override
             public Object function(final Object[] arguments) {
                 ThreadingUtils.executeAsyncTask(() -> {
-                    try {
-                        commandParser.parseCommand(arguments)
-                            .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
-                    } catch (Exception e) {
-                        PluginLogger.error("Error processing message from Browser", e);
-                    }
+                    handleMessageFromUI(browser, arguments);
                 });
                 return null;
             }
         };
+    }
+
+    private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
+        try {
+            commandParser.parseCommand(arguments)
+                .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+        } catch (Exception e) {
+            PluginLogger.error("Error processing message from Browser", e);
+        }
     }
 
     private String getContent() {
@@ -139,10 +150,20 @@ public class AmazonQChatWebview extends AmazonQView {
     }
 
     @Override
+    public final void onSendToChatUi(final String message) {
+        var browser = getBrowser();
+        String script = "window.postMessage(" + message + ");";
+        browser.getDisplay().asyncExec(() -> {
+            browser.evaluate(script);
+        });
+    }
+
+    @Override
     public final void dispose() {
         if (webviewAssetServer != null) {
             webviewAssetServer.stop();
         }
+        chatCommunicationManager.removeListener();
         super.dispose();
     }
 }

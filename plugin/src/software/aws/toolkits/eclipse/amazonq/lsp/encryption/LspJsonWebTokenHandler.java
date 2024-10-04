@@ -25,11 +25,12 @@ public final class LspJsonWebTokenHandler {
         // Long notBefore = currentTime - minute;
         // Long expiresOn = currentTime + minute;
 
-        try {
-            JsonHandler jsonHandler = new JsonHandler();
+        JsonHandler jsonHandler = new JsonHandler();
+        String serializedData = jsonHandler.serialize(data);
 
+        try {
             JWEHeader header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A256GCM);
-            Payload payload = new Payload(jsonHandler.serialize(data));
+            Payload payload = new Payload(serializedData);
             JWEObject jweObject = new JWEObject(header, payload);
 
             jweObject.encrypt(new DirectEncrypter(encryptionKey));
@@ -43,7 +44,6 @@ public final class LspJsonWebTokenHandler {
     public static String decrypt(final SecretKey encryptionKey, final String jwt) {
         try {
             JWEObject jweObject = JWEObject.parse(jwt);
-
             jweObject.decrypt(new DirectDecrypter(encryptionKey));
 
             return jweObject.getPayload().toString();

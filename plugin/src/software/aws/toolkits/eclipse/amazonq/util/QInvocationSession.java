@@ -143,6 +143,7 @@ public final class QInvocationSession extends QResource {
 
     public void invoke() {
         var session = QInvocationSession.getInstance();
+        System.out.println("Invocation offset is: " + session.getInvocationOffset());
 
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
@@ -169,8 +170,12 @@ public final class QInvocationSession extends QResource {
                             }).collect(Collectors.toList())).get();
 
                     Display.getDefault().asyncExec(() -> {
-                        if (newSuggestions == null || newSuggestions.isEmpty() || session
-                                .getInvocationOffset() != session.getViewer().getTextWidget().getCaretOffset()) {
+//                        if (newSuggestions == null || newSuggestions.isEmpty() || session
+//                                .getInvocationOffset() != session.getViewer().getTextWidget().getCaretOffset()) {
+//                            end();
+//                            return;
+//                        }
+                        if (newSuggestions == null || newSuggestions.isEmpty()) {
                             end();
                             return;
                         }

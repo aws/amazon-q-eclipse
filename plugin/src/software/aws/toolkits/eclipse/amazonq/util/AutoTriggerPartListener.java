@@ -4,21 +4,26 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-public final class AutoTriggerPartListener implements IPartListener2 {
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
-    private IDocumentListener docListener;
+public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTriggerListener>
+        implements IPartListener2, IAutoTriggerListener {
+
+    private T docListener;
     private IDocument activeDocument;
 
-    public AutoTriggerPartListener(final IDocumentListener docListener) {
+    public AutoTriggerPartListener(final T docListener) {
         this.docListener = docListener;
     }
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
+        System.out.println("Part visible called");
         var part = partRef.getPart(false);
         if (!(part instanceof ITextEditor)) {
             return;
@@ -34,6 +39,7 @@ public final class AutoTriggerPartListener implements IPartListener2 {
 
     @Override
     public void partDeactivated(final IWorkbenchPartReference partRef) {
+        System.out.println("Part deactivated called");
         var part = partRef.getPart(false);
         if (!(part instanceof ITextEditor)) {
             return;
@@ -55,6 +61,43 @@ public final class AutoTriggerPartListener implements IPartListener2 {
         if (activeDocument != null) {
             activeDocument.removeDocumentListener(docListener);
         }
+    }
+    
+    private synchronized void setActiveDocument(final IDocument document) {
+        activeDocument = document;
+    }
+    
+    private synchronized IDocument getActiveDocument() {
+        return activeDocument;
+    }
+
+    @Override
+    public void onStart() {
+        // I do not know of a better way to do this currently
+        Display.getDefault().asyncExec(() -> {
+            while (getActiveTextEditor() == null) {
+                System.out.println("Active document is null, sleeping");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            var editor = getActiveTextEditor();
+            var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+            setActiveDocument(document);
+            document.addDocumentListener(docListener);
+            System.out.println("Document listener added from separate thread");
+        });
+
+        docListener.onStart();
+    }
+
+    @Override
+    public void onShutdown() {
+        // TODO Auto-generated method stub
+
     }
 
 }

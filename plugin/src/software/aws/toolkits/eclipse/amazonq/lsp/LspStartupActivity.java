@@ -41,8 +41,11 @@ public class LspStartupActivity implements IStartup {
                     LanguageServiceAccessor.startLanguageServer(authServerDefinition);
 
                     var documentListener = new AutoTriggerDocumentListener();
-                    var autoTriggerPartListener = new AutoTriggerPartListener(documentListener);
-                    var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener(autoTriggerPartListener);
+                    var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(
+                            documentListener);
+                    @SuppressWarnings("rawtypes")
+                    var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener<AutoTriggerPartListener>(
+                            autoTriggerPartListener);
                     autoTriggerTopLevelListener.onStart();
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);

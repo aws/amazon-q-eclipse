@@ -5,6 +5,6 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record EncryptedChatRequestParams(
-        @JsonProperty("message") String message,
+        @JsonProperty("message") String encryptedMessage,
         @JsonProperty("partialResultToken") String partialResultToken) {
 }

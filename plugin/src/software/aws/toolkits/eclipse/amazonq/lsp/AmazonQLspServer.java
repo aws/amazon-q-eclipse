@@ -30,6 +30,9 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/chat/sendChatQuickAction")
     CompletableFuture<ChatResult> sendQuickAction(QuickActionParams quickActionParams);
+    
+    @JsonRequest("aws/chat/endChat")
+    CompletableFuture<Boolean> endChat(GenericTabParams params);
 
     @JsonNotification("aws/chat/tabAdd")
     void tabAdd(GenericTabParams params);
@@ -39,7 +42,7 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonNotification("aws/chat/tabChange")
     void tabChange(GenericTabParams params);
-
+    
     @JsonNotification("aws/chat/ready")
     void chatReady();
 

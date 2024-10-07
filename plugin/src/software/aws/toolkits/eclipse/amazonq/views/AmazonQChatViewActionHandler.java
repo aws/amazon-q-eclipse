@@ -65,7 +65,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_END_CHAT:
-                //TODO
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
                 //TODO

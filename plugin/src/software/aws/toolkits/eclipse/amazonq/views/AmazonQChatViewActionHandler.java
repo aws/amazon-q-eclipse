@@ -43,7 +43,11 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_INFO_LINK_CLICK:
+            	//TODO
+            	break;
             case CHAT_LINK_CLICK:
+            	//TODO
+            	break;
             case CHAT_SOURCE_LINK_CLICK:
                 InfoLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params, InfoLinkClickParams.class);
                 var link = infoLinkClickParams.getLink();
@@ -58,8 +62,30 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case CHAT_TAB_ADD:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
-            case TELEMETRY_EVENT:
+            case CHAT_TAB_REMOVE:
+            	chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
+            case CHAT_TAB_CHANGE:
+            	chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
+            case CHAT_END_CHAT:
+            	//TODO
+            	break;
+            case CHAT_INSERT_TO_CURSOR_POSITION:
+            	//TODO
+            	break;
+            case CHAT_FEEDBACK:
+            	//TODO
+            	break;
+            case CHAT_FOLLOW_UP_CLICK:
+            	//TODO
+            	break;
+            case TELEMETRY_EVENT:
+            	//TODO
+            	break;
+            case AUTH_FOLLOW_UP_CLICKED:
+            	//TODO
+            	break;
             default:
                 throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
         }

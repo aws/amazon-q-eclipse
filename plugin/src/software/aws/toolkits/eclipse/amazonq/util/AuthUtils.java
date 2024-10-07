@@ -89,7 +89,7 @@ public final class AuthUtils {
     }
 
     private static CompletableFuture<SsoToken> getSsoToken(final boolean triggerSignIn) {
-        GetSsoTokenSource source = new GetSsoTokenSource(Q_PRODUCT_NAME, "AwsBuilderId");
+        GetSsoTokenSource source = new GetSsoTokenSource(Q_PRODUCT_NAME, "AwsBuilderId", null, null);
         GetSsoTokenOptions options = new GetSsoTokenOptions(true, true, triggerSignIn);
         GetSsoTokenParams params = new GetSsoTokenParams(source, Q_SCOPES, options);
         return LspProvider.getAuthServer()

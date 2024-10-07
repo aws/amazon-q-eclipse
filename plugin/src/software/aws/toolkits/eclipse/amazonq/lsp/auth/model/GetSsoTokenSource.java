@@ -3,4 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-public record GetSsoTokenSource(String clientName, String kind) { }
+public record GetSsoTokenSource(String clientName, String kind, String issuerUrl, String region) { }

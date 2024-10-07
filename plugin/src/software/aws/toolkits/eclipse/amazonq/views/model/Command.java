@@ -18,7 +18,9 @@ public enum Command {
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
-    CANCEL_LOGIN("cancelLogin");
+    LOGIN_IDC("loginIdC"),
+    CANCEL_LOGIN("cancelLogin"),
+    ON_LOAD("onLoad");
 
     private final String commandString;
 

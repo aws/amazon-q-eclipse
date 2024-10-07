@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -46,7 +46,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
             @Override
             public Object function(final Object[] arguments) {
                 commandParser.parseCommand(arguments)
-                        .ifPresent(command -> actionHandler.handleCommand(command, browser));
+                    .ifPresent(command -> actionHandler.handleCommand(command, browser));
                 return null;
             }
         };
@@ -96,6 +96,9 @@ public final class ToolkitLoginWebview extends AmazonQView {
                                     };
                                     window.ideApi = ideApi;
                                 });
+                                window.onload = function() {
+                                    ideCommand(JSON.stringify({"command":"onLoad"}));
+                                }
                             </script>
                         </body>
                     </html>

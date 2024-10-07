@@ -14,6 +14,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
@@ -55,10 +56,17 @@ public final class ChatCommunicationManager {
                 switch (command) {
                     case CHAT_SEND_PROMPT:
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                    return sendChatRequest(chatRequestParams.getTabId(), token -> {
-                        chatRequestParams.setPartialResultToken(token);
+                        return sendChatRequest(chatRequestParams.getTabId(), token -> {
+                            chatRequestParams.setPartialResultToken(token);
 
-                        return chatMessageProvider.sendChatPrompt(chatRequestParams);
+                            return chatMessageProvider.sendChatPrompt(chatRequestParams);
+                        });
+                    case CHAT_QUICK_ACTION:
+                        QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
+                        return sendChatRequest(quickActionParams.getTabId(), token -> {
+                            quickActionParams.setPartialResultToken(token);
+
+                        return chatMessageProvider.sendQuickAction(quickActionParams);
                     });
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();

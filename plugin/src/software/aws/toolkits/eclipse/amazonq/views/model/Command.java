@@ -14,11 +14,14 @@ public enum Command {
     CHAT_LINK_CLICK("aws/chat/linkClick"),
     CHAT_INFO_LINK_CLICK("aws/chat/infoLinkClick"),
     CHAT_SOURCE_LINK_CLICK("aws/chat/sourceLinkClick"),
+    CHAT_QUICK_ACTION("aws/chat/sendChatQuickAction"),
     TELEMETRY_EVENT("telemetry/event"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
-    CANCEL_LOGIN("cancelLogin");
+    LOGIN_IDC("loginIdC"),
+    CANCEL_LOGIN("cancelLogin"),
+    ON_LOAD("onLoad");
 
     private final String commandString;
 

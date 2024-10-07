@@ -48,9 +48,9 @@ public final class ChatMessageProvider {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         return chatMessage.sendQuickAction(encryptedQuickActionParams);
     }
-    
+
     public CompletableFuture<Boolean> endChat(final GenericTabParams tabParams) {
-    	ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         return chatMessage.endChat(tabParams);
     }
 

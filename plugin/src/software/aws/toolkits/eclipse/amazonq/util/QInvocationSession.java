@@ -18,11 +18,13 @@ import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
@@ -37,6 +39,7 @@ public final class QInvocationSession extends QResource {
 
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
+    private AtomicInteger requestsInFlight = new AtomicInteger(0);
 
     private QSuggestionsContext suggestionsContext = null;
 
@@ -99,6 +102,7 @@ public final class QInvocationSession extends QResource {
     // Method to start the session
     public synchronized boolean start(final ITextEditor editor) {
         if (!isActive()) {
+            System.out.println("Session starting");
             state = QInvocationSessionState.INVOKING;
 
             // Start session logic here
@@ -117,27 +121,142 @@ public final class QInvocationSession extends QResource {
             invocationTimeInMs = System.currentTimeMillis();
             System.out.println("Session started.");
 
-            var listeners = widget.getTypedListeners(SWT.Paint, QInlineRendererListener.class)
-                    .collect(Collectors.toList());
-            System.out.println("Current listeners for " + widget);
-            listeners.forEach(System.out::println);
-            if (listeners.isEmpty()) {
-                paintListener = new QInlineRendererListener();
-                widget.addPaintListener(paintListener);
-            }
-
-            inputListener = new QInlineInputListener(widget);
-            widget.addVerifyListener(inputListener);
-            widget.addVerifyKeyListener(inputListener);
-            widget.addMouseListener(inputListener);
-
-            caretListener = new QInlineCaretListener(widget);
-            widget.addCaretListener(caretListener);
-
             return true;
         } else {
             System.out.println("Session is already active.");
             return false;
+        }
+    }
+    
+    private void attachListeners() {
+        var widget = this.viewer.getTextWidget();
+        var listeners = widget.getTypedListeners(SWT.Paint, QInlineRendererListener.class)
+                .collect(Collectors.toList());
+        System.out.println("Current listeners for " + widget);
+        listeners.forEach(System.out::println);
+        if (listeners.isEmpty()) {
+            paintListener = new QInlineRendererListener();
+            widget.addPaintListener(paintListener);
+        }
+
+        inputListener = new QInlineInputListener(widget);
+        widget.addVerifyListener(inputListener);
+        widget.addVerifyKeyListener(inputListener);
+        widget.addMouseListener(inputListener);
+
+        caretListener = new QInlineCaretListener(widget);
+        widget.addCaretListener(caretListener);
+    }
+    
+    public void invoke(final int invocationOffset) {
+        var session = QInvocationSession.getInstance();
+        requestsInFlight.incrementAndGet();
+        
+        try {
+            var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
+                    invocationOffset, InlineCompletionTriggerKind.Automatic);
+
+            ThreadingUtils.executeAsyncTask(() -> {
+                try {
+                    if (!AuthUtils.isLoggedIn().get()) {
+                        requestsInFlight.decrementAndGet();
+                        this.end();
+                        return;
+                    } else {
+                        AuthUtils.updateToken().get();
+                    }
+
+                    List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
+                            .inlineCompletionWithReferences(params)
+                            .thenApply(result -> result.getItems().parallelStream().map(item -> {
+                                if (isTabOnly) {
+                                    String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
+                                    System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
+                                    item.setInsertText(sanitizedText);
+                                }
+                                return item;
+                            }).collect(Collectors.toList())).get();
+                    
+                    Display.getDefault().asyncExec(() -> {
+                        session.transitionToPreviewingState();
+                        
+                        if (newSuggestions == null || newSuggestions.isEmpty()) {
+                            requestsInFlight.decrementAndGet();
+                            if (!session.isPreviewingSuggestions()) {
+                                end();
+                            }
+                            System.out
+                                    .println("Got emtpy result for from invocation offset of " + invocationOffset);
+                            return;
+                        }
+
+                        // If the caret positions has moved on from the invocation offset, we need to
+                        // see if there exists in the suggestions fetched
+                        // one more suggestions that qualify for what has been typed since the
+                        // invocation.
+                        // Note that we should not remove the ones that have been disqualified by the
+                        // content typed since the user might still want to explore them.
+                        int currentIdxInSuggestion = 0;
+                        boolean hasAMatch = false;
+                        var widget = session.getViewer().getTextWidget();
+                        int currentOffset = widget.getCaretOffset();
+                        if (currentOffset < invocationOffset) {
+                            requestsInFlight.decrementAndGet();
+                            end();
+                            return;
+                        } else if (currentOffset > invocationOffset) {
+                            for (int i = 0; i < newSuggestions.size(); i++) {
+                                String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
+                                if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
+                                    currentIdxInSuggestion = i;
+                                    hasAMatch = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (invocationOffset != currentOffset && !hasAMatch) {
+                            System.out.println(
+                                    "invocation offset: " + invocationOffset + "\ncurrent offset: " + currentOffset);
+                            requestsInFlight.decrementAndGet();
+                            end();
+                            return;
+                        }
+
+                        session.invocationOffset = invocationOffset;
+
+                        suggestionsContext.getDetails().addAll(
+                                newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
+
+                        suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
+
+                        // TODO: remove print
+                        // Update the UI with the results
+                        System.out.println("Suggestions: " + newSuggestions.stream()
+                                .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
+                        System.out.println("Total suggestion number: " + newSuggestions.size());
+                        System.out.println("Invocation offset: " + invocationOffset);
+                        System.out.println("========================");
+
+                        attachListeners();
+                        session.primeListeners();
+                        session.getViewer().getTextWidget().redraw();
+                        requestsInFlight.decrementAndGet();
+                    });
+                } catch (InterruptedException e) {
+                    System.out.println("Query InterruptedException: " + e.getMessage());
+                    PluginLogger.error("Inline completion interrupted", e);
+                    requestsInFlight.decrementAndGet();
+                } catch (ExecutionException e) {
+                    System.out.println("Query ExecutionException: " + e.getMessage());
+                    PluginLogger.error("Error executing inline completion", e);
+                    requestsInFlight.decrementAndGet();
+                }
+           });
+        } catch (BadLocationException e) {
+            System.out.println("BadLocationException: " + e.getMessage());
+            PluginLogger.error("Unable to compute inline completion request from document", e);
+            requestsInFlight.decrementAndGet();
         }
     }
 
@@ -147,7 +266,7 @@ public final class QInvocationSession extends QResource {
 
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
-                    session.getInvocationOffset());
+                    session.getInvocationOffset(), InlineCompletionTriggerKind.Invoke);
 
             ThreadingUtils.executeAsyncTask(() -> {
                 try {
@@ -184,7 +303,6 @@ public final class QInvocationSession extends QResource {
                                 newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
 
                         suggestionsContext.setCurrentIndex(0);
-                        session.primeListeners();
 
                         // TODO: remove print
                         // Update the UI with the results
@@ -193,6 +311,8 @@ public final class QInvocationSession extends QResource {
                         System.out.println("Total suggestion number: " + newSuggestions.size());
 
                         transitionToPreviewingState();
+                        attachListeners();
+                        session.primeListeners();
                         session.getViewer().getTextWidget().redraw();
                     });
                 } catch (InterruptedException e) {
@@ -219,21 +339,22 @@ public final class QInvocationSession extends QResource {
 
     // Method to end the session
     public synchronized void end() {
-        // Get the current thread's stack trace
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        if (isActive() && requestsInFlight.get() == 0) {
+         // Get the current thread's stack trace
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 
-        // Log the stack trace
-        System.out.println("Stack trace:");
-        for (StackTraceElement element : stackTraceElements) {
-            System.out.println(element);
-        }
-        if (isActive()) {
+            // Log the stack trace
+            System.out.println("Stack trace:");
+            for (StackTraceElement element : stackTraceElements) {
+                System.out.println(element);
+            }
+            System.out.println("Requests in flight: " + requestsInFlight.get());
             dispose();
             state = QInvocationSessionState.INACTIVE;
             // End session logic here
             System.out.println("Session ended.");
-        } else {
-            System.out.println("Session is not active.");
+        } else if (requestsInFlight.get() > 0) {
+            System.out.println("Session cannot be ended because there are " + requestsInFlight.get() + " requests in flight");
         }
     }
 
@@ -250,7 +371,7 @@ public final class QInvocationSession extends QResource {
         return state == QInvocationSessionState.DECISION_MADE;
     }
 
-    public void transitionToPreviewingState() {
+    public synchronized void transitionToPreviewingState() {
         assert state == QInvocationSessionState.INVOKING;
         state = QInvocationSessionState.SUGGESTION_PREVIEWING;
     }
@@ -305,7 +426,7 @@ public final class QInvocationSession extends QResource {
         return viewer;
     }
 
-    public QInvocationSessionState getState() {
+    public synchronized QInvocationSessionState getState() {
         return state;
     }
 
@@ -421,15 +542,22 @@ public final class QInvocationSession extends QResource {
         inlineTextFont.dispose();
         inlineTextFont = null;
         closingBrackets = null;
+        requestsInFlight = new AtomicInteger(0);
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
-        inputListener.beforeRemoval();
+        if (inputListener != null) {
+            inputListener.beforeRemoval();
+            widget.removeVerifyListener(inputListener);
+            widget.removeVerifyKeyListener(inputListener);
+            widget.removeMouseListener(inputListener);
+        }
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
-        widget.removePaintListener(paintListener);
-        widget.removeCaretListener(caretListener);
-        widget.removeVerifyListener(inputListener);
-        widget.removeVerifyKeyListener(inputListener);
-        widget.removeMouseListener(inputListener);
+        if (paintListener != null) {
+            widget.removePaintListener(paintListener);
+        }
+        if (caretListener != null) {
+            widget.removeCaretListener(caretListener);
+        }
         paintListener = null;
         caretListener = null;
         inputListener = null;

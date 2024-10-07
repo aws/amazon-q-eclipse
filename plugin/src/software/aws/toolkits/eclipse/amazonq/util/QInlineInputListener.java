@@ -180,10 +180,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             }
             lastKeyStrokeType = LastKeyStrokeType.BACKSPACE;
             return;
-        case SWT.ESC:
-            qInvocationSessionInstance.transitionToDecisionMade();
-            qInvocationSessionInstance.end();
-            return;
         default:
             lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
             return;

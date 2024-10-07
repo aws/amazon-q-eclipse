@@ -16,21 +16,24 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
 
     @Override
     public void documentChanged(final DocumentEvent e) {
-        System.out.println("Document change: " + e.getText());
-        if (!shouldSendQuery(e)) {
+        var qSes = QInvocationSession.getInstance();
+        if (!shouldSendQuery(e, qSes)) {
             return;
         }
 
-        var qSes = QInvocationSession.getInstance();
         if (!qSes.isActive()) {
             var editor = getActiveTextEditor();
             qSes.start(editor);
         }
-        qSes.invoke();
+        qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset() + 1);
     }
 
-    private boolean shouldSendQuery(final DocumentEvent e) {
+    private boolean shouldSendQuery(final DocumentEvent e, final QInvocationSession session) {
         if (e.getText().length() <= 0) {
+            return false;
+        }
+
+        if (session.isPreviewingSuggestions()) {
             return false;
         }
 

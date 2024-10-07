@@ -64,8 +64,7 @@ public final class ChatCommunicationManager {
                         return sendEncryptedChatRequest(chatRequestParams.getTabId(), token -> {
                             chatRequestParams.setPartialResultToken(token);
 
-                            String serializedData = jsonHandler.serialize(chatRequestParams);
-                            String jwt = lspEncryptionManager.encrypt(serializedData);
+                            String jwt = lspEncryptionManager.encrypt(chatRequestParams);
 
                             EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
                                 jwt,
@@ -79,8 +78,7 @@ public final class ChatCommunicationManager {
                         return sendEncryptedChatRequest(quickActionParams.getTabId(), token -> {
                             quickActionParams.setPartialResultToken(token);
 
-                            String serializedData = jsonHandler.serialize(quickActionParams);
-                            String jwt = lspEncryptionManager.encrypt(serializedData);
+                            String jwt = lspEncryptionManager.encrypt(quickActionParams);
 
                             EncryptedQuickActionParams encryptedChatRequestParams = new EncryptedQuickActionParams(
                                 jwt,

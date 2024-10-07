@@ -34,8 +34,7 @@ public final class LspEncryptionManager {
 
     public void initializeEncrypedCommunication(final OutputStream serverStdin) {
         // Ensure the message does not contain any newline characters. The server will
-        // process characters up
-        // to the first newline.
+        // process characters up to the first newline.
         String message = String.format("""
                 {\
                     "version": "1.0", \

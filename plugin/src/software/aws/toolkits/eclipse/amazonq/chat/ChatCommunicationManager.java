@@ -72,8 +72,16 @@ public final class ChatCommunicationManager {
                         chatMessageProvider.sendChatReady();
                         return CompletableFuture.completedFuture(null);
                     case CHAT_TAB_ADD:
-                        GenericTabParams tabParams = jsonHandler.convertObject(params, GenericTabParams.class);
-                        chatMessageProvider.sendTabAdd(tabParams);
+                        GenericTabParams tabParamsForAdd = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.sendTabAdd(tabParamsForAdd);
+                        return CompletableFuture.completedFuture(null);
+                    case CHAT_TAB_REMOVE:
+                        GenericTabParams tabParamsForRemove = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.sendTabRemove(tabParamsForRemove);
+                        return CompletableFuture.completedFuture(null);
+                    case CHAT_TAB_CHANGE:
+                        GenericTabParams tabParamsForChange = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.sendTabChange(tabParamsForChange);
                         return CompletableFuture.completedFuture(null);
                     default:
                         throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());

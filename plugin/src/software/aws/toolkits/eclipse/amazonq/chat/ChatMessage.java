@@ -32,4 +32,12 @@ public final class ChatMessage {
     public void sendTabAdd(final GenericTabParams tabParams) {
         amazonQLspServer.tabAdd(tabParams);
     }
+    
+    public void sendTabRemove(final GenericTabParams tabParams) {
+        amazonQLspServer.tabRemove(tabParams);
+    }
+    
+    public void sendTabChange(final GenericTabParams tabParams) {
+        amazonQLspServer.tabChange(tabParams);
+    }
 }

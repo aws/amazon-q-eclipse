@@ -18,10 +18,10 @@ public enum Command {
     CHAT_SOURCE_LINK_CLICK("aws/chat/sourceLinkClick"),
     CHAT_QUICK_ACTION("aws/chat/sendChatQuickAction"),
     CHAT_END_CHAT("aws/chat/endChat"),
-    CHAT_INSERT_TO_CURSOR_POSITION("aws/chat/insertToCursorPosition"),
     CHAT_FEEDBACK("aws/chat/feedback"),
     CHAT_FOLLOW_UP_CLICK("aws/chat/followUpClick"),
     TELEMETRY_EVENT("telemetry/event"),
+    CHAT_INSERT_TO_CURSOR_POSITION("insertToCursorPosition"),
     AUTH_FOLLOW_UP_CLICKED("authFollowUpClicked"), //Auth command handled in QChat webview
 
     // Auth

@@ -43,11 +43,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_INFO_LINK_CLICK:
-                //TODO
-                break;
             case CHAT_LINK_CLICK:
-                //TODO
-                break;
             case CHAT_SOURCE_LINK_CLICK:
                 InfoLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params, InfoLinkClickParams.class);
                 var link = infoLinkClickParams.getLink();

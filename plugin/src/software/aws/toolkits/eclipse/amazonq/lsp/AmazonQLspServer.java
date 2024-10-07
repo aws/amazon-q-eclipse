@@ -12,6 +12,7 @@ import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
@@ -39,11 +40,8 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonNotification("aws/chat/tabChange")
     void tabChange(GenericTabParams params);
 
-    @JsonNotification("aws/chat/tabRemove")
-    void tabRemove(GenericTabParams params);
-
-    @JsonNotification("aws/chat/tabChange")
-    void tabChange(GenericTabParams params);
+    @JsonNotification("aws/chat/followUpClick")
+    void followUpClick(FollowUpClickParams params);
 
     @JsonNotification("aws/chat/ready")
     void chatReady();

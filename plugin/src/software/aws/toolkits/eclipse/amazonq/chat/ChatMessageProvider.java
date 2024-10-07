@@ -8,6 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+
+import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
@@ -66,6 +68,11 @@ public final class ChatMessageProvider {
     public void sendTabChange(final GenericTabParams tabParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.sendTabChange(tabParams);
+    }
+
+    public void followUpClick(final FollowUpClickParams followUpClickParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.followUpClick(followUpClickParams);
     }
 
     private void cancelInflightRequests(final String tabId) {

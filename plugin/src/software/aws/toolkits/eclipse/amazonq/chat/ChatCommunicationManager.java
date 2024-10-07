@@ -15,6 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -97,6 +98,10 @@ public final class ChatCommunicationManager {
                     case CHAT_TAB_CHANGE:
                         GenericTabParams tabParamsForChange = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.sendTabChange(tabParamsForChange);
+                        return CompletableFuture.completedFuture(null);
+                    case CHAT_FOLLOW_UP_CLICK:
+                        FollowUpClickParams followUpClickParams = jsonHandler.convertObject(params, FollowUpClickParams.class);
+                        chatMessageProvider.followUpClick(followUpClickParams);
                         return CompletableFuture.completedFuture(null);
                     default:
                         throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());

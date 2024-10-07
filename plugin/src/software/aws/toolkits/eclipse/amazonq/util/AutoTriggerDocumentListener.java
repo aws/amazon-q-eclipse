@@ -33,7 +33,7 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
             return false;
         }
 
-        if (session.isPreviewingSuggestions()) {
+        if (session.isPreviewingSuggestions() || session.isDecisionMade()) {
             return false;
         }
 

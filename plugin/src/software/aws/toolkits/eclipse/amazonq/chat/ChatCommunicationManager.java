@@ -103,6 +103,10 @@ public final class ChatCommunicationManager {
                         FollowUpClickParams followUpClickParams = jsonHandler.convertObject(params, FollowUpClickParams.class);
                         chatMessageProvider.followUpClick(followUpClickParams);
                         return CompletableFuture.completedFuture(null);
+                    case CHAT_END_CHAT:
+                        GenericTabParams tabParamsForEndChat = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.endChat(tabParamsForEndChat);
+                        return CompletableFuture.completedFuture(null);
                     default:
                         throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());
                 }

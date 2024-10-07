@@ -26,6 +26,10 @@ public final class ChatMessage {
     public CompletableFuture<String> sendQuickAction(final EncryptedQuickActionParams params) {
         return amazonQLspServer.sendQuickAction(params);
     }
+    
+    public CompletableFuture<Boolean> endChat(final GenericTabParams tabParams) {
+    	return amazonQLspServer.endChat(tabParams);
+    }
 
     public void sendChatReady() {
         amazonQLspServer.chatReady();

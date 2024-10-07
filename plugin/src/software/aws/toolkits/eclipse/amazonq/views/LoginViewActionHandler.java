@@ -5,20 +5,25 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 
 import java.util.stream.Collectors;
-
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Display;
-
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
+import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
+import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public class LoginViewActionHandler implements ViewActionHandler {
+
+    private static final JsonHandler JSON_HANDLER = new JsonHandler();
+
     @Override
     public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
+        Object params = parsedCommand.getParams();
         switch (parsedCommand.getCommand()) {
             case LOGIN_BUILDER_ID:
                 ThreadingUtils.executeAsyncTask(() -> {
@@ -35,6 +40,20 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 break;
             case LOGIN_IDC:
                 PluginLogger.info("loginIdc command received");
+                ThreadingUtils.executeAsyncTask(() -> {
+                    try {
+                        LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(parsedCommand.getParams(), LoginIdcParams.class);
+                        var url = loginIdcParams.getUrl();
+                        var region = loginIdcParams.getRegion();
+                        if (StringUtils.isEmpty(url) || StringUtils.isEmpty(region)) {
+                            throw new IllegalArgumentException("Url/Region parameters cannot be null or empty");
+                        }
+                        // TODO: Add logic to sign-in using IDC
+                    } catch (Exception e) {
+                        PluginLogger.error("Failed to update token", e);
+                    }
+                });
+                break;
             case CANCEL_LOGIN:
                 PluginLogger.info("cancelLogin command received");
                 break;

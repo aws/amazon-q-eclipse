@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-
 import java.util.stream.Collectors;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Display;
@@ -42,7 +41,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 PluginLogger.info("loginIdc command received");
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
-                        LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(parsedCommand.getParams(), LoginIdcParams.class);
+                        LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(params, LoginIdcParams.class);
                         var url = loginIdcParams.getUrl();
                         var region = loginIdcParams.getRegion();
                         if (StringUtils.isEmpty(url) || StringUtils.isEmpty(region)) {

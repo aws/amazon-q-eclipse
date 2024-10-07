@@ -10,9 +10,9 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageServer;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
@@ -25,10 +25,10 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(InlineCompletionParams params);
 
     @JsonRequest("aws/chat/sendChatPrompt")
-    CompletableFuture<String> sendChatPrompt(EncryptedChatRequestParams encryptedChatRequestParams);
+    CompletableFuture<String> sendChatPrompt(EncryptedChatParams encryptedChatRequestParams);
 
     @JsonRequest("aws/chat/sendChatQuickAction")
-    CompletableFuture<ChatResult> sendQuickAction(QuickActionParams quickActionParams);
+    CompletableFuture<String> sendQuickAction(EncryptedQuickActionParams encryptedQuickActionParams);
 
     @JsonNotification("aws/chat/tabAdd")
     void tabAdd(GenericTabParams params);

@@ -8,9 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
@@ -30,7 +30,7 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<String> sendChatPrompt(final EncryptedChatRequestParams encryptedChatRequestParams) {
+    public CompletableFuture<String> sendChatPrompt(final EncryptedChatParams encryptedChatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
 
         var response = chatMessage.sendChatPrompt(chatRequestParams);
@@ -44,9 +44,9 @@ public final class ChatMessageProvider {
         return response;
     }
 
-    public CompletableFuture<ChatResult> sendQuickAction(final QuickActionParams quickActionParams) {
+    public CompletableFuture<String> sendQuickAction(final EncryptedQuickActionParams encryptedQuickActionParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendQuickAction(quickActionParams);
+        return chatMessage.sendQuickAction(encryptedQuickActionParams);
     }
 
     public void sendChatReady() {

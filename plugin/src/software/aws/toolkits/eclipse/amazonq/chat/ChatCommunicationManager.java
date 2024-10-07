@@ -13,7 +13,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -62,11 +63,11 @@ public final class ChatCommunicationManager {
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
                         return sendEncryptedChatRequest(chatRequestParams.getTabId(), token -> {
                             chatRequestParams.setPartialResultToken(token);
-                            
+
                             String serializedData = jsonHandler.serialize(chatRequestParams);
                             String jwt = lspEncryptionManager.encrypt(serializedData);
-                            
-                            EncryptedChatRequestParams encryptedChatRequestParams = new EncryptedChatRequestParams(
+
+                            EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
                                 jwt,
                                 token
                             );
@@ -75,11 +76,19 @@ public final class ChatCommunicationManager {
                         });
                     case CHAT_QUICK_ACTION:
                         QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
-                        return sendChatRequest(quickActionParams.getTabId(), token -> {
+                        return sendEncryptedChatRequest(quickActionParams.getTabId(), token -> {
                             quickActionParams.setPartialResultToken(token);
 
-                        return chatMessageProvider.sendQuickAction(quickActionParams);
-                    });
+                            String serializedData = jsonHandler.serialize(quickActionParams);
+                            String jwt = lspEncryptionManager.encrypt(serializedData);
+
+                            EncryptedQuickActionParams encryptedChatRequestParams = new EncryptedQuickActionParams(
+                                jwt,
+                                token
+                            );
+
+                            return chatMessageProvider.sendQuickAction(encryptedChatRequestParams);
+                        });
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
                         return CompletableFuture.completedFuture(null);

@@ -65,13 +65,23 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_END_CHAT:
+                //TODO
+                break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
+                //TODO
+                break;
             case CHAT_FEEDBACK:
+                //TODO
+                break;
             case CHAT_FOLLOW_UP_CLICK:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case TELEMETRY_EVENT:
+                //TODO
+                break;
             case AUTH_FOLLOW_UP_CLICKED:
+                //TODO
+                break;
             default:
                 throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
         }

@@ -3,11 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenSource;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
@@ -38,6 +41,55 @@ public final class AuthUtils {
         LISTENERS.remove(listener);
     }
 
+    public static CompletableFuture<Boolean> isBuilderIdLogin() {
+        String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
+        if (loginType == null || !LoginType.valueOf(loginType).equals(LoginType.BUILDER_ID)) {
+            return CompletableFuture.supplyAsync(() -> {
+                notifyAuthStatusChanged(false);
+                return false;
+            });
+        }
+        return getSsoToken(LoginType.BUILDER_ID, false, null)
+                .thenApply(ssoToken -> {
+                    boolean isLoggedIn = ssoToken != null;
+                    notifyAuthStatusChanged(isLoggedIn);
+                    return isLoggedIn;
+                })
+                .exceptionally(throwable -> {
+                    PluginLogger.error("Failed to check builderId login status", throwable);
+                    return false;
+                });
+    }
+
+    public static CompletableFuture<Boolean> isIamIdcLogin() {
+        String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
+        if (loginType == null || !LoginType.valueOf(loginType).equals(LoginType.IAM_IDENTITY_CENTER)) {
+            return CompletableFuture.supplyAsync(() -> {
+                notifyAuthStatusChanged(false);
+                return false;
+            });
+        }
+        return getSsoToken(LoginType.IAM_IDENTITY_CENTER, false, null)
+                .thenApply(ssoToken -> {
+                    boolean isLoggedIn = ssoToken != null;
+                    notifyAuthStatusChanged(isLoggedIn);
+                    return isLoggedIn;
+                })
+                .exceptionally(throwable -> {
+                    PluginLogger.error("Failed to check iamIdc login status", throwable);
+                    return false;
+                });
+    }
+
+    public static CompletableFuture<ResponseMessage> signIn(final LoginType loginType, final LoginIdcParams loginIdcParams) {
+        return getSsoToken(loginType, true, loginIdcParams)
+                .thenCompose(AuthUtils::updateCredentials)
+                .exceptionally(throwable -> {
+                    PluginLogger.error("Failed to sign in", throwable);
+                    throw new AmazonQPluginException(throwable);
+                });
+    }
+
     public static CompletableFuture<ResponseMessage> signIn() {
         return getSsoToken(true)
                 .thenCompose(AuthUtils::updateCredentials)
@@ -48,7 +100,13 @@ public final class AuthUtils {
     }
 
     public static CompletableFuture<ResponseMessage> updateToken() {
-        return getSsoToken(false)
+        String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
+        if (loginType == null) {
+            return AuthUtils.updateCredentials(null);
+        }
+        LoginIdcParams loginIdcParams = LoginType.valueOf(loginType).equals(LoginType.IAM_IDENTITY_CENTER)
+                ? PluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class) : null;
+        return getSsoToken(LoginType.valueOf(loginType), false, loginIdcParams)
                 .thenCompose(AuthUtils::updateCredentials)
                 .exceptionally(throwable -> {
                     PluginLogger.error("Failed to update token", throwable);
@@ -57,7 +115,16 @@ public final class AuthUtils {
     }
 
     public static CompletableFuture<Boolean> isLoggedIn() {
-        return getSsoToken(false)
+        String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
+        if (loginType == null) {
+            return CompletableFuture.supplyAsync(() -> {
+                notifyAuthStatusChanged(false);
+                return false;
+            });
+        }
+        LoginIdcParams loginIdcParams = LoginType.valueOf(loginType).equals(LoginType.IAM_IDENTITY_CENTER)
+                ? PluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class) : null;
+        return getSsoToken(LoginType.valueOf(loginType), false, loginIdcParams)
                 .thenApply(ssoToken -> {
                     boolean isLoggedIn = ssoToken != null;
                     notifyAuthStatusChanged(isLoggedIn);
@@ -70,7 +137,13 @@ public final class AuthUtils {
     }
 
     public static CompletableFuture<Void> invalidateToken() {
-        return getSsoToken(false)
+        String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
+        if (loginType == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        LoginIdcParams loginIdcParams = LoginType.valueOf(loginType).equals(LoginType.IAM_IDENTITY_CENTER)
+                ? PluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class) : null;
+        return getSsoToken(LoginType.valueOf(loginType), false, loginIdcParams)
                 .thenCompose(currentToken -> {
                     if (currentToken == null) {
                         PluginLogger.warn("Attempting to invalidate token with no active auth session");
@@ -80,7 +153,11 @@ public final class AuthUtils {
                     InvalidateSsoTokenParams params = new InvalidateSsoTokenParams(ssoTokenId);
                     return LspProvider.getAuthServer()
                                       .thenCompose(server -> server.invalidateSsoToken(params))
-                                      .thenRun(() -> notifyAuthStatusChanged(false))
+                                      .thenRun(() -> {
+                                          notifyAuthStatusChanged(false);
+                                          PluginStore.remove(Constants.LOGIN_TYPE_KEY);
+                                          PluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
+                                      })
                                       .exceptionally(throwable -> {
                                           PluginLogger.error("Unexpected error while invalidating token", throwable);
                                           throw new AmazonQPluginException(throwable);
@@ -124,5 +201,32 @@ public final class AuthUtils {
         for (AuthStatusChangedListener listener : LISTENERS) {
             listener.onAuthStatusChanged(isLoggedIn);
         }
+    }
+
+    private static CompletableFuture<SsoToken> getSsoToken(final LoginType loginType, final boolean triggerSignIn, final LoginIdcParams loginIdcParams) {
+        GetSsoTokenSource source;
+        if (loginType.equals(LoginType.IAM_IDENTITY_CENTER)) {
+            source = new GetSsoTokenSource(Q_PRODUCT_NAME, "IamIdentityCenter", loginIdcParams.getUrl(), loginIdcParams.getRegion());
+        } else {
+            source = new GetSsoTokenSource(Q_PRODUCT_NAME, "AwsBuilderId", null, null);
+        }
+        GetSsoTokenOptions options = new GetSsoTokenOptions(true, true, triggerSignIn);
+        GetSsoTokenParams params = new GetSsoTokenParams(source, Q_SCOPES, options);
+        return LspProvider.getAuthServer()
+                           .thenCompose(server -> server.getSsoToken(params)
+                                                        .thenApply(response -> {
+                                                            if (triggerSignIn) {
+                                                                notifyAuthStatusChanged(true);
+                                                                PluginStore.put(Constants.LOGIN_TYPE_KEY, loginType.name());
+                                                            }
+                                                            if (triggerSignIn && loginType.equals(LoginType.IAM_IDENTITY_CENTER)) {
+                                                                PluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, loginIdcParams);
+                                                            }
+                                                            return response.ssoToken();
+                                                        }))
+                           .exceptionally(throwable -> {
+                               PluginLogger.error("Failed to fetch SSO token from LSP", throwable);
+                               throw new AmazonQPluginException(throwable);
+                           });
     }
 }

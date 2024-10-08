@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.ui.texteditor.ITextEditor;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.shouldIndentVertically;
 

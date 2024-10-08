@@ -16,7 +16,8 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 public final class ChatMessageProvider {
 
     private final AmazonQLspServer amazonQLspServer;
-    // Map of in-flight requests per tab Id
+    // Map of in-flight requests per tab Ids
+    // TODO ECLIPSE-349: Handle disposing resources of this class including this map
     private Map<String, CompletableFuture<ChatResult>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<ChatResult>>();
 
     public static CompletableFuture<ChatMessageProvider> createAsync() {

@@ -7,7 +7,7 @@ import org.eclipse.core.commands.ExecutionException;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandVerb;
 
-public class QExplainHandler extends QGenericCommandHandler {
+public class QExplainHandler extends QContextMenuHandler {
 
     @Override
     public final boolean isEnabled() {

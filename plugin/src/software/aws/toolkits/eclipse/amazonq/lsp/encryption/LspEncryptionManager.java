@@ -35,9 +35,9 @@ public final class LspEncryptionManager {
     /*
      * For improved security, the communication between the Plugin extension and the Amazon Q LSP Server
      * should be encrypted. The Amazon Q LSP Server is initiated as encrypted when the --set-credentials-encryption-key
-     * flag is provided in the start up command {@link QLspConnectionProvider}. Once the sub-process for the LSP server 
+     * flag is provided in the start up command {@link QLspConnectionProvider}. Once the sub-process for the LSP server
      * has been initiated, it waits for an encryption key to be sent over stdin before initiating the LSP protocol.
-     * The server saves the provided encryption key and will use the key for future requests (such as Q Chat Requests) 
+     * The server saves the provided encryption key and will use the key for future requests (such as Q Chat Requests)
      */
     public void initializeEncrypedCommunication(final OutputStream serverStdin) {
         // Ensure the message does not contain any newline characters. The server will

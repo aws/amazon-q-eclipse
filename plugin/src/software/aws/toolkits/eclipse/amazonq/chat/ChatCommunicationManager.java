@@ -65,7 +65,7 @@ public final class ChatCommunicationManager {
                             String encryptedChatResult = lspEncryptionManager.encrypt(chatRequestParams);
 
                             EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
-                            	encryptedChatResult,
+                                encryptedChatResult,
                                 token
                             );
 
@@ -77,7 +77,7 @@ public final class ChatCommunicationManager {
                             String encryptedChatResult = lspEncryptionManager.encrypt(quickActionParams);
 
                             EncryptedQuickActionParams encryptedQuickActionParams = new EncryptedQuickActionParams(
-                            	encryptedChatResult,
+                                encryptedChatResult,
                                 token
                             );
 

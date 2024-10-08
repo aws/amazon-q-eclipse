@@ -10,10 +10,20 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.EditorUtils;
 
 public abstract class QContextMenuHandler extends AbstractHandler {
-    
+	
+	@Override
+    public final boolean isEnabled() {
+        try {
+			return AuthUtils.isLoggedIn().get();
+		} catch (Exception e) {
+			throw new AmazonQPluginException("Error retrieving login status for QContextMenuHandler", e);
+		}
+    }
+	
     protected void executeGenericCommand(String genericCommandVerb) {
         EditorUtils.getSelectedText()
             .thenApplyAsync(selection -> new GenericCommandParams(

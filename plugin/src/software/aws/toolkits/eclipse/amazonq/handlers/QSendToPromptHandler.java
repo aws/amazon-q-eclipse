@@ -8,12 +8,6 @@ import org.eclipse.core.commands.ExecutionException;
 public class QSendToPromptHandler extends QContextMenuHandler {
 
     @Override
-    public final boolean isEnabled() {
-        // TODO
-        return true;
-    }
-
-    @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
         executeSendToPromptCommand();
         return null;

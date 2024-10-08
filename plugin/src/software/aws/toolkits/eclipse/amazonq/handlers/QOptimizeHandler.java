@@ -10,12 +10,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandVerb;
 public class QOptimizeHandler extends QContextMenuHandler {
 
     @Override
-    public final boolean isEnabled() {
-        // TODO
-        return true;
-    }
-
-    @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
     	executeGenericCommand(GenericCommandVerb.Optimize.getValue());
         return null;

@@ -5,7 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.handlers;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 
-public class QSendToPromptHandler extends QContextMenuHandler {
+public class QSendToPromptHandler extends AbstractQContextMenuHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {

@@ -7,7 +7,7 @@ import org.eclipse.core.commands.ExecutionException;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandVerb;
 
-public class QOptimizeHandler extends QContextMenuHandler {
+public class QOptimizeHandler extends AbstractQContextMenuHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {

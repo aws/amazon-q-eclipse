@@ -13,7 +13,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.EditorUtils;
 
-public abstract class QContextMenuHandler extends AbstractHandler {
+public abstract class AbstractQContextMenuHandler extends AbstractHandler {
 	
 	@Override
     public final boolean isEnabled() {

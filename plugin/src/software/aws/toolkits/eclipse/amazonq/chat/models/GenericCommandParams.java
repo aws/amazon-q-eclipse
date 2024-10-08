@@ -7,6 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record GenericCommandParams(
         @JsonProperty("genericCommand") String genericCommand,
         @JsonProperty("selection") String selection,
-        @JsonProperty("triggerType") String triggerType,
+        @JsonProperty("triggerType") String triggerType
 ) { };
 

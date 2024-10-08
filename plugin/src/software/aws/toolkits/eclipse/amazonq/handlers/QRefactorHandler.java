@@ -11,7 +11,7 @@ public class QRefactorHandler extends AbstractQContextMenuHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
-    	executeGenericCommand(GenericCommandVerb.Refactor.getValue());
+        executeGenericCommand(GenericCommandVerb.Refactor.getValue());
         return null;
     }
 }

@@ -9,28 +9,33 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-public class EditorUtils {
-	public static CompletableFuture<String> getSelectedText() {
-		CompletableFuture<String> future = new CompletableFuture<>();
-	    
-	    Display.getDefault().asyncExec(() -> {
-	        try {
-	            IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-	            if (editor instanceof ITextEditor) {
-	                ITextEditor textEditor = (ITextEditor) editor;
-	                ISelection selection = textEditor.getSelectionProvider().getSelection();
-	                if (selection instanceof ITextSelection) {
-	                    ITextSelection textSelection = (ITextSelection) selection;
-	                    future.complete(textSelection.getText());
-	                    return;
-	                }
-	            }
-	            future.complete(null);
-	        } catch (Exception e) {
-	            future.completeExceptionally(e);
-	        }
-	    });
-	    
-	    return future;
-	}
+public final class EditorUtils {
+
+    private EditorUtils() {
+        // Prevent instantiation
+    }
+
+    public static CompletableFuture<String> getSelectedText() {
+        CompletableFuture<String> future = new CompletableFuture<>();
+
+        Display.getDefault().asyncExec(() -> {
+            try {
+                IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+                if (editor instanceof ITextEditor) {
+                    ITextEditor textEditor = (ITextEditor) editor;
+                    ISelection selection = textEditor.getSelectionProvider().getSelection();
+                    if (selection instanceof ITextSelection) {
+                        ITextSelection textSelection = (ITextSelection) selection;
+                        future.complete(textSelection.getText());
+                        return;
+                    }
+                }
+                future.complete(null);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        });
+
+        return future;
+    }
 }

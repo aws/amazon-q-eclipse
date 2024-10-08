@@ -11,7 +11,7 @@ public class QOptimizeHandler extends AbstractQContextMenuHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
-    	executeGenericCommand(GenericCommandVerb.Optimize.getValue());
+        executeGenericCommand(GenericCommandVerb.Optimize.getValue());
         return null;
     }
 }

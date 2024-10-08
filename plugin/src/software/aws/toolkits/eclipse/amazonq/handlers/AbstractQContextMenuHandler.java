@@ -14,17 +14,17 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.EditorUtils;
 
 public abstract class AbstractQContextMenuHandler extends AbstractHandler {
-	
-	@Override
+
+    @Override
     public final boolean isEnabled() {
         try {
-			return AuthUtils.isLoggedIn().get();
-		} catch (Exception e) {
-			throw new AmazonQPluginException("Error retrieving login status for QContextMenuHandler", e);
-		}
+            return AuthUtils.isLoggedIn().get();
+        } catch (Exception e) {
+            throw new AmazonQPluginException("Error retrieving login status for QContextMenuHandler", e);
+        }
     }
-	
-    protected void executeGenericCommand(String genericCommandVerb) {
+
+    protected final void executeGenericCommand(final String genericCommandVerb) {
         EditorUtils.getSelectedText()
             .thenApplyAsync(selection -> new GenericCommandParams(
                 null,
@@ -33,7 +33,7 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
                 genericCommandVerb
             ))
             .thenApplyAsync(ChatUIInboundCommand::createGenericCommand)
-            .thenAcceptAsync(command -> 
+            .thenAcceptAsync(command ->
                 ChatCommunicationManager.getInstance().sendMessageToChatUI(command)
             )
             .exceptionally(e -> {
@@ -41,14 +41,14 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
             });
     }
 
-    protected void executeSendToPromptCommand() {
+    protected final void executeSendToPromptCommand() {
         EditorUtils.getSelectedText()
             .thenApplyAsync(selection -> new SendToPromptParams(
                 selection,
                 TriggerType.ContextMenu.getValue()
             ))
             .thenApplyAsync(ChatUIInboundCommand::createSendToPromptCommand)
-            .thenAcceptAsync(command -> 
+            .thenAcceptAsync(command ->
                 ChatCommunicationManager.getInstance().sendMessageToChatUI(command)
             )
             .exceptionally(e -> {

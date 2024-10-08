@@ -11,7 +11,7 @@ public class QExplainHandler extends AbstractQContextMenuHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
-    	executeGenericCommand(GenericCommandVerb.Explain.getValue());
+        executeGenericCommand(GenericCommandVerb.Explain.getValue());
         return null;
     }
 }

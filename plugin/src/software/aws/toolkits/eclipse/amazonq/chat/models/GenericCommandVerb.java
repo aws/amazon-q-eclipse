@@ -5,8 +5,8 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 public enum GenericCommandVerb {
     Explain("Explain"),
     Refactor("Refactor"),
-    Selection("Fix"),
-    TriggerType("Optimize");
+    Fix("Fix"),
+    Optimize("Optimize");
 
     private final String value;
 

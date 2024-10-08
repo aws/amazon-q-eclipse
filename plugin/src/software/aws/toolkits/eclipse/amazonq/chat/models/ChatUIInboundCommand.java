@@ -22,7 +22,7 @@ public record ChatUIInboundCommand(
         );
     }
 
-    public static ChatUIInboundCommand createSendToPrompCommand(final SendToPromptParams params) {
+    public static ChatUIInboundCommand createSendToPromptCommand(final SendToPromptParams params) {
         return new ChatUIInboundCommand(
             ChatUIInboundCommandName.SendToPrompt.getValue(),
             null,

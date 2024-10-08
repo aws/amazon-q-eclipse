@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenError;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenSource;
@@ -16,6 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
@@ -36,6 +38,15 @@ public final class AuthUtils {
 
     public static void removeAuthStatusChangeListener(final AuthStatusChangedListener listener) {
         LISTENERS.remove(listener);
+    }
+    
+    public static CompletableFuture<ResponseMessage> signInWithIdc(final String issuerUrl, final String region) {
+        return getSsoToken(true, issuerUrl, region)
+                .thenCompose(AuthUtils::updateCredentials)
+                .exceptionally(throwable -> {
+                        PluginLogger.error("Failed to sign in", throwable);
+                        throw new AmazonQPluginException(throwable);
+                });
     }
 
     public static CompletableFuture<ResponseMessage> signIn() {
@@ -124,5 +135,27 @@ public final class AuthUtils {
         for (AuthStatusChangedListener listener : LISTENERS) {
             listener.onAuthStatusChanged(isLoggedIn);
         }
+    }
+    
+    private static CompletableFuture<SsoToken> getSsoToken(final boolean triggerSignIn, final String issuerUrl, final String region) {
+        GetSsoTokenSource source = new GetSsoTokenSource(Q_PRODUCT_NAME, "IamIdentityCenter", issuerUrl, region);
+        GetSsoTokenOptions options = new GetSsoTokenOptions(true, true, triggerSignIn);
+        GetSsoTokenParams params = new GetSsoTokenParams(source, Q_SCOPES, options);
+        return LspProvider.getAuthServer()
+                           .thenCompose(server -> server.getSsoToken(params)
+                                                        .thenApply(response -> {
+                                                            System.out.println("*** " + response.ssoToken());
+                                                            if (response.ssoToken() != null ) {
+                                                                System.out.println("**** " + response.ssoToken().id() + " | " + response.ssoToken().accessToken());
+                                                            }
+                                                            if (triggerSignIn) {
+                                                                notifyAuthStatusChanged(true);
+                                                            }
+                                                            return response.ssoToken();
+                                                        }))
+                           .exceptionally(throwable -> {
+                               PluginLogger.error("Failed to fetch SSO token from LSP", throwable);
+                               throw new AmazonQPluginException(throwable);
+                           });
     }
 }

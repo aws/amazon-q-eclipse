@@ -56,8 +56,8 @@ public final class ChatCommunicationManager {
         return instance;
     }
 
-    public CompletableFuture<ChatResult> sendMessageToChatServer(final Command command, final Object params) {
-        return chatMessageProvider.thenCompose(chatMessageProvider -> {
+    public void sendMessageToChatServer(final Command command, final Object params) {
+        chatMessageProvider.thenCompose(chatMessageProvider -> {
             try {
                 switch (command) {
                     case CHAT_SEND_PROMPT:
@@ -86,15 +86,12 @@ public final class ChatCommunicationManager {
                         });
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
-                        return CompletableFuture.completedFuture(null);
                     case CHAT_TAB_ADD:
                         GenericTabParams tabParamsForAdd = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.sendTabAdd(tabParamsForAdd);
-                        return CompletableFuture.completedFuture(null);
                     case CHAT_TAB_REMOVE:
                         GenericTabParams tabParamsForRemove = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.sendTabRemove(tabParamsForRemove);
-                        return CompletableFuture.completedFuture(null);
                     case CHAT_TAB_CHANGE:
                         GenericTabParams tabParamsForChange = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.sendTabChange(tabParamsForChange);
@@ -106,7 +103,6 @@ public final class ChatCommunicationManager {
                     case CHAT_END_CHAT:
                         GenericTabParams tabParamsForEndChat = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.endChat(tabParamsForEndChat);
-                        return CompletableFuture.completedFuture(null);
                     default:
                         throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());
                 }

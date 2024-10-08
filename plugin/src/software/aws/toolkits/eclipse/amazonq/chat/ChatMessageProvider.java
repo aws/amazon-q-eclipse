@@ -19,7 +19,7 @@ public final class ChatMessageProvider {
     private final AmazonQLspServer amazonQLspServer;
     // Map of in-flight requests per tab Ids
     // TODO ECLIPSE-349: Handle disposing resources of this class including this map
-    private Map<String, CompletableFuture<ChatResult>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<ChatResult>>();
+    private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
     public static CompletableFuture<ChatMessageProvider> createAsync() {
         return LspProvider.getAmazonQServer()
@@ -30,16 +30,16 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<String> sendChatPrompt(final EncryptedChatParams encryptedChatRequestParams) {
+    public CompletableFuture<String> sendChatPrompt(final String tabId, final EncryptedChatParams encryptedChatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
 
-        var response = chatMessage.sendChatPrompt(chatRequestParams);
+        var response = chatMessage.sendChatPrompt(encryptedChatRequestParams);
         // We assume there is only one outgoing request per tab because the input is
         // blocked when there is an outgoing request
-        inflightRequestByTabId.put(chatRequestParams.getTabId(), response);
+        inflightRequestByTabId.put(tabId, response);
         response.whenComplete((result, exception) -> {
             // stop tracking in-flight requests once response is received
-            inflightRequestByTabId.remove(chatRequestParams.getTabId());
+            inflightRequestByTabId.remove(tabId);
         });
         return response;
     }

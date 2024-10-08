@@ -16,10 +16,12 @@ public final class ChatMessage {
         this.amazonQLspServer = amazonQLspServer;
     }
 
+    // Returns a ChatResult as an encrypted message {@link LspEncryptionManager#decrypt()}
     public CompletableFuture<String> sendChatPrompt(final EncryptedChatParams params) {
         return amazonQLspServer.sendChatPrompt(params);
     }
 
+    // Returns a ChatResult as an encrypted message {@link LspEncryptionManager#decrypt()}
     public CompletableFuture<String> sendQuickAction(final EncryptedQuickActionParams params) {
         return amazonQLspServer.sendQuickAction(params);
     }

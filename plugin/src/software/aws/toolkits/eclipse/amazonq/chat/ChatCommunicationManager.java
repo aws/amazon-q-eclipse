@@ -62,30 +62,26 @@ public final class ChatCommunicationManager {
                     case CHAT_SEND_PROMPT:
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
                         return sendEncryptedChatRequest(chatRequestParams.getTabId(), token -> {
-                            chatRequestParams.setPartialResultToken(token);
-
-                            String jwt = lspEncryptionManager.encrypt(chatRequestParams);
+                            String encryptedChatResult = lspEncryptionManager.encrypt(chatRequestParams);
 
                             EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
-                                jwt,
+                            	encryptedChatResult,
                                 token
                             );
 
-                            return chatMessageProvider.sendChatPrompt(encryptedChatRequestParams);
+                            return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);
                         });
                     case CHAT_QUICK_ACTION:
                         QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
                         return sendEncryptedChatRequest(quickActionParams.getTabId(), token -> {
-                            quickActionParams.setPartialResultToken(token);
+                            String encryptedChatResult = lspEncryptionManager.encrypt(quickActionParams);
 
-                            String jwt = lspEncryptionManager.encrypt(quickActionParams);
-
-                            EncryptedQuickActionParams encryptedChatRequestParams = new EncryptedQuickActionParams(
-                                jwt,
+                            EncryptedQuickActionParams encryptedQuickActionParams = new EncryptedQuickActionParams(
+                            	encryptedChatResult,
                                 token
                             );
 
-                            return chatMessageProvider.sendQuickAction(encryptedChatRequestParams);
+                            return chatMessageProvider.sendQuickAction(encryptedQuickActionParams);
                         });
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
@@ -122,12 +118,12 @@ public final class ChatCommunicationManager {
         // a message for the UI.
         String partialResultToken = addPartialChatMessage(tabId);
 
-        return action.apply(partialResultToken).thenApply(jwt -> {
+        return action.apply(partialResultToken).thenApply(encryptedChatResult -> {
             // The mapping entry no longer needs to be maintained once the final result is
             // retrieved.
             removePartialChatMessage(partialResultToken);
 
-            String serializedData = lspEncryptionManager.decrypt(jwt);
+            String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
             ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
 
             // show chat response in Chat UI
@@ -175,8 +171,8 @@ public final class ChatCommunicationManager {
             throw new AmazonQPluginException("Error occurred while handling partial result notification: expected Object value");
         }
 
-        String jwt = ProgressNotficationUtils.getObject(params, String.class);
-        String serializedData = lspEncryptionManager.decrypt(jwt);
+        String encryptedPartialChatResult = ProgressNotficationUtils.getObject(params, String.class);
+        String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
         ChatResult partialChatResult = jsonHandler.deserialize(serializedData, ChatResult.class);
 
         // Check to ensure the body has content in order to keep displaying the spinner while loading

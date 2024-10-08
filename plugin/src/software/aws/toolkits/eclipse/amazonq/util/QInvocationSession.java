@@ -178,8 +178,6 @@ public final class QInvocationSession extends QResource {
                             }).collect(Collectors.toList())).get();
                     
                     Display.getDefault().asyncExec(() -> {
-                        session.transitionToPreviewingState();
-                        
                         if (newSuggestions == null || newSuggestions.isEmpty()) {
                             requestsInFlight.decrementAndGet();
                             if (!session.isPreviewingSuggestions()) {
@@ -238,6 +236,7 @@ public final class QInvocationSession extends QResource {
                         System.out.println("Invocation offset: " + invocationOffset);
                         System.out.println("========================");
 
+                        session.transitionToPreviewingState();
                         attachListeners();
                         session.primeListeners();
                         session.getViewer().getTextWidget().redraw();

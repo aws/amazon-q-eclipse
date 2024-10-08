@@ -20,12 +20,11 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
         if (!shouldSendQuery(e, qSes)) {
             return;
         }
-
         if (!qSes.isActive()) {
             var editor = getActiveTextEditor();
             qSes.start(editor);
         }
-        qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset() + 1);
+        qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset() + e.getText().length());
     }
 
     private boolean shouldSendQuery(final DocumentEvent e, final QInvocationSession session) {

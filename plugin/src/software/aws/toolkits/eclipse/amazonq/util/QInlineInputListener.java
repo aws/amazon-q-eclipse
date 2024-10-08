@@ -223,11 +223,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
         boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-//            System.out.println("input is: "
-//                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-//            System.out.println("suggestion is: "
-//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-//                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+            System.out.println("input is: "
+                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+            System.out.println("suggestion is: "
+                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             qInvocationSessionInstance.transitionToDecisionMade();
             qInvocationSessionInstance.end();
             return;

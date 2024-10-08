@@ -2,11 +2,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.handlers;
 
-import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 
-public class QExplainHandler extends AbstractHandler {
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandVerb;
+
+public class QExplainHandler extends QGenericCommandHandler {
 
     @Override
     public final boolean isEnabled() {
@@ -16,7 +17,7 @@ public class QExplainHandler extends AbstractHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
-        // TODO
+    	executeGenericCommand(GenericCommandVerb.Explain.getValue());
         return null;
     }
 }

@@ -11,14 +11,23 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
         implements IAutoTriggerListener {
 
     private T partListener;
+    private IWindowListener windowListener;
+
+    public AutoTriggerTopLevelListener() {
+
+    }
 
     public AutoTriggerTopLevelListener(final T partListener) {
         this.partListener = partListener;
     }
 
+    public void addPartListener(final T partListener) {
+        this.partListener = partListener;
+    }
+
     @Override
     public void onStart() {
-        PlatformUI.getWorkbench().addWindowListener(new IWindowListener() {
+        windowListener = new IWindowListener() {
 
             @Override
             public void windowActivated(final IWorkbenchWindow window) {
@@ -43,7 +52,8 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
                 System.out.println("window listener added from opened");
                 window.getPartService().addPartListener(partListener);
             }
-        });
+        };
+        PlatformUI.getWorkbench().addWindowListener(windowListener);
 
         // Aside from adding the listeners to the window, we would also need to add the
         // listener actively for the first time
@@ -54,6 +64,7 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
 
     @Override
     public void onShutdown() {
-        // TOOD: implement shutdown logic
+        partListener.onShutdown();
+        PlatformUI.getWorkbench().removeWindowListener(windowListener);
     }
 }

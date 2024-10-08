@@ -23,7 +23,7 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
-        System.out.println("Part visible called");
+        System.out.println("Part activated called");
         var part = partRef.getPart(false);
         if (!(part instanceof ITextEditor)) {
             return;
@@ -96,8 +96,9 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void onShutdown() {
-        // TODO Auto-generated method stub
-
+        System.out.println("Part listener on shutdown called");
+        docListener.onShutdown();
+        activeDocument.removeDocumentListener(docListener);
     }
 
 }

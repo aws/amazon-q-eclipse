@@ -3,6 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -20,6 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
+import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 
 import org.eclipse.lsp4e.LanguageServiceAccessor;
 import org.eclipse.lsp4e.LanguageServersRegistry;
@@ -40,13 +44,7 @@ public class LspStartupActivity implements IStartup {
                     var authServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.authServer");
                     LanguageServiceAccessor.startLanguageServer(authServerDefinition);
 
-                    var documentListener = new AutoTriggerDocumentListener();
-                    var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(
-                            documentListener);
-                    @SuppressWarnings("rawtypes")
-                    var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener<AutoTriggerPartListener>(
-                            autoTriggerPartListener);
-                    autoTriggerTopLevelListener.onStart();
+                    attachAutoTriggerListenersIfApplicable();
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
                 }
@@ -75,6 +73,37 @@ public class LspStartupActivity implements IStartup {
                 }
             }
         });
+    }
+
+    private void attachAutoTriggerListenersIfApplicable() {
+        String autoTriggerPrefValue = PluginStore.get(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY);
+        boolean isEnabled = autoTriggerPrefValue != null && !autoTriggerPrefValue.isBlank()
+                && autoTriggerPrefValue.equals("true");
+        var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener<AutoTriggerPartListener<AutoTriggerDocumentListener>>();
+        if (isEnabled) {
+            var documentListener = new AutoTriggerDocumentListener();
+            var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(documentListener);
+            autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
+            autoTriggerTopLevelListener.onStart();
+        }
+        var prefChangeListener = new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(PreferenceChangeEvent evt) {
+                String keyChanged = evt.getKey();
+                String newValue = evt.getNewValue();
+                if (!keyChanged.equals(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY)) {
+                    return;
+                }
+                boolean isEnabled = newValue != null && !newValue.isBlank() && newValue.equals("true");
+                if (isEnabled) {
+                    autoTriggerTopLevelListener.onStart();
+                } else {
+                    autoTriggerTopLevelListener.onShutdown();
+                }
+                System.out.println(keyChanged + " changed to " + newValue);
+            }
+        };
+        PluginStore.addChangeListener(prefChangeListener);
     }
 
 }

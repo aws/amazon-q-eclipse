@@ -58,9 +58,6 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
                 widget.setStyleRange(styleRange);
                 // also include the character right of the caret that is covered by the glyph
                 textToRender += contentInLine.charAt(lineIdx);
-                System.out.println("Idx in line: " + idxInLine);
-                System.out.println("Content in line: " + contentInLine);
-                System.out.println("Text to render: " + textToRender);
             }
         } else if (currentCaretOffset <= startCaretOffset) {
             textToRender = text;

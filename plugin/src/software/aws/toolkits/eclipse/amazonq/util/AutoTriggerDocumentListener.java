@@ -48,6 +48,7 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
 
     @Override
     public void onShutdown() {
+        System.out.println("Doc listener on shutdown called");
         return;
     }
 }

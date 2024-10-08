@@ -137,7 +137,7 @@ public final class ChatCommunicationManager {
 
             // show chat response in Chat UI
             ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                    ChatUIInboundCommandName.ChatPrompt.toString(), tabId, result, false);
+                    ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
             sendMessageToChatUI(chatUIInboundCommand);
             return result;
         });
@@ -190,7 +190,7 @@ public final class ChatCommunicationManager {
         }
 
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-            ChatUIInboundCommandName.ChatPrompt.toString(),
+            ChatUIInboundCommandName.ChatPrompt.getValue(),
             tabId,
             partialChatResult,
             true

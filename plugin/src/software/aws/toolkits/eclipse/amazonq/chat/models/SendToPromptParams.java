@@ -4,10 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record GenericCommandParams(
-		@JsonProperty("tabId") String tabId,
+public record SendToPromptParams(
         @JsonProperty("selection") String selection,
-        @JsonProperty("triggerType") String triggerType, // {@link TriggerType}
-        @JsonProperty("genericCommand") String genericCommand // {@link GenericCommandVerb}
+        @JsonProperty("triggerType") String triggerType // {@link TriggerType}
 ) { };
 

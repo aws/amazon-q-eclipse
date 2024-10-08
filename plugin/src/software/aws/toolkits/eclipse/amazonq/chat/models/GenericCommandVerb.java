@@ -2,19 +2,23 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat.models;
 
-public enum GenericCommandName {
+public enum GenericCommandVerb {
     Explain("Explain"),
     Refactor("Refactor"),
     Selection("Fix"),
     TriggerType("Optimize");
 
-    private final String name;
+    private final String value;
 
-    GenericCommandName(final String name) {
-        this.name = name;
+    GenericCommandVerb(final String value) {
+        this.value = value;
+    }
+    
+    public String getValue() {
+    	return value;
     }
 
     public String toString() {
-        return name;
+        return getValue();
     }
 }

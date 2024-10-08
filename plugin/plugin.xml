@@ -115,6 +115,31 @@
               id="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward"
               name="Toggle Suggestions Backward">
         </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.explain"
+              name="Explain">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.refactor"
+              name="Refactor">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.fix"
+              name="Fix">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.optimize"
+              name="Optimize">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
+              name="Send To Prompt">
+        </command>
     </extension>
 
     <extension point="org.eclipse.ui.handlers">
@@ -137,6 +162,26 @@
         <handler
               class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsBackwardHandler"
               commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QExplainHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.explain">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QRefactorHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.refactor">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QFixHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.fix">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QOptimizeHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.optimize">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QSendToPromptHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt">
         </handler>
     </extension>
 
@@ -190,5 +235,32 @@
             class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferenceInitializer">
         </initializer>
    </extension>
-
+    <extension point="org.eclipse.ui.menus">
+        <menuContribution locationURI="popup:org.eclipse.ui.popup.any">
+            <menu 
+                icon="icons/AmazonQ.png"
+                label="Amazon Q">
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.explain"
+                    label="Explain">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.refactor"
+                    label="Refactor">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.fix"
+                    label="Fix">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.optimize"
+                    label="Optimize">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
+                    label="Send To Prompt">
+                </command>
+            </menu>
+        </menuContribution>
+    </extension>
 </plugin>

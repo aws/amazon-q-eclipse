@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -17,14 +16,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenError;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
-import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -54,27 +50,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);
-        
-        
-        try {
-            System.out.println("**-**");
-            JsonHandler js = new JsonHandler();
-            software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ListProfilesResult result = LspProvider.getAuthServer().get().listProfiles().get();
-            System.out.println("--" + result.getProfiles().size());
-            System.out.println("---" + result.getSsoSessions().size());
-            result.getProfiles().forEach(profile -> {
-                System.out.println("profile");
-                System.out.println(js.serialize(profile));
-            });
-            result.getSsoSessions().forEach(session->{
-                System.out.println("session");
-                System.out.println(js.serialize(session));
-            });
-        } catch (GetSsoTokenError | InterruptedException
-                | ExecutionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
 
         AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
             handleAuthStatusChange(isLoggedIn);

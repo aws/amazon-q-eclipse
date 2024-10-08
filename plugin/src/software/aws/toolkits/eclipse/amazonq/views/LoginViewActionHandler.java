@@ -47,14 +47,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         if (StringUtils.isEmpty(url) || StringUtils.isEmpty(region)) {
                             throw new IllegalArgumentException("Url/Region parameters cannot be null or empty");
                         }
-                        PluginLogger.info(String.format("loginIdc information: url-%s, region-%s", url, region));
                         // TODO: Add logic to sign-in using IDC
-                        AuthUtils.signInWithIdc(url, region).get();
-                        Display.getDefault().asyncExec(() -> {
-                            PluginLogger.info("Login succeeded with IAM IDC");
-                            browser.setText("Login succeeded with IAM IDC");
-                            AmazonQView.showView(AmazonQChatWebview.ID);
-                        });
                     } catch (Exception e) {
                         PluginLogger.error("Failed to update token", e);
                     }

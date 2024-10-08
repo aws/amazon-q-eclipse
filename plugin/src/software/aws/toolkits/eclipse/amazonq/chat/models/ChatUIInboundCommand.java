@@ -11,23 +11,23 @@ public record ChatUIInboundCommand(
     @JsonProperty("tabId") String tabId,
     @JsonProperty("params") Object params,
     @JsonProperty("isPartialResult") Boolean isPartialResult
-) { 
-	
-	public static ChatUIInboundCommand createGenericCommand(GenericCommandParams params) {
-		return new ChatUIInboundCommand(
-			ChatUIInboundCommandName.GenericCommand.getValue(),
-			null,
-			params,
-			null
-		);
-	}
-	
-	public static ChatUIInboundCommand createSendToPrompCommand(SendToPromptParams params) {
-		return new ChatUIInboundCommand(
-			ChatUIInboundCommandName.SendToPrompt.getValue(),
-			null,
-			params,
-			null
-		);
-	}
+) {
+
+    public static ChatUIInboundCommand createGenericCommand(final GenericCommandParams params) {
+        return new ChatUIInboundCommand(
+            ChatUIInboundCommandName.GenericCommand.getValue(),
+            null,
+            params,
+            null
+        );
+    }
+
+    public static ChatUIInboundCommand createSendToPrompCommand(final SendToPromptParams params) {
+        return new ChatUIInboundCommand(
+            ChatUIInboundCommandName.SendToPrompt.getValue(),
+            null,
+            params,
+            null
+        );
+    }
 };

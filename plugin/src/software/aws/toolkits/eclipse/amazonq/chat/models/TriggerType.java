@@ -12,9 +12,9 @@ public enum TriggerType {
     TriggerType(final String value) {
         this.value = value;
     }
-    
+
     public String getValue() {
-    	return value;
+        return value;
     }
 
     public String toString() {

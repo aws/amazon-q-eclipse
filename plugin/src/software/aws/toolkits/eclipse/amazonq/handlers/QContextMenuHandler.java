@@ -9,35 +9,40 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.EditorUtils;
 
 public abstract class QContextMenuHandler extends AbstractHandler {
-	
-	protected void executeGenericCommand(String genericCommandVerb) {
-		String selection = EditorUtils.getSelectedText();
-    	
-    	GenericCommandParams params = new GenericCommandParams(
-    			null,
-    			selection,
-    			TriggerType.ContextMenu.getValue(),
-    			genericCommandVerb
-    	);
-    	
-        ChatUIInboundCommand command = ChatUIInboundCommand.createGenericCommand(params);
-        
-        ChatCommunicationManager.getInstance().sendMessageToChatUI(command);
-	}
+    
+    protected void executeGenericCommand(String genericCommandVerb) {
+        EditorUtils.getSelectedText()
+            .thenApplyAsync(selection -> new GenericCommandParams(
+                null,
+                selection,
+                TriggerType.ContextMenu.getValue(),
+                genericCommandVerb
+            ))
+            .thenApplyAsync(ChatUIInboundCommand::createGenericCommand)
+            .thenAcceptAsync(command -> 
+                ChatCommunicationManager.getInstance().sendMessageToChatUI(command)
+            )
+            .exceptionally(e -> {
+                throw new AmazonQPluginException("Error executing generic command", e);
+            });
+    }
 
-	protected void executeSendToPromptCommand() {
-		String selection = EditorUtils.getSelectedText();
-    	
-    	SendToPromptParams params = new SendToPromptParams(
-    			selection,
-    			TriggerType.ContextMenu.getValue()
-    	);
-    	
-        ChatUIInboundCommand command = ChatUIInboundCommand.createSendToPrompCommand(params);
-        
-        ChatCommunicationManager.getInstance().sendMessageToChatUI(command);
-	}
+    protected void executeSendToPromptCommand() {
+        EditorUtils.getSelectedText()
+            .thenApplyAsync(selection -> new SendToPromptParams(
+                selection,
+                TriggerType.ContextMenu.getValue()
+            ))
+            .thenApplyAsync(ChatUIInboundCommand::createSendToPromptCommand)
+            .thenAcceptAsync(command -> 
+                ChatCommunicationManager.getInstance().sendMessageToChatUI(command)
+            )
+            .exceptionally(e -> {
+                throw new AmazonQPluginException("Error executing send to prompt command", e);
+            });
+    }
 }

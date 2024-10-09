@@ -45,21 +45,21 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
             return;
         }
         ITextEditor editor = (ITextEditor) part;
-        var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-        if (activeDocument == document) {
-            detachDocumentListenerFromLastActiveDocument();
-        }
+//        var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        detachDocumentListenerFromLastActiveDocument();
     }
 
     private void attachDocumentListenerAndUpdateActiveDocument(final ITextEditor editor) {
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         document.addDocumentListener(docListener);
         activeDocument = document;
+        System.out.println("odc listener added to doc");
     }
 
     private void detachDocumentListenerFromLastActiveDocument() {
         if (activeDocument != null) {
             activeDocument.removeDocumentListener(docListener);
+            System.out.println("doc listener removed from doc");
         }
     }
 
@@ -98,7 +98,9 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
     public void onShutdown() {
         System.out.println("Part listener on shutdown called");
         docListener.onShutdown();
-        activeDocument.removeDocumentListener(docListener);
+        if (activeDocument != null) {
+            activeDocument.removeDocumentListener(docListener);
+        }
     }
 
 }

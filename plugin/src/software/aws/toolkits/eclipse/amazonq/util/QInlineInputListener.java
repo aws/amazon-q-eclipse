@@ -117,25 +117,29 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         if (qSes == null || !qSes.isActive() || brackets == null) {
             return;
         }
-        String toAppend = "";
-        for (int i = brackets.length - 1; i >= 0; i--) {
-            var bracket = brackets[i];
-            if (bracket == null) {
-                continue;
-            }
-            String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
-                    isStringSetToAutoClose);
-            if (autoCloseContent != null) {
-                toAppend += autoCloseContent;
-            }
-            bracket.dispose();
-        }
 
-        IDocument doc = qSes.getViewer().getDocument();
-        try {
-            doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
-        } catch (BadLocationException e) {
-            PluginLogger.error(e.toString());
+        if (!qSes.getSuggestionAccepted()) {
+            System.out.println("Suggestion has not been accepted");
+            String toAppend = "";
+            for (int i = brackets.length - 1; i >= 0; i--) {
+                var bracket = brackets[i];
+                if (bracket == null) {
+                    continue;
+                }
+                String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
+                        isStringSetToAutoClose);
+                if (autoCloseContent != null) {
+                    toAppend += autoCloseContent;
+                }
+                bracket.dispose();
+            }
+
+            IDocument doc = qSes.getViewer().getDocument();
+            try {
+                doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
+            } catch (BadLocationException e) {
+                PluginLogger.error(e.toString());
+            }
         }
 
         IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");

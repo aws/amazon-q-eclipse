@@ -41,6 +41,7 @@ public final class QInvocationSession extends QResource {
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private AtomicInteger requestsInFlight = new AtomicInteger(0);
+    private boolean suggestionAccepted = false;
 
     private QSuggestionsContext suggestionsContext = null;
 
@@ -349,6 +350,15 @@ public final class QInvocationSession extends QResource {
         unsetVerticalIndent(line);
     }
 
+    public void setSuggestionAccepted(final boolean suggestionAccepted) {
+        System.out.println("Suggestion accepted has been set to " + suggestionAccepted);
+        this.suggestionAccepted = suggestionAccepted;
+    }
+
+    public boolean getSuggestionAccepted() {
+        return suggestionAccepted;
+    }
+
     public void setCaretMovementReason(final CaretMovementReason reason) {
         this.caretMovementReason = reason;
     }
@@ -515,5 +525,6 @@ public final class QInvocationSession extends QResource {
         invocationTimeInMs = -1L;
         editor = null;
         viewer = null;
+        suggestionAccepted = false;
     }
 }

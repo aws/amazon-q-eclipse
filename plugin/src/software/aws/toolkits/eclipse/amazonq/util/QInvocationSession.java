@@ -18,6 +18,7 @@ import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
@@ -155,103 +156,7 @@ public final class QInvocationSession extends QResource {
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
                     invocationOffset, InlineCompletionTriggerKind.Automatic);
-
-            ThreadingUtils.executeAsyncTask(() -> {
-                try {
-                    if (!AuthUtils.isLoggedIn().get()) {
-                        requestsInFlight.decrementAndGet();
-                        this.end();
-                        return;
-                    } else {
-                        AuthUtils.updateToken().get();
-                    }
-
-                    List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
-                            .inlineCompletionWithReferences(params)
-                            .thenApply(result -> result.getItems().parallelStream().map(item -> {
-                                if (isTabOnly) {
-                                    String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
-                                    System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
-                                    item.setInsertText(sanitizedText);
-                                }
-                                return item;
-                            }).collect(Collectors.toList())).get();
-                    
-                    Display.getDefault().asyncExec(() -> {
-                        if (newSuggestions == null || newSuggestions.isEmpty()) {
-                            requestsInFlight.decrementAndGet();
-                            if (!session.isPreviewingSuggestions()) {
-                                end();
-                            }
-                            System.out
-                                    .println("Got emtpy result for from invocation offset of " + invocationOffset);
-                            return;
-                        }
-
-                        // If the caret positions has moved on from the invocation offset, we need to
-                        // see if there exists in the suggestions fetched
-                        // one more suggestions that qualify for what has been typed since the
-                        // invocation.
-                        // Note that we should not remove the ones that have been disqualified by the
-                        // content typed since the user might still want to explore them.
-                        int currentIdxInSuggestion = 0;
-                        boolean hasAMatch = false;
-                        var widget = session.getViewer().getTextWidget();
-                        int currentOffset = widget.getCaretOffset();
-                        if (currentOffset < invocationOffset) {
-                            requestsInFlight.decrementAndGet();
-                            end();
-                            return;
-                        } else if (currentOffset > invocationOffset) {
-                            for (int i = 0; i < newSuggestions.size(); i++) {
-                                String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
-                                if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
-                                    currentIdxInSuggestion = i;
-                                    hasAMatch = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (invocationOffset != currentOffset && !hasAMatch) {
-                            System.out.println(
-                                    "invocation offset: " + invocationOffset + "\ncurrent offset: " + currentOffset);
-                            requestsInFlight.decrementAndGet();
-                            end();
-                            return;
-                        }
-
-                        session.invocationOffset = invocationOffset;
-
-                        suggestionsContext.getDetails().addAll(
-                                newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
-
-                        suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
-
-                        // TODO: remove print
-                        // Update the UI with the results
-                        System.out.println("Suggestions: " + newSuggestions.stream()
-                                .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
-                        System.out.println("Total suggestion number: " + newSuggestions.size());
-                        System.out.println("Invocation offset: " + invocationOffset);
-                        System.out.println("========================");
-
-                        session.transitionToPreviewingState();
-                        attachListeners();
-                        session.primeListeners();
-                        session.getViewer().getTextWidget().redraw();
-                        requestsInFlight.decrementAndGet();
-                    });
-                } catch (InterruptedException e) {
-                    System.out.println("Query InterruptedException: " + e.getMessage());
-                    PluginLogger.error("Inline completion interrupted", e);
-                    requestsInFlight.decrementAndGet();
-                } catch (ExecutionException e) {
-                    System.out.println("Query ExecutionException: " + e.getMessage());
-                    PluginLogger.error("Error executing inline completion", e);
-                    requestsInFlight.decrementAndGet();
-                }
-           });
+            queryAsync(params, invocationOffset);
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
             PluginLogger.error("Unable to compute inline completion request from document", e);
@@ -261,71 +166,117 @@ public final class QInvocationSession extends QResource {
 
     public void invoke() {
         var session = QInvocationSession.getInstance();
-        System.out.println("Invocation offset is: " + session.getInvocationOffset());
-
+        requestsInFlight.incrementAndGet();
+        
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
                     session.getInvocationOffset(), InlineCompletionTriggerKind.Invoke);
-
-            ThreadingUtils.executeAsyncTask(() -> {
-                try {
-                    if (!AuthUtils.isLoggedIn().get()) {
-                        this.end();
-                        return;
-                    } else {
-                        AuthUtils.updateToken().get();
-                    }
-
-                    List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
-                            .inlineCompletionWithReferences(params)
-                            .thenApply(result -> result.getItems().parallelStream().map(item -> {
-                                if (isTabOnly) {
-                                    String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
-                                    System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
-                                    item.setInsertText(sanitizedText);
-                                }
-                                return item;
-                            }).collect(Collectors.toList())).get();
-
-                    Display.getDefault().asyncExec(() -> {
-//                        if (newSuggestions == null || newSuggestions.isEmpty() || session
-//                                .getInvocationOffset() != session.getViewer().getTextWidget().getCaretOffset()) {
-//                            end();
-//                            return;
-//                        }
-                        if (newSuggestions == null || newSuggestions.isEmpty()) {
-                            end();
-                            return;
-                        }
-
-                        suggestionsContext.getDetails().addAll(
-                                newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
-
-                        suggestionsContext.setCurrentIndex(0);
-
-                        // TODO: remove print
-                        // Update the UI with the results
-                        System.out.println("Suggestions: " + newSuggestions.stream()
-                                .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
-                        System.out.println("Total suggestion number: " + newSuggestions.size());
-
-                        transitionToPreviewingState();
-                        attachListeners();
-                        session.primeListeners();
-                        session.getViewer().getTextWidget().redraw();
-                    });
-                } catch (InterruptedException e) {
-                    System.out.println("Query InterruptedException: " + e.getMessage());
-                    PluginLogger.error("Inline completion interrupted", e);
-                } catch (ExecutionException e) {
-                    System.out.println("Query ExecutionException: " + e.getMessage());
-                    PluginLogger.error("Error executing inline completion", e);
-                }
-            });
+            queryAsync(params, session.getInvocationOffset());
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
             PluginLogger.error("Unable to compute inline completion request from document", e);
         }
+    }
+
+    private void queryAsync(final InlineCompletionParams params, int invocationOffset) {
+        ThreadingUtils.executeAsyncTask(() -> {
+            try {
+                if (!AuthUtils.isLoggedIn().get()) {
+                    requestsInFlight.decrementAndGet();
+                    this.end();
+                    return;
+                } else {
+                    AuthUtils.updateToken().get();
+                }
+                
+                var session = QInvocationSession.getInstance();
+
+                List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
+                        .inlineCompletionWithReferences(params)
+                        .thenApply(result -> result.getItems().parallelStream().map(item -> {
+                            if (isTabOnly) {
+                                String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
+                                System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
+                                item.setInsertText(sanitizedText);
+                            }
+                            return item;
+                        }).collect(Collectors.toList())).get();
+                
+                Display.getDefault().asyncExec(() -> {
+                    if (newSuggestions == null || newSuggestions.isEmpty()) {
+                        requestsInFlight.decrementAndGet();
+                        if (!session.isPreviewingSuggestions()) {
+                            end();
+                        }
+                        System.out
+                                .println("Got emtpy result for from invocation offset of " + invocationOffset);
+                        return;
+                    }
+
+                    // If the caret positions has moved on from the invocation offset, we need to
+                    // see if there exists in the suggestions fetched
+                    // one more suggestions that qualify for what has been typed since the
+                    // invocation.
+                    // Note that we should not remove the ones that have been disqualified by the
+                    // content typed since the user might still want to explore them.
+                    int currentIdxInSuggestion = 0;
+                    boolean hasAMatch = false;
+                    var widget = session.getViewer().getTextWidget();
+                    int currentOffset = widget.getCaretOffset();
+                    if (currentOffset < invocationOffset) {
+                        requestsInFlight.decrementAndGet();
+                        end();
+                        return;
+                    } else if (currentOffset > invocationOffset) {
+                        for (int i = 0; i < newSuggestions.size(); i++) {
+                            String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
+                            if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
+                                currentIdxInSuggestion = i;
+                                hasAMatch = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (invocationOffset != currentOffset && !hasAMatch) {
+                        System.out.println(
+                                "invocation offset: " + invocationOffset + "\ncurrent offset: " + currentOffset);
+                        requestsInFlight.decrementAndGet();
+                        end();
+                        return;
+                    }
+
+                    session.invocationOffset = invocationOffset;
+
+                    suggestionsContext.getDetails().addAll(
+                            newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
+
+                    suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
+
+                    // TODO: remove print
+                    // Update the UI with the results
+                    System.out.println("Suggestions: " + newSuggestions.stream()
+                            .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
+                    System.out.println("Total suggestion number: " + newSuggestions.size());
+                    System.out.println("Invocation offset: " + invocationOffset);
+                    System.out.println("========================");
+
+                    session.transitionToPreviewingState();
+                    attachListeners();
+                    session.primeListeners();
+                    session.getViewer().getTextWidget().redraw();
+                    requestsInFlight.decrementAndGet();
+                });
+            } catch (InterruptedException e) {
+                System.out.println("Query InterruptedException: " + e.getMessage());
+                PluginLogger.error("Inline completion interrupted", e);
+                requestsInFlight.decrementAndGet();
+            } catch (ExecutionException e) {
+                System.out.println("Query ExecutionException: " + e.getMessage());
+                PluginLogger.error("Error executing inline completion", e);
+                requestsInFlight.decrementAndGet();
+            }
+       });
     }
 
     private Font getInlineTextFont(final StyledText widget) {

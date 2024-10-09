@@ -50,4 +50,8 @@ public final class ChatMessage {
     public void followUpClick(final FollowUpClickParams followUpClickParams) {
         amazonQLspServer.followUpClick(followUpClickParams);
     }
+
+    public void sendTelemetryEvent(final Object params) {
+        amazonQLspServer.sendTelemetryEvent(params);
+    }
 }

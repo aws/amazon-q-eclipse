@@ -69,6 +69,11 @@ public final class ChatMessageProvider {
         chatMessage.sendTabChange(tabParams);
     }
 
+    public void sendTelemetryEvent(final Object params) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendTelemetryEvent(params);
+    }
+
     private void cancelInflightRequests(final String tabId) {
         var inflightRequest  =  inflightRequestByTabId.getOrDefault(tabId, null);
         if (inflightRequest != null) {

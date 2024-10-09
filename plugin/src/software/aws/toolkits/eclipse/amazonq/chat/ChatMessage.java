@@ -40,4 +40,8 @@ public final class ChatMessage {
     public void sendTabChange(final GenericTabParams tabParams) {
         amazonQLspServer.tabChange(tabParams);
     }
+
+    public void sendTelemetryEvent(final Object params) {
+        amazonQLspServer.sendTelemetryEvent(params);
+    }
 }

@@ -96,6 +96,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                         handleCopyToClipboard(copyToClipboardParams);
                     }
                 }
+
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case AUTH_FOLLOW_UP_CLICKED:
                 //TODO

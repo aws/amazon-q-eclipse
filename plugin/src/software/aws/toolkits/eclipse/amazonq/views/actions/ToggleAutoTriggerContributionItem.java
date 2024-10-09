@@ -44,13 +44,13 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 String settingValue = PluginStore.get(AUTO_TRIGGER_ENABLEMENT_KEY);
-                boolean isEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
-                if (isEnabled) {
+                boolean wasEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
+                if (wasEnabled) {
                     PluginStore.remove(AUTO_TRIGGER_ENABLEMENT_KEY);
                 } else {
                     PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
                 }
-                menuItem.setText(isEnabled ? "Pause auto trigger" : "Resume auto trigger");
+                menuItem.setText(wasEnabled ? "Resume auto trigger" : "Pause auto trigger");
             }
         });
     }

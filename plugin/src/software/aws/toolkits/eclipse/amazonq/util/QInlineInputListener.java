@@ -118,23 +118,24 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             return;
         }
 
-        if (!qSes.getSuggestionAccepted()) {
-            System.out.println("Suggestion has not been accepted");
-            String toAppend = "";
-            for (int i = brackets.length - 1; i >= 0; i--) {
-                var bracket = brackets[i];
-                if (bracket == null) {
-                    continue;
-                }
+        String toAppend = "";
+        for (int i = brackets.length - 1; i >= 0; i--) {
+            var bracket = brackets[i];
+            if (bracket == null) {
+                continue;
+            }
+            if (!qSes.getSuggestionAccepted()) {
                 String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
                         isStringSetToAutoClose);
                 if (autoCloseContent != null) {
                     toAppend += autoCloseContent;
                 }
-                bracket.dispose();
             }
+            bracket.dispose();
+        }
 
-            IDocument doc = qSes.getViewer().getDocument();
+        IDocument doc = qSes.getViewer().getDocument();
+        if (!toAppend.isEmpty()) {
             try {
                 doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
             } catch (BadLocationException e) {

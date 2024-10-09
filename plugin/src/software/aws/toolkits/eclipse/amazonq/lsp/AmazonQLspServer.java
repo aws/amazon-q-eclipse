@@ -50,5 +50,5 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<List<Customization>> getConfigurationFromServer(GetConfigurationFromServerParams params);
 
     @JsonNotification("telemetry/event")
-    void sendTelemetryEvent(Object params); 
+    void sendTelemetryEvent(Object params);
 }

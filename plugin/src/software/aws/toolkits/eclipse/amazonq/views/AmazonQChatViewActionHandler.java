@@ -75,8 +75,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 //TODO
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
-                PluginLogger.info("Command: " + command);
-                PluginLogger.info("Params: " + params.toString());
                 break;
             case CHAT_FEEDBACK:
                 //TODO

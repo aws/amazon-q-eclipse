@@ -26,6 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 
 import org.eclipse.lsp4e.LanguageServiceAccessor;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.lsp4e.LanguageServersRegistry;
 
 @SuppressWarnings("restriction")
@@ -96,9 +97,15 @@ public class LspStartupActivity implements IStartup {
                 }
                 boolean isEnabled = newValue != null && !newValue.isBlank() && newValue.equals("true");
                 if (isEnabled) {
+                    if (autoTriggerTopLevelListener.getPartListener() == null) {
+                        var documentListener = new AutoTriggerDocumentListener();
+                        var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(documentListener);
+                        autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
+                    }
                     autoTriggerTopLevelListener.onStart();
                 } else {
-                    autoTriggerTopLevelListener.onShutdown();
+                    // Note to future maintainers: this has to be called from the UI thread or it would not do anything
+                    Display.getDefault().asyncExec(() -> {autoTriggerTopLevelListener.onShutdown();});
                 }
                 System.out.println(keyChanged + " changed to " + newValue);
             }

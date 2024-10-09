@@ -24,6 +24,10 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
     public void addPartListener(final T partListener) {
         this.partListener = partListener;
     }
+    
+    public T getPartListener() {
+        return partListener;
+    }
 
     @Override
     public void onStart() {
@@ -66,5 +70,6 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
     public void onShutdown() {
         partListener.onShutdown();
         PlatformUI.getWorkbench().removeWindowListener(windowListener);
+        System.out.println("top level listener on shutdown called");
     }
 }

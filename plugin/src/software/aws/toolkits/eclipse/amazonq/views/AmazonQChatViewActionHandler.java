@@ -3,10 +3,17 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 
+import java.util.LinkedHashMap;
+
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
-
+import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -68,7 +75,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 //TODO
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
-                //TODO
+                PluginLogger.info("Command: " + command);
+                PluginLogger.info("Params: " + params.toString());
                 break;
             case CHAT_FEEDBACK:
                 //TODO
@@ -77,7 +85,19 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 //TODO
                 break;
             case TELEMETRY_EVENT:
-                //TODO
+                LinkedHashMap<?, ?> paramsMap = jsonHandler.convertObject(params, LinkedHashMap.class);
+                Object nameAttribute = paramsMap.get("name");
+                if (nameAttribute instanceof String) {
+                    String name = (String) nameAttribute;
+
+                    // Workaround to copy to clipboard because the chat-client does not currently emit a copyToClipboard event.
+                    // This intercepts a telemetry event and retrieves the code to be copied from the params. This should be replaced
+                    // once the LSP server team has moved the responsibility to the server-side.
+                    if (name.equals("copyToClipboard")) {
+                        CopyToClipboardParams copyToClipboardParams = jsonHandler.convertObject(params, CopyToClipboardParams.class);
+                        handleCopyToClipboard(copyToClipboardParams);
+                    }
+                }
                 break;
             case AUTH_FOLLOW_UP_CLICKED:
                 //TODO
@@ -96,5 +116,22 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         } catch (Exception ex) {
             PluginLogger.error("Failed to open url in browser", ex);
         }
+    }
+
+    private void handleCopyToClipboard(final CopyToClipboardParams params) {
+        Display display = PlatformUI.getWorkbench().getDisplay();
+        String codeToCopy = params.code();
+
+        display.asyncExec(() -> {
+            Clipboard clipboard = new Clipboard(display);
+            try {
+                TextTransfer textTransfer = TextTransfer.getInstance();
+                clipboard.setContents(new Object[]{codeToCopy}, new Transfer[]{textTransfer});
+            } catch (Exception e) {
+                throw new AmazonQPluginException("Failed to copy to clipboard", e);
+            } finally {
+                clipboard.dispose();
+            }
+        });
     }
 }

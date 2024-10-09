@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.configuration;
 
 import java.util.prefs.BackingStoreException;
-import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 
@@ -32,8 +31,8 @@ public final class PluginStore {
     public static void remove(final String key) {
         PREFERENCES.remove(key);
     }
-    
-    public static void addChangeListener(PreferenceChangeListener prefChangeListener) {
+
+    public static void addChangeListener(final PreferenceChangeListener prefChangeListener) {
         PREFERENCES.addPreferenceChangeListener(prefChangeListener);
     }
 

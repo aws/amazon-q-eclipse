@@ -24,7 +24,7 @@ public final class InlineCompletionUtils {
     }
 
     public static InlineCompletionParams cwParamsFromContext(final ITextEditor editor, final ITextViewer viewer,
-            final int invocationOffset, InlineCompletionTriggerKind triggerKind) throws BadLocationException {
+            final int invocationOffset, final InlineCompletionTriggerKind triggerKind) throws BadLocationException {
         System.out.println("Param made with invocation offset of " + invocationOffset);
         var document = viewer.getDocument();
 

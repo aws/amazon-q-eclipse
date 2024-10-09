@@ -62,11 +62,11 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
             activeDocument.removeDocumentListener(docListener);
         }
     }
-    
+
     private synchronized void setActiveDocument(final IDocument document) {
         activeDocument = document;
     }
-    
+
     private synchronized IDocument getActiveDocument() {
         return activeDocument;
     }

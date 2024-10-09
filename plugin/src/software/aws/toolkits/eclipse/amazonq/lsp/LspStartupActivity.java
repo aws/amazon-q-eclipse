@@ -89,7 +89,7 @@ public class LspStartupActivity implements IStartup {
         }
         var prefChangeListener = new PreferenceChangeListener() {
             @Override
-            public void preferenceChange(PreferenceChangeEvent evt) {
+            public void preferenceChange(final PreferenceChangeEvent evt) {
                 String keyChanged = evt.getKey();
                 String newValue = evt.getNewValue();
                 if (!keyChanged.equals(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY)) {
@@ -105,7 +105,9 @@ public class LspStartupActivity implements IStartup {
                     autoTriggerTopLevelListener.onStart();
                 } else {
                     // Note to future maintainers: this has to be called from the UI thread or it would not do anything
-                    Display.getDefault().asyncExec(() -> {autoTriggerTopLevelListener.onShutdown();});
+                    Display.getDefault().asyncExec(() -> {
+                        autoTriggerTopLevelListener.onShutdown();
+                    });
                 }
                 System.out.println(keyChanged + " changed to " + newValue);
             }

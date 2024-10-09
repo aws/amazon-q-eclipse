@@ -37,7 +37,7 @@ public final class AmazonQCommonActions {
     public CustomizationDialogContributionItem getCustomizationDialogContributionAction() {
         return customizationDialogContributionItem;
     }
-    
+
     public ToggleAutoTriggerContributionItem getToggleAutoTriggerContributionAction() {
         return toggleAutoTriggerContributionItem;
     }

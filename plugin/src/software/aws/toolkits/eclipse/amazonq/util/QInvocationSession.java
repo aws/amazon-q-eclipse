@@ -128,11 +128,10 @@ public final class QInvocationSession extends QResource {
             return false;
         }
     }
-    
+
     private void attachListeners() {
         var widget = this.viewer.getTextWidget();
-        var listeners = widget.getTypedListeners(SWT.Paint, QInlineRendererListener.class)
-                .collect(Collectors.toList());
+        var listeners = widget.getTypedListeners(SWT.Paint, QInlineRendererListener.class).collect(Collectors.toList());
         System.out.println("Current listeners for " + widget);
         listeners.forEach(System.out::println);
         if (listeners.isEmpty()) {
@@ -148,11 +147,11 @@ public final class QInvocationSession extends QResource {
         caretListener = new QInlineCaretListener(widget);
         widget.addCaretListener(caretListener);
     }
-    
+
     public void invoke(final int invocationOffset) {
         var session = QInvocationSession.getInstance();
         requestsInFlight.incrementAndGet();
-        
+
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
                     invocationOffset, InlineCompletionTriggerKind.Automatic);
@@ -167,7 +166,7 @@ public final class QInvocationSession extends QResource {
     public void invoke() {
         var session = QInvocationSession.getInstance();
         requestsInFlight.incrementAndGet();
-        
+
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
                     session.getInvocationOffset(), InlineCompletionTriggerKind.Invoke);
@@ -178,7 +177,7 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    private void queryAsync(final InlineCompletionParams params, int invocationOffset) {
+    private void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
                 if (!AuthUtils.isLoggedIn().get()) {
@@ -188,7 +187,7 @@ public final class QInvocationSession extends QResource {
                 } else {
                     AuthUtils.updateToken().get();
                 }
-                
+
                 var session = QInvocationSession.getInstance();
 
                 List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
@@ -196,20 +195,20 @@ public final class QInvocationSession extends QResource {
                         .thenApply(result -> result.getItems().parallelStream().map(item -> {
                             if (isTabOnly) {
                                 String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
-                                System.out.println("Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
+                                System.out.println(
+                                        "Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
                                 item.setInsertText(sanitizedText);
                             }
                             return item;
                         }).collect(Collectors.toList())).get();
-                
+
                 Display.getDefault().asyncExec(() -> {
                     if (newSuggestions == null || newSuggestions.isEmpty()) {
                         requestsInFlight.decrementAndGet();
                         if (!session.isPreviewingSuggestions()) {
                             end();
                         }
-                        System.out
-                                .println("Got emtpy result for from invocation offset of " + invocationOffset);
+                        System.out.println("Got emtpy result for from invocation offset of " + invocationOffset);
                         return;
                     }
 
@@ -248,8 +247,8 @@ public final class QInvocationSession extends QResource {
 
                     session.invocationOffset = invocationOffset;
 
-                    suggestionsContext.getDetails().addAll(
-                            newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
+                    suggestionsContext.getDetails()
+                            .addAll(newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
 
                     suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
 
@@ -276,7 +275,7 @@ public final class QInvocationSession extends QResource {
                 PluginLogger.error("Error executing inline completion", e);
                 requestsInFlight.decrementAndGet();
             }
-       });
+        });
     }
 
     private Font getInlineTextFont(final StyledText widget) {
@@ -290,7 +289,7 @@ public final class QInvocationSession extends QResource {
     // Method to end the session
     public synchronized void end() {
         if (isActive() && requestsInFlight.get() == 0) {
-         // Get the current thread's stack trace
+            // Get the current thread's stack trace
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 
             // Log the stack trace
@@ -304,7 +303,8 @@ public final class QInvocationSession extends QResource {
             // End session logic here
             System.out.println("Session ended.");
         } else if (requestsInFlight.get() > 0) {
-            System.out.println("Session cannot be ended because there are " + requestsInFlight.get() + " requests in flight");
+            System.out.println(
+                    "Session cannot be ended because there are " + requestsInFlight.get() + " requests in flight");
         }
     }
 

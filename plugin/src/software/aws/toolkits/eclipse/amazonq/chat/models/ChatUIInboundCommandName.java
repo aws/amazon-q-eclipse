@@ -11,13 +11,17 @@ public enum ChatUIInboundCommandName {
     AuthFollowUpClicked("authFollowUpClicked"),
     GenericCommand("genericCommand");
 
-    private final String commandString;
+    private final String value;
 
-    ChatUIInboundCommandName(final String commandString) {
-        this.commandString = commandString;
+    ChatUIInboundCommandName(final String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     public String toString() {
-        return commandString;
+        return getValue();
     }
 }

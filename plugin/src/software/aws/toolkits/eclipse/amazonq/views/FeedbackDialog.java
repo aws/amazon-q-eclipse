@@ -27,9 +27,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
+import software.aws.toolkits.eclipse.amazonq.telemetry.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public class FeedbackDialog extends Dialog {
 
@@ -70,11 +74,6 @@ public class FeedbackDialog extends Dialog {
         }
     }
 
-    enum Sentiment {
-        POSITIVE,
-        NEGATIVE
-    }
-
     public FeedbackDialog(final Shell parentShell) {
         super(parentShell);
     }
@@ -104,8 +103,8 @@ public class FeedbackDialog extends Dialog {
     protected final void okPressed() {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
-        // TODO: to remove the info log post call to telemetry feedback api implementation
         PluginLogger.info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
+        ThreadingUtils.executeAsyncTask(() -> TelemetryService.emitFeedback(comment, selectedSentiment));
         super.okPressed();
     }
 

@@ -12,9 +12,9 @@ import org.eclipse.lsp4j.jsonrpc.messages.Message;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
+import com.google.gson.ToNumberPolicy;
+
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResult;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.Command;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ClientMetadata;
 
@@ -25,6 +25,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         super.setRemoteInterface(AmazonQLspServer.class);
         super.configureGson(builder -> {
            builder.registerTypeAdapterFactory(new QLspTypeAdapterFactory());
+           builder.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE);
         });
         Launcher<AmazonQLspServer> launcher = super.create();
         LspProvider.setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
@@ -40,12 +41,8 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
             }
             if (message instanceof ResponseMessage && ((ResponseMessage) message).getResult() instanceof AwsExtendedInitializeResult) {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
-                for (QuickActionsCommandGroup commandGroups : result.getAwsServerCapabilities().chatOptions().quickActions().quickActionsCommandGroups()) {
-                    for (Command command : commandGroups.commands()) {
-                        System.out.println("Command: " + command.command());
-                        System.out.println("Description: " + command.description());
-                    }
-                }
+                var awsServerCapabiltiesProvider = AwsServerCapabiltiesProvider.getInstance();
+                awsServerCapabiltiesProvider.setAwsServerCapabilties(result.getAwsServerCapabilities());
             }
             consumer.consume(message);
         });

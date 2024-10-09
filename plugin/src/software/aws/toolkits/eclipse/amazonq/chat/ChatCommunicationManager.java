@@ -13,11 +13,15 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
-import software.aws.toolkits.eclipse.amazonq.util.ProgressNotficationUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
@@ -34,12 +38,14 @@ public final class ChatCommunicationManager {
     private final JsonHandler jsonHandler;
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultMap chatPartialResultMap;
+    private final LspEncryptionManager lspEncryptionManager;
     private ChatUiRequestListener chatUiRequestListener;
 
     private ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProvider = ChatMessageProvider.createAsync();
         this.chatPartialResultMap = new ChatPartialResultMap();
+        this.lspEncryptionManager = LspEncryptionManager.getInstance();
     }
 
     public static synchronized ChatCommunicationManager getInstance() {
@@ -49,36 +55,70 @@ public final class ChatCommunicationManager {
         return instance;
     }
 
-    public CompletableFuture<ChatResult> sendMessageToChatServer(final Command command, final Object params) {
-        return chatMessageProvider.thenCompose(chatMessageProvider -> {
+    public void sendMessageToChatServer(final Command command, final Object params) {
+        chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
                 switch (command) {
                     case CHAT_SEND_PROMPT:
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                    return sendChatRequest(chatRequestParams.getTabId(), token -> {
-                        chatRequestParams.setPartialResultToken(token);
+                        sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
+                            String encryptedChatResult = lspEncryptionManager.encrypt(chatRequestParams);
 
-                        return chatMessageProvider.sendChatPrompt(chatRequestParams);
-                    });
+                            EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
+                                encryptedChatResult,
+                                token
+                            );
+
+                            return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);
+                        });
+                        break;
+                    case CHAT_QUICK_ACTION:
+                        QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
+                        sendEncryptedChatMessage(quickActionParams.getTabId(), token -> {
+                            String encryptedChatResult = lspEncryptionManager.encrypt(quickActionParams);
+
+                            EncryptedQuickActionParams encryptedQuickActionParams = new EncryptedQuickActionParams(
+                                encryptedChatResult,
+                                token
+                            );
+
+                            return chatMessageProvider.sendQuickAction(encryptedQuickActionParams);
+                        });
+                        break;
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
-                        return CompletableFuture.completedFuture(null);
+                        break;
                     case CHAT_TAB_ADD:
-                        GenericTabParams tabParams = jsonHandler.convertObject(params, GenericTabParams.class);
-                        chatMessageProvider.sendTabAdd(tabParams);
-                        return CompletableFuture.completedFuture(null);
+                        GenericTabParams tabParamsForAdd = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.sendTabAdd(tabParamsForAdd);
+                        break;
+                    case CHAT_TAB_REMOVE:
+                        GenericTabParams tabParamsForRemove = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.sendTabRemove(tabParamsForRemove);
+                        break;
+                    case CHAT_TAB_CHANGE:
+                        GenericTabParams tabParamsForChange = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.sendTabChange(tabParamsForChange);
+                        break;
+                    case CHAT_FOLLOW_UP_CLICK:
+                        FollowUpClickParams followUpClickParams = jsonHandler.convertObject(params, FollowUpClickParams.class);
+                        chatMessageProvider.followUpClick(followUpClickParams);
+                        break;
+                    case CHAT_END_CHAT:
+                        GenericTabParams tabParamsForEndChat = jsonHandler.convertObject(params, GenericTabParams.class);
+                        chatMessageProvider.endChat(tabParamsForEndChat);
+                        break;
                     default:
                         throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());
                 }
             } catch (Exception e) {
-                PluginLogger.error("Error occurred in sendMessageToChatServer", e);
-                return CompletableFuture.failedFuture(new AmazonQPluginException(e));
+                throw new AmazonQPluginException("Error occurred in sendMessageToChatServer", e);
             }
         });
     }
 
-    private CompletableFuture<ChatResult> sendChatRequest(final String tabId,
-            final Function<String, CompletableFuture<ChatResult>> action) {
+    private CompletableFuture<ChatResult> sendEncryptedChatMessage(final String tabId,
+            final Function<String, CompletableFuture<String>> action) {
         // Retrieving the chat result is expected to be a long-running process with
         // intermittent progress notifications being sent
         // from the LSP server. The progress notifications provide a token and a partial
@@ -87,13 +127,17 @@ public final class ChatCommunicationManager {
         // a message for the UI.
         String partialResultToken = addPartialChatMessage(tabId);
 
-        return action.apply(partialResultToken).thenApply(result -> {
+        return action.apply(partialResultToken).thenApply(encryptedChatResult -> {
             // The mapping entry no longer needs to be maintained once the final result is
             // retrieved.
             removePartialChatMessage(partialResultToken);
+
+            String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+            ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
+
             // show chat response in Chat UI
             ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                    ChatUIInboundCommandName.ChatPrompt.toString(), tabId, result, false);
+                    ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
             sendMessageToChatUI(chatUIInboundCommand);
             return result;
         });
@@ -124,7 +168,7 @@ public final class ChatCommunicationManager {
      * - Sends a partial chat prompt message to the webview.
      */
     public void handlePartialResultProgressNotification(final ProgressParams params) {
-        String token = ProgressNotficationUtils.getToken(params);
+        String token = ProgressNotificationUtils.getToken(params);
         String tabId = getPartialChatMessage(token);
 
         if (tabId == null || tabId.isEmpty()) {
@@ -136,7 +180,9 @@ public final class ChatCommunicationManager {
             throw new AmazonQPluginException("Error occurred while handling partial result notification: expected Object value");
         }
 
-        ChatResult partialChatResult = ProgressNotficationUtils.getObject(params, ChatResult.class);
+        String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
+        String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
+        ChatResult partialChatResult = jsonHandler.deserialize(serializedData, ChatResult.class);
 
         // Check to ensure the body has content in order to keep displaying the spinner while loading
         if (partialChatResult.body() == null || partialChatResult.body().length() == 0) {
@@ -144,7 +190,7 @@ public final class ChatCommunicationManager {
         }
 
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-            ChatUIInboundCommandName.ChatPrompt.toString(),
+            ChatUIInboundCommandName.ChatPrompt.getValue(),
             tabId,
             partialChatResult,
             true

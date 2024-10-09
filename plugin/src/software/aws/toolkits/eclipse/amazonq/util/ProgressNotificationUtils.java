@@ -8,8 +8,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 
-public final class ProgressNotficationUtils {
-    private ProgressNotficationUtils() {
+public final class ProgressNotificationUtils {
+    private ProgressNotificationUtils() {
         // Prevent instantiation
     }
 

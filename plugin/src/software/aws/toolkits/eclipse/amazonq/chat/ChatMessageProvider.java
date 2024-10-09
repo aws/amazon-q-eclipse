@@ -2,9 +2,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import java.util.concurrent.ConcurrentHashMap;
+
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+
+import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
@@ -12,6 +17,9 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 public final class ChatMessageProvider {
 
     private final AmazonQLspServer amazonQLspServer;
+    // Map of in-flight requests per tab Ids
+    // TODO ECLIPSE-349: Handle disposing resources of this class including this map
+    private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
     public static CompletableFuture<ChatMessageProvider> createAsync() {
         return LspProvider.getAmazonQServer()
@@ -22,9 +30,28 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<ChatResult> sendChatPrompt(final ChatRequestParams chatRequestParams) {
+    public CompletableFuture<String> sendChatPrompt(final String tabId, final EncryptedChatParams encryptedChatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendChatPrompt(chatRequestParams);
+
+        var response = chatMessage.sendChatPrompt(encryptedChatRequestParams);
+        // We assume there is only one outgoing request per tab because the input is
+        // blocked when there is an outgoing request
+        inflightRequestByTabId.put(tabId, response);
+        response.whenComplete((result, exception) -> {
+            // stop tracking in-flight requests once response is received
+            inflightRequestByTabId.remove(tabId);
+        });
+        return response;
+    }
+
+    public CompletableFuture<String> sendQuickAction(final EncryptedQuickActionParams encryptedQuickActionParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.sendQuickAction(encryptedQuickActionParams);
+    }
+
+    public CompletableFuture<Boolean> endChat(final GenericTabParams tabParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.endChat(tabParams);
     }
 
     public void sendChatReady() {
@@ -37,4 +64,27 @@ public final class ChatMessageProvider {
         chatMessage.sendTabAdd(tabParams);
     }
 
+    public void sendTabRemove(final GenericTabParams tabParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        cancelInflightRequests(tabParams.tabId());
+        chatMessage.sendTabRemove(tabParams);
+    }
+
+    public void sendTabChange(final GenericTabParams tabParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendTabChange(tabParams);
+    }
+
+    public void followUpClick(final FollowUpClickParams followUpClickParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.followUpClick(followUpClickParams);
+    }
+
+    private void cancelInflightRequests(final String tabId) {
+        var inflightRequest  =  inflightRequestByTabId.getOrDefault(tabId, null);
+        if (inflightRequest != null) {
+            inflightRequest.cancel(true);
+            inflightRequestByTabId.remove(tabId);
+        }
+    }
 }

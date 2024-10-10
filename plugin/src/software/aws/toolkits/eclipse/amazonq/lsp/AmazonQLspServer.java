@@ -54,4 +54,7 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/getConfigurationFromServer")
     CompletableFuture<List<Customization>> getConfigurationFromServer(GetConfigurationFromServerParams params);
+
+    @JsonNotification("telemetry/event")
+    void sendTelemetryEvent(Object params);
 }

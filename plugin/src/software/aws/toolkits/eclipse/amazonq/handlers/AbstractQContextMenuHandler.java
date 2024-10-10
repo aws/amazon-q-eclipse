@@ -11,7 +11,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
-import software.aws.toolkits.eclipse.amazonq.util.EditorUtils;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
 public abstract class AbstractQContextMenuHandler extends AbstractHandler {
 
@@ -25,7 +25,7 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
     }
 
     protected final void executeGenericCommand(final String genericCommandVerb) {
-        EditorUtils.getSelectedText()
+        QEclipseEditorUtils.getSelectedText()
             .thenApplyAsync(selection -> new GenericCommandParams(
                 null,
                 selection,
@@ -42,7 +42,7 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
     }
 
     protected final void executeSendToPromptCommand() {
-        EditorUtils.getSelectedText()
+        QEclipseEditorUtils.getSelectedText()
             .thenApplyAsync(selection -> new SendToPromptParams(
                 selection,
                 TriggerType.ContextMenu.getValue()

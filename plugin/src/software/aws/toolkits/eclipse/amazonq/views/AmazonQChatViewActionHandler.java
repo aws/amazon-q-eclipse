@@ -77,7 +77,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case TELEMETRY_EVENT:
-                //TODO
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case AUTH_FOLLOW_UP_CLICKED:
                 //TODO

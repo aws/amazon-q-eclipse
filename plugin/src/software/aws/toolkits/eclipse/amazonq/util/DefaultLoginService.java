@@ -35,8 +35,8 @@ public final class DefaultLoginService implements LoginService {
     private DefaultLoginService() {
         // prevent initialization
     }
-    
-    private static boolean isValidLoginType(String loginType) {
+
+    private static boolean isValidLoginType(final String loginType) {
         try {
             LoginType.valueOf(loginType);
         } catch (IllegalArgumentException e) {

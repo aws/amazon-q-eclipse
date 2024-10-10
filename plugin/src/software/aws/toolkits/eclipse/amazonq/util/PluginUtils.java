@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -114,5 +116,13 @@ public final class PluginUtils {
             PluginLogger.error(ex.getMessage());
         }
         return result[0];
+    }
+
+    public static void openBrowserUrl(final String url) {
+        try {
+            PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(url));
+        } catch (PartInitException | MalformedURLException e) {
+            PluginLogger.error("Error opening URL: " + url, e);
+        }
     }
 }

@@ -142,7 +142,7 @@ public final class CustomizationDialog extends Dialog {
             Map<String, Object> updatedSettings = new HashMap<>();
             Map<String, String> internalMap = new HashMap<>();
             internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.getSelectedCustomization().getArn());
-            updatedSettings.put(Constants.LSP_CONFIGURATION_KEY, internalMap);
+            updatedSettings.put(Constants.LSP_Q_CONFIGURATION_KEY, internalMap);
             ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings));
             Display.getCurrent().asyncExec(() -> showNotification(String.format("%s customization", this.getSelectedCustomization().getName())));
         }

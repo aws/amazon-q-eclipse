@@ -61,7 +61,7 @@ public final class TelemetryService {
         MetricDatum datum = MetricDatum.builder()
                 .metricName(event.name())
                 .epochTimestamp(Instant.now().toEpochMilli())
-                .value(event.result().equals("Success") ? 1.0 : 0.0)
+                .value(1.0)
                 .passive(false)
                 .unit(Unit.NONE)
                 .metadata(metadataEntries)

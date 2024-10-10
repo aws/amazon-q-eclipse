@@ -76,12 +76,21 @@
             contentType="org.eclipse.core.runtime.text"
             id="software.aws.toolkits.eclipse.amazonq.authServer">
         </contentTypeMapping>
+        <contentTypeMapping
+              contentType="org.eclipse.wst.jsdt.core.jsSource"
+              id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
+              languageId="javascript">
+        </contentTypeMapping>
     </extension>
     <extension
         point="org.eclipse.core.filebuffers.documentSetup">
         <participant
             class="org.eclipse.lsp4e.ConnectDocumentToLanguageServerSetupParticipant"
             contentTypeId="org.eclipse.jdt.core.javaSource">
+        </participant>
+        <participant
+            class="org.eclipse.lsp4e.ConnectDocumentToLanguageServerSetupParticipant"
+            contentTypeId="org.eclipse.wst.jsdt.core.jsSource">
         </participant>
    </extension>
 

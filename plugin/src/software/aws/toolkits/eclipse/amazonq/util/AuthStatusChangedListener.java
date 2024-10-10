@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+
 public interface AuthStatusChangedListener {
-    void onAuthStatusChanged(boolean isLoggedIn);
+    void onAuthStatusChanged(LoginDetails loginDetails);
 }

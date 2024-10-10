@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
@@ -46,13 +48,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void createPartControl(final Composite parent) {
-        setupAmazonQView(parent, true);
+        LoginDetails loginInfo = new LoginDetails();
+        loginInfo.setIsLoggedIn(true);
+        loginInfo.setLoginType(LoginType.BUILDER_ID);
+        setupAmazonQView(parent, loginInfo);
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);
 
         DefaultLoginService.getInstance().getLoginDetails().thenAcceptAsync(loginDetails -> {
-            handleAuthStatusChange(loginDetails.getIsLoggedIn());
+            handleAuthStatusChange(loginDetails);
         }, ThreadingUtils::executeAsyncTask);
 
        new BrowserFunction(browser, "ideCommand") {
@@ -168,11 +173,11 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     @Override
-    protected final void handleAuthStatusChange(final boolean isLoggedIn) {
+    protected final void handleAuthStatusChange(final LoginDetails loginDetails) {
         var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
-            amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
-            if (!isLoggedIn) {
+            amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
+            if (!loginDetails.getIsLoggedIn()) {
                 browser.setText("Signed Out");
                 AmazonQView.showView(ToolkitLoginWebview.ID);
             } else {

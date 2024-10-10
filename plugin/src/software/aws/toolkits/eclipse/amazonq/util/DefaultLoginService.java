@@ -35,12 +35,21 @@ public final class DefaultLoginService implements LoginService {
     private DefaultLoginService() {
         // prevent initialization
     }
+    
+    private static boolean isValidLoginType(String loginType) {
+        try {
+            LoginType.valueOf(loginType);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        return true;
+    }
 
     public static synchronized DefaultLoginService getInstance() {
         if (instance == null) {
             instance = new DefaultLoginService();
             String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
-            currentLogin = StringUtils.isEmpty(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
+            currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
             loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
                     ? new LoginParams().setLoginIdcParams(PluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)) : null;
         }
@@ -54,12 +63,12 @@ public final class DefaultLoginService implements LoginService {
 
     private static void updatePluginStore(final LoginType type, final LoginParams params) {
         PluginStore.put(Constants.LOGIN_TYPE_KEY, type.name());
-        PluginStore.putObject(Constants.LOGIN_TYPE_KEY, params.getLoginIdcParams());
+        PluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, params.getLoginIdcParams());
     }
 
     private static void removeItemsFromPluginStore() {
         PluginStore.remove(Constants.LOGIN_TYPE_KEY);
-        PluginStore.remove(Constants.LOGIN_TYPE_KEY);
+        PluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
     }
 
     private CompletableFuture<SsoToken> getToken(final boolean triggerSignIn) {
@@ -76,7 +85,10 @@ public final class DefaultLoginService implements LoginService {
                            .thenCompose(server -> server.getSsoToken(params)
                                                         .thenApply(response -> {
                                                             if (triggerSignIn) {
-                                                                notifyAuthStatusChanged(true);
+                                                                LoginDetails loginDetails = new LoginDetails();
+                                                                loginDetails.setIsLoggedIn(true);
+                                                                loginDetails.setLoginType(currentLogin);
+                                                                notifyAuthStatusChanged(loginDetails);
                                                             }
                                                             return response.ssoToken();
                                                         }))
@@ -108,9 +120,9 @@ public final class DefaultLoginService implements LoginService {
         LISTENERS.remove(listener);
     }
 
-    private static void notifyAuthStatusChanged(final boolean isLoggedIn) {
+    private static void notifyAuthStatusChanged(final LoginDetails loginDetails) {
         for (AuthStatusChangedListener listener : LISTENERS) {
-            listener.onAuthStatusChanged(isLoggedIn);
+            listener.onAuthStatusChanged(loginDetails);
         }
     }
 
@@ -144,7 +156,10 @@ public final class DefaultLoginService implements LoginService {
                     return LspProvider.getAuthServer()
                                       .thenCompose(server -> server.invalidateSsoToken(params))
                                       .thenRun(() -> {
-                                          notifyAuthStatusChanged(false);
+                                          LoginDetails loginDetails = new LoginDetails();
+                                          loginDetails.setIsLoggedIn(false);
+                                          loginDetails.setLoginType(LoginType.NONE);
+                                          notifyAuthStatusChanged(loginDetails);
                                           removeItemsFromPluginStore();
                                           updateConnectionDetails(LoginType.NONE, new LoginParams().setLoginIdcParams(null));
                                       })
@@ -174,18 +189,18 @@ public final class DefaultLoginService implements LoginService {
         LoginDetails loginDetails = new LoginDetails();
         if (currentLogin.equals(LoginType.NONE)) {
             return CompletableFuture.supplyAsync(() -> {
-                notifyAuthStatusChanged(false);
                 loginDetails.setIsLoggedIn(false);
                 loginDetails.setLoginType(LoginType.NONE);
+                notifyAuthStatusChanged(loginDetails);
                 return loginDetails;
             });
         }
         return getToken(false)
                 .thenApply(ssoToken -> {
                     boolean isLoggedIn = ssoToken != null;
-                    notifyAuthStatusChanged(isLoggedIn);
                     loginDetails.setIsLoggedIn(isLoggedIn);
                     loginDetails.setLoginType(isLoggedIn ? currentLogin : LoginType.NONE);
+                    notifyAuthStatusChanged(loginDetails);
                     return loginDetails;
                 })
                 .exceptionally(throwable -> {

@@ -7,6 +7,7 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PlatformUI;
 
 import jakarta.inject.Inject;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.views.DialogContributionItem;
 import software.aws.toolkits.eclipse.amazonq.views.FeedbackDialog;
@@ -29,8 +30,8 @@ public final class FeedbackDialogContributionItem implements AuthStatusChangedLi
         );
     }
 
-    public void updateVisibility(final boolean isLoggedIn) {
-        feedbackDialogContributionItem.setVisible(isLoggedIn);
+    public void updateVisibility(final LoginDetails loginDetails) {
+        feedbackDialogContributionItem.setVisible(loginDetails.getIsLoggedIn());
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
@@ -42,7 +43,7 @@ public final class FeedbackDialogContributionItem implements AuthStatusChangedLi
     }
 
     @Override
-    public void onAuthStatusChanged(final boolean isLoggedIn) {
-        updateVisibility(isLoggedIn);
+    public void onAuthStatusChanged(final LoginDetails loginDetails) {
+        updateVisibility(loginDetails);
     }
 }

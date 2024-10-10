@@ -108,6 +108,9 @@ public final class ChatCommunicationManager {
                         GenericTabParams tabParamsForEndChat = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.endChat(tabParamsForEndChat);
                         break;
+                    case TELEMETRY_EVENT:
+                        chatMessageProvider.sendTelemetryEvent(params);
+                        break;
                     default:
                         throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());
                 }

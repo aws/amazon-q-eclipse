@@ -6,7 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 public enum PluginPlatform {
     WINDOWS("windows"),
     LINUX("linux"),
-    MAC("mac");
+    MAC("darwin");
 
     private final String value;
 

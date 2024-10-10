@@ -9,9 +9,10 @@ import org.eclipse.swt.widgets.Display;
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
 import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -28,7 +29,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
             case LOGIN_BUILDER_ID:
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
-                        AuthUtils.signIn(LoginType.BUILDER_ID, null).get();
+                        DefaultLoginService.getInstance().login(LoginType.BUILDER_ID, new LoginParams()).get();
                         Display.getDefault().asyncExec(() -> {
                             browser.setText("Login succeeded");
                             AmazonQView.showView(AmazonQChatWebview.ID);
@@ -48,7 +49,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         if (StringUtils.isEmpty(url) || StringUtils.isEmpty(region)) {
                             throw new IllegalArgumentException("Url/Region parameters cannot be null or empty");
                         }
-                        AuthUtils.signIn(LoginType.IAM_IDENTITY_CENTER, loginIdcParams).get();
+                        DefaultLoginService.getInstance().login(LoginType.IAM_IDENTITY_CENTER, new LoginParams().setLoginIdcParams(loginIdcParams)).get();
                         Display.getDefault().asyncExec(() -> {
                             browser.setText("Login succeeded");
                             AmazonQView.showView(AmazonQChatWebview.ID);

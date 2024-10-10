@@ -20,7 +20,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
-import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -51,8 +51,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);
 
-        AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
-            handleAuthStatusChange(isLoggedIn);
+        DefaultLoginService.getInstance().getLoginDetails().thenAcceptAsync(loginDetails -> {
+            handleAuthStatusChange(loginDetails.getIsLoggedIn());
         }, ThreadingUtils::executeAsyncTask);
 
        new BrowserFunction(browser, "ideCommand") {

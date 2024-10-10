@@ -11,7 +11,7 @@ import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
-import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
@@ -38,8 +38,8 @@ public final class ToolkitLoginWebview extends AmazonQView {
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
 
-        AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
-            handleAuthStatusChange(isLoggedIn);
+        DefaultLoginService.getInstance().getLoginDetails().thenAcceptAsync(loginDetails -> {
+            handleAuthStatusChange(loginDetails.getIsLoggedIn());
         }, ThreadingUtils::executeAsyncTask);
 
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {

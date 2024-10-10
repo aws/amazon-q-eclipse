@@ -79,7 +79,7 @@ public final class ChatMessageProvider {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.followUpClick(followUpClickParams);
     }
-    
+
     public void sendTelemetryEvent(final Object params) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.sendTelemetryEvent(params);

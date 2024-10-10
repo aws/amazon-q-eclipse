@@ -5,5 +5,6 @@ package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
 public enum LoginType {
     BUILDER_ID,
-    IAM_IDENTITY_CENTER
+    IAM_IDENTITY_CENTER,
+    NONE
 }

@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
@@ -77,24 +78,22 @@ public final class QEclipseEditorUtils {
         return zeroIndexedLine + 1 < textWidget.getLineCount();
     }
 
-    public static String getOpenFileUri() {
+    public static Optional<String> getOpenFileUri() {
         try {
-            var filePath = getOpenFilePath();
-            if (filePath != null) {
-                return Paths.get(filePath).toUri().toString();
-            }
+            return getOpenFilePath()
+            .map(filePath -> Paths.get(filePath).toUri().toString());
         } catch (Exception e) {
             PluginLogger.error("Unexpected error when determining open file path", e);
+            return Optional.empty();
         }
-        return null;
     }
 
-    public static String getOpenFilePath() {
+    private static Optional<String> getOpenFilePath() {
         var editor = getActiveTextEditor();
         if (editor == null) {
-            return null;
+            return Optional.empty();
         }
-        return getOpenFilePath(editor.getEditorInput());
+        return Optional.of(getOpenFilePath(editor.getEditorInput()));
     }
 
     public static String getOpenFilePath(final IEditorInput editorInput) {
@@ -107,10 +106,10 @@ public final class QEclipseEditorUtils {
         }
     }
 
-    public static Range getActiveSelectionRange() {
+    public static Optional<Range> getActiveSelectionRange() {
         var editor = getActiveTextEditor();
         if (editor == null) {
-            return null;
+            return Optional.empty();
         }
 
         var selection = editor.getSelectionProvider().getSelection();
@@ -127,12 +126,11 @@ public final class QEclipseEditorUtils {
 
                 var start = new Position(startLine, startColumn);
                 var end = new Position(endLine, endColumn);
-                return new Range(start, end);
+                return Optional.of(new Range(start, end));
             } catch (org.eclipse.jface.text.BadLocationException e) {
                 PluginLogger.error("Error occurred while attempting to determine selected text position in editor", e);
-                return null;
             }
         }
-        return null;
+        return Optional.empty();
     }
 }

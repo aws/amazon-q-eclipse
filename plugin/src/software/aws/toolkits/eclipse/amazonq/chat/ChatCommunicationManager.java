@@ -3,9 +3,11 @@
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.eclipse.lsp4j.ProgressParams;
@@ -128,43 +130,36 @@ public final class ChatCommunicationManager {
     }
 
     private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams) {
-        var filePathUri = getOpenFileUri();
         // only include files that are accessible via lsp which have absolute paths
-        if (filePathUri != null && !filePathUri.isEmpty()) {
+        getOpenFileUri().ifPresent(filePathUri -> {
             chatRequestParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
-
-            var cursorState = getSelectionRangeCursorState();
-            if (cursorState != null) {
-                chatRequestParams.setCursorState(Arrays.asList(cursorState));
-            }
-        }
+            getSelectionRangeCursorState()
+                .ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+        });
         return chatRequestParams;
     }
 
-    private String getOpenFileUri() {
-        final String[] fileUri = new String[] {null};
+    private Optional<String> getOpenFileUri() {
+        AtomicReference<Optional<String>> fileUri = new AtomicReference<Optional<String>>();
         Display.getDefault().syncExec(new Runnable() {
             @Override
             public void run() {
-                fileUri[0] = QEclipseEditorUtils.getOpenFileUri();
+                fileUri.set(QEclipseEditorUtils.getOpenFileUri());
             }
         });
-        return fileUri[0];
+        return fileUri.get();
     }
 
-    private CursorState getSelectionRangeCursorState() {
-        final Range[] range = new Range[] {null};
+    private Optional<CursorState> getSelectionRangeCursorState() {
+        AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();
         Display.getDefault().syncExec(new Runnable() {
             @Override
             public void run() {
-                range[0] = QEclipseEditorUtils.getActiveSelectionRange();
+                range.set(QEclipseEditorUtils.getActiveSelectionRange());
             }
         });
 
-        if (range[0] !=  null) {
-            return new CursorState(range[0]);
-        }
-        return null;
+        return range.get().map(CursorState::new);
     }
 
     private CompletableFuture<ChatResult> sendEncryptedChatMessage(final String tabId,

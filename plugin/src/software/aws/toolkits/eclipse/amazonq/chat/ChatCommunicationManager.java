@@ -3,11 +3,17 @@
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.eclipse.lsp4j.ProgressParams;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
@@ -16,12 +22,14 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandNam
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
@@ -61,6 +69,7 @@ public final class ChatCommunicationManager {
                 switch (command) {
                     case CHAT_SEND_PROMPT:
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
+                        addEditorState(chatRequestParams);
                         sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
                             String encryptedChatResult = lspEncryptionManager.encrypt(chatRequestParams);
 
@@ -118,6 +127,39 @@ public final class ChatCommunicationManager {
                 throw new AmazonQPluginException("Error occurred in sendMessageToChatServer", e);
             }
         });
+    }
+
+    private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams) {
+        // only include files that are accessible via lsp which have absolute paths
+        getOpenFileUri().ifPresent(filePathUri -> {
+            chatRequestParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
+            getSelectionRangeCursorState()
+                .ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+        });
+        return chatRequestParams;
+    }
+
+    private Optional<String> getOpenFileUri() {
+        AtomicReference<Optional<String>> fileUri = new AtomicReference<Optional<String>>();
+        Display.getDefault().syncExec(new Runnable() {
+            @Override
+            public void run() {
+                fileUri.set(QEclipseEditorUtils.getOpenFileUri());
+            }
+        });
+        return fileUri.get();
+    }
+
+    private Optional<CursorState> getSelectionRangeCursorState() {
+        AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();
+        Display.getDefault().syncExec(new Runnable() {
+            @Override
+            public void run() {
+                range.set(QEclipseEditorUtils.getActiveSelectionRange());
+            }
+        });
+
+        return range.get().map(CursorState::new);
     }
 
     private CompletableFuture<ChatResult> sendEncryptedChatMessage(final String tabId,

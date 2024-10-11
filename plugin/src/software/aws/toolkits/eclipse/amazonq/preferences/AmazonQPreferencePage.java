@@ -77,7 +77,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         telemetryLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
-                PluginUtils.openBrowserUrl(event.text);
+                PluginUtils.openWebpage(event.text);
             }
         });
     }
@@ -101,7 +101,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         dataSharingLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
-                PluginUtils.openBrowserUrl(event.text);
+                PluginUtils.openWebpage(event.text);
             }
         });
     }

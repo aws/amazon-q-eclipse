@@ -13,8 +13,9 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -70,11 +71,11 @@ public abstract class AmazonQView extends ViewPart {
         return amazonQCommonActions;
     }
 
-    protected abstract void handleAuthStatusChange(boolean isLoggedIn);
+    protected abstract void handleAuthStatusChange(LoginDetails loginDetails);
 
-    protected final void setupAmazonQView(final Composite parent, final boolean isLoggedIn) {
+    protected final void setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         setupBrowser(parent);
-        setupActions(browser, isLoggedIn);
+        setupActions(browser, loginDetails);
         setupAuthStatusListeners();
     }
 
@@ -95,15 +96,15 @@ public abstract class AmazonQView extends ViewPart {
         return SWT.WEBKIT;
     }
 
-    private void setupActions(final Browser browser, final boolean isLoggedIn) {
-        amazonQCommonActions = new AmazonQCommonActions(browser, isLoggedIn, getViewSite());
+    private void setupActions(final Browser browser, final LoginDetails loginDetails) {
+        amazonQCommonActions = new AmazonQCommonActions(browser, loginDetails, getViewSite());
     }
 
     private void setupAuthStatusListeners() {
         authStatusChangedListener = this::handleAuthStatusChange;
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
-        AuthUtils.addAuthStatusChangeListener(amazonQCommonActions.getCustomizationDialogContributionAction());
+        DefaultLoginService.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
+        DefaultLoginService.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
+        DefaultLoginService.addAuthStatusChangeListener(amazonQCommonActions.getCustomizationDialogContributionAction());
     }
 
     @Override
@@ -119,7 +120,7 @@ public abstract class AmazonQView extends ViewPart {
      */
     @Override
     public void dispose() {
-        AuthUtils.removeAuthStatusChangeListener(authStatusChangedListener);
+        DefaultLoginService.removeAuthStatusChangeListener(authStatusChangedListener);
         super.dispose();
     }
 

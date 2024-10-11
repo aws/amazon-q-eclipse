@@ -150,11 +150,11 @@ public final class QInvocationSession extends QResource {
 
             ThreadingUtils.executeAsyncTask(() -> {
                 try {
-                    if (!AuthUtils.isLoggedIn().get()) {
+                    if (!DefaultLoginService.getInstance().getLoginDetails().get().getIsLoggedIn()) {
                         this.end();
                         return;
                     } else {
-                        AuthUtils.updateToken().get();
+                        DefaultLoginService.getInstance().updateToken();
                     }
 
                     List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()

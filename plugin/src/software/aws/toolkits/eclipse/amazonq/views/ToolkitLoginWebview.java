@@ -11,7 +11,9 @@ import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
-import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
@@ -34,12 +36,15 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void createPartControl(final Composite parent) {
-        setupAmazonQView(parent, true);
+        LoginDetails loginInfo = new LoginDetails();
+        loginInfo.setIsLoggedIn(true);
+        loginInfo.setLoginType(LoginType.BUILDER_ID);
+        setupAmazonQView(parent, loginInfo);
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
 
-        AuthUtils.isLoggedIn().thenAcceptAsync(isLoggedIn -> {
-            handleAuthStatusChange(isLoggedIn);
+        DefaultLoginService.getInstance().getLoginDetails().thenAcceptAsync(loginDetails -> {
+            handleAuthStatusChange(loginDetails);
         }, ThreadingUtils::executeAsyncTask);
 
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
@@ -52,11 +57,11 @@ public final class ToolkitLoginWebview extends AmazonQView {
         };
     }
 
-    protected void handleAuthStatusChange(final boolean isLoggedIn) {
+    protected void handleAuthStatusChange(final LoginDetails loginDetails) {
         var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
-            amazonQCommonActions.updateActionVisibility(isLoggedIn, getViewSite());
-            if (!isLoggedIn) {
+            amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
+            if (!loginDetails.getIsLoggedIn()) {
                 browser.setText(getContent());
             } else {
                 browser.setText("Signed in");

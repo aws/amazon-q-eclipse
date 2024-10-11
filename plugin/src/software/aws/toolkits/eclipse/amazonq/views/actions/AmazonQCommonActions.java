@@ -75,7 +75,7 @@ public final class AmazonQCommonActions {
         signoutAction.updateVisibility(loginDetails);
         feedbackDialogContributionItem.updateVisibility(loginDetails);
         customizationDialogContributionItem.updateVisibility(loginDetails);
-        toggleAutoTriggerContributionItem.updateVisibility(true);
+        toggleAutoTriggerContributionItem.updateVisibility(loginDetails);
     }
 
 }

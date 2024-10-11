@@ -273,6 +273,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         // (the CaretListener) is called _before_ the mouse listener
         // For consistency sake, we'll stick with updating it now.
         var qInvocationSessionInstance = QInvocationSession.getInstance();
+        if (!qInvocationSessionInstance.isActive()) {
+            return;
+        }
         qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOUSE);
         int lastKnownLine = qInvocationSessionInstance.getLastKnownLine();
         qInvocationSessionInstance.transitionToDecisionMade(lastKnownLine + 1);

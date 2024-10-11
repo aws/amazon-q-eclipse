@@ -14,6 +14,7 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 
 public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
@@ -25,8 +26,8 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
         this.viewSite = viewSite;
     }
 
-    public void updateVisibility(final boolean isLoggedIn) {
-        this.setVisible(isLoggedIn);
+    public void updateVisibility(final LoginDetails loginDetails) {
+        this.setVisible(loginDetails.getIsLoggedIn());
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);

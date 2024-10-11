@@ -15,6 +15,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
@@ -33,8 +35,8 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
     }
 
     // TODO: Need to update this method as the login condition has to be Pro login using IAM identity center
-    public void updateVisibility(final boolean isLoggedIn) {
-        this.setVisible(isLoggedIn);
+    public void updateVisibility(final LoginDetails loginDetails) {
+        this.setVisible(loginDetails.getIsLoggedIn() && loginDetails.getLoginType().equals(LoginType.IAM_IDENTITY_CENTER));
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
@@ -42,8 +44,8 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
     }
 
     @Override
-    public void onAuthStatusChanged(final boolean isLoggedIn) {
-        updateVisibility(isLoggedIn);
+    public void onAuthStatusChanged(final LoginDetails loginDetails) {
+        updateVisibility(loginDetails);
     }
 
     @Override

@@ -6,6 +6,9 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
+
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+
 import org.eclipse.swt.browser.Browser;
 
 public final class AmazonQCommonActions {
@@ -16,10 +19,10 @@ public final class AmazonQCommonActions {
     private CustomizationDialogContributionItem customizationDialogContributionItem;
     private ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
 
-    public AmazonQCommonActions(final Browser browser, final boolean isLoggedIn, final IViewSite viewSite) {
-        createActions(browser, isLoggedIn, viewSite);
+    public AmazonQCommonActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
+        createActions(browser, loginDetails, viewSite);
         contributeToActionBars(viewSite);
-        updateActionVisibility(isLoggedIn, viewSite);
+        updateActionVisibility(loginDetails, viewSite);
     }
 
     public ChangeThemeAction getChangeThemeAction() {
@@ -42,7 +45,7 @@ public final class AmazonQCommonActions {
         return toggleAutoTriggerContributionItem;
     }
 
-    private void createActions(final Browser browser, final boolean isLoggedIn, final IViewSite viewSite) {
+    private void createActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
         changeThemeAction = new ChangeThemeAction(browser);
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
@@ -68,11 +71,11 @@ public final class AmazonQCommonActions {
         manager.add(changeThemeAction);
     }
 
-    public void updateActionVisibility(final boolean isLoggedIn, final IViewSite viewSite) {
-        signoutAction.updateVisibility(isLoggedIn);
-        feedbackDialogContributionItem.updateVisibility(isLoggedIn);
-        customizationDialogContributionItem.updateVisibility(isLoggedIn);
-        toggleAutoTriggerContributionItem.updateVisibility(isLoggedIn);
+    public void updateActionVisibility(final LoginDetails loginDetails, final IViewSite viewSite) {
+        signoutAction.updateVisibility(loginDetails);
+        feedbackDialogContributionItem.updateVisibility(loginDetails);
+        customizationDialogContributionItem.updateVisibility(loginDetails);
+        toggleAutoTriggerContributionItem.updateVisibility(true);
     }
 
 }

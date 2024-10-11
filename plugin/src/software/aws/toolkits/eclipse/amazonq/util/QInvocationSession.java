@@ -181,12 +181,12 @@ public final class QInvocationSession extends QResource {
     private void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                if (!AuthUtils.isLoggedIn().get()) {
+                if (!DefaultLoginService.getInstance().getLoginDetails().get().getIsLoggedIn()) {
                     requestsInFlight.decrementAndGet();
                     this.end();
                     return;
                 } else {
-                    AuthUtils.updateToken().get();
+                    DefaultLoginService.getInstance().updateToken();
                 }
 
                 var session = QInvocationSession.getInstance();

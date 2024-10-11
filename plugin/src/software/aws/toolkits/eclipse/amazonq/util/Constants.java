@@ -15,5 +15,7 @@ public final class Constants {
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_TITLE = "Amazon Q Customization";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE = "Amazon Q inline suggestions are now coming from the %s";
     public static final String DEFAULT_Q_FOUNDATION_DISPLAY_NAME = "Amazon Q foundation (Default)";
+    public static final String LOGIN_TYPE_KEY = "LOGIN_TYPE";
+    public static final String LOGIN_IDC_PARAMS_KEY = "IDC_PARAMS";
 
 }

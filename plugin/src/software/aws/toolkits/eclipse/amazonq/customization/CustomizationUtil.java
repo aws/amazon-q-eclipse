@@ -39,7 +39,7 @@ public final class CustomizationUtil {
         params.setSection("aws.q");
         return LspProvider.getAmazonQServer()
                 .thenCompose(server -> server.getConfigurationFromServer(params))
-                .thenApply(customizations -> customizations.stream()
+                .thenApply(customizations -> customizations.getCustomizations().stream()
                     .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
                     .collect(Collectors.toList()))
                 .exceptionally(throwable -> {

@@ -4,15 +4,17 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
-
+import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
@@ -68,7 +70,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
-                //TODO
+                var insertToCursorParams = jsonHandler.convertObject(params, InsertToCursorPositionParams.class);
+                insertAtCursor(insertToCursorParams);
                 break;
             case CHAT_FEEDBACK:
                 //TODO
@@ -96,5 +99,14 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         } catch (Exception ex) {
             PluginLogger.error("Failed to open url in browser", ex);
         }
+    }
+
+    private void insertAtCursor(final InsertToCursorPositionParams insertToCursorParams) {
+        Display.getDefault().syncExec(new Runnable() {
+            @Override
+            public void run() {
+                QEclipseEditorUtils.insertAtCursor(insertToCursorParams.getCode());
+            }
+        });
     }
 }

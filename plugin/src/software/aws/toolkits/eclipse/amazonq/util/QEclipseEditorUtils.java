@@ -133,4 +133,26 @@ public final class QEclipseEditorUtils {
         }
         return Optional.empty();
     }
+
+    public static void insertAtCursor(final String text) {
+        var editor = getActiveTextEditor();
+        if (editor == null) {
+            return;
+        }
+
+        var selection = editor.getSelectionProvider().getSelection();
+        var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        if (selection instanceof ITextSelection textSelection) {
+            try {
+                int offset = textSelection.getOffset();
+                // insert text
+                document.replace(offset, 0, text);
+                // Move the cursor to the end of the inserted text
+                int newOffset = offset + text.length();
+                editor.selectAndReveal(newOffset, 0);
+            } catch (org.eclipse.jface.text.BadLocationException e) {
+                PluginLogger.error("Error occurred while inserting at cursor in editor", e);
+            }
+        }
+    }
 }

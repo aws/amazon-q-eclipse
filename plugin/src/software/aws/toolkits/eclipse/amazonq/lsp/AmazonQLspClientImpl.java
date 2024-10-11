@@ -19,6 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
@@ -46,13 +48,16 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         }
         List<Object> output = new ArrayList<>();
         configurationParams.getItems().forEach(item -> {
-            if (item.getSection().equals(Constants.LSP_CONFIGURATION_KEY)) {
+            if (item.getSection().equals(Constants.LSP_Q_CONFIGURATION_KEY)) {
                 Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
                 Map<String, String> customization = new HashMap<>();
                 customization.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, Objects.nonNull(storedCustomization) ? storedCustomization.getArn() : null);
                 output.add(customization);
-            } else {
-                output.add(null);
+            } else if (item.getSection().equals(Constants.LSP_CW_CONFIGURATION_KEY)) {
+                Map<String, Boolean> cwConfig = new HashMap<>();
+                boolean shareContentSetting = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.Q_DATA_SHARING);
+                cwConfig.put(Constants.LSP_CW_OPT_OUT_KEY, shareContentSetting);
+                output.add(cwConfig);
             }
         });
         return CompletableFuture.completedFuture(output);

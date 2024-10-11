@@ -2,9 +2,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
@@ -17,8 +15,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
-import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public interface AmazonQLspServer extends LanguageServer {
 
@@ -53,7 +51,7 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);
 
     @JsonRequest("aws/getConfigurationFromServer")
-    CompletableFuture<List<Customization>> getConfigurationFromServer(GetConfigurationFromServerParams params);
+    CompletableFuture<LspServerConfigurations> getConfigurationFromServer(GetConfigurationFromServerParams params);
 
     @JsonNotification("telemetry/event")
     void sendTelemetryEvent(Object params);

@@ -6,6 +6,8 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.lsp4j.Position;
@@ -14,10 +16,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.ui.IEditorInput;
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
@@ -145,8 +144,9 @@ public final class QEclipseEditorUtils {
             }
         }
         return Optional.empty();
-        
-    public static CompletableFuture<String> getSelectedText() {
+    }
+
+    public static CompletableFuture<String> getSelectedTextOrCurrentLine() {
         CompletableFuture<String> future = new CompletableFuture<>();
 
         Display.getDefault().asyncExec(() -> {
@@ -157,7 +157,18 @@ public final class QEclipseEditorUtils {
                     ISelection selection = textEditor.getSelectionProvider().getSelection();
                     if (selection instanceof ITextSelection) {
                         ITextSelection textSelection = (ITextSelection) selection;
-                        future.complete(textSelection.getText());
+                        String selectedText = textSelection.getText();
+
+                        if (selectedText != null && !selectedText.isEmpty()) {
+                            future.complete(selectedText);
+                            return;
+                        }
+
+                        int lineNumber = textSelection.getStartLine();
+                        IDocument document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
+                        IRegion lineInfo = document.getLineInformation(lineNumber);
+                        String currentLine = document.get(lineInfo.getOffset(), lineInfo.getLength());
+                        future.complete(currentLine);
                         return;
                     }
                 }

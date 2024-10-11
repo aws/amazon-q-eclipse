@@ -2,6 +2,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.handlers;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.eclipse.core.commands.AbstractHandler;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -10,7 +13,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.util.AuthUtils;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
 public abstract class AbstractQContextMenuHandler extends AbstractHandler {
@@ -18,14 +21,18 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
     @Override
     public final boolean isEnabled() {
         try {
-            return AuthUtils.isLoggedIn().get();
+            return DefaultLoginService.getInstance().getLoginDetails()
+                    .thenApply(loginDetails -> loginDetails.getIsLoggedIn())
+                    .get(5, TimeUnit.SECONDS);
+        }  catch (TimeoutException e) {
+            throw new AmazonQPluginException("Timeout retrieving login status", e);
         } catch (Exception e) {
             throw new AmazonQPluginException("Error retrieving login status for QContextMenuHandler", e);
         }
     }
 
     protected final void executeGenericCommand(final String genericCommandVerb) {
-        QEclipseEditorUtils.getSelectedText()
+        QEclipseEditorUtils.getSelectedTextOrCurrentLine()
             .thenApplyAsync(selection -> new GenericCommandParams(
                 null,
                 selection,
@@ -42,7 +49,7 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
     }
 
     protected final void executeSendToPromptCommand() {
-        QEclipseEditorUtils.getSelectedText()
+        QEclipseEditorUtils.getSelectedTextOrCurrentLine()
             .thenApplyAsync(selection -> new SendToPromptParams(
                 selection,
                 TriggerType.ContextMenu.getValue()

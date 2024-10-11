@@ -52,6 +52,7 @@ public final class DefaultLoginService implements LoginService {
             currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
             loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
                     ? new LoginParams().setLoginIdcParams(PluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)) : null;
+            instance.updateToken();
         }
         return instance;
     }

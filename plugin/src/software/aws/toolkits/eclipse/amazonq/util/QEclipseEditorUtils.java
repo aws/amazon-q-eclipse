@@ -14,10 +14,8 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.ui.IEditorInput;
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
@@ -60,9 +58,9 @@ public final class QEclipseEditorUtils {
         }
         return activePage == null ? null : asTextEditor(activePage.getActiveEditor());
     }
-    
-    public static ISelection getSelection(ITextEditor textEditor) {
-    	return textEditor.getSelectionProvider().getSelection();
+
+    public static ISelection getSelection(final ITextEditor textEditor) {
+        return textEditor.getSelectionProvider().getSelection();
     }
 
     public static ITextEditor asTextEditor(final IEditorPart editorPart) {
@@ -170,8 +168,8 @@ public final class QEclipseEditorUtils {
                 return currentLine;
             }
         } catch (Exception e) {
-        	throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
+            throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
         }
-		return null;
+        return null;
     }
 }

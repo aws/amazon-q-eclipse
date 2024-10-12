@@ -60,6 +60,10 @@ public final class QEclipseEditorUtils {
         }
         return activePage == null ? null : asTextEditor(activePage.getActiveEditor());
     }
+    
+    public static ISelection getSelection(ITextEditor textEditor) {
+    	return textEditor.getSelectionProvider().getSelection();
+    }
 
     public static ITextEditor asTextEditor(final IEditorPart editorPart) {
         if (editorPart instanceof ITextEditor) {
@@ -124,7 +128,7 @@ public final class QEclipseEditorUtils {
             return Optional.empty();
         }
 
-        var selection = editor.getSelectionProvider().getSelection();
+        ISelection selection = getSelection(editor);
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         if (selection instanceof ITextSelection textSelection) {
             try {
@@ -146,38 +150,28 @@ public final class QEclipseEditorUtils {
         return Optional.empty();
     }
 
-    public static CompletableFuture<String> getSelectedTextOrCurrentLine() {
-        CompletableFuture<String> future = new CompletableFuture<>();
+    public static String getSelectedTextOrCurrentLine() {
+        ITextEditor editor = getActiveTextEditor();
+        ISelection selection = getSelection(editor);
 
-        Display.getDefault().asyncExec(() -> {
-            try {
-                IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-                if (editor instanceof ITextEditor) {
-                    ITextEditor textEditor = (ITextEditor) editor;
-                    ISelection selection = textEditor.getSelectionProvider().getSelection();
-                    if (selection instanceof ITextSelection) {
-                        ITextSelection textSelection = (ITextSelection) selection;
-                        String selectedText = textSelection.getText();
+        try {
+            if (selection instanceof ITextSelection) {
+                ITextSelection textSelection = (ITextSelection) selection;
+                String selectedText = textSelection.getText();
 
-                        if (selectedText != null && !selectedText.isEmpty()) {
-                            future.complete(selectedText);
-                            return;
-                        }
-
-                        int lineNumber = textSelection.getStartLine();
-                        IDocument document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
-                        IRegion lineInfo = document.getLineInformation(lineNumber);
-                        String currentLine = document.get(lineInfo.getOffset(), lineInfo.getLength());
-                        future.complete(currentLine);
-                        return;
-                    }
+                if (selectedText != null && !selectedText.isEmpty()) {
+                    return selectedText;
                 }
-                future.complete(null);
-            } catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
 
-        return future;
+                int lineNumber = textSelection.getStartLine();
+                IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+                IRegion lineInfo = document.getLineInformation(lineNumber);
+                String currentLine = document.get(lineInfo.getOffset(), lineInfo.getLength());
+                return currentLine;
+            }
+        } catch (Exception e) {
+        	throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
+        }
+		return null;
     }
 }

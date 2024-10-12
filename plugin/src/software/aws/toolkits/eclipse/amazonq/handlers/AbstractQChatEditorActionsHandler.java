@@ -16,7 +16,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
-public abstract class AbstractQContextMenuHandler extends AbstractHandler {
+public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler {
 
     @Override
     public final boolean isEnabled() {
@@ -32,6 +32,8 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
     }
 
     protected final void executeGenericCommand(final String genericCommandVerb) {
+    	// TODO: Open the Q Chat window if it is closed https://sim.amazon.com/issues/ECLIPSE-361
+    	
         QEclipseEditorUtils.getSelectedTextOrCurrentLine()
             .thenApplyAsync(selection -> new GenericCommandParams(
                 null,
@@ -49,6 +51,8 @@ public abstract class AbstractQContextMenuHandler extends AbstractHandler {
     }
 
     protected final void executeSendToPromptCommand() {
+    	// TODO: Open the Q Chat window if it is closed https://sim.amazon.com/issues/ECLIPSE-361   	
+
         QEclipseEditorUtils.getSelectedTextOrCurrentLine()
             .thenApplyAsync(selection -> new SendToPromptParams(
                 selection,

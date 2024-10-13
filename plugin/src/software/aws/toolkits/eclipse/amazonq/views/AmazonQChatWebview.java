@@ -78,10 +78,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         // Inject chat theme after mynah-ui has loaded
         browser.addProgressListener(new ProgressAdapter() {
             @Override
-            public void completed(ProgressEvent event) {
-            	ThemeExtractor themeExtractor = new ThemeExtractor();
-            	AmazonQTheme amazonQTheme = themeExtractor.getAmazonQTheme();
-            	ChatTheme chatTheme = new ChatTheme(amazonQTheme);
+            public void completed(final ProgressEvent event) {
+                ThemeExtractor themeExtractor = new ThemeExtractor();
+                AmazonQTheme amazonQTheme = themeExtractor.getAmazonQTheme();
+                ChatTheme chatTheme = new ChatTheme(amazonQTheme);
                 injectCSS(browser, chatTheme.getCss());
             }
         });
@@ -148,16 +148,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 </style>
                 """;
     }
-    
 
-    private void injectCSS(Browser browser, String css) {
+
+    private void injectCSS(final Browser browser, final String css) {
         String script = String.format("""
-        	var style = document.createElement("style");\
-        	style.type = "text/css";\
-        	style.innerHTML = "%s";\
-        	document.head.appendChild(style);
+            var style = document.createElement("style");\
+            style.type = "text/css";\
+            style.innerHTML = "%s";\
+            document.head.appendChild(style);
         """, css);
-        
+
         browser.evaluate(script);
     }
 

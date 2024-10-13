@@ -9,12 +9,17 @@ import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
+import software.aws.toolkits.eclipse.amazonq.chat.ThemeExtractor;
+import software.aws.toolkits.eclipse.amazonq.chat.models.AmazonQTheme;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
@@ -69,6 +74,17 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 return null;
             }
         };
+
+        // Inject chat theme after mynah-ui has loaded
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(ProgressEvent event) {
+            	ThemeExtractor themeExtractor = new ThemeExtractor();
+            	AmazonQTheme amazonQTheme = themeExtractor.getAmazonQTheme();
+            	ChatTheme chatTheme = new ChatTheme(amazonQTheme);
+                injectCSS(browser, chatTheme.getCss());
+            }
+        });
     }
 
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
@@ -131,6 +147,18 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     }
                 </style>
                 """;
+    }
+    
+
+    private void injectCSS(Browser browser, String css) {
+        String script = String.format("""
+        	var style = document.createElement("style");\
+        	style.type = "text/css";\
+        	style.innerHTML = "%s";\
+        	document.head.appendChild(style);
+        """, css);
+        
+        browser.evaluate(script);
     }
 
     private String generateJS(final String jsEntrypoint) {

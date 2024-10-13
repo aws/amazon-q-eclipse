@@ -13,6 +13,7 @@ import org.eclipse.ui.themes.IThemeManager;
 
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.AmazonQTheme;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public final class ThemeExtractor {
 
@@ -25,8 +26,17 @@ public final class ThemeExtractor {
     }
 
     private Color getColor(final String key) {
-        RGB rgb = colorRegistry.getRGB(key);
-        return new Color(rgb.red, rgb.green, rgb.blue);
+    	if (key.isBlank()) {
+    		return null;
+    	}
+    	
+    	try {
+    		RGB rgb = colorRegistry.getRGB(key);
+    		return new Color(rgb.red, rgb.green, rgb.blue);
+    	} catch (Exception e) {
+    		PluginLogger.info("Failed to retrieve color for key " + key);
+    	}
+    	return null;
     }
 
    public AmazonQTheme getAmazonQTheme() {
@@ -60,8 +70,8 @@ public final class ThemeExtractor {
 
         Color cardBackground = getColor("");
 
-        Color editorBackground = getColor("");
-        Color editorForeground = getColor("");
+        Color editorBackground = getColor("org.eclipse.ui.editors.backgroundColor");
+        Color editorForeground = getColor("org.eclipse.ui.editors.foregroundColor");
         Color editorVariable = getColor("");
         Color editorOperator = getColor("");
         Color editorFunction = getColor("");

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.AmazonQTheme;
 import software.aws.toolkits.eclipse.amazonq.chat.models.MynahCssVariable;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -63,7 +64,7 @@ public class ChatTheme {
     }
 
     /*
-     * Returns the mynah-ui css variables as a string within the root tag
+     * Returns a string of the root tag nesting the mynah-ui css variables
      */
     public final String getCss() {
         StringBuilder variables = new StringBuilder();
@@ -79,6 +80,8 @@ public class ChatTheme {
                 entry.getValue()
             ));
         }
+        
+        PluginLogger.info(variables.toString());
 
         return String.format(":root{%s}", variables.toString());
     }
@@ -102,24 +105,43 @@ public class ChatTheme {
     }
 
     private String toCssFontFamily(final Font font, final String fallback) {
+    	if (font == null) {
+    		return "";
+    	}
+    	
         String fontFamily = font.getFamily();
 
         if (fontFamily.isBlank()) {
-            return String.format("font-family:$s", fallback);
+            return String.format("font-family:%s", fallback);
         }
 
-        return String.format("font-family:$s", fontFamily);
+        return String.format("font-family:%s", fontFamily);
     }
 
     private void addEntry(final String key, final Color color) {
+    	if (color == null) {
+    		PluginLogger.info("Failed to add theme entry: No color for key " + key);
+    		return;
+    	}
+    	
         themeMap.put(key, toCssColor(color));
     }
 
     private void addEntry(final String key, final Font font) {
+    	if (font == null) {
+    		PluginLogger.info("Failed to add theme entry: No font for key " + key);
+    		return;
+    	}
+    	
         themeMap.put(key, toCssSize(font));
     }
 
     private void addEntry(final String key, final String value) {
+    	if (value.isBlank()) {
+    		PluginLogger.info("Failed to add theme entry: No value provided for key " + key);
+    		return;
+    	}
+    	
         themeMap.put(key, value);
 
     }

@@ -79,10 +79,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         browser.addProgressListener(new ProgressAdapter() {
             @Override
             public void completed(final ProgressEvent event) {
-                ThemeExtractor themeExtractor = new ThemeExtractor();
-                AmazonQTheme amazonQTheme = themeExtractor.getAmazonQTheme();
-                ChatTheme chatTheme = new ChatTheme(amazonQTheme);
-                injectCSS(browser, chatTheme.getCss());
+            	Display.getDefault().asyncExec(() -> {
+	            	try {
+		                ThemeExtractor themeExtractor = new ThemeExtractor();
+		                AmazonQTheme amazonQTheme = themeExtractor.getAmazonQTheme();
+		                ChatTheme chatTheme = new ChatTheme(amazonQTheme);
+		                injectCSS(browser, chatTheme.getCss());
+	            	} catch (Exception e) {
+	            		PluginLogger.info("Error occurred while injecting theme", e);
+	            	}
+            	});
             }
         });
     }

@@ -3,6 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -15,10 +18,15 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
+import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
+import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
+import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 
 import org.eclipse.lsp4e.LanguageServiceAccessor;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.lsp4e.LanguageServersRegistry;
 
 @SuppressWarnings("restriction")
@@ -36,6 +44,8 @@ public class LspStartupActivity implements IStartup {
 
                     var authServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.authServer");
                     LanguageServiceAccessor.startLanguageServer(authServerDefinition);
+
+                    attachAutoTriggerListenersIfApplicable();
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
                 }
@@ -64,6 +74,45 @@ public class LspStartupActivity implements IStartup {
                 }
             }
         });
+    }
+
+    private void attachAutoTriggerListenersIfApplicable() {
+        String autoTriggerPrefValue = PluginStore.get(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY);
+        boolean isEnabled = autoTriggerPrefValue != null && !autoTriggerPrefValue.isBlank()
+                && autoTriggerPrefValue.equals("true");
+        var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener<AutoTriggerPartListener<AutoTriggerDocumentListener>>();
+        if (isEnabled) {
+            var documentListener = new AutoTriggerDocumentListener();
+            var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(documentListener);
+            autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
+            autoTriggerTopLevelListener.onStart();
+        }
+        var prefChangeListener = new PreferenceChangeListener() {
+            @Override
+            public void preferenceChange(final PreferenceChangeEvent evt) {
+                String keyChanged = evt.getKey();
+                String newValue = evt.getNewValue();
+                if (!keyChanged.equals(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY)) {
+                    return;
+                }
+                boolean isEnabled = newValue != null && !newValue.isBlank() && newValue.equals("true");
+                if (isEnabled) {
+                    if (autoTriggerTopLevelListener.getPartListener() == null) {
+                        var documentListener = new AutoTriggerDocumentListener();
+                        var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(documentListener);
+                        autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
+                    }
+                    autoTriggerTopLevelListener.onStart();
+                } else {
+                    // Note to future maintainers: this has to be called from the UI thread or it would not do anything
+                    Display.getDefault().asyncExec(() -> {
+                        autoTriggerTopLevelListener.onShutdown();
+                    });
+                }
+                System.out.println(keyChanged + " changed to " + newValue);
+            }
+        };
+        PluginStore.addChangeListener(prefChangeListener);
     }
 
 }

@@ -117,25 +117,30 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         if (qSes == null || !qSes.isActive() || brackets == null) {
             return;
         }
+
         String toAppend = "";
         for (int i = brackets.length - 1; i >= 0; i--) {
             var bracket = brackets[i];
             if (bracket == null) {
                 continue;
             }
-            String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
-                    isStringSetToAutoClose);
-            if (autoCloseContent != null) {
-                toAppend += autoCloseContent;
+            if (!qSes.getSuggestionAccepted()) {
+                String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
+                        isStringSetToAutoClose);
+                if (autoCloseContent != null) {
+                    toAppend += autoCloseContent;
+                }
             }
             bracket.dispose();
         }
 
         IDocument doc = qSes.getViewer().getDocument();
-        try {
-            doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
-        } catch (BadLocationException e) {
-            PluginLogger.error(e.toString());
+        if (!toAppend.isEmpty()) {
+            try {
+                doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
+            } catch (BadLocationException e) {
+                PluginLogger.error(e.toString());
+            }
         }
 
         IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
@@ -180,10 +185,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             }
             lastKeyStrokeType = LastKeyStrokeType.BACKSPACE;
             return;
-        case SWT.ESC:
-            qInvocationSessionInstance.transitionToDecisionMade();
-            qInvocationSessionInstance.end();
-            return;
         default:
             lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
             return;
@@ -227,11 +228,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
         boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-//            System.out.println("input is: "
-//                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-//            System.out.println("suggestion is: "
-//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-//                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+            // System.out.println("input is: "
+            //        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+            // System.out.println("suggestion is: "
+            //        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+            //                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             qInvocationSessionInstance.transitionToDecisionMade();
             qInvocationSessionInstance.end();
             return;
@@ -272,6 +273,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         // (the CaretListener) is called _before_ the mouse listener
         // For consistency sake, we'll stick with updating it now.
         var qInvocationSessionInstance = QInvocationSession.getInstance();
+        if (!qInvocationSessionInstance.isActive()) {
+            return;
+        }
         qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOUSE);
         int lastKnownLine = qInvocationSessionInstance.getLastKnownLine();
         qInvocationSessionInstance.transitionToDecisionMade(lastKnownLine + 1);

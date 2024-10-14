@@ -32,6 +32,9 @@ public final class QEclipseEditorUtils {
 
     public static IWorkbenchPage getActivePage() {
         IWorkbenchWindow window = getActiveWindow();
+        if (window == null) {
+            System.out.println("active window is null as per getActivePage");
+        }
         return window == null ? null : window.getActivePage();
     }
 
@@ -46,6 +49,9 @@ public final class QEclipseEditorUtils {
 
     public static ITextEditor getActiveTextEditor() {
         IWorkbenchPage activePage = getActivePage();
+        if (activePage == null) {
+            System.out.println("active page is null as per getActiveTextEditor");
+        }
         return activePage == null ? null : asTextEditor(activePage.getActiveEditor());
     }
 

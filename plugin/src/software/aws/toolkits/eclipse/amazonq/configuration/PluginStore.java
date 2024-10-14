@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.configuration;
 
 import java.nio.charset.StandardCharsets;
 import java.util.prefs.BackingStoreException;
+import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import com.google.gson.Gson;
 
@@ -37,6 +38,10 @@ public final class PluginStore {
         PREFERENCES.remove(key);
     }
 
+    public static void addChangeListener(final PreferenceChangeListener prefChangeListener) {
+        PREFERENCES.addPreferenceChangeListener(prefChangeListener);
+    }
+
     public static <T> void putObject(final String key, final T value) {
         String jsonValue = GSON.toJson(value);
         byte[] byteValue = jsonValue.getBytes(StandardCharsets.UTF_8);
@@ -56,4 +61,5 @@ public final class PluginStore {
         String jsonValue = new String(byteValue, StandardCharsets.UTF_8);
         return GSON.fromJson(jsonValue, type);
     }
+
 }

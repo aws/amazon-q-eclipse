@@ -20,7 +20,7 @@ public final class IQInlineSuggestionSegmentFactory {
         var suggestionLines = suggestion.split("\\R");
         var res = new ArrayList<IQInlineSuggestionSegment>();
         var widget = qSes.getViewer().getTextWidget();
-        int currentOffset = widget.getCaretOffset();
+        int currentOffset = qSes.getInvocationOffset();
         int distanceTraversed = 0;
         Stack<QInlineSuggestionOpenBracketSegment> unresolvedBrackets = new Stack<>();
         for (int i = 0; i < suggestionLines.length; i++) {

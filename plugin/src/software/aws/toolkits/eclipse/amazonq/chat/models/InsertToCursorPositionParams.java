@@ -14,6 +14,7 @@ public final class InsertToCursorPositionParams {
     private final int codeBlockIndex;
     private final int totalCodeBlocks;
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     public InsertToCursorPositionParams(
         @JsonProperty("tabId") final String tabId,
         @JsonProperty("messageId") final String messageId,

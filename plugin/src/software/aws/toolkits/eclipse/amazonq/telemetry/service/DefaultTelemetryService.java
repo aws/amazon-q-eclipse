@@ -165,6 +165,9 @@ public final class DefaultTelemetryService implements TelemetryService {
                         endpoint != null ? endpoint : DEFAULT_TELEMETRY_ENDPOINT,
                         identityPool != null ? identityPool : DEFAULT_TELEMETRY_IDENTITY_POOL);
             }
+            if (clientMetadata == null) {
+                clientMetadata = PluginClientMetadata.getInstance();
+            }
             return new DefaultTelemetryService(this);
         }
     }

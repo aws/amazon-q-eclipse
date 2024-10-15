@@ -1,177 +1,141 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
-//import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.regions.RegionMetadata;
-import software.amazon.awssdk.regions.PartitionMetadata;
-
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
 
-import static org.mockito.Mockito.*;
-
-
-
-@TestMethodOrder(OrderAnnotation.class)
 public class AwsRegionTest {
 	
-	private static Region mockRegion = mock(Region.class);
-    private static RegionMetadata mockRegionMetadata = mock(RegionMetadata.class);
-    private static PartitionMetadata mockPartitionMetadata = mock(PartitionMetadata.class);
     AwsRegion result;
-
-
-    @BeforeAll 
-    static void setUp() {	  	
-        when(mockRegion.id())
-        .thenReturn("us-west-1")    	//first test --> US West
-        .thenReturn("ca-central-1")		//second test --> Canada
-        .thenReturn("eu-north-1")  		//third test --> Europe
-        .thenReturn("af-south-1") 		//fourth test --> Africa
-        .thenReturn("ap-northeast-2")	//fifth test --> Asia Pacific
-        .thenReturn("me-south-1") 		//sixth test --> Middle East
-        .thenReturn("cn-north-1")		//seventh test --> China
-        .thenReturn("us-east-1")		//eighth test --> US East
-        .thenReturn("sa-east-1")		//ninth test --> South America
-        .thenReturn("il-central-1");	//tenth test --> region code not outlined in AwsRegion.getCategory()
-        
-        when(mockRegion.metadata()).thenReturn(mockRegionMetadata);
-        
-        when(mockRegionMetadata.description())
-        .thenReturn("US West (Oregon)")
-        .thenReturn("Canada (Central)")
-        .thenReturn("Europe (Stockholm)")
-        .thenReturn("Africa (Cape Town)")
-        .thenReturn("Asia Pacific (Seoul)") 
-        .thenReturn("Middle East (Bahrain)")
-        .thenReturn("China (Beijing)")
-        .thenReturn("US East (N. Virginia)")
-        .thenReturn("South America (Sao Paulo)")
-        .thenReturn("Israel (Tel Aviv)"); //ensuring category is properly set for unlisted region code
-        
-        when(mockRegionMetadata.partition()).thenReturn(mockPartitionMetadata);
-        when(mockPartitionMetadata.id()).thenReturn("aws");
-    }
-
-    //from() called before each test, which uses sequential .thenReturns above to set AwsRegion properties
-    @BeforeEach
-    void setUpEach() {
-    	result = AwsRegion.from(mockRegion);
-    }
-    
-    @Test
-    @Order(1)
-    public void testFromWithUsWestRegion() {   	
-    	assertEquals("us-west-1", result.id());
-        assertEquals("US West (Oregon)", result.name());
+	
+	@Test
+	public void testUsWestRegion() {
+        result = AwsRegion.from(Region.US_WEST_1);
+        assertEquals("us-west-1", result.id());
+        assertEquals("US West (N. California)", result.name());
         assertEquals("aws", result.partitionId());
         assertEquals("North America", result.category());
-        assertEquals("(Oregon) (us-west-1)", result.displayName());  
-        
-        //ensure results of object creation expected string format
-        String toStringExpected = "{\"id\":\"us-west-1\",\"name\":\"US West (Oregon)\",\"partitionId\":\"aws\",\"category\":\"North America\",\"displayName\":\"(Oregon) (us-west-1)\"}";
+        assertEquals("(N. California) (us-west-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"us-west-1\",\"name\":\"US West (N. California)\",\"partitionId\":\"aws\",\"category\":\"North America\",\"displayName\":\"(N. California) (us-west-1)\"}";	
         assertEquals(toStringExpected, result.toString());
-    }
-    
-    @Test 
-    @Order(2)
-    public void testFromWithCanadaRegion() {
-       assertEquals("ca-central-1", result.id());
-       assertEquals("Canada (Central)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("North America", result.category());
-       assertEquals("Canada (Central) (ca-central-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(3)
-    public void testFromWithEuropeRegion() {
-	   assertEquals("eu-north-1", result.id());
-       assertEquals("Europe (Stockholm)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("Europe", result.category());
-       assertEquals("(Stockholm) (eu-north-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(4)
-    public void testFromWithAfricaRegion() {
+	}
+	
+	@Test
+	public void testUsEastRegion() {
+        result = AwsRegion.from(Region.US_EAST_1);
+        assertEquals("us-east-1", result.id());
+        assertEquals("US East (N. Virginia)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("North America", result.category());
+        assertEquals("(N. Virginia) (us-east-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"us-east-1\",\"name\":\"US East (N. Virginia)\",\"partitionId\":\"aws\",\"category\":\"North America\",\"displayName\":\"(N. Virginia) (us-east-1)\"}";
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testEuNorthRegion() {
+        result = AwsRegion.from(Region.EU_NORTH_1);
+        assertEquals("eu-north-1", result.id());
+        assertEquals("Europe (Stockholm)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("Europe", result.category());
+        assertEquals("(Stockholm) (eu-north-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"eu-north-1\",\"name\":\"Europe (Stockholm)\",\"partitionId\":\"aws\",\"category\":\"Europe\",\"displayName\":\"(Stockholm) (eu-north-1)\"}";	
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testAfSouthRegion() {
+        result = AwsRegion.from(Region.AF_SOUTH_1);
         assertEquals("af-south-1", result.id());
-       assertEquals("Africa (Cape Town)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("Africa", result.category());
-       assertEquals("Africa (af-south-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(5)
-    public void testFromWithAsiaPacificRegion() {
+        assertEquals("Africa (Cape Town)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("Africa", result.category());
+        assertEquals("Africa (af-south-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"af-south-1\",\"name\":\"Africa (Cape Town)\",\"partitionId\":\"aws\",\"category\":\"Africa\",\"displayName\":\"Africa (af-south-1)\"}";	
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testCaCentralRegion() {
+        result = AwsRegion.from(Region.CA_CENTRAL_1);
+        assertEquals("ca-central-1", result.id());
+        assertEquals("Canada (Central)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("North America", result.category());
+        assertEquals("Canada (Central) (ca-central-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"ca-central-1\",\"name\":\"Canada (Central)\",\"partitionId\":\"aws\",\"category\":\"North America\",\"displayName\":\"Canada (Central) (ca-central-1)\"}";	
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testApNortheastRegion() {
+        result = AwsRegion.from(Region.AP_NORTHEAST_2);
         assertEquals("ap-northeast-2", result.id());
-       assertEquals("Asia Pacific (Seoul)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("Asia Pacific", result.category());
-       assertEquals("Asia Pacific (ap-northeast-2)", result.displayName());
-    }
-    
-    @Test 
-    @Order(6)
-    public void testFromWithMiddleEastRegion() {
+        assertEquals("Asia Pacific (Seoul)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("Asia Pacific", result.category());
+        assertEquals("Asia Pacific (ap-northeast-2)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"ap-northeast-2\",\"name\":\"Asia Pacific (Seoul)\",\"partitionId\":\"aws\",\"category\":\"Asia Pacific\",\"displayName\":\"Asia Pacific (ap-northeast-2)\"}";
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testSaEastRegion() {
+        result = AwsRegion.from(Region.SA_EAST_1);
+        assertEquals("sa-east-1", result.id());
+        assertEquals("South America (Sao Paulo)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("South America", result.category());
+        assertEquals("South America (sa-east-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"sa-east-1\",\"name\":\"South America (Sao Paulo)\",\"partitionId\":\"aws\",\"category\":\"South America\",\"displayName\":\"South America (sa-east-1)\"}";	
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testCnNorthRegion() {
+        result = AwsRegion.from(Region.CN_NORTH_1);
+        assertEquals("cn-north-1", result.id());
+        assertEquals("China (Beijing)", result.name());
+        assertEquals("aws-cn", result.partitionId());
+        assertEquals("China", result.category());
+        assertEquals("China (cn-north-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"cn-north-1\",\"name\":\"China (Beijing)\",\"partitionId\":\"aws-cn\",\"category\":\"China\",\"displayName\":\"China (cn-north-1)\"}";	
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testMeSouthRegion() {
+        result = AwsRegion.from(Region.ME_SOUTH_1);
         assertEquals("me-south-1", result.id());
-       assertEquals("Middle East (Bahrain)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("Middle East", result.category());
-       assertEquals("Middle East (me-south-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(7)
-    public void testFromWithChinaRegion() {
-       assertEquals("cn-north-1", result.id());
-       assertEquals("China (Beijing)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("China", result.category());
-       assertEquals("China (cn-north-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(8)
-    public void testFromWithUSEastRegion() {
-       assertEquals("us-east-1", result.id());
-       assertEquals("US East (N. Virginia)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("North America", result.category());
-       assertEquals("(N. Virginia) (us-east-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(9)
-    public void testFromWithSouthAmericaRegion() {
-       assertEquals("sa-east-1", result.id());
-       assertEquals("South America (Sao Paulo)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertEquals("South America", result.category());
-       assertEquals("South America (sa-east-1)", result.displayName());
-    }
-    
-    @Test 
-    @Order(10)
-    public void testFromWithUnlistedRegion() {
-       assertEquals("il-central-1", result.id());
-       assertEquals("Israel (Tel Aviv)", result.name());
-       assertEquals("aws", result.partitionId());
-       assertNull(result.category());
-       assertEquals("Israel (Tel Aviv)", result.displayName());
-       
-       //ensure expected string output given null value in category
-       String toStringExpected = "{\"id\":\"il-central-1\",\"name\":\"Israel (Tel Aviv)\",\"partitionId\":\"aws\",\"category\":\"null\",\"displayName\":\"Israel (Tel Aviv)\"}";
-       assertEquals(toStringExpected, result.toString());
-    }
-    
-   
+        assertEquals("Middle East (Bahrain)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertEquals("Middle East", result.category());
+        assertEquals("Middle East (me-south-1)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"me-south-1\",\"name\":\"Middle East (Bahrain)\",\"partitionId\":\"aws\",\"category\":\"Middle East\",\"displayName\":\"Middle East (me-south-1)\"}";	
+        assertEquals(toStringExpected, result.toString());
+	}
+	
+	@Test
+	public void testIlCentralRegion() {
+        result = AwsRegion.from(Region.IL_CENTRAL_1);
+        assertEquals("il-central-1", result.id());
+        assertEquals("Israel (Tel Aviv)", result.name());
+        assertEquals("aws", result.partitionId());
+        assertNull(result.category());
+        assertEquals("Israel (Tel Aviv)", result.displayName());
+
+        String toStringExpected = "{\"id\":\"il-central-1\",\"name\":\"Israel (Tel Aviv)\",\"partitionId\":\"aws\",\"category\":\"null\",\"displayName\":\"Israel (Tel Aviv)\"}";
+        assertEquals(toStringExpected, result.toString());
+	}    
 }

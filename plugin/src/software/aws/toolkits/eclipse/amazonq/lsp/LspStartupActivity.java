@@ -3,6 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import org.eclipse.core.net.proxy.IProxyChangeEvent;
+import org.eclipse.core.net.proxy.IProxyChangeListener;
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -16,6 +20,7 @@ import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 
 import org.eclipse.lsp4e.LanguageServiceAccessor;
@@ -24,12 +29,33 @@ import org.eclipse.lsp4e.LanguageServersRegistry;
 @SuppressWarnings("restriction")
 public class LspStartupActivity implements IStartup {
 
+    private void checkProxyConfiguration() {
+        IProxyService proxyService = PlatformUI.getWorkbench().getService(IProxyService.class);
+        if (proxyService != null && proxyService.isProxiesEnabled()) {
+            IProxyData proxyData = proxyService.getProxyData(IProxyData.HTTPS_PROXY_TYPE);
+            if (ProxyUtil.isProxyValid(proxyData)) {
+                ProxyUtil.updateProxyUrl(ProxyUtil.createProxyHost(proxyData));
+            }
+        } else {
+            ProxyUtil.updateProxyUrl("");
+        }
+        proxyService.addProxyChangeListener(new IProxyChangeListener() {
+            @Override
+            public void proxyInfoChanged(final IProxyChangeEvent event) {
+                ProxyUtil.updateProxyUrl("");
+                LanguageServiceAccessor.clearStartedServers();
+                earlyStartup();
+            }
+        });
+    }
+
     @Override
     public final void earlyStartup() {
         Job job = new Job("Start language servers") {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
+                    checkProxyConfiguration();
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);

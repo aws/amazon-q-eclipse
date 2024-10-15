@@ -21,6 +21,7 @@ public enum Command {
     CHAT_FEEDBACK("aws/chat/feedback"),
     CHAT_FOLLOW_UP_CLICK("aws/chat/followUpClick"),
     TELEMETRY_EVENT("telemetry/event"),
+    CHAT_COPY_TO_CLIPBOARD("copyToClipboard"),
     CHAT_INSERT_TO_CURSOR_POSITION("insertToCursorPosition"),
     AUTH_FOLLOW_UP_CLICKED("authFollowUpClicked"), //Auth command handled in QChat webview
 

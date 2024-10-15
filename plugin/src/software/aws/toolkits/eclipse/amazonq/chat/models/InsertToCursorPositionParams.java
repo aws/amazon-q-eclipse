@@ -2,6 +2,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat.models;
 
+import java.util.List;
+
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class InsertToCursorPositionParams {
@@ -13,6 +17,8 @@ public final class InsertToCursorPositionParams {
     private final String eventId;
     private final int codeBlockIndex;
     private final int totalCodeBlocks;
+    private TextDocumentIdentifier textDocument;
+    private List<CursorState> cursorState;
 
     @SuppressWarnings("checkstyle:ParameterNumber")
     public InsertToCursorPositionParams(
@@ -23,7 +29,9 @@ public final class InsertToCursorPositionParams {
         @JsonProperty("referenceTrackerInformation") final ReferenceTrackerInformation[] referenceTrackerInformation,
         @JsonProperty("eventId") final String eventId,
         @JsonProperty("codeBlockIndex") final int codeBlockIndex,
-        @JsonProperty("totalCodeBlocks") final int totalCodeBlocks
+        @JsonProperty("totalCodeBlocks") final int totalCodeBlocks,
+        @JsonProperty("textDocument") final TextDocumentIdentifier textDocument,
+        @JsonProperty("cursorState") final CursorState cursorState
     ) {
         this.tabId = tabId;
         this.messageId = messageId;
@@ -37,5 +45,21 @@ public final class InsertToCursorPositionParams {
 
     public String getCode() {
         return code;
+    }
+
+    public List<CursorState> getCursorState() {
+        return cursorState;
+    }
+
+    public void setCursorState(final List<CursorState> cursorState) {
+        this.cursorState = cursorState;
+    }
+
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    public void setTextDocument(final TextDocumentIdentifier textDocument) {
+        this.textDocument = textDocument;
     }
 }

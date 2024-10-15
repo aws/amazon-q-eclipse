@@ -3,11 +3,19 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Display;
 
-import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import com.fasterxml.jackson.databind.JsonNode;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -71,7 +79,15 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
                 var insertToCursorParams = jsonHandler.convertObject(params, InsertToCursorPositionParams.class);
-                insertAtCursor(insertToCursorParams);
+                var cursorState = insertAtCursor(insertToCursorParams);
+                // add information about editor state and send telemetry event
+                // only include files that are accessible via lsp which have absolute paths
+                // When this fails, we will still send the request for amazonq_interactWithMessage telemetry
+                getOpenFileUri().ifPresent(filePathUri -> {
+                    insertToCursorParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
+                    cursorState.ifPresent(state -> insertToCursorParams.setCursorState(Arrays.asList(state)));
+                });
+                chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, insertToCursorParams);
                 break;
             case CHAT_FEEDBACK:
                 //TODO
@@ -80,6 +96,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case TELEMETRY_EVENT:
+                // telemetry notification for insert to cursor is modified and forwarded to server in the InsertToCursorPosition handler
+                if (isInsertToCursorEvent(params)) {
+                    break;
+                }
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case AUTH_FOLLOW_UP_CLICKED:
@@ -101,12 +121,36 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         }
     }
 
-    private void insertAtCursor(final InsertToCursorPositionParams insertToCursorParams) {
+    /*
+     *   Inserts the text present in parameters at caret position in editor
+     *   and returns cursor state range from the start caret to end caret, which includes the entire inserted text range
+     */
+    private Optional<CursorState> insertAtCursor(final InsertToCursorPositionParams insertToCursorParams) {
+        AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();
         Display.getDefault().syncExec(new Runnable() {
             @Override
             public void run() {
-                QEclipseEditorUtils.insertAtCursor(insertToCursorParams.getCode());
+                range.set(QEclipseEditorUtils.insertAtCursor(insertToCursorParams.getCode()));
             }
         });
+        return range.get().map(CursorState::new);
+    }
+
+    private boolean isInsertToCursorEvent(final Object params) {
+        return Optional.ofNullable(jsonHandler.getValueForKey(params, "name"))
+                .map(JsonNode::asText)
+                .map("insertToCursorPosition"::equals)
+                .orElse(false);
+    }
+
+    private Optional<String> getOpenFileUri() {
+        AtomicReference<Optional<String>> fileUri = new AtomicReference<Optional<String>>();
+        Display.getDefault().syncExec(new Runnable() {
+            @Override
+            public void run() {
+                fileUri.set(QEclipseEditorUtils.getOpenFileUri());
+            }
+        });
+        return fileUri.get();
     }
 }

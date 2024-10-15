@@ -148,26 +148,42 @@ public final class QEclipseEditorUtils {
         return Optional.empty();
     }
 
-    public static void insertAtCursor(final String text) {
+    /*
+     * Inserts the given text at cursor position and returns cursor position range of the text
+     */
+    public static Optional<Range> insertAtCursor(final String text) {
         var editor = getActiveTextEditor();
         if (editor == null) {
-            return;
+            return Optional.empty();
         }
 
         var selection = editor.getSelectionProvider().getSelection();
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         if (selection instanceof ITextSelection textSelection) {
             try {
-                int offset = textSelection.getOffset();
+                int startOffset = textSelection.getOffset();
+                int startLine = document.getLineOfOffset(startOffset);
+                int startColumn = startOffset - document.getLineOffset(startLine);
+
                 // insert text
-                document.replace(offset, 0, text);
+                document.replace(startOffset, 0, text);
+                // compute end offset after text is inserted
+                int endOffset = startOffset + text.length();
                 // Move the cursor to the end of the inserted text
-                int newOffset = offset + text.length();
-                editor.selectAndReveal(newOffset, 0);
+                editor.selectAndReveal(endOffset, 0);
+
+                int endLine = document.getLineOfOffset(endOffset);
+                int endColumn = endOffset - document.getLineOffset(endLine);
+
+                // return the text cursor position
+                var start = new Position(startLine, startColumn);
+                var end = new Position(endLine, endColumn);
+                return Optional.of(new Range(start, end));
             } catch (org.eclipse.jface.text.BadLocationException e) {
                 PluginLogger.error("Error occurred while inserting at cursor in editor", e);
             }
         }
+        return Optional.empty();
     }
 
     public static String getSelectedTextOrCurrentLine() {

@@ -29,8 +29,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
-import software.aws.toolkits.eclipse.amazonq.telemetry.TelemetryService;
-import software.aws.toolkits.eclipse.amazonq.util.ClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -104,7 +105,7 @@ public class FeedbackDialog extends Dialog {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
         PluginLogger.info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
-        ThreadingUtils.executeAsyncTask(() -> TelemetryService.emitFeedback(comment, selectedSentiment));
+        ThreadingUtils.executeAsyncTask(() -> Activator.getTelemetryService().emitFeedback(comment, selectedSentiment));
         super.okPressed();
     }
 
@@ -287,13 +288,14 @@ public class FeedbackDialog extends Dialog {
     }
 
     private String getBodyMessageForReportIssueOrRequestFeature() {
+        ClientMetadata metadata = PluginClientMetadata.getInstance();
         return String.format(
             "--- \n"
             + "Toolkit: Amazon Q for %s\n"
             + "OS: %s %s\n"
-            + "IDE: %s %s", ClientMetadata.getIdeName(), ClientMetadata.getOSName(),
-            ClientMetadata.getOSVersion(), ClientMetadata.getIdeName(),
-            ClientMetadata.getIdeVersion()).stripIndent();
+            + "IDE: %s %s", metadata.getIdeName(), metadata.getOSName(),
+            metadata.getOSVersion(), metadata.getIdeName(),
+            metadata.getIdeVersion()).stripIndent();
     }
 
     private void updateCharacterRemainingCount() {

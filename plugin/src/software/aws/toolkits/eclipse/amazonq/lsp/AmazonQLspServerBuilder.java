@@ -16,7 +16,8 @@ import com.google.gson.ToNumberPolicy;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResult;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
-import software.aws.toolkits.eclipse.amazonq.util.ClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
@@ -37,7 +38,8 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         return super.wrapMessageConsumer((Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
-                initParams.setClientInfo(new ClientInfo(ClientMetadata.getPluginName(), ClientMetadata.getPluginVersion()));
+                ClientMetadata metadata = PluginClientMetadata.getInstance();
+                initParams.setClientInfo(new ClientInfo(metadata.getPluginName(), metadata.getPluginVersion()));
             }
             if (message instanceof ResponseMessage && ((ResponseMessage) message).getResult() instanceof AwsExtendedInitializeResult) {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();

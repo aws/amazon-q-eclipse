@@ -21,7 +21,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
-import software.aws.toolkits.eclipse.amazonq.telemetry.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
@@ -84,6 +83,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     @Override
     public final void telemetryEvent(final Object event) {
         TelemetryEvent telemetryEvent = ObjectMapperFactory.getInstance().convertValue(event, TelemetryEvent.class);
-        TelemetryService.emitMetric(telemetryEvent);
+        Activator.getTelemetryService().emitMetric(telemetryEvent);
     }
 }

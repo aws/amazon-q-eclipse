@@ -35,8 +35,8 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     protected final void addEnvironmentVariables(final Map<String, String> env) {
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
-        if (!StringUtils.isEmpty(ProxyUtil.getProxyUrl())) {
-            env.put("HTTPS_PROXY", ProxyUtil.getProxyUrl());
+        if (!StringUtils.isEmpty(ProxyUtil.getHttpsProxyUrl())) {
+            env.put("HTTPS_PROXY", ProxyUtil.getHttpsProxyUrl());
         }
     }
 

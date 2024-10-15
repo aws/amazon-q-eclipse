@@ -19,32 +19,38 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
-
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.lsp4e.LanguageServiceAccessor;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.lsp4e.LanguageServersRegistry;
 
 @SuppressWarnings("restriction")
 public class LspStartupActivity implements IStartup {
 
     private void checkProxyConfiguration() {
+        ProxyUtil.updateHttpsProxyUrl("");
         IProxyService proxyService = PlatformUI.getWorkbench().getService(IProxyService.class);
         if (proxyService != null && proxyService.isProxiesEnabled()) {
             IProxyData proxyData = proxyService.getProxyData(IProxyData.HTTPS_PROXY_TYPE);
             if (ProxyUtil.isProxyValid(proxyData)) {
-                ProxyUtil.updateProxyUrl(ProxyUtil.createProxyHost(proxyData));
+                ProxyUtil.updateHttpsProxyUrl(ProxyUtil.createHttpsProxyHost(proxyData));
             }
-        } else {
-            ProxyUtil.updateProxyUrl("");
         }
         proxyService.addProxyChangeListener(new IProxyChangeListener() {
             @Override
             public void proxyInfoChanged(final IProxyChangeEvent event) {
-                ProxyUtil.updateProxyUrl("");
-                LanguageServiceAccessor.clearStartedServers();
-                earlyStartup();
+                ProxyUtil.updateHttpsProxyUrl("");
+                Display.getCurrent().asyncExec(() -> {
+                    AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                            Constants.PROXY_UPDATE_NOTIFICATION_TITLE,
+                            Constants.PROXY_UPDATE_NOTIFICATION_DESCRIPTION);
+                    notification.open();
+                });
             }
         });
     }

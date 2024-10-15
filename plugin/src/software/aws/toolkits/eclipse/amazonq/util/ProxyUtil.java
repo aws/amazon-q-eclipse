@@ -12,14 +12,14 @@ public final class ProxyUtil {
         // Prevent initialization
     }
 
-    private static String proxyUrl = "";
+    private static String proxyHttpsUrl = "";
 
-    public static String getProxyUrl() {
-        return proxyUrl;
+    public static String getHttpsProxyUrl() {
+        return proxyHttpsUrl;
     }
 
-    public static void updateProxyUrl(final String proxyHost) {
-        proxyUrl = proxyHost;
+    public static void updateHttpsProxyUrl(final String proxyHost) {
+        proxyHttpsUrl = proxyHost;
     }
 
     public static boolean isProxyValid(final IProxyData proxyData) {
@@ -36,7 +36,7 @@ public final class ProxyUtil {
         );
     }
 
-    public static String createProxyHost(final IProxyData proxyData) {
+    public static String createHttpsProxyHost(final IProxyData proxyData) {
         String host = proxyData.getHost();
         int port = proxyData.getPort();
         String user = proxyData.getUserId();

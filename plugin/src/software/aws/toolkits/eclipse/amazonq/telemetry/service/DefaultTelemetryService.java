@@ -36,8 +36,8 @@ public final class DefaultTelemetryService implements TelemetryService {
     private ClientMetadata clientMetadata;
 
     private DefaultTelemetryService(final Builder builder) {
-        this.telemetryClient = Objects.requireNonNull(builder.telemetryClient, "telemetry client");
-        this.clientMetadata = Objects.requireNonNull(builder.clientMetadata, "client metadata");
+        this.telemetryClient = Objects.requireNonNull(builder.telemetryClient, "telemetry client cannot be null");
+        this.clientMetadata = Objects.requireNonNull(builder.clientMetadata, "client metadata cannot be null");
     }
 
     public static Builder builder() {

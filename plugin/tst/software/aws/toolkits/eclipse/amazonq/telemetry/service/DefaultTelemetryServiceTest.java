@@ -32,7 +32,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 
-public class DefaultTelemetryServiceTest {
+public final class DefaultTelemetryServiceTest {
 
     private DefaultTelemetryService service;
     private ToolkitTelemetryClient mockClient;
@@ -49,7 +49,7 @@ public class DefaultTelemetryServiceTest {
     }
 
     @Test
-    public void testEmitMetric_telemetryDisabled() {
+    public void testEmitTelemetryEventTelemetryDisabled() {
         try (MockedStatic<Activator> activatorMock = mockActivatorWithTelemetryOptIn(false)) {
             when(mockClient.postMetrics((PostMetricsRequest) any())).thenReturn(null);
             service.emitMetric(new TelemetryEvent("FooEvent", "FooResult", new HashMap<>()));
@@ -58,12 +58,30 @@ public class DefaultTelemetryServiceTest {
     }
 
     @Test
-    public void testEmitMetric_telemetryEnabled() {
+    public void testEmitTelemetryEventTelemetryEnabled() {
         try (MockedStatic<Activator> activatorMock = mockActivatorWithTelemetryOptIn(true)) {
             when(mockClient.postMetrics(any(PostMetricsRequest.class))).thenReturn(null);
             Map<String, Object> data = new HashMap<>();
             data.put("key", "value");
             service.emitMetric(new TelemetryEvent("FooEvent", "FooResult", data));
+            verify(mockClient).postMetrics(any(PostMetricsRequest.class));
+        }
+    }
+
+    @Test
+    public void testEmitMetricTelemetryDisabled() {
+        try (MockedStatic<Activator> activatorMock = mockActivatorWithTelemetryOptIn(false)) {
+            when(mockClient.postMetrics((PostMetricsRequest) any())).thenReturn(null);
+            service.emitMetric(MetricDatum.builder().build());
+            verify(mockClient, never()).postMetrics(any(PostMetricsRequest.class));
+        }
+    }
+
+    @Test
+    public void testEmitMetricTelemetryEnabled() {
+        try (MockedStatic<Activator> activatorMock = mockActivatorWithTelemetryOptIn(true)) {
+            when(mockClient.postMetrics(any(PostMetricsRequest.class))).thenReturn(null);
+            service.emitMetric(MetricDatum.builder().build());
             verify(mockClient).postMetrics(any(PostMetricsRequest.class));
         }
     }
@@ -87,7 +105,7 @@ public class DefaultTelemetryServiceTest {
     }
 
     @Test
-    public void testEmitMetric_datum() {
+    public void testEmitMetricDatum() {
         try (MockedStatic<Activator> activatorMock = mockActivatorWithTelemetryOptIn(true)) {
             MetricDatum datum = MetricDatum.builder()
                     .metricName("test")
@@ -109,12 +127,12 @@ public class DefaultTelemetryServiceTest {
             assertEquals(mockClientMetadata.getOSVersion(), request.osVersion());
             assertEquals(mockClientMetadata.getIdeName(), request.parentProduct());
             assertEquals(mockClientMetadata.getIdeVersion(), request.parentProductVersion());
-            
+
             assertEquals(request.metricData().size(), 1);
             MetricDatum requestDatum = request.metricData().get(0);
             assertEquals(datum.metricName(), requestDatum.metricName());
             assertEquals(1.0, requestDatum.value());
-            
+
             assertEquals(requestDatum.metadata().size(), 1);
             MetadataEntry metadataEntry = requestDatum.metadata().get(0);
             assertEquals("foo", metadataEntry.key());
@@ -123,7 +141,7 @@ public class DefaultTelemetryServiceTest {
     }
 
     @Test
-    public void testEmitMetric_telemetryEvent() {
+    public void testEmitMetricTelemetryEvent() {
         try (MockedStatic<Activator> activatorMock = mockActivatorWithTelemetryOptIn(true)) {
             Map<String, Object> metadata = Map.of("foo", "fooVal");
             TelemetryEvent event = new TelemetryEvent("testEvent", "testResult", metadata);
@@ -139,7 +157,7 @@ public class DefaultTelemetryServiceTest {
             assertEquals(mockClientMetadata.getOSVersion(), request.osVersion());
             assertEquals(mockClientMetadata.getIdeName(), request.parentProduct());
             assertEquals(mockClientMetadata.getIdeVersion(), request.parentProductVersion());
-            
+
             assertEquals(request.metricData().size(), 1);
             MetricDatum requestDatum = request.metricData().get(0);
             assertEquals("testEvent", requestDatum.metricName());
@@ -152,7 +170,8 @@ public class DefaultTelemetryServiceTest {
         }
     }
 
-    private MockedStatic<Activator> mockActivatorWithTelemetryOptIn(boolean telemetryOptIn) {
+
+    private MockedStatic<Activator> mockActivatorWithTelemetryOptIn(final boolean telemetryOptIn) {
         MockedStatic<Activator> activatorMock = mockStatic(Activator.class);
         Activator mockActivator = mock(Activator.class);
         IPreferenceStore mockPreferenceStore = mock(IPreferenceStore.class);
@@ -161,8 +180,8 @@ public class DefaultTelemetryServiceTest {
         when(Activator.getDefault()).thenReturn(mockActivator);
         return activatorMock;
     }
-    
-    private class MockClientMetadata implements ClientMetadata {
+
+    private final class MockClientMetadata implements ClientMetadata {
         @Override
         public String getOSName() {
             return "FooName";

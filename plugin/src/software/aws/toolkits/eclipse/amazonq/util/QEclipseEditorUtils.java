@@ -6,12 +6,16 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.ui.IEditorInput;
+
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
@@ -53,6 +57,10 @@ public final class QEclipseEditorUtils {
             System.out.println("active page is null as per getActiveTextEditor");
         }
         return activePage == null ? null : asTextEditor(activePage.getActiveEditor());
+    }
+
+    public static ISelection getSelection(final ITextEditor textEditor) {
+        return textEditor.getSelectionProvider().getSelection();
     }
 
     public static ITextEditor asTextEditor(final IEditorPart editorPart) {
@@ -118,7 +126,7 @@ public final class QEclipseEditorUtils {
             return Optional.empty();
         }
 
-        var selection = editor.getSelectionProvider().getSelection();
+        ISelection selection = getSelection(editor);
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         if (selection instanceof ITextSelection textSelection) {
             try {
@@ -138,5 +146,30 @@ public final class QEclipseEditorUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static String getSelectedTextOrCurrentLine() {
+        ITextEditor editor = getActiveTextEditor();
+        ISelection selection = getSelection(editor);
+
+        try {
+            if (selection instanceof ITextSelection) {
+                ITextSelection textSelection = (ITextSelection) selection;
+                String selectedText = textSelection.getText();
+
+                if (selectedText != null && !selectedText.isEmpty()) {
+                    return selectedText;
+                }
+
+                int lineNumber = textSelection.getStartLine();
+                IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+                IRegion lineInfo = document.getLineInformation(lineNumber);
+                String currentLine = document.get(lineInfo.getOffset(), lineInfo.getLength());
+                return currentLine;
+            }
+        } catch (Exception e) {
+            throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
+        }
+        return null;
     }
 }

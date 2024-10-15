@@ -29,6 +29,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.AwsCognitoCredentialsProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 public final class DefaultTelemetryService implements TelemetryService {

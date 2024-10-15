@@ -2,21 +2,16 @@
 
 package software.aws.toolkits.eclipse.amazonq.handlers;
 
-import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 
-public class QOptimizeHandler extends AbstractHandler {
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandVerb;
 
-    @Override
-    public final boolean isEnabled() {
-        // TODO
-        return true;
-    }
+public class QOptimizeHandler extends AbstractQChatEditorActionsHandler {
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
-        // TODO
+        executeGenericCommand(GenericCommandVerb.Optimize.getValue());
         return null;
     }
 }

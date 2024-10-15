@@ -98,10 +98,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-		    <groupId>com.nimbusds</groupId>
-		    <artifactId>nimbus-jose-jwt</artifactId>
-		    <version>9.37.2</version>
-		</dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.14.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.37.2</version>
+        </dependency>
     </dependencies>
     
     <build>
@@ -193,6 +199,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <testSourceDirectory>${project.build.testSourceDirectory}</testSourceDirectory>
                 </configuration>
@@ -226,6 +240,7 @@
                     <configLocation>checkstyle.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                 </configuration>
                 <executions>
                     <execution>
@@ -250,9 +265,15 @@
                     </execution>
                     <execution>
                         <id>default-report</id>
+                        <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <includes>
+                                <include>software/aws/toolkits/eclipse/amazonq/**</include>
+                            </includes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>default-check</id>
@@ -260,6 +281,9 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <includes>
+                                <include>software/aws/toolkits/eclipse/amazonq/**</include>
+                            </includes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>

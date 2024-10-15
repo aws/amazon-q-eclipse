@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
@@ -70,23 +68,23 @@ public final class QInvocationSession extends QResource {
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
-            IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
-            boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
-            boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
-            boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+            var prefStoreUtil = new PreferenceStoreUtil("org.eclipse.jdt.ui");
+            boolean isBracesSetToAutoClose = prefStoreUtil.getBoolean("closeBraces", true);
+            boolean isBracketsSetToAutoClose = prefStoreUtil.getBoolean("closeBrackets", true);
+            boolean isStringSetToAutoClose = prefStoreUtil.getBoolean("closeStrings", true);
 
             // We'll also need tab sizes since suggestions do not take that into account
             // and is only given in spaces
-            IEclipsePreferences tabPref = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.core");
+            var tabPref = new PreferenceStoreUtil("org.eclipse.jdt.core");
             instance.tabSize = tabPref.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
             instance.isTabOnly = tabPref.getBoolean("use_tabs_only_for_leading_indentations", true);
 
             PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
                 @Override
                 public boolean preShutdown(final IWorkbench workbench, final boolean forced) {
-                    preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
-                    preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
-                    preferences.putBoolean("closeStrings", isStringSetToAutoClose);
+                    prefStoreUtil.putBoolean("closeBraces", isBracesSetToAutoClose);
+                    prefStoreUtil.putBoolean("closeBrackets", isBracketsSetToAutoClose);
+                    prefStoreUtil.putBoolean("closeStrings", isStringSetToAutoClose);
                     return true;
                 }
 

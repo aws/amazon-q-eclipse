@@ -20,7 +20,8 @@ public final class InlineCompletionUtils {
     }
 
     public static InlineCompletionParams cwParamsFromContext(final ITextEditor editor, final ITextViewer viewer,
-            final int invocationOffset) throws BadLocationException {
+            final int invocationOffset, final InlineCompletionTriggerKind triggerKind) throws BadLocationException {
+        System.out.println("Param made with invocation offset of " + invocationOffset);
         var document = viewer.getDocument();
 
         var openFilePath = QEclipseEditorUtils.getOpenFilePath(editor.getEditorInput());
@@ -31,7 +32,7 @@ public final class InlineCompletionUtils {
         params.setTextDocument(identifier);
 
         var inlineCompletionContext = new InlineCompletionContext();
-        inlineCompletionContext.setTriggerKind(InlineCompletionTriggerKind.Invoke);
+        inlineCompletionContext.setTriggerKind(triggerKind);
 
         params.setContext(inlineCompletionContext);
 

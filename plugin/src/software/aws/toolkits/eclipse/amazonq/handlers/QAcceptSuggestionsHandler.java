@@ -23,7 +23,9 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
         var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
-        QInvocationSession.getInstance().transitionToDecisionMade();
+        var session = QInvocationSession.getInstance();
+        session.setSuggestionAccepted(true);
+        session.transitionToDecisionMade();
         Display display = widget.getDisplay();
         display.syncExec(() -> this.insertSuggestion(suggestion.getInsertText()));
         return null;

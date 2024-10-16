@@ -245,10 +245,21 @@
         </initializer>
    </extension>
     <extension point="org.eclipse.ui.menus">
-        <menuContribution locationURI="popup:org.eclipse.ui.popup.any">
+        <menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
             <menu 
                 icon="icons/AmazonQ.png"
                 label="Amazon Q">
+                <visibleWhen checkEnabled="false">
+                    <and>
+                        <with variable="activePartId">
+                            <or>
+                                <equals value="org.eclipse.ui.DefaultTextEditor"/>
+                                <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
+                                <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
+                            </or>
+                        </with>
+                    </and>
+                </visibleWhen>
                 <command
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.explain"
                     label="Explain">

@@ -17,6 +17,7 @@ public final class AmazonQCommonActions {
     private SignoutAction signoutAction;
     private FeedbackDialogContributionItem feedbackDialogContributionItem;
     private CustomizationDialogContributionItem customizationDialogContributionItem;
+    private ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
 
     public AmazonQCommonActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
         createActions(browser, loginDetails, viewSite);
@@ -40,11 +41,16 @@ public final class AmazonQCommonActions {
         return customizationDialogContributionItem;
     }
 
+    public ToggleAutoTriggerContributionItem getToggleAutoTriggerContributionAction() {
+        return toggleAutoTriggerContributionItem;
+    }
+
     private void createActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
         changeThemeAction = new ChangeThemeAction(browser);
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
+        toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem(viewSite);
     }
 
     private void contributeToActionBars(final IViewSite viewSite) {
@@ -55,6 +61,7 @@ public final class AmazonQCommonActions {
 
     private void fillLocalPullDown(final IMenuManager manager) {
         manager.add(changeThemeAction);
+        manager.add(toggleAutoTriggerContributionItem);
         manager.add(customizationDialogContributionItem);
         manager.add(feedbackDialogContributionItem.getDialogContributionItem());
         manager.add(signoutAction);
@@ -68,6 +75,7 @@ public final class AmazonQCommonActions {
         signoutAction.updateVisibility(loginDetails);
         feedbackDialogContributionItem.updateVisibility(loginDetails);
         customizationDialogContributionItem.updateVisibility(loginDetails);
+        toggleAutoTriggerContributionItem.updateVisibility(loginDetails);
     }
 
 }

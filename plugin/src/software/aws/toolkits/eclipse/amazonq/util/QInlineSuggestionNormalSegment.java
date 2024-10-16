@@ -4,7 +4,9 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 
+import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.GlyphMetrics;
 
 public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionSegment {
     private int startCaretOffset;
@@ -43,6 +45,20 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
         if (lineInSuggestion == 0) {
             x = widget.getLocationAtOffset(widget.getCaretOffset()).x;
             textToRender = text.substring(idxInLine);
+            int curLineInDoc = widget.getLineAtOffset(currentCaretOffset);
+            int lineIdx = currentCaretOffset - widget.getOffsetAtLine(invocationLine);
+            String contentInLine = widget.getLine(curLineInDoc);
+            String rightCtxInLine = contentInLine.substring(lineIdx);
+            if (!rightCtxInLine.isBlank()) {
+                StyleRange styleRange = new StyleRange();
+                styleRange.start = currentCaretOffset;
+                styleRange.length = 1;
+                styleRange.metrics = new GlyphMetrics(0, 0, gc.textExtent(textToRender).x + gc.textExtent(" ").x);
+                styleRange.foreground = widget.getBackground();
+                widget.setStyleRange(styleRange);
+                // also include the character right of the caret that is covered by the glyph
+                textToRender += contentInLine.charAt(lineIdx);
+            }
         } else if (currentCaretOffset <= startCaretOffset) {
             textToRender = text;
             x = widget.getLeftMargin();

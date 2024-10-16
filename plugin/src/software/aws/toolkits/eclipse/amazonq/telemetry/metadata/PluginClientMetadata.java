@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.util;
+package software.aws.toolkits.eclipse.amazonq.telemetry.metadata;
 
 import java.util.UUID;
 
@@ -10,8 +10,8 @@ import org.osgi.framework.FrameworkUtil;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 
-public final class ClientMetadata {
-    private ClientMetadata() {
+public final class PluginClientMetadata implements ClientMetadata {
+    private PluginClientMetadata() {
         // Prevent instantiation
     }
 
@@ -21,37 +21,43 @@ public final class ClientMetadata {
     private static final String OS_VERSION = System.getProperty("os.version");
     private static final String IDE_NAME = Platform.getProduct().getName();
     private static final String IDE_VERSION = System.getProperty("eclipse.buildId");
-    private static final String PLUGIN_NAME = FrameworkUtil.getBundle(ClientMetadata.class).getSymbolicName();
-    private static final String PLUGIN_VERSION = FrameworkUtil.getBundle(ClientMetadata.class).getVersion().toString();
+    private static final String PLUGIN_NAME = FrameworkUtil.getBundle(PluginClientMetadata.class).getSymbolicName();
+    private static final String PLUGIN_VERSION = FrameworkUtil.getBundle(PluginClientMetadata.class).getVersion().toString();
 
-    public static String getOSName() {
+    private static final PluginClientMetadata INSTANCE = new PluginClientMetadata();
+
+    public static ClientMetadata getInstance() {
+        return INSTANCE;
+    }
+
+    public String getOSName() {
         return OS_NAME;
     }
 
-    public static String getOSVersion() {
+    public String getOSVersion() {
         return OS_VERSION;
     }
 
-    public static String getIdeName() {
+    public String getIdeName() {
         return IDE_NAME;
     }
 
-    public static String getIdeVersion() {
+    public String getIdeVersion() {
         return IDE_VERSION;
     }
 
-    public static String getPluginName() {
+    public String getPluginName() {
         return PLUGIN_NAME;
     }
 
-    public static String getPluginVersion() {
+    public String getPluginVersion() {
         return PLUGIN_VERSION;
     }
 
-    public static String getClientId() {
+    public String getClientId() {
         String clientId = PluginStore.get(CLIENT_ID_KEY);
         if (clientId == null) {
-            synchronized (ClientMetadata.class) {
+            synchronized (PluginClientMetadata.class) {
                 clientId = PluginStore.get(CLIENT_ID_KEY);
                 if (clientId == null) {
                     clientId = UUID.randomUUID().toString();

@@ -21,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
@@ -116,6 +117,10 @@ public final class ChatCommunicationManager {
                     case CHAT_END_CHAT:
                         GenericTabParams tabParamsForEndChat = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.endChat(tabParamsForEndChat);
+                        break;
+                    case CHAT_FEEDBACK:
+                        var feedbackParams = jsonHandler.convertObject(params, FeedbackParams.class);
+                        chatMessageProvider.sendFeedback(feedbackParams);
                         break;
                     case TELEMETRY_EVENT:
                         chatMessageProvider.sendTelemetryEvent(params);

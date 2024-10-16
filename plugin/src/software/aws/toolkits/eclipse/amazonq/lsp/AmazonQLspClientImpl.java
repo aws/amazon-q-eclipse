@@ -8,12 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 
+import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
@@ -83,6 +85,29 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     @Override
     public final void telemetryEvent(final Object event) {
         TelemetryEvent telemetryEvent = ObjectMapperFactory.getInstance().convertValue(event, TelemetryEvent.class);
-        Activator.getTelemetryService().emitMetric(telemetryEvent);
+        switch (telemetryEvent.name()) {
+        // intercept the feedback telemetry event and re-route to our feedback backend
+        case "amazonq_sendFeedback":
+            sendFeedback(telemetryEvent);
+            break;
+        default:
+            Activator.getTelemetryService().emitMetric(telemetryEvent);
+        }
+    }
+
+    private void sendFeedback(final TelemetryEvent telemetryEvent) {
+        var data = telemetryEvent.data();
+
+        if (data.containsKey("sentiment")) {
+            var sentiment = data.get("sentiment").equals(Sentiment.POSITIVE) ? Sentiment.POSITIVE : Sentiment.NEGATIVE;
+
+            var comment = Optional.ofNullable(data.get("comment")).filter(String.class::isInstance)
+                    .map(String.class::cast).orElse("");
+            try {
+                Activator.getTelemetryService().emitFeedback(comment, sentiment);
+            } catch (Exception e) {
+                PluginLogger.error("Error occurred when submitting feedback", e);
+            }
+        }
     }
 }

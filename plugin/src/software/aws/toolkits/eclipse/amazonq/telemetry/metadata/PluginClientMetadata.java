@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.FrameworkUtil;
 
+import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 
 public final class PluginClientMetadata implements ClientMetadata {
@@ -21,7 +22,7 @@ public final class PluginClientMetadata implements ClientMetadata {
     private static final String OS_VERSION = System.getProperty("os.version");
     private static final String IDE_NAME = Platform.getProduct().getName();
     private static final String IDE_VERSION = System.getProperty("eclipse.buildId");
-    private static final String PLUGIN_NAME = FrameworkUtil.getBundle(PluginClientMetadata.class).getSymbolicName();
+    private static final String PLUGIN_NAME = AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString();
     private static final String PLUGIN_VERSION = FrameworkUtil.getBundle(PluginClientMetadata.class).getVersion().toString();
 
     private static final PluginClientMetadata INSTANCE = new PluginClientMetadata();

@@ -10,6 +10,7 @@ import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
@@ -46,6 +47,9 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonNotification("aws/chat/ready")
     void chatReady();
+
+    @JsonNotification("aws/chat/feedback")
+    void sendFeedback(FeedbackParams params);
 
     @JsonRequest("aws/credentials/token/update")
     CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);

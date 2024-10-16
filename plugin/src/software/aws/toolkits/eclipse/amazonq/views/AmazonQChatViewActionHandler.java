@@ -90,7 +90,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, insertToCursorParams);
                 break;
             case CHAT_FEEDBACK:
-                //TODO
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_FOLLOW_UP_CLICK:
                 chatCommunicationManager.sendMessageToChatServer(command, params);

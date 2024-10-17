@@ -3,15 +3,11 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CaretListener;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
@@ -39,6 +35,8 @@ public final class QInvocationSession extends QResource {
 
     // Static variable to hold the single instance
     private static QInvocationSession instance;
+    private static PreferenceStoreUtil uiStore;
+    private static PreferenceStoreUtil coreStore;
 
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
@@ -68,18 +66,28 @@ public final class QInvocationSession extends QResource {
         // Initialization code here
     }
 
+    public static void setUIStore(final PreferenceStoreUtil uiStore) {
+        QInvocationSession.uiStore = uiStore;
+    }
+
+    public static void setCoreStore(final PreferenceStoreUtil coreStore) {
+        QInvocationSession.coreStore = coreStore;
+    }
+
     // Method to get the single instance
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
-            var prefStoreUtil = new PreferenceStoreUtil("org.eclipse.jdt.ui");
+            var prefStoreUtil = QInvocationSession.uiStore != null ? QInvocationSession.uiStore
+                    : new PreferenceStoreUtil("org.eclipse.jdt.ui");
             boolean isBracesSetToAutoClose = prefStoreUtil.getBoolean("closeBraces", true);
             boolean isBracketsSetToAutoClose = prefStoreUtil.getBoolean("closeBrackets", true);
             boolean isStringSetToAutoClose = prefStoreUtil.getBoolean("closeStrings", true);
 
             // We'll also need tab sizes since suggestions do not take that into account
             // and is only given in spaces
-            var tabPref = new PreferenceStoreUtil("org.eclipse.jdt.core");
+            var tabPref = QInvocationSession.coreStore != null ? QInvocationSession.coreStore
+                    : new PreferenceStoreUtil("org.eclipse.jdt.core");
             instance.tabSize = tabPref.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
             instance.isTabOnly = tabPref.getBoolean("use_tabs_only_for_leading_indentations", true);
 
@@ -131,7 +139,7 @@ public final class QInvocationSession extends QResource {
             var widget = viewer.getTextWidget();
 
             suggestionsContext = new QSuggestionsContext();
-            inlineTextFont = getInlineTextFont(widget);
+            inlineTextFont = QEclipseEditorUtils.getInlineTextFont(widget, Q_INLINE_HINT_TEXT_STYLE);
             invocationOffset = widget.getCaretOffset();
             invocationTimeInMs = System.currentTimeMillis();
             System.out.println("Session started.");
@@ -153,7 +161,7 @@ public final class QInvocationSession extends QResource {
             widget.addPaintListener(paintListener);
         }
 
-        inputListener = new QInlineInputListener(widget);
+        inputListener = QEclipseEditorUtils.getInlineInputListener(widget);
         widget.addVerifyListener(inputListener);
         widget.addVerifyKeyListener(inputListener);
         widget.addMouseListener(inputListener);
@@ -278,14 +286,6 @@ public final class QInvocationSession extends QResource {
             }
         });
         unresolvedTasks.put(uuid, future);
-    }
-
-    private Font getInlineTextFont(final StyledText widget) {
-        FontData[] fontData = widget.getFont().getFontData();
-        for (FontData fontDatum : fontData) {
-            fontDatum.setStyle(Q_INLINE_HINT_TEXT_STYLE);
-        }
-        return new Font(widget.getDisplay(), fontData);
     }
 
     // Method to end the session
@@ -499,6 +499,20 @@ public final class QInvocationSession extends QResource {
 
     public int getLastKnownLine() {
         return ((QInlineCaretListener) caretListener).getLastKnownLine();
+    }
+
+    public void awaitAllUnresolvedTasks() throws ExecutionException {
+        List<Future<?>> tasks = unresolvedTasks.values().stream().toList();
+        for (Future<?> future : tasks) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                // Propagate the execution exception
+                throw e;
+            }
+        }
     }
 
     // Additional methods for the session can be added here

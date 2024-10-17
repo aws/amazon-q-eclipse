@@ -16,6 +16,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.ui.PlatformUI;
+
+import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -102,6 +108,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 }
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
+            case CHAT_COPY_TO_CLIPBOARD:
+                CopyToClipboardParams copyToClipboardParams = jsonHandler.convertObject(params, CopyToClipboardParams.class);
+                handleCopyToClipboard(copyToClipboardParams.code());
+                break;
             case AUTH_FOLLOW_UP_CLICKED:
                 //TODO
                 break;
@@ -152,5 +162,21 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             }
         });
         return fileUri.get();
+    }
+
+    private void handleCopyToClipboard(final String selection) {
+        Display display = PlatformUI.getWorkbench().getDisplay();
+
+        display.asyncExec(() -> {
+            Clipboard clipboard = new Clipboard(display);
+            try {
+                TextTransfer textTransfer = TextTransfer.getInstance();
+                clipboard.setContents(new Object[]{selection}, new Transfer[]{textTransfer});
+            } catch (Exception e) {
+                throw new AmazonQPluginException("Failed to copy to clipboard", e);
+            } finally {
+                clipboard.dispose();
+            }
+        });
     }
 }

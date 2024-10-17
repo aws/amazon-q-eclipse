@@ -5,144 +5,81 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 import java.util.HashMap;
 import java.util.Map;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.AmazonQTheme;
 import software.aws.toolkits.eclipse.amazonq.chat.models.MynahCssVariable;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
-import java.awt.Color;
-import java.awt.Font;
+public final class ChatTheme {
+	public static String getCssForDarkTheme() {
+		Map<MynahCssVariable, String> themeMap = new HashMap<>();
 
-public class ChatTheme {
+		String defaultTextColor = rgb(238, 238, 238);
+		String cardBackgroundColor = rgb(55, 55, 55);
 
-    private final Map<String, String> themeMap = new HashMap<>();
+		// Text
+		themeMap.put(MynahCssVariable.TextColorDefault, defaultTextColor);
+		themeMap.put(MynahCssVariable.TextColorStrong, rgb(255, 255, 255));
+		themeMap.put(MynahCssVariable.TextColorWeak, rgba(205, 205, 205, 0.5));
+		themeMap.put(MynahCssVariable.TextColorLink, rgb(102, 168, 245));
+		themeMap.put(MynahCssVariable.TextColorInput, defaultTextColor);
 
-    public ChatTheme(final AmazonQTheme theme) {
-        addEntry(MynahCssVariable.FontSize.getValue(), theme.font());
-        addEntry(MynahCssVariable.FontFamily.getValue(), toCssFontFamily(theme.font()));
+		// Layout
+		themeMap.put(MynahCssVariable.Background, rgb(47, 47, 47));
+		themeMap.put(MynahCssVariable.TabActive, cardBackgroundColor);
+		themeMap.put(MynahCssVariable.BorderDefault, rgb(76, 76, 76));
+		themeMap.put(MynahCssVariable.ColorToggle, rgb(30, 30, 30));
 
-        addEntry(MynahCssVariable.TextColorDefault.getValue(), theme.defaultText());
-        addEntry(MynahCssVariable.TextColorStrong.getValue(), theme.textFieldForeground());
-        addEntry(MynahCssVariable.TextColorInput.getValue(), theme.textFieldForeground());
-        addEntry(MynahCssVariable.TextColorLink.getValue(), theme.linkText());
-        addEntry(MynahCssVariable.TextColorWeak.getValue(), theme.inactiveText());
+		// Code Syntax
+		themeMap.put(MynahCssVariable.SyntaxBackground, rgb(29, 30, 34));
+		themeMap.put(MynahCssVariable.SyntaxVariable, rgb(247, 247, 80));
+		themeMap.put(MynahCssVariable.SyntaxFunction, rgb(86, 178, 80));
+		themeMap.put(MynahCssVariable.SyntaxOperator, rgb(217, 111, 187));
+		themeMap.put(MynahCssVariable.SyntaxAttributeValue, rgb(66, 141, 190));
+		themeMap.put(MynahCssVariable.SyntaxAttribute, rgb(179, 108, 50));
+		themeMap.put(MynahCssVariable.SyntaxProperty, rgb(57, 171, 184));
+		themeMap.put(MynahCssVariable.SyntaxComment, rgb(130, 130, 130));
+		themeMap.put(MynahCssVariable.SyntaxCode, rgb(230, 230, 230));
 
-        addEntry(MynahCssVariable.Background.getValue(), theme.background());
-        addEntry(MynahCssVariable.BackgroundAlt.getValue(), theme.background());
-        addEntry(MynahCssVariable.CardBackground.getValue(), theme.cardBackground());
-        addEntry(MynahCssVariable.BorderDefault.getValue(), theme.border());
-        addEntry(MynahCssVariable.TabActive.getValue(), theme.activeTab());
+		// Status
+		themeMap.put(MynahCssVariable.StatusInfo, rgb(55, 148, 255));
+		themeMap.put(MynahCssVariable.StatusSuccess, rgb(135, 217, 108));
+		themeMap.put(MynahCssVariable.StatusWarning, rgb(255, 204, 102));
+		themeMap.put(MynahCssVariable.StatusError, rgb(255, 102, 102));
 
-        addEntry(MynahCssVariable.InputBackground.getValue(), theme.textFieldBackground());
+		// Buttons
+		themeMap.put(MynahCssVariable.ButtonBackground, rgb(51, 118, 205));
+		themeMap.put(MynahCssVariable.ButtonForeground, rgb(255, 255, 255));
 
-        addEntry(MynahCssVariable.ButtonBackground.getValue(), theme.buttonBackground());
-        addEntry(MynahCssVariable.ButtonForeground.getValue(), theme.buttonForeground());
-        addEntry(MynahCssVariable.SecondaryButtonBackground.getValue(), theme.secondaryButtonBackground());
-        addEntry(MynahCssVariable.SecondaryButtonForeground.getValue(), theme.secondaryButtonForeground());
+		// Alternates
+		themeMap.put(MynahCssVariable.AlternateBackground, rgb(95, 106, 121));
+		themeMap.put(MynahCssVariable.AlternateForeground, rgb(255, 255, 255));
 
-        addEntry(MynahCssVariable.StatusInfo.getValue(), theme.info());
-        addEntry(MynahCssVariable.StatusSuccess.getValue(), theme.success());
-        addEntry(MynahCssVariable.StatusWarning.getValue(), theme.warning());
-        addEntry(MynahCssVariable.StatusError.getValue(), theme.error());
+		// Card
+		themeMap.put(MynahCssVariable.CardBackground, cardBackgroundColor);
 
-        addEntry(MynahCssVariable.ColorDeep.getValue(), theme.checkboxBackground());
-        addEntry(MynahCssVariable.ColorDeepReverse.getValue(), theme.checkboxForeground());
+		return getCss(themeMap);
+	}
 
-        addEntry(MynahCssVariable.SyntaxCodeFontFamily.getValue(), toCssFontFamily(theme.editorFont(), "monospace"));
-        addEntry(MynahCssVariable.SyntaxCodeFontSize.getValue(), theme.editorFont());
-        addEntry(MynahCssVariable.SyntaxBackground.getValue(), theme.editorBackground());
-        addEntry(MynahCssVariable.SyntaxVariable.getValue(), theme.editorVariable());
-        addEntry(MynahCssVariable.SyntaxOperator.getValue(), theme.editorOperator());
-        addEntry(MynahCssVariable.SyntaxFunction.getValue(), theme.editorFunction());
-        addEntry(MynahCssVariable.SyntaxComment.getValue(), theme.editorComment());
-        addEntry(MynahCssVariable.SyntaxAttributeValue.getValue(), theme.editorKeyword());
-        addEntry(MynahCssVariable.SyntaxAttribute.getValue(), theme.editorString());
-        addEntry(MynahCssVariable.SyntaxProperty.getValue(), theme.editorProperty());
-        addEntry(MynahCssVariable.SyntaxCode.getValue(), theme.editorForeground());
+	private final static String getCss(Map<MynahCssVariable, String> themeMap) {
+		StringBuilder variables = new StringBuilder();
 
-        addEntry(MynahCssVariable.MainBackground.getValue(), theme.buttonBackground());
-        addEntry(MynahCssVariable.MainForeground.getValue(), theme.buttonForeground());
-    }
+		for (var entry : themeMap.entrySet()) {
+			if (entry.getValue().isBlank()) {
+				continue;
+			}
 
-    /*
-     * Returns a string of the root tag nesting the mynah-ui css variables
-     */
-    public final String getCss() {
-        StringBuilder variables = new StringBuilder();
+			variables.append(String.format("%s:%s;",
+					entry.getKey().getValue(),
+					entry.getValue()));
+		}
 
-        for (var entry : themeMap.entrySet()) {
+		return String.format(":root{%s}", variables.toString());
+	}
 
-            if (entry.getValue().isBlank()) {
-                continue;
-            }
+	private final static String rgb(Integer r, Integer g, Integer b) {
+		return String.format("rgb(%s,%s,%s)", r, g, b);
+	}
 
-            variables.append(String.format("%s:%s;",
-                entry.getKey(),
-                entry.getValue()
-            ));
-        }
-        
-        PluginLogger.info(variables.toString());
+	private final static String rgba(Integer r, Integer g, Integer b, Double a) {
+		return String.format("rgb(%s,%s,%s,%s)", r, g, b, a);
+	}
 
-        return String.format(":root{%s}", variables.toString());
-    }
-
-    private String toCssColor(final Color color) {
-        return String.format("rgba(%s,%s,%s,%s)",
-                color.getRed(),
-                color.getGreen(),
-                color.getBlue(),
-                color.getAlpha()
-        );
-    }
-
-    private String toCssSize(final Font font) {
-        return String.format("%spx", font.getSize());
-    };
-
-    private String toCssFontFamily(final Font font) {
-        String fallback = "system-ui";
-        return toCssFontFamily(font, fallback);
-    }
-
-    private String toCssFontFamily(final Font font, final String fallback) {
-    	if (font == null) {
-    		return "";
-    	}
-    	
-        String fontFamily = font.getFamily();
-
-        if (fontFamily.isBlank()) {
-            return String.format("font-family:%s", fallback);
-        }
-
-        return String.format("font-family:%s", fontFamily);
-    }
-
-    private void addEntry(final String key, final Color color) {
-    	if (color == null) {
-    		PluginLogger.info("Failed to add theme entry: No color for key " + key);
-    		return;
-    	}
-    	
-        themeMap.put(key, toCssColor(color));
-    }
-
-    private void addEntry(final String key, final Font font) {
-    	if (font == null) {
-    		PluginLogger.info("Failed to add theme entry: No font for key " + key);
-    		return;
-    	}
-    	
-        themeMap.put(key, toCssSize(font));
-    }
-
-    private void addEntry(final String key, final String value) {
-    	if (value.isBlank()) {
-    		PluginLogger.info("Failed to add theme entry: No value provided for key " + key);
-    		return;
-    	}
-    	
-        themeMap.put(key, value);
-
-    }
 }

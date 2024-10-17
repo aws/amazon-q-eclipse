@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
-import software.aws.toolkits.eclipse.amazonq.chat.ThemeExtractor;
 import software.aws.toolkits.eclipse.amazonq.chat.models.AmazonQTheme;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
@@ -65,7 +64,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             handleAuthStatusChange(loginDetails);
         }, ThreadingUtils::executeAsyncTask);
 
-       new BrowserFunction(browser, "ideCommand") {
+        new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
                 ThreadingUtils.executeAsyncTask(() -> {
@@ -79,16 +78,13 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         browser.addProgressListener(new ProgressAdapter() {
             @Override
             public void completed(final ProgressEvent event) {
-            	Display.getDefault().asyncExec(() -> {
-	            	try {
-		                ThemeExtractor themeExtractor = new ThemeExtractor();
-		                AmazonQTheme amazonQTheme = themeExtractor.getAmazonQTheme();
-		                ChatTheme chatTheme = new ChatTheme(amazonQTheme);
-		                injectCSS(browser, chatTheme.getCss());
-	            	} catch (Exception e) {
-	            		PluginLogger.info("Error occurred while injecting theme", e);
-	            	}
-            	});
+                Display.getDefault().asyncExec(() -> {
+                    try {
+                        injectCSS(browser, ChatTheme.getCssForDarkTheme());
+                    } catch (Exception e) {
+                        PluginLogger.info("Error occurred while injecting theme", e);
+                    }
+                });
             }
         });
     }
@@ -96,7 +92,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
         try {
             commandParser.parseCommand(arguments)
-                .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+                    .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
         } catch (Exception e) {
             Activator.getLogger().error("Error processing message from Browser", e);
         }
@@ -155,20 +151,19 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 """;
     }
 
-
     private void injectCSS(final Browser browser, final String css) {
         String script = String.format("""
-            var style = document.createElement("style");\
-            style.type = "text/css";\
-            style.innerHTML = "%s";\
-            document.head.appendChild(style);
-        """, css);
+                    var style = document.createElement("style");\
+                    style.type = "text/css";\
+                    style.innerHTML = "%s";\
+                    document.head.appendChild(style);
+                """, css);
 
         browser.evaluate(script);
     }
 
     private String generateJS(final String jsEntrypoint) {
-        var chatQuickActionConfig  = generateQuickActionConfig();
+        var chatQuickActionConfig = generateQuickActionConfig();
         return String.format("""
                 <script type="text/javascript" src="%s" defer onload="init()"></script>
                 <script type="text/javascript">
@@ -185,7 +180,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     /*
      * Generates javascript for chat options to be supplied to Chat UI defined here
-     * https://github.com/aws/language-servers/blob/785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
+     * https://github.com/aws/language-servers/blob/
+     * 785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
      */
     private String generateQuickActionConfig() {
         return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())

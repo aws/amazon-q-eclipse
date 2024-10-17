@@ -2,25 +2,22 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat.models;
 
+// See examples in https://github.com/aws/mynah-ui/blob/main/docs/STYLING.md
 public enum MynahCssVariable {
-    FontSize("--vscode-font-size"),
-    FontFamily("--mynah-font-family"),
-
+	// Text
     TextColorDefault("--mynah-color-text-default"),
     TextColorStrong("--mynah-color-text-strong"),
     TextColorWeak("--mynah-color-text-weak"),
     TextColorLink("--mynah-color-text-link"),
     TextColorInput("--mynah-color-text-input"),
 
+    // Layout
     Background("--mynah-color-bg"),
-    BackgroundAlt("--mynah-color-bg-alt"),
     TabActive("--mynah-color-tab-active"),
-
-    ColorDeep("--mynah-color-deep"),
-    ColorDeepReverse("--mynah-color-deep-reverse"),
     BorderDefault("--mynah-color-border-default"),
-    InputBackground("--mynah-color-input-bg"),
+    ColorToggle("--mynah-color-toggle"),
 
+    // Code syntax
     SyntaxBackground("--mynah-color-syntax-bg"),
     SyntaxVariable("--mynah-color-syntax-variable"),
     SyntaxFunction("--mynah-color-syntax-function"),
@@ -30,25 +27,22 @@ public enum MynahCssVariable {
     SyntaxProperty("--mynah-color-syntax-property"),
     SyntaxComment("--mynah-color-syntax-comment"),
     SyntaxCode("--mynah-color-syntax-code"),
-    SyntaxCodeFontFamily("--mynah-syntax-code-font-family"),
-    SyntaxCodeFontSize("--mynah-syntax-code-font-size"),
 
+    // Status
     StatusInfo("--mynah-color-status-info"),
     StatusSuccess("--mynah-color-status-success"),
     StatusWarning("--mynah-color-status-warning"),
     StatusError("--mynah-color-status-error"),
-
+    
+    // Buttons
     ButtonBackground("--mynah-color-button"),
     ButtonForeground("--mynah-color-button-reverse"),
-
-    SecondaryButtonBackground("--mynah-color-alternate"),
-    SecondaryButtonForeground("--mynah-color-alternate-reverse"),
-
-    CodeText("--mynah-color-code-text"),
-
-    MainBackground("--mynah-color-main"),
-    MainForeground("--mynah-color-main-reverse"),
-
+    
+    // Alternates
+    AlternateBackground("--mynah-color-alternate"),
+    AlternateForeground("--mynah-color-alternate-reverse"),
+    
+    // Card
     CardBackground("--mynah-card-bg");
 
     private String value;

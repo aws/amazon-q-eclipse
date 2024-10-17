@@ -19,10 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
-import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
@@ -165,7 +163,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         });
         return fileUri.get();
     }
-        
+
     private void handleCopyToClipboard(final String selection) {
         Display display = PlatformUI.getWorkbench().getDisplay();
 

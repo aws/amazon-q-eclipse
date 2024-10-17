@@ -117,4 +117,14 @@ public final class PluginUtils {
         return result[0];
     }
 
+    public static void handleExternalLinkClick(final String link) {
+        try {
+            var result = PluginUtils.showConfirmDialog("Amazon Q", "Do you want to open the external website?\n\n" + link);
+            if (result) {
+                PluginUtils.openWebpage(link);
+            }
+        } catch (Exception ex) {
+            PluginLogger.error("Failed to open url in browser", ex);
+        }
+    }
 }

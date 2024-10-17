@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class JsonHandler {
     private final ObjectMapper objectMapper;
@@ -13,12 +14,16 @@ public final class JsonHandler {
         this.objectMapper = ObjectMapperFactory.getInstance();
     }
 
+    JsonHandler(final ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
     public String serialize(final Object obj) {
         String serializedObj = null;
         try {
             serializedObj = objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            PluginLogger.error("Error occurred while serializing object: " + obj.toString(), e);
+            Activator.getLogger().error("Error occurred while serializing object: " + obj.toString(), e);
             return null;
         }
         return serializedObj;
@@ -29,7 +34,7 @@ public final class JsonHandler {
             T params = objectMapper.readValue(jsonString, cls);
             return params;
         } catch (JsonProcessingException e) {
-            PluginLogger.error("Error occurred while deserializing jsonString: " + jsonString, e);
+            Activator.getLogger().error("Error occurred while deserializing jsonString: " + jsonString, e);
         }
         return null;
     }

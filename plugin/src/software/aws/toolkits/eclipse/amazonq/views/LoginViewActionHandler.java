@@ -14,7 +14,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
@@ -35,12 +35,12 @@ public class LoginViewActionHandler implements ViewActionHandler {
                             AmazonQView.showView(AmazonQChatWebview.ID);
                         });
                     } catch (Exception e) {
-                        PluginLogger.error("Failed to update token", e);
+                        Activator.getLogger().error("Failed to update token", e);
                     }
                 });
                 break;
             case LOGIN_IDC:
-                PluginLogger.info("loginIdc command received");
+                Activator.getLogger().info("loginIdc command received");
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
                         LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(params, LoginIdcParams.class);
@@ -55,12 +55,12 @@ public class LoginViewActionHandler implements ViewActionHandler {
                             AmazonQView.showView(AmazonQChatWebview.ID);
                         });
                     } catch (Exception e) {
-                        PluginLogger.error("Failed to update token", e);
+                        Activator.getLogger().error("Failed to update token", e);
                     }
                 });
                 break;
             case CANCEL_LOGIN:
-                PluginLogger.info("cancelLogin command received");
+                Activator.getLogger().info("cancelLogin command received");
                 break;
             case ON_LOAD:
                 OidcServiceMetadata oidcMetadata = new OidcServiceMetadata();

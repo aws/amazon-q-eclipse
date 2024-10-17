@@ -13,7 +13,7 @@ import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
@@ -44,7 +44,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     public final void start() throws IOException {
         super.start();
 
-        PluginLogger.info("Initializing encrypted communication with Amazon Q Lsp Server");
+        Activator.getLogger().info("Initializing encrypted communication with Amazon Q Lsp Server");
 
         try {
             LspEncryptionManager lspEncryption = LspEncryptionManager.getInstance();
@@ -52,7 +52,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
             lspEncryption.initializeEncrypedCommunication(serverStdIn);
         } catch (Exception e) {
-            PluginLogger.error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
+            Activator.getLogger().error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
         }
     }
 }

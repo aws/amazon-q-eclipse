@@ -25,6 +25,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 
@@ -97,7 +98,7 @@ public final class QEclipseEditorUtils {
             return getOpenFilePath()
             .map(filePath -> Paths.get(filePath).toUri().toString());
         } catch (Exception e) {
-            PluginLogger.error("Unexpected error when determining open file path", e);
+            Activator.getLogger().error("Unexpected error when determining open file path", e);
             return Optional.empty();
         }
     }
@@ -142,7 +143,7 @@ public final class QEclipseEditorUtils {
                 var end = new Position(endLine, endColumn);
                 return Optional.of(new Range(start, end));
             } catch (org.eclipse.jface.text.BadLocationException e) {
-                PluginLogger.error("Error occurred while attempting to determine selected text position in editor", e);
+                Activator.getLogger().error("Error occurred while attempting to determine selected text position in editor", e);
             }
         }
         return Optional.empty();
@@ -180,7 +181,7 @@ public final class QEclipseEditorUtils {
                 var end = new Position(endLine, endColumn);
                 return Optional.of(new Range(start, end));
             } catch (org.eclipse.jface.text.BadLocationException e) {
-                PluginLogger.error("Error occurred while inserting at cursor in editor", e);
+                Activator.getLogger().error("Error occurred while inserting at cursor in editor", e);
             }
         }
         return Optional.empty();

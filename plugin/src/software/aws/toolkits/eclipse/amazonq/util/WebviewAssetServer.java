@@ -4,6 +4,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.ResourceFactory;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class WebviewAssetServer {
 
@@ -34,7 +35,7 @@ public final class WebviewAssetServer {
 
         } catch (Exception e) {
             stop();
-            PluginLogger.error("Error occurred while attempting to start a virtual server for " + jsPath, e);
+            Activator.getLogger().error("Error occurred while attempting to start a virtual server for " + jsPath, e);
             return false;
         }
     }
@@ -48,7 +49,7 @@ public final class WebviewAssetServer {
             try {
                 server.stop();
             } catch (Exception e) {
-                PluginLogger.error("Error occurred when attempting to stop the virtual server", e);
+                Activator.getLogger().error("Error occurred when attempting to stop the virtual server", e);
             }
         }
     }

@@ -25,6 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class DefaultLoginService implements LoginService {
     private static DefaultLoginService instance;
@@ -94,7 +95,7 @@ public final class DefaultLoginService implements LoginService {
                                                             return response.ssoToken();
                                                         }))
                            .exceptionally(throwable -> {
-                               PluginLogger.error("Failed to fetch SSO token from LSP", throwable);
+                               Activator.getLogger().error("Failed to fetch SSO token from LSP", throwable);
                                throw new AmazonQPluginException(throwable);
                            });
     }
@@ -108,7 +109,7 @@ public final class DefaultLoginService implements LoginService {
         return LspProvider.getAmazonQServer()
                            .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))
                            .exceptionally(throwable -> {
-                               PluginLogger.error("Failed to update credentials with AmazonQ server", throwable);
+                               Activator.getLogger().error("Failed to update credentials with AmazonQ server", throwable);
                                throw new AmazonQPluginException(throwable);
                            });
     }
@@ -136,7 +137,7 @@ public final class DefaultLoginService implements LoginService {
             DefaultLoginService.updatePluginStore(loginType, loginParams);
         })
         .exceptionally(throwable -> {
-            PluginLogger.error("Failed to sign in", throwable);
+            Activator.getLogger().error("Failed to sign in", throwable);
             throw new AmazonQPluginException(throwable);
         });
     }
@@ -149,7 +150,7 @@ public final class DefaultLoginService implements LoginService {
         return getToken(false)
                 .thenCompose(currentToken -> {
                     if (currentToken == null) {
-                        PluginLogger.warn("Attempting to invalidate token with no active auth session");
+                        Activator.getLogger().warn("Attempting to invalidate token with no active auth session");
                         return CompletableFuture.completedFuture(null);
                     }
                     String ssoTokenId = currentToken.id();
@@ -165,7 +166,7 @@ public final class DefaultLoginService implements LoginService {
                                           updateConnectionDetails(LoginType.NONE, new LoginParams().setLoginIdcParams(null));
                                       })
                                       .exceptionally(throwable -> {
-                                          PluginLogger.error("Unexpected error while invalidating token", throwable);
+                                          Activator.getLogger().error("Unexpected error while invalidating token", throwable);
                                           throw new AmazonQPluginException(throwable);
                                       });
                 });
@@ -180,7 +181,7 @@ public final class DefaultLoginService implements LoginService {
                 .thenCompose(DefaultLoginService::updateCredentials)
                 .thenRun(() -> CompletableFuture.completedFuture(null))
                 .exceptionally(throwable -> {
-                    PluginLogger.error("Failed to update token", throwable);
+                    Activator.getLogger().error("Failed to update token", throwable);
                     throw new AmazonQPluginException(throwable);
                 });
     }
@@ -205,7 +206,7 @@ public final class DefaultLoginService implements LoginService {
                     return loginDetails;
                 })
                 .exceptionally(throwable -> {
-                    PluginLogger.error("Failed to check login status", throwable);
+                    Activator.getLogger().error("Failed to check login status", throwable);
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);
                     return loginDetails;

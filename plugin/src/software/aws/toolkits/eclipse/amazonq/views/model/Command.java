@@ -4,7 +4,7 @@ package software.aws.toolkits.eclipse.amazonq.views.model;
 
 import java.util.Optional;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public enum Command {
     // QChat
@@ -44,7 +44,7 @@ public enum Command {
             }
         }
 
-        PluginLogger.info("Unregistered command parsed: " + value);
+        Activator.getLogger().info("Unregistered command parsed: " + value);
         return Optional.empty();
     }
 

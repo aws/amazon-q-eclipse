@@ -26,7 +26,6 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 @SuppressWarnings("restriction")
@@ -77,7 +76,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             try {
                 chatCommunicationManager.handlePartialResultProgressNotification(params);
             } catch (Exception e) {
-                PluginLogger.error("Error processing partial result progress notification", e);
+                Activator.getLogger().error("Error processing partial result progress notification", e);
             }
         });
     }
@@ -106,7 +105,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             try {
                 Activator.getTelemetryService().emitFeedback(comment, sentiment);
             } catch (Exception e) {
-                PluginLogger.error("Error occurred when submitting feedback", e);
+                Activator.getLogger().error("Error occurred when submitting feedback", e);
             }
         }
     }

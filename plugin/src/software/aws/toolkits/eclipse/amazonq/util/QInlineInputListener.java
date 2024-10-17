@@ -16,6 +16,7 @@ import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class QInlineInputListener implements VerifyListener, VerifyKeyListener, MouseListener {
 
@@ -139,7 +140,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             try {
                 doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
             } catch (BadLocationException e) {
-                PluginLogger.error(e.toString());
+                Activator.getLogger().error(e.toString());
             }
         }
 

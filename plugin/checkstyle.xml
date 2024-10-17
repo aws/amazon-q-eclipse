@@ -31,9 +31,11 @@
     <property name="message" value="Line has trailing spaces."/>
   </module>
 
+  <module name="SuppressWarningsFilter"/>
 
   <module name="TreeWalker">
 
+    <module name="SuppressWarningsHolder"/>
     <module name="JavadocStyle"/>
 
     <module name="ConstantName"/>

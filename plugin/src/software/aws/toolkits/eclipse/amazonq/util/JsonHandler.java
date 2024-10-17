@@ -3,6 +3,7 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class JsonHandler {
@@ -36,5 +37,13 @@ public final class JsonHandler {
     public <T> T convertObject(final Object obj, final Class<T> cls) {
         T castedObj = deserialize(serialize(obj), cls);
         return castedObj;
+    }
+
+    public JsonNode getValueForKey(final Object obj, final String key) {
+        var paramsNode = objectMapper.valueToTree(obj);
+        if (paramsNode.has(key)) {
+            return paramsNode.get(key);
+        }
+        return null;
     }
 }

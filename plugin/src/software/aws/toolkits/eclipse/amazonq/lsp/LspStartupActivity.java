@@ -3,9 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import org.eclipse.core.net.proxy.IProxyChangeEvent;
+import org.eclipse.core.net.proxy.IProxyChangeListener;
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -18,13 +21,16 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
-
 import org.eclipse.lsp4e.LanguageServiceAccessor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.lsp4e.LanguageServersRegistry;
@@ -32,12 +38,36 @@ import org.eclipse.lsp4e.LanguageServersRegistry;
 @SuppressWarnings("restriction")
 public class LspStartupActivity implements IStartup {
 
+    private void checkProxyConfiguration() {
+        ProxyUtil.updateHttpsProxyUrl("");
+        IProxyService proxyService = PlatformUI.getWorkbench().getService(IProxyService.class);
+        if (proxyService != null && proxyService.isProxiesEnabled()) {
+            IProxyData proxyData = proxyService.getProxyData(IProxyData.HTTPS_PROXY_TYPE);
+            if (ProxyUtil.isProxyValid(proxyData)) {
+                ProxyUtil.updateHttpsProxyUrl(ProxyUtil.createHttpsProxyHost(proxyData));
+            }
+        }
+        proxyService.addProxyChangeListener(new IProxyChangeListener() {
+            @Override
+            public void proxyInfoChanged(final IProxyChangeEvent event) {
+                ProxyUtil.updateHttpsProxyUrl("");
+                Display.getCurrent().asyncExec(() -> {
+                    AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                            Constants.PROXY_UPDATE_NOTIFICATION_TITLE,
+                            Constants.PROXY_UPDATE_NOTIFICATION_DESCRIPTION);
+                    notification.open();
+                });
+            }
+        });
+    }
+
     @Override
     public final void earlyStartup() {
         Job job = new Job("Start language servers") {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
+                    checkProxyConfiguration();
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);

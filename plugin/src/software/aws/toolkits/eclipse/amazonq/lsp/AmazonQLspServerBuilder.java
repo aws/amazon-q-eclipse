@@ -21,6 +21,8 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMeta
 
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
+    private static final String USER_AGENT_CLIENT_NAME = "AmazonQ-For-Eclipse";
+
     @Override
     public final Launcher<AmazonQLspServer> create() {
         super.setRemoteInterface(AmazonQLspServer.class);
@@ -39,7 +41,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 ClientMetadata metadata = PluginClientMetadata.getInstance();
-                initParams.setClientInfo(new ClientInfo(metadata.getPluginName(), metadata.getPluginVersion()));
+                initParams.setClientInfo(new ClientInfo(USER_AGENT_CLIENT_NAME, metadata.getPluginVersion()));
             }
             if (message instanceof ResponseMessage && ((ResponseMessage) message).getResult() instanceof AwsExtendedInitializeResult) {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();

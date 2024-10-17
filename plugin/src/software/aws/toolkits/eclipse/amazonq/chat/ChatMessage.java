@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
@@ -49,6 +50,10 @@ public final class ChatMessage {
 
     public void followUpClick(final FollowUpClickParams followUpClickParams) {
         amazonQLspServer.followUpClick(followUpClickParams);
+    }
+
+    public void sendFeedback(final FeedbackParams feedbackParams) {
+        amazonQLspServer.sendFeedback(feedbackParams);
     }
 
     public void sendTelemetryEvent(final Object params) {

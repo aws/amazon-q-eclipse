@@ -9,10 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
@@ -33,6 +35,9 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     protected final void addEnvironmentVariables(final Map<String, String> env) {
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
+        if (!StringUtils.isEmpty(ProxyUtil.getHttpsProxyUrl())) {
+            env.put("HTTPS_PROXY", ProxyUtil.getHttpsProxyUrl());
+        }
     }
 
     @Override

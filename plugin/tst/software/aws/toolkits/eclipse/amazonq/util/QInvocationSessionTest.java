@@ -222,7 +222,6 @@ public class QInvocationSessionTest {
         doAnswer(new Answer<Runnable>() {
             @Override
             public Runnable answer(final InvocationOnMock invocation) throws Throwable {
-                System.out.println("Answer consulted");
                 Runnable runnable = invocation.getArgument(0);
                 runnable.run();
                 return null;

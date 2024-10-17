@@ -214,8 +214,6 @@ public final class QInvocationSession extends QResource {
                             }
                             return item;
                         }).collect(Collectors.toList())).get();
-
-                System.out.println("query results with offset " + invocationOffset + " received");
                 unresolvedTasks.remove(uuid);
 
                 Display.getDefault().asyncExec(() -> {

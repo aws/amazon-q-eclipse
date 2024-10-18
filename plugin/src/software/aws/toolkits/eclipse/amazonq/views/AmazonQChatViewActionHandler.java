@@ -26,7 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -49,7 +49,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         Command command = parsedCommand.getCommand();
         Object params = parsedCommand.getParams();
 
-        PluginLogger.info(command + " being processed by ActionHandler");
+        Activator.getLogger().info(command + " being processed by ActionHandler");
 
         switch (command) {
             case CHAT_SEND_PROMPT:
@@ -127,7 +127,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 PluginUtils.openWebpage(link);
             }
         } catch (Exception ex) {
-            PluginLogger.error("Failed to open url in browser", ex);
+            Activator.getLogger().error("Failed to open url in browser", ex);
         }
     }
 

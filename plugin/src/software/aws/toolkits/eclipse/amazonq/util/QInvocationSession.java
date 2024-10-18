@@ -17,6 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import java.util.List;
 import java.util.Stack;
@@ -179,7 +180,7 @@ public final class QInvocationSession extends QResource {
             queryAsync(params, invocationOffset);
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
-            PluginLogger.error("Unable to compute inline completion request from document", e);
+            Activator.getLogger().error("Unable to compute inline completion request from document", e);
         }
     }
 
@@ -192,7 +193,7 @@ public final class QInvocationSession extends QResource {
             queryAsync(params, session.getInvocationOffset());
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
-            PluginLogger.error("Unable to compute inline completion request from document", e);
+            Activator.getLogger().error("Unable to compute inline completion request from document", e);
         }
     }
 
@@ -278,9 +279,10 @@ public final class QInvocationSession extends QResource {
                 });
             } catch (InterruptedException e) {
                 System.out.println("Query InterruptedException: " + e.getMessage());
+                Activator.getLogger().error("Inline completion interrupted", e);
             } catch (ExecutionException e) {
                 System.out.println("Query ExecutionException: " + e.getMessage());
-                PluginLogger.error("Error executing inline completion", e);
+                Activator.getLogger().error("Error executing inline completion", e);
             }
         });
         unresolvedTasks.put(uuid, future);
@@ -413,13 +415,13 @@ public final class QInvocationSession extends QResource {
 
     public InlineCompletionItem getCurrentSuggestion() {
         if (suggestionsContext == null) {
-            PluginLogger.warn("QSuggestion context is null");
+            Activator.getLogger().warn("QSuggestion context is null");
             return null;
         }
         var details = suggestionsContext.getDetails();
         var index = suggestionsContext.getCurrentIndex();
         if (details.isEmpty() && index != -1 || !details.isEmpty() && (index < 0 || index >= details.size())) {
-            PluginLogger.warn("QSuggestion context index is incorrect");
+            Activator.getLogger().warn("QSuggestion context index is incorrect");
             return null;
         }
         var detail = details.get(index);

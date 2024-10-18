@@ -27,7 +27,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
 public final class RemoteManifestLspFetcher implements LspFetcher {
@@ -120,24 +120,24 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
         if (Files.exists(destinationFile)) {
             // If the file exists locally, check if the hashes match
             if (this.integrityChecking && ArtifactUtils.validateHash(destinationFile, expectedHashes, false)) {
-                PluginLogger.info(filename + " already exists and matches the expected checksum. Skipping download.");
+                Activator.getLogger().info(filename + " already exists and matches the expected checksum. Skipping download.");
                 return;
             } else {
-                PluginLogger.info(filename + " already exists but doesn't match the expected checksum. Redownloading file.");
+                Activator.getLogger().info(filename + " already exists but doesn't match the expected checksum. Redownloading file.");
             }
         }
 
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(destinationFile));
 
         if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-            PluginLogger.info("Downloaded " + filename + " to " + destination);
+            Activator.getLogger().info("Downloaded " + filename + " to " + destination);
 
             if (this.integrityChecking) {
                 ArtifactUtils.validateHash(destinationFile, expectedHashes, true);
             }
 
             if (filename.endsWith(".zip")) {
-                PluginLogger.info("Extracting contents of " + filename);
+                Activator.getLogger().info("Extracting contents of " + filename);
                 ArtifactUtils.extractFile(response.body(), destination);
             }
         } else {

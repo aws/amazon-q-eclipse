@@ -20,6 +20,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class PluginUtils {
 
@@ -64,7 +65,7 @@ public final class PluginUtils {
                 var icon = getResource("icons/AmazonQ.png");
                 qIcon = new Image(null, icon.openStream());
             } catch (IOException e) {
-                PluginLogger.warn("Unable to retreive Q icon", e);
+                Activator.getLogger().warn("Unable to retreive Q icon", e);
             }
         }
         return qIcon;
@@ -97,7 +98,7 @@ public final class PluginUtils {
         try {
             PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(url));
         } catch (Exception ex) {
-            PluginLogger.warn("Error while trying to open an external web page:", ex);
+            Activator.getLogger().warn("Error while trying to open an external web page:", ex);
         }
     }
 
@@ -111,7 +112,7 @@ public final class PluginUtils {
                 }
             });
         } catch (Exception ex) {
-            PluginLogger.error(ex.getMessage());
+            Activator.getLogger().error(ex.getMessage());
         }
         return result[0];
     }

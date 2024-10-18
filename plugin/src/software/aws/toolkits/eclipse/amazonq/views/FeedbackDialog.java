@@ -32,7 +32,6 @@ import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
@@ -89,7 +88,7 @@ public class FeedbackDialog extends Dialog {
                 this.loadedImage = loadedImage;
             }
         } catch (IOException e) {
-            PluginLogger.warn(e.getMessage(), e);
+            Activator.getLogger().warn(e.getMessage(), e);
         }
         return loadedImage;
     }
@@ -104,7 +103,7 @@ public class FeedbackDialog extends Dialog {
     protected final void okPressed() {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
-        PluginLogger.info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
+        Activator.getLogger().info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
         ThreadingUtils.executeAsyncTask(() -> Activator.getTelemetryService().emitFeedback(comment, selectedSentiment));
         super.okPressed();
     }

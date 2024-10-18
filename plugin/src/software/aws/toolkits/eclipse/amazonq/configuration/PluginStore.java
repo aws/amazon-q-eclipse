@@ -9,7 +9,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import com.google.gson.Gson;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class PluginStore {
 
@@ -26,7 +26,7 @@ public final class PluginStore {
         try {
             PREFERENCES.flush();
         } catch (BackingStoreException e) {
-            PluginLogger.warn(String.format("Error while saving entry to a preference store - key: %s, value: %s", key, value), e);
+            Activator.getLogger().warn(String.format("Error while saving entry to a preference store - key: %s, value: %s", key, value), e);
         }
     }
 
@@ -49,7 +49,7 @@ public final class PluginStore {
         try {
             PREFERENCES.flush();
         } catch (BackingStoreException e) {
-            PluginLogger.warn(String.format("Error while saving entry to a preference store - key: %s, value: %s", key, value), e);
+            Activator.getLogger().warn(String.format("Error while saving entry to a preference store - key: %s, value: %s", key, value), e);
         }
     }
 

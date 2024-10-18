@@ -15,7 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
 public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler {
@@ -39,7 +39,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
         String selection = getSelectedTextOrCurrentLine();
 
         if (selection == null || selection.isEmpty()) {
-            PluginLogger.info("No text was retrieved when fetching selected text or current line");
+            Activator.getLogger().info("No text was retrieved when fetching selected text or current line");
             return;
         }
 
@@ -65,7 +65,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
         String selection = getSelectedTextOrCurrentLine();
 
         if (selection == null || selection.isEmpty()) {
-            PluginLogger.info("No text was retrieved when fetching selected text or current line");
+            Activator.getLogger().info("No text was retrieved when fetching selected text or current line");
             return;
         }
 

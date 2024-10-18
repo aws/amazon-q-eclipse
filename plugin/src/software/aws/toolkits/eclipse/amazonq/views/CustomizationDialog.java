@@ -35,7 +35,7 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
@@ -185,7 +185,7 @@ public final class CustomizationDialog extends Dialog {
         try {
             customizations = CustomizationUtil.listCustomizations().get();
         } catch (InterruptedException | ExecutionException e) {
-            PluginLogger.error("Error occurred in getCustomizations", e);
+            Activator.getLogger().error("Error occurred in getCustomizations", e);
             throw new AmazonQPluginException(e);
         }
         return customizations;
@@ -216,7 +216,7 @@ public final class CustomizationDialog extends Dialog {
                 String selectedOption = combo.getItem(selectedIndex);
                 Customization selectedCustomization = (Customization) combo.getData(String.valueOf(selectedIndex));
                 CustomizationDialog.this.setSelectedCustomization(selectedCustomization);
-                PluginLogger.info(String.format("Selected option:%s with arn:%s", selectedOption, selectedCustomization.getArn()));
+                Activator.getLogger().info(String.format("Selected option:%s with arn:%s", selectedOption, selectedCustomization.getArn()));
             }
         });
     }

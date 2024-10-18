@@ -16,7 +16,7 @@ import org.eclipse.ui.part.ViewPart;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -35,7 +35,7 @@ public abstract class AmazonQView extends ViewPart {
     public static void showView(final String viewId) {
         if (!AMAZON_Q_VIEWS
         .contains(viewId)) {
-            PluginLogger.error("Failed to show view. You must add the view " + viewId + " to AMAZON_Q_VIEWS Set");
+            Activator.getLogger().error("Failed to show view. You must add the view " + viewId + " to AMAZON_Q_VIEWS Set");
             return;
         }
 
@@ -44,9 +44,9 @@ public abstract class AmazonQView extends ViewPart {
             // Show requested view
             try {
                 page.showView(viewId);
-                PluginLogger.info("Showing view " + viewId);
+                Activator.getLogger().info("Showing view " + viewId);
             } catch (Exception e) {
-                PluginLogger.error("Error occurred while showing view " + viewId, e);
+                Activator.getLogger().error("Error occurred while showing view " + viewId, e);
             }
 
             // Hide all other Amazon Q Views
@@ -56,7 +56,7 @@ public abstract class AmazonQView extends ViewPart {
                     try {
                         page.hideView(viewRef);
                     } catch (Exception e) {
-                        PluginLogger.error("Error occurred while hiding view " + viewId, e);
+                        Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
                     }
                 }
             }

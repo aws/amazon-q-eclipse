@@ -73,22 +73,20 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void onStart() {
-        // I do not know of a better way to do this currently
-        Display.getDefault().asyncExec(() -> {
-            while (getActiveTextEditor() == null) {
-                System.out.println("Active document is null, sleeping");
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+        Display.getDefault().timerExec(1000, new Runnable() {
+            @Override
+            public void run() {
+                var editor = getActiveTextEditor();
+                var activeDoc = getActiveDocument();
+                if (editor != null && activeDoc == null) {
+                    var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+                    setActiveDocument(document);
+                    document.addDocumentListener(docListener);
+                    System.out.println("Document listener added from UI thread");
+                } else {
+                    Display.getDefault().timerExec(1000, this);
                 }
             }
-            var editor = getActiveTextEditor();
-            var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-            setActiveDocument(document);
-            document.addDocumentListener(docListener);
-            System.out.println("Document listener added from separate thread");
         });
 
         docListener.onStart();

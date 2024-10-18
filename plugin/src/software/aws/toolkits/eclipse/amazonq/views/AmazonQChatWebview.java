@@ -7,10 +7,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
-import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressAdapter;
@@ -22,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
-import software.aws.toolkits.eclipse.amazonq.chat.models.AmazonQTheme;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
@@ -33,7 +28,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -87,7 +81,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             public void completed(final ProgressEvent event) {
                 Display.getDefault().syncExec(() -> {
                     try {
-                    	chatTheme.injectTheme(browser);
+                        chatTheme.injectTheme(browser);
                     } catch (Exception e) {
                         PluginLogger.info("Error occurred while injecting theme", e);
                     }

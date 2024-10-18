@@ -2,7 +2,6 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
@@ -13,12 +12,11 @@ public final class ChangeThemeAction extends Action {
     private final ThemeDetector themeDetector;
     private final ChatTheme chatTheme;
     private final Browser browser;
-    private final String SWITCH_TO_LIGHT_MODE_TEXT = "Switch to Light Mode";
-    private final String SWITCH_TO_DARK_MODE_TEXT = "Switch to Dark Mode";
+    private static final String SWITCH_TO_LIGHT_MODE_TEXT = "Switch to Light Mode";
+    private static final String SWITCH_TO_DARK_MODE_TEXT = "Switch to Dark Mode";
 
     public ChangeThemeAction(final Browser browser) {
         this.themeDetector = new ThemeDetector();
-        ;
         this.chatTheme = new ChatTheme();
         this.browser = browser;
 
@@ -46,7 +44,7 @@ public final class ChangeThemeAction extends Action {
         chatTheme.injectTheme(browser);
     }
 
-    private void updateText(String text) {
+    private void updateText(final String text) {
         setText(text);
         setToolTipText(text);
     }

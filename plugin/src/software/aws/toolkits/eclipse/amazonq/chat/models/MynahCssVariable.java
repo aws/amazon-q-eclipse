@@ -4,7 +4,7 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 
 // See examples in https://github.com/aws/mynah-ui/blob/main/docs/STYLING.md
 public enum MynahCssVariable {
-	// Text
+    // Text
     TextColorDefault("--mynah-color-text-default"),
     TextColorStrong("--mynah-color-text-strong"),
     TextColorWeak("--mynah-color-text-weak"),
@@ -33,15 +33,15 @@ public enum MynahCssVariable {
     StatusSuccess("--mynah-color-status-success"),
     StatusWarning("--mynah-color-status-warning"),
     StatusError("--mynah-color-status-error"),
-    
+
     // Buttons
     ButtonBackground("--mynah-color-button"),
     ButtonForeground("--mynah-color-button-reverse"),
-    
+
     // Alternates
     AlternateBackground("--mynah-color-alternate"),
     AlternateForeground("--mynah-color-alternate-reverse"),
-    
+
     // Card
     CardBackground("--mynah-card-bg");
 

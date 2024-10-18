@@ -7,6 +7,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.eclipse.core.runtime.Preferences.IPropertyChangeListener;
+import org.eclipse.core.runtime.Preferences.PropertyChangeEvent;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressAdapter;
@@ -29,6 +33,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -43,11 +48,13 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
     private ChatCommunicationManager chatCommunicationManager;
+    private ChatTheme chatTheme;
 
     public AmazonQChatWebview() {
         this.commandParser = new LoginViewCommandParser();
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
+        this.chatTheme = new ChatTheme();
     }
 
     @Override
@@ -78,9 +85,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         browser.addProgressListener(new ProgressAdapter() {
             @Override
             public void completed(final ProgressEvent event) {
-                Display.getDefault().asyncExec(() -> {
+                Display.getDefault().syncExec(() -> {
                     try {
-                        injectCSS(browser, ChatTheme.getCssForDarkTheme());
+                    	chatTheme.injectTheme(browser);
                     } catch (Exception e) {
                         PluginLogger.info("Error occurred while injecting theme", e);
                     }
@@ -149,17 +156,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     }
                 </style>
                 """;
-    }
-
-    private void injectCSS(final Browser browser, final String css) {
-        String script = String.format("""
-                    var style = document.createElement("style");\
-                    style.type = "text/css";\
-                    style.innerHTML = "%s";\
-                    document.head.appendChild(style);
-                """, css);
-
-        browser.evaluate(script);
     }
 
     private String generateJS(final String jsEntrypoint) {
@@ -231,6 +227,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             webviewAssetServer.stop();
         }
         chatCommunicationManager.removeListener();
+//        themeDetector.removeListener();
         super.dispose();
     }
 }

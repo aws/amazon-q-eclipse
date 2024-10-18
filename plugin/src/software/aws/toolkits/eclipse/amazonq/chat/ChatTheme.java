@@ -5,10 +5,54 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.swt.browser.Browser;
+
 import software.aws.toolkits.eclipse.amazonq.chat.models.MynahCssVariable;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
 public final class ChatTheme {
-	public static String getCssForDarkTheme() {
+	private static String CHAT_THEME_STYLE_TITLE = "CHAT_THEME_STYLE";
+
+	private final ThemeDetector themeDetector;
+
+	public ChatTheme() {
+		this.themeDetector = new ThemeDetector();
+	}
+
+	public void injectTheme(final Browser browser) {
+		String css = "";
+
+		if (themeDetector.isDarkTheme()) {
+			css = getCssForDarkTheme();
+		} else {
+			css = getCssForLightTheme();
+		}
+
+		String removeExistingThemeScript = String.format("""
+					var sheets = document.styleSheets;\
+					for (var i=0; i<sheets.length; i++){\
+						var sheet = sheets[i];\
+						if (sheet.title === "%s") {\
+							for (var j=0; j<sheet.rules.length; j++){\
+								sheet.deleteRule(j);\
+							}\
+						}\
+					}\
+				""", CHAT_THEME_STYLE_TITLE);
+
+		String addThemeScript = String.format("""
+				    var style = document.createElement('style');\
+				    style.type = "text/css";\
+				    style.title = "%s";\
+				    document.head.appendChild(style);\
+				    style.sheet.insertRule("%s", style.sheet.cssRules.length);\
+				""", CHAT_THEME_STYLE_TITLE, css);
+
+		browser.evaluate(removeExistingThemeScript);
+		browser.evaluate(addThemeScript);
+	}
+
+	private String getCssForDarkTheme() {
 		Map<MynahCssVariable, String> themeMap = new HashMap<>();
 
 		String defaultTextColor = rgb(238, 238, 238);
@@ -58,7 +102,7 @@ public final class ChatTheme {
 		return getCss(themeMap);
 	}
 
-	public static String getCssForLightTheme() {
+	private String getCssForLightTheme() {
 		Map<MynahCssVariable, String> themeMap = new HashMap<>();
 
 		String defaultTextColor = rgb(10, 10, 10);
@@ -108,7 +152,7 @@ public final class ChatTheme {
 		return getCss(themeMap);
 	}
 
-	private final static String getCss(Map<MynahCssVariable, String> themeMap) {
+	private final String getCss(Map<MynahCssVariable, String> themeMap) {
 		StringBuilder variables = new StringBuilder();
 
 		for (var entry : themeMap.entrySet()) {
@@ -124,11 +168,11 @@ public final class ChatTheme {
 		return String.format(":root{%s}", variables.toString());
 	}
 
-	private final static String rgb(Integer r, Integer g, Integer b) {
+	private final String rgb(Integer r, Integer g, Integer b) {
 		return String.format("rgb(%s,%s,%s)", r, g, b);
 	}
 
-	private final static String rgba(Integer r, Integer g, Integer b, Double a) {
+	private final String rgba(Integer r, Integer g, Integer b, Double a) {
 		return String.format("rgb(%s,%s,%s,%s)", r, g, b, a);
 	}
 

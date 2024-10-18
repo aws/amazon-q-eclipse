@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
@@ -13,6 +15,8 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.osgi.service.prefs.Preferences;
+
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
@@ -36,8 +40,6 @@ public final class QInvocationSession extends QResource {
 
     // Static variable to hold the single instance
     private static QInvocationSession instance;
-    private static PreferenceStoreUtil uiStore;
-    private static PreferenceStoreUtil coreStore;
 
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
@@ -67,37 +69,31 @@ public final class QInvocationSession extends QResource {
         // Initialization code here
     }
 
-    public static void setUIStore(final PreferenceStoreUtil uiStore) {
-        QInvocationSession.uiStore = uiStore;
-    }
-
-    public static void setCoreStore(final PreferenceStoreUtil coreStore) {
-        QInvocationSession.coreStore = coreStore;
-    }
-
     // Method to get the single instance
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
-            var prefStoreUtil = QInvocationSession.uiStore != null ? QInvocationSession.uiStore
-                    : new PreferenceStoreUtil("org.eclipse.jdt.ui");
-            boolean isBracesSetToAutoClose = prefStoreUtil.getBoolean("closeBraces", true);
-            boolean isBracketsSetToAutoClose = prefStoreUtil.getBoolean("closeBrackets", true);
-            boolean isStringSetToAutoClose = prefStoreUtil.getBoolean("closeStrings", true);
+            Preferences eclipseUIPrefs = Platform.getPreferencesService().getRootNode()
+                    .node(InstanceScope.SCOPE)
+                    .node("org.eclipse.jdt.ui");
+            boolean isBracesSetToAutoClose = eclipseUIPrefs.getBoolean("closeBraces", true);
+            boolean isBracketsSetToAutoClose = eclipseUIPrefs.getBoolean("closeBrackets", true);
+            boolean isStringSetToAutoClose = eclipseUIPrefs.getBoolean("closeStrings", true);
 
             // We'll also need tab sizes since suggestions do not take that into account
             // and is only given in spaces
-            var tabPref = QInvocationSession.coreStore != null ? QInvocationSession.coreStore
-                    : new PreferenceStoreUtil("org.eclipse.jdt.core");
-            instance.tabSize = tabPref.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
-            instance.isTabOnly = tabPref.getBoolean("use_tabs_only_for_leading_indentations", true);
+            Preferences eclipseCorePrefs = Platform.getPreferencesService().getRootNode()
+                    .node(InstanceScope.SCOPE)
+                    .node("org.eclipse.jdt.core");
+            instance.tabSize = eclipseCorePrefs.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
+            instance.isTabOnly = eclipseCorePrefs.getBoolean("use_tabs_only_for_leading_indentations", true);
 
             PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
                 @Override
                 public boolean preShutdown(final IWorkbench workbench, final boolean forced) {
-                    prefStoreUtil.putBoolean("closeBraces", isBracesSetToAutoClose);
-                    prefStoreUtil.putBoolean("closeBrackets", isBracketsSetToAutoClose);
-                    prefStoreUtil.putBoolean("closeStrings", isStringSetToAutoClose);
+                    eclipseUIPrefs.putBoolean("closeBraces", isBracesSetToAutoClose);
+                    eclipseUIPrefs.putBoolean("closeBrackets", isBracketsSetToAutoClose);
+                    eclipseUIPrefs.putBoolean("closeStrings", isStringSetToAutoClose);
                     return true;
                 }
 
@@ -113,7 +109,7 @@ public final class QInvocationSession extends QResource {
     // TODO: separation of concerns between session attributes, session management,
     // and remote invocation logic
     // Method to start the session
-    public synchronized boolean start(final ITextEditor editor) {
+    public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
             try {
                 if (!DefaultLoginService.getInstance().getLoginDetails().get().getIsLoggedIn()) {
@@ -122,9 +118,9 @@ public final class QInvocationSession extends QResource {
                 } else {
                     DefaultLoginService.getInstance().updateToken();
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            } catch (InterruptedException e) {
+                Activator.getLogger().info("Invocation start interrupted", e);
+                return false;
             }
             System.out.println("Session starting");
             state = QInvocationSessionState.INVOKING;
@@ -201,7 +197,6 @@ public final class QInvocationSession extends QResource {
         var uuid = UUID.randomUUID();
         var future = ThreadingUtils.executeAsyncTaskAndReturnFuture(() -> {
             try {
-                System.out.println("making query with offset: " + invocationOffset);
                 var session = QInvocationSession.getInstance();
 
                 List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()

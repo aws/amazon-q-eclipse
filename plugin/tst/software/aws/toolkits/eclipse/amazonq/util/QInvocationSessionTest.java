@@ -1,14 +1,14 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.util;
 
-//import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
@@ -36,11 +37,11 @@ import static org.mockito.Mockito.mockStatic;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.osgi.service.prefs.Preferences;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
@@ -57,14 +58,14 @@ public class QInvocationSessionTest {
 
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
-    private static PreferenceStoreUtil preferenceStoreUtil;
 
     @BeforeAll
     public static void setUp() throws Exception {
-        preferenceStoreUtil = mock(PreferenceStoreUtil.class);
-        when(preferenceStoreUtil.getBoolean(anyString(), anyBoolean())).thenReturn(true);
-        when(preferenceStoreUtil.getInt(eq("org.eclipse.jdt.core.formatter.tabulation.size"), any(Integer.class)))
-                .thenReturn(4);
+        MockedStatic<Platform> prefMockStatic = mockStatic(Platform.class, RETURNS_DEEP_STUBS);
+        Preferences prefMock = mock(Preferences.class);
+        prefMockStatic.when(() -> Platform.getPreferencesService().getRootNode().node(anyString()).node(anyString())).thenReturn(prefMock);
+        when(prefMock.getBoolean(anyString(), any(Boolean.class))).thenReturn(true);
+        when(prefMock.getInt(anyString(), any(Integer.class))).thenReturn(4);
 
         MockedStatic<PlatformUI> platformUIMock = mockStatic(PlatformUI.class);
         IWorkbench wbMock = mock(IWorkbench.class);
@@ -91,19 +92,13 @@ public class QInvocationSessionTest {
         }).when(displayMock).asyncExec(any(Runnable.class));
     }
 
-    @BeforeEach
-    public final void beforeEach() {
-        QInvocationSession.setUIStore(preferenceStoreUtil);
-        QInvocationSession.setCoreStore(preferenceStoreUtil);
-    }
-
     @AfterEach
     public final void afterEach() {
         QInvocationSession.getInstance().endImmediately();
     }
 
     @Test
-    void testSessionStart() {
+    void testSessionStart() throws ExecutionException {
         QInvocationSession session = QInvocationSession.getInstance();
         assertNotEquals(session, null);
 
@@ -172,6 +167,8 @@ public class QInvocationSessionTest {
                             try {
                                 queue.take();
                             } catch (InterruptedException e) {
+                                // This will print stack traces from interrupted exception for when it gets terminated forcefully
+                                // It does not mean the test has failed.
                                 e.printStackTrace();
                             }
                         };

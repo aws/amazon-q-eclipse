@@ -36,7 +36,7 @@ public final class ChatTheme {
 		themeMap.put(MynahCssVariable.SyntaxAttribute, rgb(179, 108, 50));
 		themeMap.put(MynahCssVariable.SyntaxProperty, rgb(57, 171, 184));
 		themeMap.put(MynahCssVariable.SyntaxComment, rgb(130, 130, 130));
-		themeMap.put(MynahCssVariable.SyntaxCode, rgb(230, 230, 230));
+		themeMap.put(MynahCssVariable.SyntaxCode, defaultTextColor);
 
 		// Status
 		themeMap.put(MynahCssVariable.StatusInfo, rgb(55, 148, 255));
@@ -51,6 +51,56 @@ public final class ChatTheme {
 		// Alternates
 		themeMap.put(MynahCssVariable.AlternateBackground, rgb(95, 106, 121));
 		themeMap.put(MynahCssVariable.AlternateForeground, rgb(255, 255, 255));
+
+		// Card
+		themeMap.put(MynahCssVariable.CardBackground, cardBackgroundColor);
+
+		return getCss(themeMap);
+	}
+
+	public static String getCssForLightTheme() {
+		Map<MynahCssVariable, String> themeMap = new HashMap<>();
+
+		String defaultTextColor = rgb(10, 10, 10);
+		String cardBackgroundColor = rgb(255, 255, 255);
+
+		// Text
+		themeMap.put(MynahCssVariable.TextColorDefault, defaultTextColor);
+		themeMap.put(MynahCssVariable.TextColorStrong, rgb(0, 0, 0));
+		themeMap.put(MynahCssVariable.TextColorWeak, rgba(45, 45, 45, 0.5));
+		themeMap.put(MynahCssVariable.TextColorLink, rgb(59, 34, 246));
+		themeMap.put(MynahCssVariable.TextColorInput, defaultTextColor);
+
+		// Layout
+		themeMap.put(MynahCssVariable.Background, rgb(250, 250, 250));
+		themeMap.put(MynahCssVariable.TabActive, cardBackgroundColor);
+		themeMap.put(MynahCssVariable.BorderDefault, rgb(230, 230, 230));
+		themeMap.put(MynahCssVariable.ColorToggle, rgb(220, 220, 220));
+
+		// Code Syntax
+		themeMap.put(MynahCssVariable.SyntaxBackground, rgb(220, 232, 250));
+		themeMap.put(MynahCssVariable.SyntaxVariable, rgb(247, 247, 80));
+		themeMap.put(MynahCssVariable.SyntaxFunction, rgb(86, 178, 80));
+		themeMap.put(MynahCssVariable.SyntaxOperator, rgb(217, 111, 187));
+		themeMap.put(MynahCssVariable.SyntaxAttributeValue, rgb(66, 141, 190));
+		themeMap.put(MynahCssVariable.SyntaxAttribute, rgb(179, 108, 50));
+		themeMap.put(MynahCssVariable.SyntaxProperty, rgb(57, 171, 184));
+		themeMap.put(MynahCssVariable.SyntaxComment, rgb(130, 130, 130));
+		themeMap.put(MynahCssVariable.SyntaxCode, defaultTextColor);
+
+		// Status
+		themeMap.put(MynahCssVariable.StatusInfo, rgb(55, 148, 255));
+		themeMap.put(MynahCssVariable.StatusSuccess, rgb(135, 217, 108));
+		themeMap.put(MynahCssVariable.StatusWarning, rgb(255, 204, 102));
+		themeMap.put(MynahCssVariable.StatusError, rgb(255, 102, 102));
+
+		// Buttons
+		themeMap.put(MynahCssVariable.ButtonBackground, rgb(51, 118, 205));
+		themeMap.put(MynahCssVariable.ButtonForeground, rgb(255, 255, 255));
+
+		// Alternates
+		themeMap.put(MynahCssVariable.AlternateBackground, rgb(95, 106, 121));
+		themeMap.put(MynahCssVariable.AlternateForeground, rgb(0, 0, 0));
 
 		// Card
 		themeMap.put(MynahCssVariable.CardBackground, cardBackgroundColor);

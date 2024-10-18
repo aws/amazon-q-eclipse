@@ -13,7 +13,7 @@ import java.util.HashSet;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
@@ -55,7 +55,7 @@ public final class DefaultLspManager implements LspManager {
 
             return new LspInstallation(nodeExecutable, lspJs);
         } catch (Exception e) {
-            PluginLogger.error("Unable to resolve local language server installation. LSP features will be unavailable.", e);
+            Activator.getLogger().error("Unable to resolve local language server installation. LSP features will be unavailable.", e);
             throw new AmazonQPluginException(e);
         }
     }

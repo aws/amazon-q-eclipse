@@ -4,7 +4,7 @@ package software.aws.toolkits.eclipse.amazonq.views.model;
 
 import java.util.Optional;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public enum Command {
     // QChat
@@ -21,6 +21,7 @@ public enum Command {
     CHAT_FEEDBACK("aws/chat/feedback"),
     CHAT_FOLLOW_UP_CLICK("aws/chat/followUpClick"),
     TELEMETRY_EVENT("telemetry/event"),
+    CHAT_COPY_TO_CLIPBOARD("copyToClipboard"),
     CHAT_INSERT_TO_CURSOR_POSITION("insertToCursorPosition"),
     AUTH_FOLLOW_UP_CLICKED("authFollowUpClicked"), //Auth command handled in QChat webview
 
@@ -43,7 +44,7 @@ public enum Command {
             }
         }
 
-        PluginLogger.info("Unregistered command parsed: " + value);
+        Activator.getLogger().info("Unregistered command parsed: " + value);
         return Optional.empty();
     }
 

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.model.CommandRequest;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
@@ -34,7 +34,7 @@ public class LoginViewCommandParser implements ViewCommandParser {
 
                 return Optional.ofNullable(parsedCommand);
             } catch (JsonProcessingException e) {
-                PluginLogger.error("Error parsing webview command JSON: " + e.getMessage());
+                Activator.getLogger().error("Error parsing webview command JSON: " + e.getMessage());
             }
         }
         return Optional.empty();

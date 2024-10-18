@@ -25,7 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -100,7 +100,7 @@ public class LspStartupActivity implements IStartup {
                         PluginStore.put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
                     }
                 } catch (PartInitException e) {
-                    PluginLogger.warn("Error occurred during auto loading of plugin", e);
+                    Activator.getLogger().warn("Error occurred during auto loading of plugin", e);
                 }
             }
         });

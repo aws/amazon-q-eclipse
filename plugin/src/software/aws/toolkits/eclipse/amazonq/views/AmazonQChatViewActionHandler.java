@@ -16,11 +16,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.ui.PlatformUI;
+
+import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -43,7 +49,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         Command command = parsedCommand.getCommand();
         Object params = parsedCommand.getParams();
 
-        PluginLogger.info(command + " being processed by ActionHandler");
+        Activator.getLogger().info(command + " being processed by ActionHandler");
 
         switch (command) {
             case CHAT_SEND_PROMPT:
@@ -102,6 +108,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 }
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
+            case CHAT_COPY_TO_CLIPBOARD:
+                CopyToClipboardParams copyToClipboardParams = jsonHandler.convertObject(params, CopyToClipboardParams.class);
+                handleCopyToClipboard(copyToClipboardParams.code());
+                break;
             case AUTH_FOLLOW_UP_CLICKED:
                 //TODO
                 break;
@@ -117,7 +127,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 PluginUtils.openWebpage(link);
             }
         } catch (Exception ex) {
-            PluginLogger.error("Failed to open url in browser", ex);
+            Activator.getLogger().error("Failed to open url in browser", ex);
         }
     }
 
@@ -152,5 +162,21 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             }
         });
         return fileUri.get();
+    }
+
+    private void handleCopyToClipboard(final String selection) {
+        Display display = PlatformUI.getWorkbench().getDisplay();
+
+        display.asyncExec(() -> {
+            Clipboard clipboard = new Clipboard(display);
+            try {
+                TextTransfer textTransfer = TextTransfer.getInstance();
+                clipboard.setContents(new Object[]{selection}, new Transfer[]{textTransfer});
+            } catch (Exception e) {
+                throw new AmazonQPluginException("Failed to copy to clipboard", e);
+            } finally {
+                clipboard.dispose();
+            }
+        });
     }
 }

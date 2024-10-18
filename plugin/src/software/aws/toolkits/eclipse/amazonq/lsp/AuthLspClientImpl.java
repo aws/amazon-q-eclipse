@@ -9,7 +9,7 @@ import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,13 +25,13 @@ public class AuthLspClientImpl extends LanguageClientImpl implements AmazonQLspC
 
     @Override
     public final CompletableFuture<ShowDocumentResult> showDocument(final ShowDocumentParams params) {
-        PluginLogger.info("Opening redirect URL: " + params.getUri());
+        Activator.getLogger().info("Opening redirect URL: " + params.getUri());
         return CompletableFuture.supplyAsync(() -> {
             try {
                 PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(params.getUri()));
                 return new ShowDocumentResult(true);
             } catch (PartInitException | MalformedURLException e) {
-                PluginLogger.error("Error opening URL: " + params.getUri(), e);
+                Activator.getLogger().error("Error opening URL: " + params.getUri(), e);
                 return new ShowDocumentResult(false);
             }
         });

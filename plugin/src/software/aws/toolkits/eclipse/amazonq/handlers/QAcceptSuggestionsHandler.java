@@ -9,7 +9,7 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.widgets.Display;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 public class QAcceptSuggestionsHandler extends AbstractHandler {
@@ -46,7 +46,7 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
             QInvocationSession.getInstance().executeCallbackForCodeReference();
             QInvocationSession.getInstance().end();
         } catch (BadLocationException e) {
-            PluginLogger.error(e.toString());
+            Activator.getLogger().error(e.toString());
         }
     }
 }

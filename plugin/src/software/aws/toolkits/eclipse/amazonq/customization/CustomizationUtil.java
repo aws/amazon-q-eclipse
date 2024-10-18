@@ -14,7 +14,7 @@ import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationUtil {
@@ -25,11 +25,11 @@ public final class CustomizationUtil {
 
     public static void triggerChangeConfigurationNotification(final Map<String, Object> settings) {
         try {
-            PluginLogger.info("Sending configuration update notification to Amazon Q LSP server");
+            Activator.getLogger().info("Sending configuration update notification to Amazon Q LSP server");
             LspProvider.getAmazonQServer()
             .thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams(settings)));
         } catch (Exception e) {
-            PluginLogger.error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
+            Activator.getLogger().error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
             throw new AmazonQPluginException(e);
         }
     }
@@ -43,7 +43,7 @@ public final class CustomizationUtil {
                     .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
                     .collect(Collectors.toList()))
                 .exceptionally(throwable -> {
-                    PluginLogger.error("Error occurred while fetching the list of customizations", throwable);
+                    Activator.getLogger().error("Error occurred while fetching the list of customizations", throwable);
                     throw new AmazonQPluginException(throwable);
                });
     }

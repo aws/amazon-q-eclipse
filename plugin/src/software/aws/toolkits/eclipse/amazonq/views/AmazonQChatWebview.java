@@ -23,7 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
@@ -76,7 +76,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             commandParser.parseCommand(arguments)
                 .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
         } catch (Exception e) {
-            PluginLogger.error("Error processing message from Browser", e);
+            Activator.getLogger().error("Error processing message from Browser", e);
         }
     }
 
@@ -167,7 +167,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             String json = mapper.writeValueAsString(quickActionCommands);
             return String.format("{\"quickActionCommands\": %s}", json);
         } catch (Exception e) {
-            PluginLogger.warn("Error occurred when json serializing quick action commands", e);
+            Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
             return "";
         }
     }

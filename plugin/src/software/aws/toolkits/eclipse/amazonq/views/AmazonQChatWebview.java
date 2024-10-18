@@ -170,8 +170,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     /*
      * Generates javascript for chat options to be supplied to Chat UI defined here
-     * https://github.com/aws/language-servers/blob/
-     * 785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
+     * https://github.com/aws/language-servers/blob/785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
      */
     private String generateQuickActionConfig() {
         return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
@@ -221,7 +220,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             webviewAssetServer.stop();
         }
         chatCommunicationManager.removeListener();
-//        themeDetector.removeListener();
         super.dispose();
     }
 }

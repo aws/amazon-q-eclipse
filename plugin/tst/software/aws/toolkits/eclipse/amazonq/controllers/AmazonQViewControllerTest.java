@@ -22,7 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
-public class AmazonQViewControllerTest {
+public final class AmazonQViewControllerTest {
     private AmazonQViewController viewController;
     private MockedStatic<Activator> mockedActivator;
     private LoggingService mockedLogger;
@@ -41,20 +41,20 @@ public class AmazonQViewControllerTest {
 
     @ParameterizedTest
     @MethodSource("provideBrowserStyleData")
-    public void getBrowserStyle(PluginPlatform platform, int expectedStyle) {
+    public void getBrowserStyle(final PluginPlatform platform, final int expectedStyle) {
         viewController = new AmazonQViewController(platform);
         assertEquals(expectedStyle, viewController.getBrowserStyle());
     }
 
     private static Stream<Arguments> provideBrowserStyleData() {
-        return Stream.of(Arguments.of(PluginPlatform.WINDOWS, SWT.EDGE), 
+        return Stream.of(Arguments.of(PluginPlatform.WINDOWS, SWT.EDGE),
                 Arguments.of(PluginPlatform.MAC, SWT.WEBKIT),
                 Arguments.of(PluginPlatform.LINUX, SWT.WEBKIT));
     }
 
     @ParameterizedTest
     @MethodSource("provideCompatibilityData")
-    void checkWebViewCompatibility(PluginPlatform platform, String browserType, boolean expectedResult) {
+    void checkWebViewCompatibility(final PluginPlatform platform, final String browserType, final boolean expectedResult) {
         viewController = new AmazonQViewController(platform);
 
         assertFalse(viewController.hasWebViewDependency());

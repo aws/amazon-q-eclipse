@@ -83,7 +83,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     try {
                         chatTheme.injectTheme(browser);
                     } catch (Exception e) {
-                        PluginLogger.info("Error occurred while injecting theme", e);
+                        Activator.getLogger().info("Error occurred while injecting theme", e);
                     }
                 });
             }

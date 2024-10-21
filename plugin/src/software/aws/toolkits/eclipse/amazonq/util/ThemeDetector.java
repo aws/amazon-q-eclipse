@@ -48,7 +48,7 @@ public final class ThemeDetector {
         try {
             themePreferences.flush();
         } catch (Exception e) {
-        	Activator.getLogger().error("Error occurred while setting Amazon Q theme preference", e);
+            Activator.getLogger().error("Error occurred while setting Amazon Q theme preference", e);
         }
     }
 

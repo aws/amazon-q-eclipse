@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.handlers;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -12,7 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview;
 
 public class QOpenChatViewHandler extends AbstractHandler {
     @Override
-    public final Object execute(ExecutionEvent event) {
+    public final Object execute(final ExecutionEvent event) {
         IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         if (window != null) {
             IWorkbenchPage page = window.getActivePage();
@@ -20,7 +23,7 @@ public class QOpenChatViewHandler extends AbstractHandler {
                 try {
                     page.showView(AmazonQChatWebview.ID);
                 } catch (PartInitException e) {
-                    Activator.getLogger().error("Error occurred while opening Amazon Q view", e);
+                    Activator.getLogger().error("Error occurred while opening Amazon Q Chat view", e);
                 }
             }
         }

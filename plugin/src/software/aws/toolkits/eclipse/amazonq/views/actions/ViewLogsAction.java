@@ -1,4 +1,5 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
@@ -11,9 +12,9 @@ import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public class ViewLogsAction extends Action {
+public final class ViewLogsAction extends Action {
 
-    String AMAZON_Q_PLUGIN_ID = "amazon-q-eclipse";
+    private static final String AMAZON_Q_PLUGIN_ID = "amazon-q-eclipse";
 
     public ViewLogsAction() {
         setText("View Logs");
@@ -21,7 +22,7 @@ public class ViewLogsAction extends Action {
 
     @Override
     public void run() {
-		openErrorLog();
+        openErrorLog();
     }
 
     private void openErrorLog() {
@@ -34,7 +35,7 @@ public class ViewLogsAction extends Action {
                 }
             }
         } catch (PartInitException e) {
-        	Activator.getLogger().error("Failed to open Error Log view", e);
+            Activator.getLogger().error("Error occurred while opening Error Log view", e);
         }
     }
 }

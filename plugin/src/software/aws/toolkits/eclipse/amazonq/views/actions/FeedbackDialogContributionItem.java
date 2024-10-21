@@ -2,9 +2,7 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.PlatformUI;
 
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;

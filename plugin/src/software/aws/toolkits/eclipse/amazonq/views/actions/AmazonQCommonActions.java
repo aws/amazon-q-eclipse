@@ -22,7 +22,6 @@ public final class AmazonQCommonActions {
     private ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
     private OpenCodeReferenceLogAction openCodeReferenceLogAction;
     private OpenUserGuideAction openUserGuideAction;
-    private AboutAction aboutAction;
     private ViewSourceAction viewSourceAction;
     private ViewLogsAction viewLogsAction;
     private ReportAnIssueAction reportAnIssueAction;
@@ -60,7 +59,6 @@ public final class AmazonQCommonActions {
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
         toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem(viewSite);
         openUserGuideAction = new OpenUserGuideAction();
-        aboutAction = new AboutAction();
         viewSourceAction = new ViewSourceAction();
         viewLogsAction = new ViewLogsAction();
         reportAnIssueAction = new ReportAnIssueAction();
@@ -81,7 +79,6 @@ public final class AmazonQCommonActions {
         IMenuManager helpSubMenu = new MenuManager("Help");
         helpSubMenu.add(openUserGuideAction);
         helpSubMenu.add(new Separator());
-        helpSubMenu.add(aboutAction);
         helpSubMenu.add(viewSourceAction);
         helpSubMenu.add(viewLogsAction);
 

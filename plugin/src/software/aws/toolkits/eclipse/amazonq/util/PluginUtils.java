@@ -124,7 +124,7 @@ public final class PluginUtils {
                 PluginUtils.openWebpage(link);
             }
         } catch (Exception ex) {
-        	Activator.getLogger().error("Failed to open url in browser", ex);
+            Activator.getLogger().error("Failed to open url in browser", ex);
         }
     }
 }

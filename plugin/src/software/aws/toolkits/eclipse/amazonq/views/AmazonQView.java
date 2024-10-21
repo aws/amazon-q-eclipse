@@ -13,17 +13,15 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart {
 
-    private boolean hasWebviewDependency = false;
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
             AmazonQChatWebview.ID,
@@ -33,6 +31,11 @@ public abstract class AmazonQView extends ViewPart {
     private Browser browser;
     private AmazonQCommonActions amazonQCommonActions;
     private AuthStatusChangedListener authStatusChangedListener;
+    private AmazonQViewController viewController;
+
+    protected AmazonQView() {
+        this.viewController = new AmazonQViewController();
+    }
 
     public static void showView(final String viewId) {
         if (!AMAZON_Q_VIEWS
@@ -98,28 +101,13 @@ public abstract class AmazonQView extends ViewPart {
      * @param parent
      */
     protected final boolean setupBrowser(final Composite parent) {
-        var browser = new Browser(parent, getBrowserStyle());
-        hasWebviewDependency = hasWebviewDependency(browser);
+        var browser = new Browser(parent, viewController.getBrowserStyle());
+        viewController.checkWebViewCompatibility(browser.getBrowserType());
         // only set the browser if compatible webview browser can be found for the platform
-        if (hasWebviewDependency) {
+        if (viewController.hasWebViewDependency()) {
             this.browser = browser;
         }
-        return hasWebviewDependency;
-    }
-
-    /*
-     * Determines whether the browser type supports rendering webviews for the current platform
-     * Note: For windows, edge is expected, an absence of which indicates missing WebView2 runtime installation
-     * For linux, webkit is expected, an absence of which indicates missing webkit installation
-     * @param browser
-     */
-    private boolean hasWebviewDependency(final Browser browser) {
-        String expectedType = PluginUtils.getPlatform() == PluginPlatform.WINDOWS ? "edge" : "webkit";
-        var result = expectedType.equalsIgnoreCase(browser.getBrowserType());
-        if (!result) {
-            Activator.getLogger().info("Browser detected:" + browser.getBrowserType() + " is not of expected type: " + expectedType);
-        }
-        return result;
+        return viewController.hasWebViewDependency();
     }
 
     protected final void showDependencyMissingView() {
@@ -130,14 +118,6 @@ public abstract class AmazonQView extends ViewPart {
                 Activator.getLogger().error("Error occured while attempting to show missing webview dependencies view", e);
             }
         });
-    }
-
-    private int getBrowserStyle() {
-        var platform = PluginUtils.getPlatform();
-        if (platform == PluginPlatform.WINDOWS) {
-            return SWT.EDGE;
-        }
-        return SWT.WEBKIT;
     }
 
     private void setupActions(final Browser browser, final LoginDetails loginDetails) {
@@ -153,7 +133,7 @@ public abstract class AmazonQView extends ViewPart {
 
     @Override
     public final void setFocus() {
-        if (!hasWebviewDependency) {
+        if (!viewController.hasWebViewDependency()) {
             return;
         }
         browser.setFocus();

@@ -41,6 +41,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private ChatCommunicationManager chatCommunicationManager;
 
     public AmazonQChatWebview() {
+        super();
         this.commandParser = new LoginViewCommandParser();
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);

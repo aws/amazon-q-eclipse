@@ -30,6 +30,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private final ViewActionHandler actionHandler;
 
     public ToolkitLoginWebview() {
+        super();
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new LoginViewActionHandler();
     }

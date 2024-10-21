@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
@@ -22,9 +25,15 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
-
 public class DependencyMissingView extends ViewPart {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView";
+    private static final String EDGE_INSTALL = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
+    private static final String WEBKIT_INSTALL = "https://webkitgtk.org/";
+    private static final String EDGE_LEARN_MORE =
+            "https://git.eclipse.org/r/plugins/gitiles/platform/eclipse.platform.swt/+/refs/heads/master/bundles/org.eclipse.swt/Readme.WebView2.md";
+    private static final String WEBKIT_LEARN_MORE =
+            "https://git.eclipse.org/r/plugins/gitiles/platform/eclipse.platform.swt/+/refs/heads/master/bundles/org.eclipse.swt/Readme.Linux.md";
+
     private Composite parentComposite;
     private PluginPlatform platform;
 
@@ -86,15 +95,12 @@ public class DependencyMissingView extends ViewPart {
     }
 
     private String getInstallUrl() {
-        return platform == PluginPlatform.WINDOWS ? "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
-                : "https://webkitgtk.org/";
+        return platform == PluginPlatform.WINDOWS ? EDGE_INSTALL : WEBKIT_INSTALL;
 
     }
 
     private String getLearnMoreUrl() {
-        return platform == PluginPlatform.WINDOWS
-                ? "https://git.eclipse.org/r/plugins/gitiles/platform/eclipse.platform.swt/+/refs/heads/master/bundles/org.eclipse.swt/Readme.WebView2.md"
-                : "https://git.eclipse.org/r/plugins/gitiles/platform/eclipse.platform.swt/+/refs/heads/master/bundles/org.eclipse.swt/Readme.Linux.md";
+        return platform == PluginPlatform.WINDOWS ? EDGE_LEARN_MORE : WEBKIT_LEARN_MORE;
     }
 
     private SelectionAdapter openSelectionInWeb() {

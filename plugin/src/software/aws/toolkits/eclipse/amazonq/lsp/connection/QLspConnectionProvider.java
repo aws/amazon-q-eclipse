@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -22,8 +21,9 @@ import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 @Component(service = QLspConnectionProvider.class)
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
-    @Activate
-    public QLspConnectionProvider(@Reference final LspManager lspManager) throws IOException {
+    @Reference private LspManager lspManager;
+
+    public QLspConnectionProvider() throws IOException {
         super();
         List<String> commands = new ArrayList<>();
         commands.add(lspManager.getLspInstallation().nodeExecutable().toString());

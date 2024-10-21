@@ -13,12 +13,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
         scope = ServiceScope.SINGLETON)
 public final class DefaultLspManagerProvider {
 
-    private final LspFetcher lspFetcher;
-
     @Reference
-    public DefaultLspManagerProvider(final LspFetcher lspFetcher) {
-        this.lspFetcher = lspFetcher;
-    }
+    private LspFetcher lspFetcher;
 
     public LspManager getLspManager() {
         return DefaultLspManager.builder()

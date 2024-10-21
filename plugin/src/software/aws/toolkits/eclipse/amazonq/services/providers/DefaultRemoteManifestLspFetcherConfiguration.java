@@ -17,7 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
         scope = ServiceScope.SINGLETON)
 public final class DefaultRemoteManifestLspFetcherConfiguration implements RemoteManifestLspFetcherConfigurable {
 
-    @Reference private final HttpClient httpClient;
+    @Reference private HttpClient httpClient;
 //    private final ObjectMapper objectMapper;
 
 //    @Reference

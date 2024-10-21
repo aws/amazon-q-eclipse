@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -20,8 +19,9 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 @Component(service = AuthLspConnectionProvider.class)
 public class AuthLspConnectionProvider extends AbstractLspConnectionProvider {
 
-    @Activate
-    public AuthLspConnectionProvider(@Reference final LspManager lspManager) throws IOException, URISyntaxException {
+    @Reference private LspManager lspManager;
+
+    public AuthLspConnectionProvider() throws IOException, URISyntaxException {
         super();
         var authJs = PluginUtils.getResource("auth/packages/server/dist/index.js");
         var authJsPath = Path.of(authJs.toURI()).toString();

@@ -101,7 +101,7 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-            return OBJECT_MAPPER.readValue(response.body(), Manifest.class);
+            return objectMapper.readValue(response.body(), Manifest.class);
         } else {
             throw new AmazonQPluginException("Unexpected response code when fetching manifest: " + response.statusCode());
         }

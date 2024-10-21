@@ -1,9 +1,10 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.chat.models;
 
 // See examples in https://github.com/aws/mynah-ui/blob/main/docs/STYLING.md
-public enum MynahCssVariable {
+public enum QChatCssVariable {
     // Text
     TextColorDefault("--mynah-color-text-default"),
     TextColorStrong("--mynah-color-text-strong"),
@@ -47,7 +48,7 @@ public enum MynahCssVariable {
 
     private String value;
 
-    MynahCssVariable(final String name) {
+    QChatCssVariable(final String name) {
         this.value = name;
     }
 

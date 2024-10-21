@@ -9,7 +9,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public class ViewLogsAction extends Action {
 
@@ -34,7 +34,7 @@ public class ViewLogsAction extends Action {
                 }
             }
         } catch (PartInitException e) {
-            PluginLogger.error("Failed to open Error Log view", e);
+        	Activator.getLogger().error("Failed to open Error Log view", e);
         }
     }
 }

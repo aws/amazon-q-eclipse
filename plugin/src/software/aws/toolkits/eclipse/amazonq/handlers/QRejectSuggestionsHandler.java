@@ -12,14 +12,13 @@ public class QRejectSuggestionsHandler extends AbstractHandler {
 
     @Override
     public final boolean isEnabled() {
-        return QInvocationSession.getInstance().isPreviewingSuggestions();
+        return QInvocationSession.getInstance().isActive();
     }
 
     @Override
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
         QInvocationSession.getInstance().transitionToDecisionMade();
-        QInvocationSession.getInstance().end();
+        QInvocationSession.getInstance().endImmediately();
         return null;
     }
 }
-

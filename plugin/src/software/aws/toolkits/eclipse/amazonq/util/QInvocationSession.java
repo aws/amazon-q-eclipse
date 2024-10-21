@@ -3,20 +3,20 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CaretListener;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.osgi.service.prefs.Preferences;
+
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
@@ -25,8 +25,10 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import java.util.List;
 import java.util.Stack;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
@@ -41,7 +43,6 @@ public final class QInvocationSession extends QResource {
 
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
-    private AtomicInteger requestsInFlight = new AtomicInteger(0);
     private boolean suggestionAccepted = false;
 
     private QSuggestionsContext suggestionsContext = null;
@@ -61,6 +62,7 @@ public final class QInvocationSession extends QResource {
     private boolean isTabOnly = false;
     private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Consumer<Integer> unsetVerticalIndent;
+    private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -71,23 +73,27 @@ public final class QInvocationSession extends QResource {
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
-            IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
-            boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
-            boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
-            boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+            Preferences eclipseUIPrefs = Platform.getPreferencesService().getRootNode()
+                    .node(InstanceScope.SCOPE)
+                    .node("org.eclipse.jdt.ui");
+            boolean isBracesSetToAutoClose = eclipseUIPrefs.getBoolean("closeBraces", true);
+            boolean isBracketsSetToAutoClose = eclipseUIPrefs.getBoolean("closeBrackets", true);
+            boolean isStringSetToAutoClose = eclipseUIPrefs.getBoolean("closeStrings", true);
 
             // We'll also need tab sizes since suggestions do not take that into account
             // and is only given in spaces
-            IEclipsePreferences tabPref = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.core");
-            instance.tabSize = tabPref.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
-            instance.isTabOnly = tabPref.getBoolean("use_tabs_only_for_leading_indentations", true);
+            Preferences eclipseCorePrefs = Platform.getPreferencesService().getRootNode()
+                    .node(InstanceScope.SCOPE)
+                    .node("org.eclipse.jdt.core");
+            instance.tabSize = eclipseCorePrefs.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
+            instance.isTabOnly = eclipseCorePrefs.getBoolean("use_tabs_only_for_leading_indentations", true);
 
             PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
                 @Override
                 public boolean preShutdown(final IWorkbench workbench, final boolean forced) {
-                    preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
-                    preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
-                    preferences.putBoolean("closeStrings", isStringSetToAutoClose);
+                    eclipseUIPrefs.putBoolean("closeBraces", isBracesSetToAutoClose);
+                    eclipseUIPrefs.putBoolean("closeBrackets", isBracketsSetToAutoClose);
+                    eclipseUIPrefs.putBoolean("closeStrings", isStringSetToAutoClose);
                     return true;
                 }
 
@@ -103,8 +109,19 @@ public final class QInvocationSession extends QResource {
     // TODO: separation of concerns between session attributes, session management,
     // and remote invocation logic
     // Method to start the session
-    public synchronized boolean start(final ITextEditor editor) {
+    public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
+            try {
+                if (!DefaultLoginService.getInstance().getLoginDetails().get().getIsLoggedIn()) {
+                    this.end();
+                    return false;
+                } else {
+                    DefaultLoginService.getInstance().updateToken();
+                }
+            } catch (InterruptedException e) {
+                Activator.getLogger().info("Invocation start interrupted", e);
+                return false;
+            }
             System.out.println("Session starting");
             state = QInvocationSessionState.INVOKING;
 
@@ -119,7 +136,7 @@ public final class QInvocationSession extends QResource {
             var widget = viewer.getTextWidget();
 
             suggestionsContext = new QSuggestionsContext();
-            inlineTextFont = getInlineTextFont(widget);
+            inlineTextFont = QEclipseEditorUtils.getInlineTextFont(widget, Q_INLINE_HINT_TEXT_STYLE);
             invocationOffset = widget.getCaretOffset();
             invocationTimeInMs = System.currentTimeMillis();
             System.out.println("Session started.");
@@ -141,7 +158,7 @@ public final class QInvocationSession extends QResource {
             widget.addPaintListener(paintListener);
         }
 
-        inputListener = new QInlineInputListener(widget);
+        inputListener = QEclipseEditorUtils.getInlineInputListener(widget);
         widget.addVerifyListener(inputListener);
         widget.addVerifyKeyListener(inputListener);
         widget.addMouseListener(inputListener);
@@ -152,7 +169,6 @@ public final class QInvocationSession extends QResource {
 
     public void invoke(final int invocationOffset) {
         var session = QInvocationSession.getInstance();
-        requestsInFlight.incrementAndGet();
 
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
@@ -161,13 +177,11 @@ public final class QInvocationSession extends QResource {
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
             Activator.getLogger().error("Unable to compute inline completion request from document", e);
-            requestsInFlight.decrementAndGet();
         }
     }
 
     public void invoke() {
         var session = QInvocationSession.getInstance();
-        requestsInFlight.incrementAndGet();
 
         try {
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
@@ -180,16 +194,9 @@ public final class QInvocationSession extends QResource {
     }
 
     private void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
-        ThreadingUtils.executeAsyncTask(() -> {
+        var uuid = UUID.randomUUID();
+        var future = ThreadingUtils.executeAsyncTaskAndReturnFuture(() -> {
             try {
-                if (!DefaultLoginService.getInstance().getLoginDetails().get().getIsLoggedIn()) {
-                    requestsInFlight.decrementAndGet();
-                    this.end();
-                    return;
-                } else {
-                    DefaultLoginService.getInstance().updateToken();
-                }
-
                 var session = QInvocationSession.getInstance();
 
                 List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
@@ -203,10 +210,10 @@ public final class QInvocationSession extends QResource {
                             }
                             return item;
                         }).collect(Collectors.toList())).get();
+                unresolvedTasks.remove(uuid);
 
                 Display.getDefault().asyncExec(() -> {
                     if (newSuggestions == null || newSuggestions.isEmpty()) {
-                        requestsInFlight.decrementAndGet();
                         if (!session.isPreviewingSuggestions()) {
                             end();
                         }
@@ -225,7 +232,6 @@ public final class QInvocationSession extends QResource {
                     var widget = session.getViewer().getTextWidget();
                     int currentOffset = widget.getCaretOffset();
                     if (currentOffset < invocationOffset) {
-                        requestsInFlight.decrementAndGet();
                         end();
                         return;
                     } else if (currentOffset > invocationOffset) {
@@ -242,7 +248,6 @@ public final class QInvocationSession extends QResource {
                     if (invocationOffset != currentOffset && !hasAMatch) {
                         System.out.println(
                                 "invocation offset: " + invocationOffset + "\ncurrent offset: " + currentOffset);
-                        requestsInFlight.decrementAndGet();
                         end();
                         return;
                     }
@@ -266,31 +271,21 @@ public final class QInvocationSession extends QResource {
                     attachListeners();
                     session.primeListeners();
                     session.getViewer().getTextWidget().redraw();
-                    requestsInFlight.decrementAndGet();
                 });
             } catch (InterruptedException e) {
                 System.out.println("Query InterruptedException: " + e.getMessage());
                 Activator.getLogger().error("Inline completion interrupted", e);
-                requestsInFlight.decrementAndGet();
             } catch (ExecutionException e) {
                 System.out.println("Query ExecutionException: " + e.getMessage());
                 Activator.getLogger().error("Error executing inline completion", e);
-                requestsInFlight.decrementAndGet();
             }
         });
-    }
-
-    private Font getInlineTextFont(final StyledText widget) {
-        FontData[] fontData = widget.getFont().getFontData();
-        for (FontData fontDatum : fontData) {
-            fontDatum.setStyle(Q_INLINE_HINT_TEXT_STYLE);
-        }
-        return new Font(widget.getDisplay(), fontData);
+        unresolvedTasks.put(uuid, future);
     }
 
     // Method to end the session
-    public synchronized void end() {
-        if (isActive() && requestsInFlight.get() == 0) {
+    public void end() {
+        if (isActive() && unresolvedTasks.isEmpty()) {
             // Get the current thread's stack trace
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 
@@ -299,14 +294,21 @@ public final class QInvocationSession extends QResource {
             for (StackTraceElement element : stackTraceElements) {
                 System.out.println(element);
             }
-            System.out.println("Requests in flight: " + requestsInFlight.get());
             dispose();
             state = QInvocationSessionState.INACTIVE;
             // End session logic here
             System.out.println("Session ended.");
-        } else if (requestsInFlight.get() > 0) {
+        } else if (!unresolvedTasks.isEmpty()) {
             System.out.println(
-                    "Session cannot be ended because there are " + requestsInFlight.get() + " requests in flight");
+                    "Session cannot be ended because there are " + unresolvedTasks.size() + " requests in flight");
+        }
+    }
+
+    public void endImmediately() {
+        if (isActive()) {
+            dispose();
+            state = QInvocationSessionState.INACTIVE;
+            System.out.println("Session terminated");
         }
     }
 
@@ -494,6 +496,20 @@ public final class QInvocationSession extends QResource {
         return ((QInlineCaretListener) caretListener).getLastKnownLine();
     }
 
+    public void awaitAllUnresolvedTasks() throws ExecutionException {
+        List<Future<?>> tasks = unresolvedTasks.values().stream().toList();
+        for (Future<?> future : tasks) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                // Propagate the execution exception
+                throw e;
+            }
+        }
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
@@ -503,9 +519,17 @@ public final class QInvocationSession extends QResource {
         inlineTextFont.dispose();
         inlineTextFont = null;
         closingBrackets = null;
-        requestsInFlight = new AtomicInteger(0);
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
+        unresolvedTasks.forEach((uuid, task) -> {
+            boolean cancelled = task.cancel(true);
+            if (cancelled) {
+                System.out.println("Cancelled task with uuid " + uuid);
+            } else {
+                System.out.println("Failed to cancel task with uuid " + uuid);
+            }
+        });
+        unresolvedTasks.clear();
         if (inputListener != null) {
             inputListener.beforeRemoval();
             widget.removeVerifyListener(inputListener);

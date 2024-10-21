@@ -57,6 +57,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 Map<String, Boolean> cwConfig = new HashMap<>();
                 boolean shareContentSetting = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.Q_DATA_SHARING);
                 cwConfig.put(Constants.LSP_CW_OPT_OUT_KEY, shareContentSetting);
+                cwConfig.put(Constants.LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY, false);
                 output.add(cwConfig);
             }
         });

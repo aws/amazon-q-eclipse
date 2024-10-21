@@ -11,6 +11,7 @@ public final class Constants {
 
     public static final String CUSTOMIZATION_STORAGE_INTERNAL_KEY = "aws.q.customization.eclipse";
     public static final String LSP_CUSTOMIZATION_CONFIGURATION_KEY = "customization";
+    public static final String LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY = "enableTelemetryEvents";
     public static final String LSP_Q_CONFIGURATION_KEY = "aws.q";
     public static final String LSP_CW_CONFIGURATION_KEY = "aws.codeWhisperer";
     public static final String LSP_CW_OPT_OUT_KEY = "shareCodeWhispererContentWithAWS";

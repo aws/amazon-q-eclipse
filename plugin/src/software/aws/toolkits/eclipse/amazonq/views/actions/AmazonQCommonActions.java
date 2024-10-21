@@ -87,6 +87,10 @@ public final class AmazonQCommonActions {
 
         manager.add(openCodeReferenceLogAction);
         manager.add(new Separator());
+        manager.add(changeThemeAction);
+        manager.add(toggleAutoTriggerContributionItem);
+        manager.add(customizationDialogContributionItem);
+        manager.add(new Separator());
         manager.add(feedbackSubMenu);
         manager.add(helpSubMenu);
         manager.add(new Separator());

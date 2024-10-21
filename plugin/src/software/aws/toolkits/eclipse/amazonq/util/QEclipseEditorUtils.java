@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
+
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -13,6 +15,8 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.ui.IEditorInput;
 
 import org.eclipse.jface.viewers.ISelection;
@@ -210,5 +214,17 @@ public final class QEclipseEditorUtils {
             throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
         }
         return null;
+    }
+
+    public static Font getInlineTextFont(final StyledText widget, final int inlineTextStyle) {
+        FontData[] fontData = widget.getFont().getFontData();
+        for (FontData fontDatum : fontData) {
+            fontDatum.setStyle(Q_INLINE_HINT_TEXT_STYLE);
+        }
+        return new Font(widget.getDisplay(), fontData);
+    }
+
+    public static QInlineInputListener getInlineInputListener(final StyledText widget) {
+        return new QInlineInputListener(widget);
     }
 }

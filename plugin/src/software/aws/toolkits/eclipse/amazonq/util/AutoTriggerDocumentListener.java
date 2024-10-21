@@ -7,6 +7,8 @@ import org.eclipse.jface.text.IDocumentListener;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
+import java.util.concurrent.ExecutionException;
+
 public final class AutoTriggerDocumentListener implements IDocumentListener, IAutoTriggerListener {
 
     @Override
@@ -22,7 +24,11 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
         }
         if (!qSes.isActive()) {
             var editor = getActiveTextEditor();
-            qSes.start(editor);
+            try {
+                qSes.start(editor);
+            } catch (ExecutionException e1) {
+                return;
+            }
         }
         qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset() + e.getText().length());
     }

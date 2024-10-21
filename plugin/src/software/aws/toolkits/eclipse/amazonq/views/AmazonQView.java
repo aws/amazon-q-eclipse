@@ -23,9 +23,11 @@ import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart {
 
+    private boolean hasWebviewDependency = false;
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
-            AmazonQChatWebview.ID
+            AmazonQChatWebview.ID,
+            DependencyMissingView.ID
         );
 
     private Browser browser;
@@ -41,14 +43,6 @@ public abstract class AmazonQView extends ViewPart {
 
         IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
         if (page != null) {
-            // Show requested view
-            try {
-                page.showView(viewId);
-                Activator.getLogger().info("Showing view " + viewId);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error occurred while showing view " + viewId, e);
-            }
-
             // Hide all other Amazon Q Views
             IViewReference[] viewReferences = page.getViewReferences();
             for (IViewReference viewRef : viewReferences) {
@@ -59,6 +53,13 @@ public abstract class AmazonQView extends ViewPart {
                         Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
                     }
                 }
+            }
+            // Show requested view
+            try {
+                page.showView(viewId);
+                Activator.getLogger().info("Showing view " + viewId);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occurred while showing view " + viewId, e);
             }
         }
     }
@@ -73,19 +74,62 @@ public abstract class AmazonQView extends ViewPart {
 
     protected abstract void handleAuthStatusChange(LoginDetails loginDetails);
 
-    protected final void setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
-        setupBrowser(parent);
+    protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
+        // if browser setup fails, don't set up rest of the content
+        if (!setupBrowser(parent)) {
+            return false;
+        }
+        setupBrowserBackground(parent);
         setupActions(browser, loginDetails);
         setupAuthStatusListeners();
+        return true;
     }
 
-    private void setupBrowser(final Composite parent) {
-        browser = new Browser(parent, getBrowserStyle());
+    private void setupBrowserBackground(final Composite parent) {
         Display display = Display.getCurrent();
         Color black = display.getSystemColor(SWT.COLOR_BLACK);
-
-        browser.setBackground(black);
         parent.setBackground(black);
+        browser.setBackground(black);
+    }
+
+    /*
+     * Sets up the browser compatible with the platform
+     * returns boolean representing whether a browser type compatible with webview rendering for the current platform is found
+     * @param parent
+     */
+    protected final boolean setupBrowser(final Composite parent) {
+        var browser = new Browser(parent, getBrowserStyle());
+        hasWebviewDependency = hasWebviewDependency(browser);
+        // only set the browser if compatible webview browser can be found for the platform
+        if (hasWebviewDependency) {
+            this.browser = browser;
+        }
+        return hasWebviewDependency;
+    }
+
+    /*
+     * Determines whether the browser type supports rendering webviews for the current platform
+     * Note: For windows, edge is expected, an absence of which indicates missing WebView2 runtime installation
+     * For linux, webkit is expected, an absence of which indicates missing webkit installation
+     * @param browser
+     */
+    private boolean hasWebviewDependency(final Browser browser) {
+        String expectedType = PluginUtils.getPlatform() == PluginPlatform.WINDOWS ? "edge" : "webkit";
+        var result = expectedType.equalsIgnoreCase(browser.getBrowserType());
+        if (!result) {
+            Activator.getLogger().info("Browser detected:" + browser.getBrowserType() + " is not of expected type: " + expectedType);
+        }
+        return result;
+    }
+
+    protected final void showDependencyMissingView() {
+        Display.getCurrent().asyncExec(() -> {
+            try {
+                showView(DependencyMissingView.ID);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occured while attempting to show missing webview dependencies view", e);
+            }
+        });
     }
 
     private int getBrowserStyle() {
@@ -109,6 +153,9 @@ public abstract class AmazonQView extends ViewPart {
 
     @Override
     public final void setFocus() {
+        if (!hasWebviewDependency) {
+            return;
+        }
         browser.setFocus();
     }
 

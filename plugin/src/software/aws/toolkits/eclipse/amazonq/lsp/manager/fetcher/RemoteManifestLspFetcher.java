@@ -20,12 +20,10 @@ import org.osgi.framework.VersionRange;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
-import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
-import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.services.api.RemoteManifestLspFetcherConfigurable;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
@@ -33,23 +31,24 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 public final class RemoteManifestLspFetcher implements LspFetcher {
 
     private static final int TIMEOUT_SECONDS = 10;
-    private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
 
     private final String manifestUrl;
     private final VersionRange versionRange;
     private final boolean integrityChecking;
     private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
-    private RemoteManifestLspFetcher(final Builder builder) {
-        this.manifestUrl = builder.manifestUrl;
-        this.versionRange = builder.versionRange != null ? builder.versionRange : LspConstants.LSP_SUPPORTED_VERSION_RANGE;
-        this.integrityChecking = builder.integrityChecking != null ? builder.integrityChecking : true;
-        this.httpClient = builder.httpClient != null ? builder.httpClient : HttpClientFactory.getInstance();
+    public RemoteManifestLspFetcher(final RemoteManifestLspFetcherConfigurable newConfig) {
+        manifestUrl = newConfig.getManifestUrl();
+        versionRange = newConfig.getVersionRange();
+        integrityChecking = newConfig.isIntegrityCheckingEnabled();
+        httpClient = newConfig.getHttpClient();
+        objectMapper = newConfig.getObjectMapper();
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+//    public static Builder builder() {
+//        return new Builder();
+//    }
 
     @Override
     public boolean fetch(final PluginPlatform platform, final PluginArchitecture architecture, final Path destination) {
@@ -110,7 +109,6 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
 
     private void downloadFile(final String fileUrl, final Path destination, final String filename, final List<String> expectedHashes)
             throws IOException, InterruptedException, NoSuchAlgorithmException {
-        var httpClient = HttpClient.newHttpClient();
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(fileUrl))
                 .timeout(java.time.Duration.ofSeconds(TIMEOUT_SECONDS))
@@ -145,35 +143,35 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
         }
     }
 
-    public static class Builder {
-        private String manifestUrl;
-        private VersionRange versionRange;
-        private Boolean integrityChecking;
-        private HttpClient httpClient;
-
-        public final Builder withManifestUrl(final String manifestUrl) {
-            this.manifestUrl = manifestUrl;
-            return this;
-        }
-
-        public final Builder withVersionRange(final VersionRange versionRange) {
-            this.versionRange = versionRange;
-            return this;
-        }
-
-        public final Builder withIntegrityChecking(final boolean integrityChecking) {
-            this.integrityChecking = integrityChecking;
-            return this;
-        }
-
-        public final Builder withHttpClient(final HttpClient httpClient) {
-            this.httpClient = httpClient;
-            return this;
-        }
-
-        public final RemoteManifestLspFetcher build() {
-            return new RemoteManifestLspFetcher(this);
-        }
-    }
+//    public static class Builder {
+//        private String manifestUrl;
+//        private VersionRange versionRange;
+//        private Boolean integrityChecking;
+//        private HttpClient httpClient;
+//
+//        public final Builder withManifestUrl(final String manifestUrl) {
+//            this.manifestUrl = manifestUrl;
+//            return this;
+//        }
+//
+//        public final Builder withVersionRange(final VersionRange versionRange) {
+//            this.versionRange = versionRange;
+//            return this;
+//        }
+//
+//        public final Builder withIntegrityChecking(final boolean integrityChecking) {
+//            this.integrityChecking = integrityChecking;
+//            return this;
+//        }
+//
+//        public final Builder withHttpClient(final HttpClient httpClient) {
+//            this.httpClient = httpClient;
+//            return this;
+//        }
+//
+//        public final RemoteManifestLspFetcher build() {
+//            return new RemoteManifestLspFetcher(this);
+//        }
+//    }
 
 }

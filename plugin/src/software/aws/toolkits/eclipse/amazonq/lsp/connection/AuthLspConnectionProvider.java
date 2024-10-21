@@ -10,16 +10,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
+@Component(service = AuthLspConnectionProvider.class)
 public class AuthLspConnectionProvider extends AbstractLspConnectionProvider {
 
-    public AuthLspConnectionProvider() throws IOException, URISyntaxException {
+    @Activate
+    public AuthLspConnectionProvider(@Reference final LspManager lspManager) throws IOException, URISyntaxException {
         super();
         var authJs = PluginUtils.getResource("auth/packages/server/dist/index.js");
         var authJsPath = Path.of(authJs.toURI()).toString();
-        var lspManager = LspManagerProvider.getInstance();
 
         List<String> commands = new ArrayList<>();
         commands.add(lspManager.getLspInstallation().nodeExecutable().toString());

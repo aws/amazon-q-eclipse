@@ -48,20 +48,22 @@
     <extension
         point="org.eclipse.lsp4e.languageServer">
         <server
-            class="software.aws.toolkits.eclipse.amazonq.lsp.connection.QLspConnectionProvider"
+            class="software.aws.toolkits.eclipse.amazonq.lsp.connection.QLspConnectionProviderFactory"
             clientImpl="software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspClientImpl"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
             label="Amazon Q Language Server"
             launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServerBuilder"
             singleton="true">
+            <factoryMethod>createProvider</factoryMethod>
         </server>
         <server
-            class="software.aws.toolkits.eclipse.amazonq.lsp.connection.AuthLspConnectionProvider"
+            class="software.aws.toolkits.eclipse.amazonq.lsp.connection.AuthLspConnectionProviderFactory"
             clientImpl="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspClientImpl"
             id="software.aws.toolkits.eclipse.amazonq.authServer"
             label="Auth LSP Server"
             launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspServerBuilder"
             singleton="true">
+            <factoryMethod>createProvider</factoryMethod>
         </server>
         <contentTypeMapping
             contentType="org.eclipse.jdt.core.javaSource"

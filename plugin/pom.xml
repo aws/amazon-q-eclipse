@@ -19,6 +19,7 @@
         <node.version>v20.9.0</node.version>
         <npm.version>10.1.0</npm.version>
         <jackson.version>2.17.2</jackson.version>
+        <maven.compiler.release>17</maven.compiler.release>
     </properties>
 
     <repositories>

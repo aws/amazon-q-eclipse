@@ -3,19 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-import org.eclipse.jface.action.Action;
+import software.aws.toolkits.eclipse.amazonq.views.model.ExternalLink;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-
-public final class ViewSourceAction extends Action {
+public final class ViewSourceAction extends OpenUrlAction {
 
     public ViewSourceAction() {
-        setText("View Source on Github");
+        super("View Source on Github", ExternalLink.GitHubRepo);
     }
 
-    @Override
-    public void run() {
-        String link = "https://github.com/aws/amazon-q-eclipse";
-        PluginUtils.handleExternalLinkClick(link);
-    }
 }

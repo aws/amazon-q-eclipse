@@ -3,19 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-import org.eclipse.jface.action.Action;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.views.model.ExternalLink;
 
-public final class ReportAnIssueAction extends Action {
+public final class ReportAnIssueAction extends OpenUrlAction {
 
     public ReportAnIssueAction() {
-        setText("Report an Issue");
-    }
-
-    @Override
-    public void run() {
-        String link = "https://github.com/aws/amazon-q-eclipse/issues";
-        PluginUtils.handleExternalLinkClick(link);
+        super("Report an Issue", ExternalLink.GitHubIssues);
     }
 }

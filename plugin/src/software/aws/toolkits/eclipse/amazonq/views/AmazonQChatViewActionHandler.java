@@ -120,17 +120,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         }
     }
 
-    private void handleExternalLinkClick(final String link) {
-        try {
-            var result = PluginUtils.showConfirmDialog("Amazon Q", "Do you want to open the external website?\n\n" + link);
-            if (result) {
-                PluginUtils.openWebpage(link);
-            }
-        } catch (Exception ex) {
-            Activator.getLogger().error("Failed to open url in browser", ex);
-        }
-    }
-
     /*
      *   Inserts the text present in parameters at caret position in editor
      *   and returns cursor state range from the start caret to end caret, which includes the entire inserted text range

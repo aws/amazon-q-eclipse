@@ -42,11 +42,11 @@ public final class ThemeDetector {
     }
 
     private void setThemePreference(final String theme) {
-        PluginStore.put(THEME_KEY_FOR_AMAZON_Q, theme);
+        PluginStore.getInstance().put(THEME_KEY_FOR_AMAZON_Q, theme);
     }
 
     private Optional<Boolean> isDarkThemeFromAmazonQPreferences() {
-        String theme = PluginStore.get(THEME_KEY_FOR_ECLIPSE);
+        String theme = PluginStore.getInstance().get(THEME_KEY_FOR_ECLIPSE);
 
         if (theme == null || theme.isBlank()) {
             return Optional.empty();

@@ -42,6 +42,10 @@ public class DependencyMissingView extends ViewPart {
         platform = PluginUtils.getPlatform();
         this.parentComposite = parent;
         var layout = new GridLayout(1, false);
+        layout.marginLeft = 20;
+        layout.marginRight = 20;
+        layout.marginTop = 10;
+        layout.marginBottom = 10;
         parent.setLayout(layout);
 
         var contentComposite = new Composite(parent, SWT.NONE);
@@ -53,14 +57,13 @@ public class DependencyMissingView extends ViewPart {
 
         // set up q icon
         var iconLabel = new Label(contentComposite, SWT.NONE);
-        Image originalIcon = loadImage("icons/AmazonQ.png");
-        Image resizedIcon = resizeImage(originalIcon, 64, 64);
-        iconLabel.setImage(resizedIcon);
+        Image icon = loadImage("icons/AmazonQ64.png");
+        iconLabel.setImage(icon);
         iconLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
 
         iconLabel.addDisposeListener(e -> {
-            if (resizedIcon != null && !resizedIcon.isDisposed()) {
-                resizedIcon.dispose();
+            if (icon != null && !icon.isDisposed()) {
+                icon.dispose();
             }
         });
 
@@ -68,7 +71,14 @@ public class DependencyMissingView extends ViewPart {
         var header = new Label(contentComposite,  SWT.CENTER | SWT.WRAP);
         header.setText("Amazon Q requires " + getDependency() + ", install and restart Eclipse to proceed");
         header.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        header.setFont(magnifyFontSize(parent.getFont(), 18));
+        var font = magnifyFontSize(parent.getFont(), 18);
+        header.setFont(font);
+
+        header.addDisposeListener(e -> {
+            if (font != null && !font.isDisposed()) {
+                font.dispose();
+            }
+        });
 
         // setup additional text
         var textLabel = new Label(contentComposite,  SWT.CENTER | SWT.WRAP);
@@ -118,14 +128,6 @@ public class DependencyMissingView extends ViewPart {
                 }
             }
         };
-    }
-
-    private Image resizeImage(final Image image, final int width, final int height) {
-        var originalData = image.getImageData();
-        var scaledData = originalData.scaledTo(width, height);
-        var scaledImage = new Image(Display.getCurrent(), scaledData);
-        image.dispose();
-        return scaledImage;
     }
 
     private Font magnifyFontSize(final Font originalFont, final int fontSize) {

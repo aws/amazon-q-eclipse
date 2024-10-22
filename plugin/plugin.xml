@@ -277,8 +277,7 @@
     <extension point="org.eclipse.ui.menus">
         <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?endof">
             <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar">
-                <command
-                	id="software.aws.toolkits.eclipse.amazonq.toolbar.command"
+                <command id="software.aws.toolkits.eclipse.amazonq.toolbar.command"
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
                     icon="icons/AmazonQ.png"
                     tooltip="Amazon Q">

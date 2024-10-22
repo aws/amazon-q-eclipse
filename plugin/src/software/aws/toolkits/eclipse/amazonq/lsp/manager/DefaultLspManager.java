@@ -27,7 +27,7 @@ public final class DefaultLspManager implements LspManager {
 
     private DefaultLspManager(final Builder builder) {
         this.fetcher = builder.fetcher;
-        this.workingDirectory = builder.workingDirectory != null ? builder.workingDirectory : PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY);
+        this.workingDirectory = builder.workingDirectory != null ? builder.workingDirectory : PluginUtils.getPluginDir(LspConstants.LSP_SUBDIRECTORY);
         this.lspExecutablePrefix = builder.lspExecutablePrefix;
         this.platformOverride = builder.platformOverride;
         this.architectureOverride = builder.architectureOverride;

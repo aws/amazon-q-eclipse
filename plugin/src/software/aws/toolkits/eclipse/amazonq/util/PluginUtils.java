@@ -34,12 +34,11 @@ public final class PluginUtils {
     private static Image qIcon = null;
 
     public static java.nio.file.Path getPluginDir(final String directoryName) {
-        Bundle bundle = FrameworkUtil.getBundle(PluginUtils.class);
-        File pluginDir = bundle.getDataFile(directoryName);
-        if (!pluginDir.exists()) {
-            pluginDir.mkdirs();
+        var stateLocation = new File(Activator.getDefault().getStateLocation().toOSString(), directoryName);
+        if (!stateLocation.exists()) {
+            stateLocation.mkdirs();
         }
-        return Paths.get(pluginDir.getAbsolutePath());
+        return Paths.get(stateLocation.getAbsolutePath());
     }
 
     public static java.nio.file.Path getAwsDirectory(final String subdir) {

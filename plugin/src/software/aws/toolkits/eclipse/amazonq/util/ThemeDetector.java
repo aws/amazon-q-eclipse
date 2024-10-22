@@ -9,12 +9,11 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.widgets.Display;
 
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 
 public final class ThemeDetector {
     private static final String THEME_STORE_LOCATION_FOR_ECLIPSE = "org.eclipse.e4.ui.css.swt.theme";
     private static final String THEME_KEY_FOR_ECLIPSE = "themeid";
-    private static final String THEME_STORE_LOCATION_FOR_AMAZON_Q = "amazon-q-eclipse.ui";
     private static final String THEME_KEY_FOR_AMAZON_Q = "themeid";
     private static final String DARK_MODE_THEME_ID_FOR_AMAZON_Q = "dark";
     private static final String LIGHT_MDOE_THEME_ID_FOR_AMAZON_Q = "light";
@@ -43,21 +42,13 @@ public final class ThemeDetector {
     }
 
     private void setThemePreference(final String theme) {
-        IEclipsePreferences themePreferences = InstanceScope.INSTANCE.getNode(THEME_STORE_LOCATION_FOR_AMAZON_Q);
-        themePreferences.put(THEME_KEY_FOR_AMAZON_Q, theme);
-
-        try {
-            themePreferences.flush();
-        } catch (Exception e) {
-            Activator.getLogger().error("Error occurred while setting Amazon Q theme preference", e);
-        }
+        PluginStore.put(THEME_KEY_FOR_AMAZON_Q, theme);
     }
 
     private Optional<Boolean> isDarkThemeFromAmazonQPreferences() {
-        IEclipsePreferences themePreferences = InstanceScope.INSTANCE.getNode(THEME_STORE_LOCATION_FOR_AMAZON_Q);
-        String theme = themePreferences.get(THEME_KEY_FOR_AMAZON_Q, "");
+        String theme = PluginStore.get(THEME_KEY_FOR_ECLIPSE);
 
-        if (theme.isBlank()) {
+        if (theme == null || theme.isBlank()) {
             return Optional.empty();
         }
 

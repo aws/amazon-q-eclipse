@@ -15,10 +15,11 @@
 
     <properties>
         <tycho.version>4.0.8</tycho.version>
-        <aws.java.sdk.version>2.25.33</aws.java.sdk.version>
+        <aws.java.sdk.version>2.28.26</aws.java.sdk.version>
         <node.version>v20.9.0</node.version>
         <npm.version>10.1.0</npm.version>
-        <jackson.version>2.17.1</jackson.version>
+        <jackson.version>2.17.2</jackson.version>
+        <maven.compiler.release>17</maven.compiler.release>
     </properties>
 
     <repositories>
@@ -60,12 +61,12 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
+            <version>4.5.14</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
+            <version>1.17.1</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -100,13 +101,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.14.1</version>
+            <version>5.14.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
 		    <groupId>com.nimbusds</groupId>
 		    <artifactId>nimbus-jose-jwt</artifactId>
-		    <version>9.37.2</version>
+		    <version>9.41.2</version>
 		</dependency>
     </dependencies>
     
@@ -130,7 +131,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.1</version>
+                <version>3.8.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -154,6 +155,11 @@
                             <prefix>target/dependency</prefix>
                             <outputFile>${project.build.directory}/classpath.txt</outputFile>
                         </configuration>
+                    </execution>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin> 
@@ -198,7 +204,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.5.1</version>
                 <executions>
                     <execution>
                         <phase>test</phase>
@@ -208,13 +214,14 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
                     <testSourceDirectory>${project.build.testSourceDirectory}</testSourceDirectory>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <executions>
                     <execution>
                         <id>compiletests</id>
@@ -228,12 +235,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.17.0</version>
+                        <version>10.18.2</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -303,7 +310,7 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.15.0</version>
+                <version>1.15.1</version>
                 <configuration>
                     <workingDirectory>${project.basedir}/webview</workingDirectory>
                     <installDirectory>${project.basedir}/node</installDirectory>

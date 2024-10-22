@@ -129,7 +129,7 @@ public final class DefaultTelemetryService implements TelemetryService {
                 .build();
     }
 
-    private static boolean telemetryEnabled() {
+    public static boolean telemetryEnabled() {
         return Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.TELEMETRY_OPT_IN);
     }
 

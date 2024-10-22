@@ -30,6 +30,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private final ViewActionHandler actionHandler;
 
     public ToolkitLoginWebview() {
+        super();
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new LoginViewActionHandler();
     }
@@ -39,7 +40,12 @@ public final class ToolkitLoginWebview extends AmazonQView {
         LoginDetails loginInfo = new LoginDetails();
         loginInfo.setIsLoggedIn(true);
         loginInfo.setLoginType(LoginType.BUILDER_ID);
-        setupAmazonQView(parent, loginInfo);
+        var result = setupAmazonQView(parent, loginInfo);
+        // if setup of amazon q view fails due to missing webview dependency, switch to that view
+        if (!result) {
+            showDependencyMissingView();
+            return;
+        }
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
 

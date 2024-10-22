@@ -110,7 +110,6 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
 
     private void downloadFile(final String fileUrl, final Path destination, final String filename, final List<String> expectedHashes)
             throws IOException, InterruptedException, NoSuchAlgorithmException {
-        var httpClient = HttpClient.newHttpClient();
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(fileUrl))
                 .timeout(java.time.Duration.ofSeconds(TIMEOUT_SECONDS))

@@ -9,12 +9,15 @@ import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
@@ -39,11 +42,14 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
     private ChatCommunicationManager chatCommunicationManager;
+    private ChatTheme chatTheme;
 
     public AmazonQChatWebview() {
+        super();
         this.commandParser = new LoginViewCommandParser();
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
+        this.chatTheme = new ChatTheme();
     }
 
     @Override
@@ -51,7 +57,12 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         LoginDetails loginInfo = new LoginDetails();
         loginInfo.setIsLoggedIn(true);
         loginInfo.setLoginType(LoginType.BUILDER_ID);
-        setupAmazonQView(parent, loginInfo);
+        var result = setupAmazonQView(parent, loginInfo);
+        // if setup of amazon q view fails due to missing webview dependency, switch to that view
+        if (!result) {
+            showDependencyMissingView();
+            return;
+        }
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);
@@ -60,7 +71,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             handleAuthStatusChange(loginDetails);
         }, ThreadingUtils::executeAsyncTask);
 
-       new BrowserFunction(browser, "ideCommand") {
+        new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
                 ThreadingUtils.executeAsyncTask(() -> {
@@ -69,12 +80,26 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 return null;
             }
         };
+
+        // Inject chat theme after mynah-ui has loaded
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(final ProgressEvent event) {
+                Display.getDefault().syncExec(() -> {
+                    try {
+                        chatTheme.injectTheme(browser);
+                    } catch (Exception e) {
+                        Activator.getLogger().info("Error occurred while injecting theme", e);
+                    }
+                });
+            }
+        });
     }
 
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
         try {
             commandParser.parseCommand(arguments)
-                .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+                    .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
         } catch (Exception e) {
             Activator.getLogger().error("Error processing message from Browser", e);
         }
@@ -134,7 +159,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     private String generateJS(final String jsEntrypoint) {
-        var chatQuickActionConfig  = generateQuickActionConfig();
+        var chatQuickActionConfig = generateQuickActionConfig();
         return String.format("""
                 <script type="text/javascript" src="%s" defer onload="init()"></script>
                 <script type="text/javascript">

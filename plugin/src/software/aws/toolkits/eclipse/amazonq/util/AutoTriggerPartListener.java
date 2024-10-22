@@ -44,8 +44,6 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         if (!(part instanceof ITextEditor)) {
             return;
         }
-        ITextEditor editor = (ITextEditor) part;
-//        var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         detachDocumentListenerFromLastActiveDocument();
     }
 
@@ -53,7 +51,6 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         document.addDocumentListener(docListener);
         activeDocument = document;
-        System.out.println("odc listener added to doc");
     }
 
     private void detachDocumentListenerFromLastActiveDocument() {
@@ -80,6 +77,10 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
                 var activeDoc = getActiveDocument();
                 if (editor != null && activeDoc == null) {
                     var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+                    if (document == null) {
+                        Display.getDefault().timerExec(1000, this);
+                        return;
+                    }
                     setActiveDocument(document);
                     document.addDocumentListener(docListener);
                     System.out.println("Document listener added from UI thread");

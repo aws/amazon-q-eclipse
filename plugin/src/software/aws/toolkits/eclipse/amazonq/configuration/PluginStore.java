@@ -11,17 +11,25 @@ import com.google.gson.Gson;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public final class PluginStore {
-
+public final class PluginStore implements IPluginStore {
     private static final Preferences PREFERENCES = Preferences.userRoot().node("software.aws.toolkits.eclipse");
-
     private static final Gson GSON = new Gson();
+
+    private static PluginStore instance;
 
     private PluginStore() {
         // Prevent instantiation
     }
 
-    public static void put(final String key, final String value) {
+    public static synchronized PluginStore getInstance() {
+        if (instance == null) {
+            instance = new PluginStore();
+        }
+        return instance;
+    }
+
+    @Override
+    public void put(final String key, final String value) {
         PREFERENCES.put(key, value);
         try {
             PREFERENCES.flush();
@@ -30,19 +38,23 @@ public final class PluginStore {
         }
     }
 
-    public static String get(final String key) {
+    @Override
+    public String get(final String key) {
         return PREFERENCES.get(key, null);
     }
 
-    public static void remove(final String key) {
+    @Override
+    public void remove(final String key) {
         PREFERENCES.remove(key);
     }
 
-    public static void addChangeListener(final PreferenceChangeListener prefChangeListener) {
+    @Override
+    public void addChangeListener(final PreferenceChangeListener prefChangeListener) {
         PREFERENCES.addPreferenceChangeListener(prefChangeListener);
     }
 
-    public static <T> void putObject(final String key, final T value) {
+    @Override
+    public <T> void putObject(final String key, final T value) {
         String jsonValue = GSON.toJson(value);
         byte[] byteValue = jsonValue.getBytes(StandardCharsets.UTF_8);
         PREFERENCES.putByteArray(key, byteValue);
@@ -53,7 +65,8 @@ public final class PluginStore {
         }
     }
 
-    public static <T> T getObject(final String key, final Class<T> type) {
+    @Override
+    public <T> T getObject(final String key, final Class<T> type) {
         byte[] byteValue = PREFERENCES.getByteArray(key, null);
         if (byteValue == null) {
             return null;

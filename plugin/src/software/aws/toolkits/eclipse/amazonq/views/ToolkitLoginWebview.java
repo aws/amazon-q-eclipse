@@ -13,11 +13,11 @@ import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class ToolkitLoginWebview extends AmazonQView {
 
@@ -49,7 +49,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
 
-        DefaultLoginService.getInstance().getLoginDetails().thenAcceptAsync(loginDetails -> {
+        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
             handleAuthStatusChange(loginDetails);
         }, ThreadingUtils::executeAsyncTask);
 

@@ -46,7 +46,7 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
     @Override
     public void fill(final Menu menu, final int index) {
-        String settingValue = PluginStore.get(AUTO_TRIGGER_ENABLEMENT_KEY);
+        String settingValue = PluginStore.getInstance().get(AUTO_TRIGGER_ENABLEMENT_KEY);
         boolean isEnabled;
         if (settingValue == null) {
             // on by default
@@ -61,12 +61,12 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                String settingValue = PluginStore.get(AUTO_TRIGGER_ENABLEMENT_KEY);
+                String settingValue = PluginStore.getInstance().get(AUTO_TRIGGER_ENABLEMENT_KEY);
                 boolean wasEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
                 if (wasEnabled) {
-                    PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
+                    PluginStore.getInstance().put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
                 } else {
-                    PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
+                    PluginStore.getInstance().put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
                 }
                 menuItem.setText(wasEnabled ? RESUME_TEXT : PAUSE_TEXT);
                 menuItem.setImage(wasEnabled ? resume : pause);

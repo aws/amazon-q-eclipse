@@ -19,7 +19,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public class AmazonQPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
@@ -47,7 +47,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
 
         GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
         params.setSection("aws.q");
-        LspProvider.getAmazonQServer().thenCompose(server -> server.getConfigurationFromServer(params));
+        LspProviderImpl.getInstance().getAmazonQServer().thenCompose(server -> server.getConfigurationFromServer(params));
     }
 
     private void createHorizontalSeparator() {

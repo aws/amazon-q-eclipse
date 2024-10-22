@@ -56,13 +56,13 @@ public final class PluginClientMetadata implements ClientMetadata {
     }
 
     public String getClientId() {
-        String clientId = PluginStore.get(CLIENT_ID_KEY);
+        String clientId = PluginStore.getInstance().get(CLIENT_ID_KEY);
         if (clientId == null) {
             synchronized (PluginClientMetadata.class) {
-                clientId = PluginStore.get(CLIENT_ID_KEY);
+                clientId = PluginStore.getInstance().get(CLIENT_ID_KEY);
                 if (clientId == null) {
                     clientId = UUID.randomUUID().toString();
-                    PluginStore.put(CLIENT_ID_KEY, clientId);
+                    PluginStore.getInstance().put(CLIENT_ID_KEY, clientId);
                 }
             }
         }

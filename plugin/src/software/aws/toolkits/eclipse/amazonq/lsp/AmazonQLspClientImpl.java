@@ -66,7 +66,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         List<Object> output = new ArrayList<>();
         configurationParams.getItems().forEach(item -> {
             if (item.getSection().equals(Constants.LSP_Q_CONFIGURATION_KEY)) {
-                Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+                Customization storedCustomization = DefaultPluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
                 Map<String, Object> qConfig = new HashMap<>();
                 qConfig.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, Objects.nonNull(storedCustomization) ? storedCustomization.getArn() : null);
                 qConfig.put(Constants.LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY, false);

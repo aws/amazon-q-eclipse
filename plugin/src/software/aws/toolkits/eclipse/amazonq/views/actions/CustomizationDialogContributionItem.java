@@ -56,7 +56,7 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 CustomizationDialog dialog = new CustomizationDialog(shell);
-                Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+                Customization storedCustomization = PluginStore.getInstance().getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
                 if (Objects.isNull(storedCustomization)) {
                     dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
                     dialog.setSelectedCustomization(null);

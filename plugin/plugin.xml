@@ -4,6 +4,12 @@
 
     <extension
         point="org.eclipse.ui.views">
+        <view
+            id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+            name="Amazon Q Error"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+        </view>
         <category
             name="Amazon Q"
             id="amazonq">
@@ -21,14 +27,6 @@
             name="Amazon Q Chat"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            category="amazonq"
-            inject="true">
-        </view>
-         <view
-            id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
-            name="Amazon Q Error"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
             category="amazonq"
             inject="true">
         </view>

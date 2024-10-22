@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-
 import org.eclipse.jface.action.Action;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 

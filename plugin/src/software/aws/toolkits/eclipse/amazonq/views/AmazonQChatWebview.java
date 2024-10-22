@@ -41,6 +41,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private ChatCommunicationManager chatCommunicationManager;
 
     public AmazonQChatWebview() {
+        super();
         this.commandParser = new LoginViewCommandParser();
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
@@ -51,7 +52,12 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         LoginDetails loginInfo = new LoginDetails();
         loginInfo.setIsLoggedIn(true);
         loginInfo.setLoginType(LoginType.BUILDER_ID);
-        setupAmazonQView(parent, loginInfo);
+        var result = setupAmazonQView(parent, loginInfo);
+        // if setup of amazon q view fails due to missing webview dependency, switch to that view
+        if (!result) {
+            showDependencyMissingView();
+            return;
+        }
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);

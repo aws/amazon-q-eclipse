@@ -13,7 +13,9 @@ import java.util.Objects;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.profiles.ProfileFile;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cognitoidentity.CognitoIdentityClient;
@@ -30,6 +32,7 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.AwsCognitoCredentialsProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 public final class DefaultTelemetryService implements TelemetryService {
@@ -106,15 +109,21 @@ public final class DefaultTelemetryService implements TelemetryService {
     }
 
     private static ToolkitTelemetryClient createDefaultTelemetryClient(final Region region, final String endpoint, final String identityPool) {
+        SdkHttpClient sdkHttpClient = ApacheHttpClient.builder()
+                .proxyConfiguration(ProxyConfiguration.builder()
+                        .endpoint(URI.create(ProxyUtil.getHttpsProxyUrl()))
+                        .build())
+                .build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()
                 .credentialsProvider(AnonymousCredentialsProvider.create())
                 .region(region)
-                .httpClient(ApacheHttpClient.create())
+                .httpClient(sdkHttpClient)
                 .overrideConfiguration(builder -> nullDefaultProfileFile(builder))
                 .build();
         AwsCredentialsProvider credentialsProvider = new AwsCognitoCredentialsProvider(identityPool, cognitoClient);
         return ToolkitTelemetryClient.builder()
                 .region(region)
+                .httpClient(sdkHttpClient)
                 .credentialsProvider(credentialsProvider)
                 .endpointOverride(URI.create(endpoint))
                 .build();

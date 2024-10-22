@@ -7,6 +7,7 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
@@ -26,7 +27,13 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
             return null;
         }
 
-        var newSession = QInvocationSession.getInstance().start(editor);
+        boolean newSession;
+        try {
+            newSession = QInvocationSession.getInstance().start(editor);
+        } catch (java.util.concurrent.ExecutionException e) {
+            Activator.getLogger().error("Session start interrupted", e);
+            throw new ExecutionException("Session start interrupted", e);
+        }
 
         if (!newSession) {
             System.out.println("session already started, not starting another one");

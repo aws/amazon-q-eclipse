@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public final class ThreadingUtils {
     private static final int CORE_POOL_SIZE = Runtime.getRuntime().availableProcessors();
@@ -20,6 +21,10 @@ public final class ThreadingUtils {
 
     public static void executeAsyncTask(final Runnable task) {
         THREAD_POOL.execute(task);
+    }
+
+    public static Future<?> executeAsyncTaskAndReturnFuture(final Runnable task) {
+        return THREAD_POOL.submit(task);
     }
 
     public static void shutdown() {

@@ -132,7 +132,9 @@ public class LspStartupActivity implements IStartup {
                         var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(documentListener);
                         autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
                     }
-                    autoTriggerTopLevelListener.onStart();
+                    Display.getDefault().asyncExec(() -> {
+                        autoTriggerTopLevelListener.onStart();
+                    });
                 } else {
                     // Note to future maintainers: this has to be called from the UI thread or it would not do anything
                     Display.getDefault().asyncExec(() -> {

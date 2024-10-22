@@ -66,7 +66,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 if (link == null || link.isEmpty()) {
                     throw new IllegalArgumentException("Link parameter cannot be null or empty");
                 }
-                handleExternalLinkClick(link);
+                PluginUtils.handleExternalLinkClick(link);
                 break;
             case CHAT_READY:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
@@ -117,17 +117,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 break;
             default:
                 throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
-        }
-    }
-
-    private void handleExternalLinkClick(final String link) {
-        try {
-            var result = PluginUtils.showConfirmDialog("Amazon Q", "Do you want to open the external website?\n\n" + link);
-            if (result) {
-                PluginUtils.openWebpage(link);
-            }
-        } catch (Exception ex) {
-            Activator.getLogger().error("Failed to open url in browser", ex);
         }
     }
 

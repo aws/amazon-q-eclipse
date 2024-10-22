@@ -13,24 +13,29 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart {
 
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
-            AmazonQChatWebview.ID
+            AmazonQChatWebview.ID,
+            DependencyMissingView.ID
         );
 
     private Browser browser;
     private AmazonQCommonActions amazonQCommonActions;
     private AuthStatusChangedListener authStatusChangedListener;
+    private AmazonQViewController viewController;
+
+    protected AmazonQView() {
+        this.viewController = new AmazonQViewController();
+    }
 
     public static void showView(final String viewId) {
         if (!AMAZON_Q_VIEWS
@@ -41,14 +46,6 @@ public abstract class AmazonQView extends ViewPart {
 
         IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
         if (page != null) {
-            // Show requested view
-            try {
-                page.showView(viewId);
-                Activator.getLogger().info("Showing view " + viewId);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error occurred while showing view " + viewId, e);
-            }
-
             // Hide all other Amazon Q Views
             IViewReference[] viewReferences = page.getViewReferences();
             for (IViewReference viewRef : viewReferences) {
@@ -59,6 +56,13 @@ public abstract class AmazonQView extends ViewPart {
                         Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
                     }
                 }
+            }
+            // Show requested view
+            try {
+                page.showView(viewId);
+                Activator.getLogger().info("Showing view " + viewId);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occurred while showing view " + viewId, e);
             }
         }
     }
@@ -73,27 +77,47 @@ public abstract class AmazonQView extends ViewPart {
 
     protected abstract void handleAuthStatusChange(LoginDetails loginDetails);
 
-    protected final void setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
-        setupBrowser(parent);
+    protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
+        // if browser setup fails, don't set up rest of the content
+        if (!setupBrowser(parent)) {
+            return false;
+        }
+        setupBrowserBackground(parent);
         setupActions(browser, loginDetails);
         setupAuthStatusListeners();
+        return true;
     }
 
-    private void setupBrowser(final Composite parent) {
-        browser = new Browser(parent, getBrowserStyle());
+    private void setupBrowserBackground(final Composite parent) {
         Display display = Display.getCurrent();
         Color black = display.getSystemColor(SWT.COLOR_BLACK);
-
-        browser.setBackground(black);
         parent.setBackground(black);
+        browser.setBackground(black);
     }
 
-    private int getBrowserStyle() {
-        var platform = PluginUtils.getPlatform();
-        if (platform == PluginPlatform.WINDOWS) {
-            return SWT.EDGE;
+    /*
+     * Sets up the browser compatible with the platform
+     * returns boolean representing whether a browser type compatible with webview rendering for the current platform is found
+     * @param parent
+     */
+    protected final boolean setupBrowser(final Composite parent) {
+        var browser = new Browser(parent, viewController.getBrowserStyle());
+        viewController.checkWebViewCompatibility(browser.getBrowserType());
+        // only set the browser if compatible webview browser can be found for the platform
+        if (viewController.hasWebViewDependency()) {
+            this.browser = browser;
         }
-        return SWT.WEBKIT;
+        return viewController.hasWebViewDependency();
+    }
+
+    protected final void showDependencyMissingView() {
+        Display.getCurrent().asyncExec(() -> {
+            try {
+                showView(DependencyMissingView.ID);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occured while attempting to show missing webview dependencies view", e);
+            }
+        });
     }
 
     private void setupActions(final Browser browser, final LoginDetails loginDetails) {
@@ -109,6 +133,9 @@ public abstract class AmazonQView extends ViewPart {
 
     @Override
     public final void setFocus() {
+        if (!viewController.hasWebViewDependency()) {
+            return;
+        }
         browser.setFocus();
     }
 

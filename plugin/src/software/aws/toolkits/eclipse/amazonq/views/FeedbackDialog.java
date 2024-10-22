@@ -60,6 +60,11 @@ public class FeedbackDialog extends Dialog {
             iconLabel = new Label(contentComposite, SWT.NONE);
             iconLabel.setImage(image);
             iconLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+            iconLabel.addDisposeListener(e -> {
+                if (image != null && !image.isDisposed()) {
+                    image.dispose();
+                }
+            });
 
             textLabel = new Label(contentComposite, SWT.NONE);
             textLabel.setText(text);
@@ -153,7 +158,7 @@ public class FeedbackDialog extends Dialog {
 
         createLabelWithFontSize(headlineContainer, "Looking for help? View the", 14);
         createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/");
-        createLabelWithFontSize(headlineContainer, "or search our", 14);
+        createLabelWithFontSize(headlineContainer, " or search our", 14);
         createLinkLabel(headlineContainer, "Documentation", 14, "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html");
     }
 
@@ -270,7 +275,13 @@ public class FeedbackDialog extends Dialog {
 
     private void createImageLabel(final Composite parent, final String imagePath) {
         Label label = new Label(parent, SWT.NONE);
-        label.setImage(loadImage(imagePath));
+        var image = loadImage(imagePath);
+        label.setImage(image);
+        label.addDisposeListener(e -> {
+            if (image != null && !image.isDisposed()) {
+                image.dispose();
+            }
+        });
     }
 
     private void createSeparator(final Composite parent) {

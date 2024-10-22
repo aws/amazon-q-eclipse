@@ -37,21 +37,24 @@
     <extension
         point="org.eclipse.ui.perspectiveExtensions">
         <perspectiveExtension
-            targetID="org.eclipse.jdt.ui.JavaPerspective">
+            targetID="*">
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="org.eclipse.ui.views.ProblemView"
-                relationship="stack">
+                relative="org.eclipse.ui.views.ContentOutline"
+                relationship="stack"
+                visible="false">
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-                relative="org.eclipse.ui.views.ProblemView"
-                relationship="stack">
+                relative="org.eclipse.ui.views.ContentOutline"
+                relationship="stack"
+                visible="false">
             </view>
             <view
-                class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-                relative="org.eclipse.ui.views.ProblemView"
-                relationship="stack">
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+                relative="org.eclipse.ui.views.ContentOutline"
+                relationship="stack"
+                visible="false">
             </view>
         </perspectiveExtension>
     </extension>

@@ -49,7 +49,9 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
 
 public class QInvocationSessionTest {
 
@@ -85,7 +87,7 @@ public class QInvocationSessionTest {
 
         loginServiceMockStatic = mockStatic(DefaultLoginService.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
-        loginServiceMockStatic.when(DefaultLoginService::getInstance).thenReturn(loginSerivceMock);
+        activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
         when(loginSerivceMock.updateToken()).thenReturn(new CompletableFuture<Void>());
 
@@ -244,9 +246,9 @@ public class QInvocationSessionTest {
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
-        lspProviderMock.when(() -> LspProvider.getAmazonQServer().get().inlineCompletionWithReferences(POTENT_PARAM))
+        lspProviderMock.when(() -> LspProviderImpl.getInstance().getAmazonQServer().get().inlineCompletionWithReferences(POTENT_PARAM))
                 .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
-        lspProviderMock.when(() -> LspProvider.getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
+        lspProviderMock.when(() -> LspProviderImpl.getInstance().getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
                 .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
 
         return lspProviderMock;

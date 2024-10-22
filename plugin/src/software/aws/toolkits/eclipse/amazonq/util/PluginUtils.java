@@ -15,6 +15,9 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -102,7 +105,7 @@ public final class PluginUtils {
         }
     }
 
-    public static boolean showConfirmDialog(final String title, final String message) {
+    private static boolean showConfirmDialog(final String title, final String message) {
         final boolean[] result = new boolean[] {false};
         try {
             Display.getDefault().syncExec(new Runnable() {
@@ -117,4 +120,29 @@ public final class PluginUtils {
         return result[0];
     }
 
+    public static void handleExternalLinkClick(final String link) {
+        try {
+            var result = showConfirmDialog("Amazon Q", "Do you want to open the external website?\n\n" + link);
+            if (result) {
+                openWebpage(link);
+            }
+        } catch (Exception ex) {
+            Activator.getLogger().error("Failed to open url in browser", ex);
+        }
+    }
+
+    public static void showView(final String viewId) {
+        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        if (window != null) {
+            IWorkbenchPage page = window.getActivePage();
+            if (page != null) {
+                try {
+                    page.showView(viewId);
+                    Activator.getLogger().info("Showing view " + viewId);
+                } catch (PartInitException e) {
+                    Activator.getLogger().error("Error occurred while opening view " + viewId, e);
+                }
+            }
+        }
+    }
 }

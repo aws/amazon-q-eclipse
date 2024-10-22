@@ -2,9 +2,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-import java.io.IOException;
-import java.net.URL;
-
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -18,7 +15,6 @@ import org.eclipse.ui.IViewSite;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
@@ -30,8 +26,12 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
     public ToggleAutoTriggerContributionItem(final IViewSite viewSite) {
         this.viewSite = viewSite;
-        pause = loadImage("icons/PauseIcon.png");
-        resume = loadImage("icons/AmazonQ.png");
+        var pauseImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.ui.navigator",
+                "icons/full/clcl16/pause.png");
+        pause = pauseImageDescriptor.createImage(Display.getCurrent());
+        var resumeImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.wst.ws.explorer",
+                "wsexplorer/images/elcl16/actionengine_play.gif");
+        resume = resumeImageDescriptor.createImage(Display.getCurrent());
     }
 
     public void updateVisibility(final LoginDetails loginDetails) {
@@ -63,18 +63,5 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
                 menuItem.setImage(wasEnabled ? resume : pause);
             }
         });
-    }
-
-    private Image loadImage(final String imagePath) {
-        Image loadedImage = null;
-        try {
-            URL imageUrl = PluginUtils.getResource(imagePath);
-            if (imageUrl != null) {
-                loadedImage = new Image(Display.getCurrent(), imageUrl.openStream());
-            }
-        } catch (IOException e) {
-            Activator.getLogger().warn(e.getMessage(), e);
-        }
-        return loadedImage;
     }
 }

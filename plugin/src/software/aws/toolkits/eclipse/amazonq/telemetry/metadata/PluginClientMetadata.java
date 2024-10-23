@@ -9,7 +9,7 @@ import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.FrameworkUtil;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 
 public final class PluginClientMetadata implements ClientMetadata {
     private PluginClientMetadata() {
@@ -56,13 +56,13 @@ public final class PluginClientMetadata implements ClientMetadata {
     }
 
     public String getClientId() {
-        String clientId = PluginStore.getInstance().get(CLIENT_ID_KEY);
+        String clientId = DefaultPluginStore.getInstance().get(CLIENT_ID_KEY);
         if (clientId == null) {
             synchronized (PluginClientMetadata.class) {
-                clientId = PluginStore.getInstance().get(CLIENT_ID_KEY);
+                clientId = DefaultPluginStore.getInstance().get(CLIENT_ID_KEY);
                 if (clientId == null) {
                     clientId = UUID.randomUUID().toString();
-                    PluginStore.getInstance().put(CLIENT_ID_KEY, clientId);
+                    DefaultPluginStore.getInstance().put(CLIENT_ID_KEY, clientId);
                 }
             }
         }

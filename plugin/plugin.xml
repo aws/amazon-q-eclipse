@@ -43,11 +43,24 @@
     <extension
         point="org.eclipse.ui.perspectiveExtensions">
         <perspectiveExtension
-            targetID="org.eclipse.jdt.ui.JavaPerspective">
+            targetID="*">
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="org.eclipse.ui.views.ProblemView"
-                relationship="stack">
+                relative="org.eclipse.ui.views.ContentOutline"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="org.eclipse.ui.views.ContentOutline"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+                relative="org.eclipse.ui.views.ContentOutline"
+                relationship="stack"
+                visible="false">
             </view>
         </perspectiveExtension>
     </extension>
@@ -155,6 +168,11 @@
               id="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
               name="Send To Prompt">
         </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Open Amazon Q Chat View"
+            id="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView">
+        </command>
     </extension>
 
     <extension point="org.eclipse.ui.handlers">
@@ -197,6 +215,10 @@
         <handler
               class="software.aws.toolkits.eclipse.amazonq.handlers.QSendToPromptHandler"
               commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt">
+        </handler>
+        <handler
+        	class="software.aws.toolkits.eclipse.amazonq.handlers.QOpenChatViewHandler"
+        	commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView">
         </handler>
     </extension>
 
@@ -251,6 +273,15 @@
         </initializer>
    </extension>
     <extension point="org.eclipse.ui.menus">
+        <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?endof">
+            <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar">
+                <command id="software.aws.toolkits.eclipse.amazonq.toolbar.command"
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
+                    icon="icons/AmazonQ.png"
+                    tooltip="Amazon Q">
+                </command>
+           </toolbar>
+       </menuContribution>
         <menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
             <menu 
                 icon="icons/AmazonQ.png"

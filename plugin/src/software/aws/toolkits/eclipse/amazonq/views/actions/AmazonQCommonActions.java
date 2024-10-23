@@ -4,6 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
 
@@ -18,6 +20,11 @@ public final class AmazonQCommonActions {
     private FeedbackDialogContributionItem feedbackDialogContributionItem;
     private CustomizationDialogContributionItem customizationDialogContributionItem;
     private ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
+    private OpenCodeReferenceLogAction openCodeReferenceLogAction;
+    private OpenUserGuideAction openUserGuideAction;
+    private ViewSourceAction viewSourceAction;
+    private ViewLogsAction viewLogsAction;
+    private ReportAnIssueAction reportAnIssueAction;
 
     public AmazonQCommonActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
         createActions(browser, loginDetails, viewSite);
@@ -51,6 +58,11 @@ public final class AmazonQCommonActions {
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
         toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem(viewSite);
+        openUserGuideAction = new OpenUserGuideAction();
+        viewSourceAction = new ViewSourceAction();
+        viewLogsAction = new ViewLogsAction();
+        reportAnIssueAction = new ReportAnIssueAction();
+        openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
     }
 
     private void contributeToActionBars(final IViewSite viewSite) {
@@ -60,10 +72,25 @@ public final class AmazonQCommonActions {
     }
 
     private void fillLocalPullDown(final IMenuManager manager) {
+        IMenuManager feedbackSubMenu = new MenuManager("Feedback");
+        feedbackSubMenu.add(reportAnIssueAction);
+        feedbackSubMenu.add(feedbackDialogContributionItem.getDialogContributionItem());
+
+        IMenuManager helpSubMenu = new MenuManager("Help");
+        helpSubMenu.add(openUserGuideAction);
+        helpSubMenu.add(new Separator());
+        helpSubMenu.add(viewSourceAction);
+        helpSubMenu.add(viewLogsAction);
+
+        manager.add(openCodeReferenceLogAction);
+        manager.add(new Separator());
         manager.add(changeThemeAction);
         manager.add(toggleAutoTriggerContributionItem);
         manager.add(customizationDialogContributionItem);
-        manager.add(feedbackDialogContributionItem.getDialogContributionItem());
+        manager.add(new Separator());
+        manager.add(feedbackSubMenu);
+        manager.add(helpSubMenu);
+        manager.add(new Separator());
         manager.add(signoutAction);
     }
 

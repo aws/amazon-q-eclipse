@@ -64,6 +64,7 @@ public class QInvocationSessionTest {
 
     private static MockedStatic<Platform> prefMockStatic;
     private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
+    private static MockedStatic<Activator> activatorMockStatic;
     private static MockedStatic<Display> displayMockStatic;
     private static MockedStatic<ThreadingUtils> threadingUtilsMock;
     private static MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock;
@@ -86,6 +87,7 @@ public class QInvocationSessionTest {
         editorUtilsMock = mockQEclipseEditorUtils();
 
         loginServiceMockStatic = mockStatic(DefaultLoginService.class);
+        activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
         activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);

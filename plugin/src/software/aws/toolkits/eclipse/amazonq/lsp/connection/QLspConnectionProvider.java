@@ -18,9 +18,9 @@ import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
-    public QLspConnectionProvider() throws IOException {
+    public QLspConnectionProvider(final LspManager lspManager) throws IOException {
         super();
-        LspManager lspManager = LspManagerProvider.getInstance();
+
         List<String> commands = new ArrayList<>();
         commands.add(lspManager.getLspInstallation().nodeExecutable().toString());
         commands.add(lspManager.getLspInstallation().lspJs().toString());
@@ -29,6 +29,10 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         commands.add("--stdio");
         commands.add("--set-credentials-encryption-key");
         setCommands(commands);
+    }
+
+    public QLspConnectionProvider() throws IOException {
+        this(LspManagerProvider.getInstance());
     }
 
     @Override

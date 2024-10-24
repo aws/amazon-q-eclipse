@@ -33,22 +33,33 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 public final class RemoteManifestLspFetcher implements LspFetcher {
 
     private static final int TIMEOUT_SECONDS = 10;
-    private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
 
     private final String manifestUrl;
     private final VersionRange versionRange;
     private final boolean integrityChecking;
     private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
-    private RemoteManifestLspFetcher(final Builder builder) {
-        this.manifestUrl = builder.manifestUrl;
-        this.versionRange = builder.versionRange != null ? builder.versionRange : LspConstants.LSP_SUPPORTED_VERSION_RANGE;
-        this.integrityChecking = builder.integrityChecking != null ? builder.integrityChecking : true;
-        this.httpClient = builder.httpClient != null ? builder.httpClient : HttpClientFactory.getInstance();
+    public RemoteManifestLspFetcher(final String manifestUrl, final VersionRange versionRange,
+                                    final boolean integrityChecking, final HttpClient httpClient,
+                                    final ObjectMapper objectMapper) {
+        this.manifestUrl = manifestUrl;
+        this.versionRange = versionRange;
+        this.integrityChecking = integrityChecking;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public RemoteManifestLspFetcher(final String manifestUrl, final VersionRange versionRange,
+                                    final boolean integrityChecking) {
+        this(manifestUrl, versionRange, integrityChecking, HttpClientFactory.getInstance(),
+                ObjectMapperFactory.getInstance());
+    }
+
+    // Could also have something like this for the defaults
+    public RemoteManifestLspFetcher() {
+        this(LspConstants.CW_MANIFEST_URL, LspConstants.LSP_SUPPORTED_VERSION_RANGE, true,
+                HttpClientFactory.getInstance(), ObjectMapperFactory.getInstance());
     }
 
     @Override
@@ -102,7 +113,7 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-            return OBJECT_MAPPER.readValue(response.body(), Manifest.class);
+            return objectMapper.readValue(response.body(), Manifest.class);
         } else {
             throw new AmazonQPluginException("Unexpected response code when fetching manifest: " + response.statusCode());
         }
@@ -141,37 +152,6 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
             }
         } else {
             throw new AmazonQPluginException("Failed to download remote LSP artifact. Response code: " + response.statusCode());
-        }
-    }
-
-    public static class Builder {
-        private String manifestUrl;
-        private VersionRange versionRange;
-        private Boolean integrityChecking;
-        private HttpClient httpClient;
-
-        public final Builder withManifestUrl(final String manifestUrl) {
-            this.manifestUrl = manifestUrl;
-            return this;
-        }
-
-        public final Builder withVersionRange(final VersionRange versionRange) {
-            this.versionRange = versionRange;
-            return this;
-        }
-
-        public final Builder withIntegrityChecking(final boolean integrityChecking) {
-            this.integrityChecking = integrityChecking;
-            return this;
-        }
-
-        public final Builder withHttpClient(final HttpClient httpClient) {
-            this.httpClient = httpClient;
-            return this;
-        }
-
-        public final RemoteManifestLspFetcher build() {
-            return new RemoteManifestLspFetcher(this);
         }
     }
 

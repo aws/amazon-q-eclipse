@@ -30,9 +30,7 @@ public final class LspManagerProvider {
     private static LspManager createLspManager() {
         return DefaultLspManager.builder()
             .withLspExecutablePrefix(LspConstants.CW_LSP_FILENAME)
-            .withFetcher(RemoteManifestLspFetcher.builder()
-                .withManifestUrl(LspConstants.CW_MANIFEST_URL)
-                .build())
+            .withFetcher(new RemoteManifestLspFetcher())
             .build();
     }
 

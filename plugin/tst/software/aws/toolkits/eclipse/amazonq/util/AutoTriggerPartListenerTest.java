@@ -27,6 +27,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.texteditor.ITextEditor;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -39,6 +40,7 @@ public class AutoTriggerPartListenerTest {
     private static ITextEditor editorMock = mock(ITextEditor.class, RETURNS_DEEP_STUBS);
     private static IDocument docMock = mock(IDocument.class);
     private static MockedStatic<Display> displayMockStatic;
+    private static MockedStatic<QEclipseEditorUtils> editorUtilsMockStatic;
 
     private static BlockingQueue<String> channel = new ArrayBlockingQueue<>(10);
 
@@ -46,8 +48,14 @@ public class AutoTriggerPartListenerTest {
     public static void setUp() throws Exception {
         when(editorMock.getDocumentProvider().getDocument(any(IEditorInput.class))).thenReturn(docMock);
 
-        MockedStatic<QEclipseEditorUtils> editorUtilsMockStatic = mockStatic(QEclipseEditorUtils.class);
+        editorUtilsMockStatic = mockStatic(QEclipseEditorUtils.class);
         editorUtilsMockStatic.when(QEclipseEditorUtils::getActiveTextEditor).thenReturn(editorMock);
+    }
+
+    @AfterAll
+    public static void tearDown() {
+        editorUtilsMockStatic.close();
+        displayMockStatic.close();
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

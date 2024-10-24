@@ -65,20 +65,20 @@
         <perspectiveExtension
             targetID="*">
             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="org.eclipse.ui.views.ContentOutline"
-                relationship="stack"
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="org.eclipse.ui.editorss"
+                relationship="right"
                 visible="false">
             </view>
             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-                relative="org.eclipse.ui.views.ContentOutline"
+                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relationship="stack"
                 visible="false">
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-                relative="org.eclipse.ui.views.ContentOutline"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relationship="stack"
                 visible="false">
             </view>

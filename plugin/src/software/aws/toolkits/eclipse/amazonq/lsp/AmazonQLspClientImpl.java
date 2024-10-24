@@ -87,14 +87,16 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     @Override
     public final void telemetryEvent(final Object event) {
         TelemetryEvent telemetryEvent = ObjectMapperFactory.getInstance().convertValue(event, TelemetryEvent.class);
-        switch (telemetryEvent.name()) {
-        // intercept the feedback telemetry event and re-route to our feedback backend
-        case "amazonq_sendFeedback":
-            sendFeedback(telemetryEvent);
-            break;
-        default:
-            Activator.getTelemetryService().emitMetric(telemetryEvent);
-        }
+        ThreadingUtils.executeAsyncTask(() -> {
+            switch (telemetryEvent.name()) {
+            // intercept the feedback telemetry event and re-route to our feedback backend
+            case "amazonq_sendFeedback":
+                sendFeedback(telemetryEvent);
+                break;
+            default:
+                Activator.getTelemetryService().emitMetric(telemetryEvent);
+            }
+        });
     }
 
     private void sendFeedback(final TelemetryEvent telemetryEvent) {

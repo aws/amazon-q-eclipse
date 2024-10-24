@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_PRODUCT_NAME;
+import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 
 import java.util.concurrent.CompletableFuture;
@@ -46,10 +46,10 @@ public final class CredentialUtils {
     final boolean triggerSignIn) {
         GetSsoTokenSource source;
         if (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)) {
-            source = new GetSsoTokenSource(Q_PRODUCT_NAME, "IamIdentityCenter",
+            source = new GetSsoTokenSource(AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), "IamIdentityCenter",
                     loginParams.getLoginIdcParams().getUrl(), loginParams.getLoginIdcParams().getRegion());
         } else {
-            source = new GetSsoTokenSource(Q_PRODUCT_NAME, "AwsBuilderId", null, null);
+            source = new GetSsoTokenSource(AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), "AwsBuilderId", null, null);
         }
         GetSsoTokenOptions options = new GetSsoTokenOptions(true, true, triggerSignIn);
         GetSsoTokenParams params = new GetSsoTokenParams(source, Q_SCOPES, options);

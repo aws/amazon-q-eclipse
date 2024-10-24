@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.MockedStatic;
 
-import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_PRODUCT_NAME;
+import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -103,7 +103,7 @@ public class CredentialUtilsTest {
             assertEquals(expectedToken, actualToken);
 
             verify(mockAuthServer).getSsoToken(argThat(params ->
-                params.source().clientName().equals(Q_PRODUCT_NAME)
+                params.source().clientName().equals(AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString())
                 && params.source().kind().equals("IamIdentityCenter")
                 && params.source().issuerUrl().equals("testUrl")
                 && params.source().region().equals("testRegion")
@@ -137,7 +137,7 @@ public class CredentialUtilsTest {
         assertEquals(expectedToken, actualToken);
 
         verify(mockAuthServer).getSsoToken(argThat(params ->
-            params.source().clientName().equals(Q_PRODUCT_NAME)
+            params.source().clientName().equals(AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString())
             && params.source().kind().equals("AwsBuilderId")
             && params.source().issuerUrl() == null
             && params.source().region() == null

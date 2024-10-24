@@ -106,7 +106,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     private String getContent() {
-        String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
+        String jsFile = PluginUtils.getPluginDir(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
 

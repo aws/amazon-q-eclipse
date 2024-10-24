@@ -14,6 +14,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
@@ -21,6 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 public class LoginViewActionHandler implements ViewActionHandler {
 
     private static final JsonHandler JSON_HANDLER = new JsonHandler();
+    private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
     @Override
     public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
@@ -84,6 +86,8 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         }
                             """, "START", regions).stripIndent();
                 browser.execute(String.format("ideClient.prepareUi(%s)", js));
+                browser.execute("ideClient.updateAuthorization('')");
+                browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
                 break;
             default:
                 System.out.println("Unknown command: " + parsedCommand.getCommand());

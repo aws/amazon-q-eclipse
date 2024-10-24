@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,8 +18,6 @@ public final class QConstants {
 
     public static final Color Q_INLINE_HINT_TEXT_COLOR = new Color(169, 183, 214);
     public static final int Q_INLINE_HINT_TEXT_STYLE = SWT.ITALIC;
-
-    public static final String Q_PRODUCT_NAME = "Eclipse Q";
 
     public static final List<String> Q_SCOPES = new ArrayList<>(Arrays.asList(
             "codewhisperer:conversations",

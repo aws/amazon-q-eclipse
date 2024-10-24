@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -35,6 +37,22 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         return launcher;
     }
 
+    private Map<String, Object> getInitializationOptions(final ClientMetadata metadata) {
+        Map<String, Object> initOptions = new HashMap<>();
+        Map<String, Object> awsInitOptions = new HashMap<>();
+        Map<String, Object> extendedClientInfoOptions = new HashMap<>();
+        Map<String, String> extensionOptions = new HashMap<>();
+        extensionOptions.put("name", USER_AGENT_CLIENT_NAME);
+        extensionOptions.put("version", metadata.getPluginVersion());
+        extendedClientInfoOptions.put("extension", extensionOptions);
+        extendedClientInfoOptions.put("clientId", metadata.getClientId());
+        extendedClientInfoOptions.put("version", metadata.getIdeVersion());
+        extendedClientInfoOptions.put("name", metadata.getIdeName());
+        awsInitOptions.put("clientInfo", extendedClientInfoOptions);
+        initOptions.put("aws", awsInitOptions);
+        return initOptions;
+    }
+
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
         return super.wrapMessageConsumer((Message message) -> {
@@ -42,6 +60,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 ClientMetadata metadata = PluginClientMetadata.getInstance();
                 initParams.setClientInfo(new ClientInfo(USER_AGENT_CLIENT_NAME, metadata.getPluginVersion()));
+                initParams.setInitializationOptions(getInitializationOptions(metadata));
             }
             if (message instanceof ResponseMessage && ((ResponseMessage) message).getResult() instanceof AwsExtendedInitializeResult) {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();

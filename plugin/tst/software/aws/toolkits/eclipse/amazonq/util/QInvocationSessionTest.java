@@ -107,7 +107,7 @@ public class QInvocationSessionTest {
         QInvocationSession.getInstance().endImmediately();
     }
     @AfterAll
-    public final void tearDownAll() {
+    public static final void tearDownAll() {
         if (prefMockStatic != null) {
             prefMockStatic.close();
         }

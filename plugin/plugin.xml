@@ -19,7 +19,6 @@
             name="Amazon Q Login"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-            category="amazonq"
             inject="true">
         </view>
         <view
@@ -31,7 +30,6 @@
             inject="true">
         </view>
         <view
-              category="amazonq"
               class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
               icon="icons/AmazonQ.png"
               id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
@@ -39,7 +37,29 @@
               restorable="true">
         </view>
     </extension>
-
+    <extension point="org.eclipse.ui.activities">  
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ToolkitLoginWebview" name="Amazon Q Login">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
+	  </activity>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ToolkitLoginWebview"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+	  </activityPatternBinding>
+	 </extension>
     <extension
         point="org.eclipse.ui.perspectiveExtensions">
         <perspectiveExtension
@@ -282,6 +302,14 @@
                 </command>
            </toolbar>
        </menuContribution>
+       <menuContribution locationURI="menu:showView?before=viewsShortlist">
+            <command
+                commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
+                icon="icons/AmazonQ.png"
+                label="Amazon Q"
+                style="push">
+            </command>
+        </menuContribution>
         <menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
             <menu 
                 icon="icons/AmazonQ.png"

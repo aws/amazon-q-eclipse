@@ -42,6 +42,7 @@ public final class ChangeThemeAction extends Action {
         }
 
         chatTheme.injectTheme(browser);
+        browser.execute("changeTheme(" + themeDetector.isDarkTheme() + ");");
     }
 
     private void updateText(final String text) {

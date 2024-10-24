@@ -17,13 +17,13 @@ public class AuthLspConnectionProvider extends AbstractLspConnectionProvider {
 
     public AuthLspConnectionProvider() throws IOException, URISyntaxException {
         super();
-        var authJs = PluginUtils.getResource("auth/packages/server/dist/index.js");
+        var authJs = PluginUtils.getResource("auth/");
         var authJsPath = Path.of(authJs.toURI()).toString();
         var lspManager = LspManagerProvider.getInstance();
 
         List<String> commands = new ArrayList<>();
         commands.add(lspManager.getLspInstallation().nodeExecutable().toString());
-        commands.add(authJsPath);
+        commands.add(authJsPath + "/packages/server/dist/index.js");
         commands.add("--nolazy");
         commands.add("--inspect=5599");
         commands.add("--stdio");

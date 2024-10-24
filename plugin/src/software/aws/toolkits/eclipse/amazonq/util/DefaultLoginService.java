@@ -3,13 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_PRODUCT_NAME;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
+
+import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -76,10 +77,10 @@ public final class DefaultLoginService implements LoginService {
     private CompletableFuture<SsoToken> getToken(final boolean triggerSignIn) {
         GetSsoTokenSource source;
         if (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)) {
-            source = new GetSsoTokenSource(Q_PRODUCT_NAME, "IamIdentityCenter",
+            source = new GetSsoTokenSource(AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), "IamIdentityCenter",
                     loginParams.getLoginIdcParams().getUrl(), loginParams.getLoginIdcParams().getRegion());
         } else {
-            source = new GetSsoTokenSource(Q_PRODUCT_NAME, "AwsBuilderId", null, null);
+            source = new GetSsoTokenSource(AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), "AwsBuilderId", null, null);
         }
         GetSsoTokenOptions options = new GetSsoTokenOptions(true, true, triggerSignIn);
         GetSsoTokenParams params = new GetSsoTokenParams(source, Q_SCOPES, options);

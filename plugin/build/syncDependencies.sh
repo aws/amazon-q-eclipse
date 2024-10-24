@@ -19,7 +19,7 @@ if [ ! -f "$manifest_file" ]; then
 fi
 
 # Initialize the Bundle-Classpath entry
-bundle_classpath="Bundle-Classpath: .,\n"
+bundle_classpath="Bundle-Classpath: target/classes/,\n"
 
 # Loop through the JAR files in the dependency directory
 for jar in "$dependency_dir"/*.jar; do

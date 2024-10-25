@@ -37,6 +37,7 @@ import static org.mockito.Mockito.mockStatic;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
@@ -59,27 +60,36 @@ public class QInvocationSessionTest {
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
 
+    private static MockedStatic<Platform> prefMockStatic;
+    private static MockedStatic<PlatformUI> platformUIMock;
+    private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
+    private static MockedStatic<Display> displayMockStatic;
+    private static MockedStatic<ThreadingUtils> threadingUtilsMock;
+    private static MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock;
+    private static MockedStatic<LspProvider> lspProviderMock;
+    private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
+
     @BeforeAll
     public static void setUp() throws Exception {
-        MockedStatic<Platform> prefMockStatic = mockStatic(Platform.class, RETURNS_DEEP_STUBS);
+        prefMockStatic = mockStatic(Platform.class, RETURNS_DEEP_STUBS);
         Preferences prefMock = mock(Preferences.class);
         prefMockStatic.when(() -> Platform.getPreferencesService().getRootNode().node(anyString()).node(anyString())).thenReturn(prefMock);
         when(prefMock.getBoolean(anyString(), any(Boolean.class))).thenReturn(true);
         when(prefMock.getInt(anyString(), any(Integer.class))).thenReturn(4);
 
-        MockedStatic<PlatformUI> platformUIMock = mockStatic(PlatformUI.class);
+        platformUIMock = mockStatic(PlatformUI.class);
         IWorkbench wbMock = mock(IWorkbench.class);
         platformUIMock.when(PlatformUI::getWorkbench).thenReturn(wbMock);
 
         mockQEclipseEditorUtils();
 
-        MockedStatic<DefaultLoginService> loginServiceMockStatic = mockStatic(DefaultLoginService.class);
+        loginServiceMockStatic = mockStatic(DefaultLoginService.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
         loginServiceMockStatic.when(DefaultLoginService::getInstance).thenReturn(loginSerivceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
         when(loginSerivceMock.updateToken()).thenReturn(new CompletableFuture<Void>());
 
-        MockedStatic<Display> displayMockStatic = mockStatic(Display.class);
+        displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);
         displayMockStatic.when(Display::getDefault).thenReturn(displayMock);
         doAnswer(new Answer<Void>() {
@@ -92,6 +102,33 @@ public class QInvocationSessionTest {
         }).when(displayMock).asyncExec(any(Runnable.class));
     }
 
+    @AfterAll
+    public static void tearDown() {
+        if (prefMockStatic != null) {
+            prefMockStatic.close();
+        }
+        if (platformUIMock != null) {
+            platformUIMock.close();
+        }
+        if (loginServiceMockStatic != null) {
+            loginServiceMockStatic.close();
+        }
+        if (displayMockStatic != null) {
+            displayMockStatic.close();
+        }
+        if (threadingUtilsMock != null) {
+            threadingUtilsMock.close();
+        }
+        if (inlineCompletionUtilsMock != null) {
+            inlineCompletionUtilsMock.close();
+        }
+        if (lspProviderMock != null) {
+            lspProviderMock.close();
+        }
+        if (editorUtilsMock != null) {
+            editorUtilsMock.close();
+        }
+    }
     @AfterEach
     public final void afterEach() {
         QInvocationSession.getInstance().endImmediately();
@@ -114,7 +151,7 @@ public class QInvocationSessionTest {
     // - Session should be ended after all requests in flight have resolved
     // - Session should not be ended if there are still requests in flight
     void testSessionEnd() throws InterruptedException, ExecutionException {
-        MockedStatic<ThreadingUtils> threadingUtilsMock = mockStatic(ThreadingUtils.class);
+        threadingUtilsMock = mockStatic(ThreadingUtils.class);
         threadingUtilsMock.when(() -> ThreadingUtils.executeAsyncTaskAndReturnFuture(any(Runnable.class)))
                 .thenAnswer(new Answer<Future<?>>() {
                     @Override
@@ -136,7 +173,7 @@ public class QInvocationSessionTest {
 
         // We need to mock the Display here because the latter half of the update is
         // done on the UI thread
-        MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock = mockStatic(InlineCompletionUtils.class);
+        inlineCompletionUtilsMock = mockStatic(InlineCompletionUtils.class);
 
         // Test case: when there are suggestions received
         inlineCompletionUtilsMock.when(() -> InlineCompletionUtils.cwParamsFromContext(any(ITextEditor.class),
@@ -201,7 +238,7 @@ public class QInvocationSessionTest {
     }
 
     static void mockLspProvider() {
-        MockedStatic<LspProvider> lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
+        lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
@@ -213,7 +250,7 @@ public class QInvocationSessionTest {
     }
 
     static void mockDisplayAsyncCall() {
-        MockedStatic<Display> displayMockStatic = mockStatic(Display.class);
+        displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);
         displayMockStatic.when(Display::getDefault).thenReturn(displayMock);
         doAnswer(new Answer<Runnable>() {
@@ -227,7 +264,7 @@ public class QInvocationSessionTest {
     }
 
     static void mockQEclipseEditorUtils() {
-        MockedStatic<QEclipseEditorUtils> editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
+        editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
         ITextViewer viewerMock = mock(ITextViewer.class);
         Font fontMock = mock(Font.class);
         editorUtilsMock.when(() -> QEclipseEditorUtils.getActiveTextViewer(any(ITextEditor.class)))

@@ -1,182 +1,223 @@
 {
-    "version":"2.0",
-    "metadata":{
-        "apiVersion":"2017-07-25",
-        "endpointPrefix":"client-telemetry",
-        "jsonVersion":"1.1",
-        "protocol":"rest-json",
-        "serviceAbbreviation":"ToolkitTelemetry",
-        "serviceFullName":"A beautiful and amazing ToolkitTelemetry",
-        "serviceId":"ToolkitTelemetry",
-        "signatureVersion":"v4",
-        "signingName":"execute-api"
+    "version": "2.0",
+    "metadata": {
+        "apiVersion": "2017-07-25",
+        "endpointPrefix": "ToolkitTelemetry",
+        "jsonVersion": "1.1",
+        "protocol": "rest-json",
+        "protocols": [
+            "rest-json"
+        ],
+        "serviceAbbreviation": "ToolkitTelemetry",
+        "serviceFullName": "A beautiful and amazing ToolkitTelemetry",
+        "serviceId": "ToolkitTelemetry",
+        "signatureVersion": "v4",
+        "signingName": "execute-api",
+        "auth": [
+            "aws.auth#sigv4"
+        ]
     },
-    "operations":{
-        "PostErrorReport":{
-            "name":"PostErrorReport",
-            "http":{
-                "method":"POST",
-                "requestUri":"/errorReport"
+    "operations": {
+        "PostErrorReport": {
+            "name": "PostErrorReport",
+            "http": {
+                "method": "POST",
+                "requestUri": "/errorReport"
             },
-            "input":{"shape":"PostErrorReportRequest"}
+            "input": {
+                "shape": "PostErrorReportRequest"
+            }
         },
-        "PostFeedback":{
-            "name":"PostFeedback",
-            "http":{
-                "method":"POST",
-                "requestUri":"/feedback"
+        "PostFeedback": {
+            "name": "PostFeedback",
+            "http": {
+                "method": "POST",
+                "requestUri": "/feedback"
             },
-            "input":{"shape":"PostFeedbackRequest"}
+            "input": {
+                "shape": "PostFeedbackRequest"
+            }
         },
-        "PostMetrics":{
-            "name":"PostMetrics",
-            "http":{
-                "method":"POST",
-                "requestUri":"/metrics"
+        "PostMetrics": {
+            "name": "PostMetrics",
+            "http": {
+                "method": "POST",
+                "requestUri": "/metrics"
             },
-            "input":{"shape":"PostMetricsRequest"}
+            "input": {
+                "shape": "PostMetricsRequest"
+            }
         }
     },
-    "shapes":{
-        "AWSProduct":{
-            "type":"string",
-            "enum":[
+    "shapes": {
+        "AWSProduct": {
+            "type": "string",
+            "enum": [
                 "canary",
+                "AWS Cloud9",
                 "AWS Toolkit For JetBrains",
                 "AWS Toolkit For Eclipse",
                 "AWS Toolkit For VisualStudio",
                 "AWS Toolkit For VS Code",
+                "CodeWhisperer For JupyterLab",
+                "CodeWhisperer for Terminal",
                 "Amazon Q For JetBrains",
                 "Amazon Q For VS Code",
                 "Amazon Q For Eclipse"
             ]
         },
-        "AWSProductVersion":{
-            "type":"string",
-            "pattern":"^[\\w+-.]{1,512}$"
+        "AWSProductVersion": {
+            "type": "string",
+            "pattern": "^[\\w+-.]{1,512}$"
         },
-        "ClientID":{
-            "type":"string",
-            "pattern":"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+        "ClientID": {
+            "type": "string",
+            "documentation": "A valid UUID is expected, and this should be unique per-client and reused across API calls.",
+            "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
         },
-        "Command":{
-            "type":"string",
-            "max":2000
+        "Command": {
+            "type": "string",
+            "max": 2000
         },
-        "Comment":{
-            "type":"string",
-            "max":2000
+        "Comment": {
+            "type": "string",
+            "max": 2000
         },
-        "ComputeEnv":{
-            "type":"string",
-            "enum":[
-                "cloud9",
-                "cloud9-codecatalyst",
-                "cloud9-ec2",
-                "codecatalyst",
-                "ec2",
-                "local",
-                "sagemaker",
-                "ssh",
-                "test",
-                "web",
-                "wsl",
-                "other"
-            ]
+        "Datapoint": {
+            "type": "double",
+            "min": 0
         },
-        "Datapoint":{
-            "type":"double",
-            "min":0
+        "Email": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9.!#$%&amp;'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
         },
-        "Email":{
-            "type":"string",
-            "pattern":"^[a-zA-Z0-9.!#$%&amp;'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+        "EpochTimestamp": {
+            "type": "long",
+            "min": 0
         },
-        "EpochTimestamp":{
-            "type":"long",
-            "min":0
-        },
-        "ErrorDetails":{
-            "type":"structure",
-            "required":[
+        "ErrorDetails": {
+            "type": "structure",
+            "required": [
                 "Command",
                 "EpochTimestamp",
                 "Type",
                 "StackTrace"
             ],
-            "members":{
-                "Command":{"shape":"Command"},
-                "EpochTimestamp":{"shape":"EpochTimestamp"},
-                "Type":{"shape":"Type"},
-                "Message":{"shape":"Message"},
-                "StackTrace":{"shape":"StackTrace"}
+            "members": {
+                "Command": {
+                    "shape": "Command"
+                },
+                "EpochTimestamp": {
+                    "shape": "EpochTimestamp"
+                },
+                "Type": {
+                    "shape": "Type"
+                },
+                "Message": {
+                    "shape": "Message"
+                },
+                "StackTrace": {
+                    "shape": "StackTrace"
+                }
             }
         },
-        "Key":{
-            "type":"string",
-            "pattern":"^\\w[\\w\\.]{0,149}$"
+        "Key": {
+            "type": "string",
+            "pattern": "^\\w[\\w\\.]{0,149}$"
         },
-        "Message":{
-            "type":"string",
-            "max":2048
+        "Message": {
+            "type": "string",
+            "max": 2048
         },
-        "Metadata":{
-            "type":"list",
-            "member":{"shape":"MetadataEntry"}
-        },
-        "MetadataEntry":{
-            "type":"structure",
-            "members":{
-                "Key":{"shape":"Key"},
-                "Value":{"shape":"Value"}
+        "Metadata": {
+            "type": "list",
+            "member": {
+                "shape": "MetadataEntry"
             }
         },
-        "MetricData":{
-            "type":"list",
-            "member":{"shape":"MetricDatum"},
-            "max":20,
-            "min":1
+        "MetadataEntry": {
+            "type": "structure",
+            "members": {
+                "Key": {
+                    "shape": "Key"
+                },
+                "Value": {
+                    "shape": "Value"
+                }
+            }
         },
-        "MetricDatum":{
-            "type":"structure",
-            "required":[
+        "MetricData": {
+            "type": "list",
+            "member": {
+                "shape": "MetricDatum"
+            },
+            "max": 20,
+            "min": 1
+        },
+        "MetricDatum": {
+            "type": "structure",
+            "required": [
                 "MetricName",
                 "EpochTimestamp",
                 "Unit",
                 "Value"
             ],
-            "members":{
-                "MetricName":{"shape":"MetricName"},
-                "EpochTimestamp":{"shape":"EpochTimestamp"},
-                "Unit":{"shape":"Unit"},
-                "Value":{"shape":"Datapoint"},
-                "Metadata":{"shape":"Metadata"},
-                "Passive":{"shape":"Passive"}
+            "members": {
+                "MetricName": {
+                    "shape": "MetricName"
+                },
+                "EpochTimestamp": {
+                    "shape": "EpochTimestamp"
+                },
+                "Unit": {
+                    "shape": "Unit"
+                },
+                "Value": {
+                    "shape": "Datapoint"
+                },
+                "Metadata": {
+                    "shape": "Metadata"
+                },
+                "Passive": {
+                    "shape": "Passive"
+                }
             }
         },
-        "MetricName":{
-            "type":"string",
-            "pattern":"^[\\w+-.:]{1,255}$"
+        "MetricName": {
+            "type": "string",
+            "pattern": "^[\\w+-.:]{1,255}$"
         },
-        "Passive":{"type":"boolean"},
-        "PostErrorReportRequest":{
-            "type":"structure",
-            "required":[
+        "Passive": {
+            "type": "boolean"
+        },
+        "PostErrorReportRequest": {
+            "type": "structure",
+            "required": [
                 "AWSProduct",
                 "AWSProductVersion",
                 "ErrorDetails"
             ],
-            "members":{
-                "AWSProduct":{"shape":"AWSProduct"},
-                "AWSProductVersion":{"shape":"AWSProductVersion"},
-                "Metadata":{"shape":"Metadata"},
-                "Userdata":{"shape":"Userdata"},
-                "ErrorDetails":{"shape":"ErrorDetails"}
+            "members": {
+                "AWSProduct": {
+                    "shape": "AWSProduct"
+                },
+                "AWSProductVersion": {
+                    "shape": "AWSProductVersion"
+                },
+                "Metadata": {
+                    "shape": "Metadata"
+                },
+                "Userdata": {
+                    "shape": "Userdata"
+                },
+                "ErrorDetails": {
+                    "shape": "ErrorDetails"
+                }
             }
         },
-        "PostFeedbackRequest":{
-            "type":"structure",
-            "required":[
+        "PostFeedbackRequest": {
+            "type": "structure",
+            "required": [
                 "AWSProduct",
                 "AWSProductVersion",
                 "ParentProduct",
@@ -184,58 +225,106 @@
                 "Sentiment",
                 "Comment"
             ],
-            "members":{
-                "AWSProduct":{"shape":"AWSProduct"},
-                "AWSProductVersion":{"shape":"AWSProductVersion"},
-                "OS":{"shape":"Value"},
-                "OSVersion":{"shape":"Value"},
-                "ComputeEnv": {"shape":"ComputeEnv"},
-                "ParentProduct":{"shape":"Value"},
-                "ParentProductVersion":{"shape":"Value"},
-                "Metadata":{"shape":"Metadata"},
-                "Sentiment":{"shape":"Sentiment"},
-                "Comment":{"shape":"Comment"}
+            "members": {
+                "AWSProduct": {
+                    "shape": "AWSProduct"
+                },
+                "AWSProductVersion": {
+                    "shape": "AWSProductVersion"
+                },
+                "ComputeEnv": {
+                    "shape": "Value"
+                },
+                "OS": {
+                    "shape": "Value"
+                },
+                "OSVersion": {
+                    "shape": "Value"
+                },
+                "ParentProduct": {
+                    "shape": "Value"
+                },
+                "ParentProductVersion": {
+                    "shape": "Value"
+                },
+                "Metadata": {
+                    "shape": "Metadata"
+                },
+                "Sentiment": {
+                    "shape": "Sentiment"
+                },
+                "Comment": {
+                    "shape": "Comment"
+                }
             }
         },
-        "PostMetricsRequest":{
-            "type":"structure",
-            "required":[
+        "PostMetricsRequest": {
+            "type": "structure",
+            "required": [
                 "AWSProduct",
                 "AWSProductVersion",
                 "ClientID",
                 "MetricData"
             ],
-            "members":{
-                "AWSProduct":{"shape":"AWSProduct"},
-                "AWSProductVersion":{"shape":"AWSProductVersion"},
-                "ClientID":{"shape":"ClientID"},
-                "OS":{"shape":"Value"},
-                "OSArchitecture":{"shape":"Value"},
-                "OSVersion":{"shape":"Value"},
-                "ComputeEnv": {"shape":"ComputeEnv"},
-                "ParentProduct":{"shape":"Value"},
-                "ParentProductVersion":{"shape":"Value"},
-                "MetricData":{"shape":"MetricData"}
+            "members": {
+                "AWSProduct": {
+                    "shape": "AWSProduct"
+                },
+                "AWSProductVersion": {
+                    "shape": "AWSProductVersion"
+                },
+                "ClientID": {
+                    "shape": "ClientID"
+                },
+                "ComputeEnv": {
+                    "shape": "Value"
+                },
+                "OS": {
+                    "shape": "Value"
+                },
+                "OSArchitecture": {
+                    "shape": "Value"
+                },
+                "OSVersion": {
+                    "shape": "Value"
+                },
+                "ParentProduct": {
+                    "shape": "Value"
+                },
+                "ParentProductVersion": {
+                    "shape": "Value"
+                },
+                "SessionID": {
+                    "shape": "SessionID"
+                },
+                "MetricData": {
+                    "shape": "MetricData"
+                }
             }
         },
-        "Sentiment":{
-            "type":"string",
-            "enum":[
+        "Sentiment": {
+            "type": "string",
+            "enum": [
                 "Positive",
                 "Negative"
             ]
         },
-        "StackTrace":{
-            "type":"string",
-            "max":16384
+        "SessionID": {
+            "type": "string",
+            "documentation": "A valid UUID is expected, and this should be unique per IDE application instance per-client and reused across API calls. For each instance, the UUID must remain the same until the instance is terminated. Upon the creation of a new instance, a new UUID must be created.",
+            "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
         },
-        "Type":{
-            "type":"string",
-            "max":1024
+        "StackTrace": {
+            "type": "string",
+            "max": 16384
         },
-        "Unit":{
-            "type":"string",
-            "enum":[
+        "Type": {
+            "type": "string",
+            "max": 1024
+        },
+        "Unit": {
+            "type": "string",
+            "enum": [
                 "Milliseconds",
                 "Bytes",
                 "Percent",
@@ -243,16 +332,21 @@
                 "None"
             ]
         },
-        "Userdata":{
-            "type":"structure",
-            "members":{
-                "Email":{"shape":"Email"},
-                "Comment":{"shape":"Comment"}
+        "Userdata": {
+            "type": "structure",
+            "members": {
+                "Email": {
+                    "shape": "Email"
+                },
+                "Comment": {
+                    "shape": "Comment"
+                }
             }
         },
-        "Value":{
-            "type":"string",
-            "max":65536
+        "Value": {
+            "type": "string",
+            "max": 65536
         }
-    }
+    },
+    "documentation": "The entry-point for the Toolkits Telemetry system, events will be distributed from here."
 }

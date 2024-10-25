@@ -11,7 +11,7 @@ public final class LspConstants {
     }
 
     public static final String CW_MANIFEST_URL = "https://aws-toolkit-language-servers.amazonaws.com/eclipse/0/manifest.json";
-
+    public static final int MANIFEST_MAJOR_VERSION = 0;
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
     public static final String NODE_EXECUTABLE_PREFIX = "node";
 

@@ -64,6 +64,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 });
                 break;
             case CANCEL_LOGIN:
+                Activator.getLogger().info("cancelLogin command received");
                 if (isLoginTaskRunning) {
                     loginTask.cancel(true);
                     isLoginTaskRunning = false;

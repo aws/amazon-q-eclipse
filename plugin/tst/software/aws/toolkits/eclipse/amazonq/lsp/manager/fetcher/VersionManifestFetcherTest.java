@@ -28,7 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
 public final class VersionManifestFetcherTest {
-    private static String INVALID_DATA = "{\r\n    \"schemaVersion\": \"0.1\",\r\n}";
+    private static final String INVALID_DATA = "{\r\n    \"schemaVersion\": \"0.1\",\r\n}";
     private String sampleManifestFile = "sample-manifest.json";
     private VersionManifestFetcher fetcher;
     private MockedStatic<Activator> mockedActivator;
@@ -47,7 +47,7 @@ public final class VersionManifestFetcherTest {
     }
 
     @Test
-    public void fetch_WhenCacheEmptyAndNoUrl(@TempDir final Path tempDir) {
+    public void fetchWhenCacheEmptyAndNoUrl(@TempDir final Path tempDir) {
         var manifestPath = tempDir.resolve("manifest.json");
         fetcher = new VersionManifestFetcher(null, null, manifestPath);
 
@@ -56,7 +56,7 @@ public final class VersionManifestFetcherTest {
     }
 
     @Test
-    public void fetch_WhenCacheExistsAndNoUrl(@TempDir final Path tempDir) throws IOException, URISyntaxException {
+    public void fetchWhenCacheExistsAndNoUrl(@TempDir final Path tempDir) throws IOException, URISyntaxException {
         var manifestPath = tempDir.resolve("manifest.json");
         var resourcePath = getResourcePath(sampleManifestFile);
         copyFile(resourcePath.toAbsolutePath(), manifestPath);
@@ -69,7 +69,7 @@ public final class VersionManifestFetcherTest {
     }
 
     @Test
-    public void fetch_WhenCacheInvalidAndNoUrl(@TempDir final Path tempDir) throws IOException, URISyntaxException {
+    public void fetchWhenCacheInvalidAndNoUrl(@TempDir final Path tempDir) throws IOException, URISyntaxException {
         var manifestPath = tempDir.resolve("manifest.json");
         Files.writeString(manifestPath, INVALID_DATA);
 
@@ -83,7 +83,7 @@ public final class VersionManifestFetcherTest {
     }
 
     @Test
-    public void fetch_WhenNoCacheAndFetchFromRemote(@TempDir final Path tempDir)
+    public void fetchWhenNoCacheAndFetchFromRemote(@TempDir final Path tempDir)
             throws IOException, URISyntaxException {
         var manifestPath = tempDir.resolve("manifest.json");
 
@@ -98,7 +98,7 @@ public final class VersionManifestFetcherTest {
     }
 
     @Test
-    public void fetch_WhenLocalCacheAndFetchFromRemote(@TempDir final Path tempDir)
+    public void fetchWhenLocalCacheAndFetchFromRemote(@TempDir final Path tempDir)
             throws IOException, URISyntaxException {
         var manifestPath = tempDir.resolve("manifest.json");
         var resourcePath = getResourcePath(sampleManifestFile);
@@ -115,16 +115,16 @@ public final class VersionManifestFetcherTest {
         assertTrue(cacheExists(manifestPath));
         assertFalse(PluginStore.get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
-    
-    private boolean cacheExists(Path manifestPath) {
+
+    private boolean cacheExists(final Path manifestPath) {
         return Files.exists(manifestPath);
     }
 
-    private void copyFile(Path sourcePath, Path destinationPath) throws IOException {
+    private void copyFile(final Path sourcePath, final Path destinationPath) throws IOException {
         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    private Path getResourcePath(String resourceName) throws URISyntaxException {
+    private Path getResourcePath(final String resourceName) throws URISyntaxException {
         var resourceUrl = getClass().getClassLoader().getResource(resourceName);
         if (resourceUrl == null) {
             throw new IllegalArgumentException("Resource not found: " + resourceName);

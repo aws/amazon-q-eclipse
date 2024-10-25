@@ -6,14 +6,12 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -31,8 +29,6 @@ public final class PluginUtils {
         // Prevent instantiation
     }
 
-    private static Image qIcon = null;
-
     public static java.nio.file.Path getPluginDir(final String directoryName) {
         var stateLocation = new File(Activator.getDefault().getStateLocation().toOSString(), directoryName);
         if (!stateLocation.exists()) {
@@ -41,36 +37,10 @@ public final class PluginUtils {
         return Paths.get(stateLocation.getAbsolutePath());
     }
 
-    public static java.nio.file.Path getAwsDirectory(final String subdir) {
-        java.nio.file.Path homeDir = Paths.get(System.getProperty("user.home"));
-        java.nio.file.Path awsDir = homeDir.resolve(".aws");
-        java.nio.file.Path subDir = awsDir.resolve(subdir);
-
-        try {
-            Files.createDirectories(subDir);
-        } catch (IOException e) {
-            throw new AmazonQPluginException("Failed to create directory: " + subDir, e);
-        }
-
-        return subDir;
-    }
-
     public static URL getResource(final String path) throws IOException {
         Bundle bundle = FrameworkUtil.getBundle(PluginUtils.class);
         URL url = FileLocator.find(bundle, new Path(path), null);
         return FileLocator.toFileURL(url);
-    }
-
-    public static Image getQIcon() {
-        if (qIcon == null) {
-            try {
-                var icon = getResource("icons/AmazonQ.png");
-                qIcon = new Image(null, icon.openStream());
-            } catch (IOException e) {
-                Activator.getLogger().warn("Unable to retreive Q icon", e);
-            }
-        }
-        return qIcon;
     }
 
     public static PluginPlatform getPlatform() {
@@ -104,7 +74,7 @@ public final class PluginUtils {
         }
     }
 
-    private static boolean showConfirmDialog(final String title, final String message) {
+    protected static boolean showConfirmDialog(final String title, final String message) {
         final boolean[] result = new boolean[] {false};
         try {
             Display.getDefault().syncExec(new Runnable() {

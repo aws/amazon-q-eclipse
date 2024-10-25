@@ -238,8 +238,8 @@ public class QInvocationSessionTest {
         return items;
     }
 
-    static void mockLspProvider() {
-        lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
+    static MockedStatic<LspProvider> mockLspProvider() {
+        MockedStatic<LspProvider> lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
@@ -248,10 +248,12 @@ public class QInvocationSessionTest {
                 .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
         lspProviderMock.when(() -> LspProvider.getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
                 .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
+
+        return lspProviderMock;
     }
 
-    static void mockDisplayAsyncCall() {
-        displayMockStatic = mockStatic(Display.class);
+    static MockedStatic<Display> mockDisplayAsyncCall() {
+        MockedStatic<Display> displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);
         displayMockStatic.when(Display::getDefault).thenReturn(displayMock);
         doAnswer(new Answer<Runnable>() {
@@ -262,6 +264,8 @@ public class QInvocationSessionTest {
                 return null;
             }
         }).when(displayMock).asyncExec(any(Runnable.class));
+
+        return displayMockStatic;
     }
 
     static MockedStatic<QEclipseEditorUtils> mockQEclipseEditorUtils() {

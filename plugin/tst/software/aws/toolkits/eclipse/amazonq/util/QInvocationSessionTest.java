@@ -38,7 +38,6 @@ import static org.mockito.Mockito.mockStatic;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
@@ -57,11 +56,6 @@ public class QInvocationSessionTest {
     private static final ITextEditor MOCK_EDITOR = mock(ITextEditor.class);
     private static final InlineCompletionParams POTENT_PARAM = mock(InlineCompletionParams.class);
     private static final InlineCompletionParams IMPOTENT_PARAM = mock(InlineCompletionParams.class);
-    private static MockedStatic<Platform> prefMockStatic;
-    private static MockedStatic<PlatformUI> platformUIMockStatic;
-    private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
-    private static MockedStatic<Display> displayMockStatic;
-    private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
 
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
@@ -73,6 +67,7 @@ public class QInvocationSessionTest {
     private static MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock;
     private static MockedStatic<LspProvider> lspProviderMock;
     private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
+    private static MockedStatic<PlatformUI> platformUIMockStatic;
 
     @BeforeAll
     public static void setUp() throws Exception {

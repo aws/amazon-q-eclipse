@@ -25,7 +25,8 @@ public abstract class AmazonQView extends ViewPart {
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
             AmazonQChatWebview.ID,
-            DependencyMissingView.ID
+            DependencyMissingView.ID,
+            ReauthenticateView.ID
         );
 
     private Browser browser;

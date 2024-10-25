@@ -4,6 +4,8 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 
+import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
+
 
 public class ReauthenticateView extends CallToActionView {
 	public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView";
@@ -54,7 +56,8 @@ public class ReauthenticateView extends CallToActionView {
         return new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-            	// TODO
+            	SignoutAction signoutAction = new SignoutAction();
+            	signoutAction.run();
             }
         };
 	}

@@ -4,7 +4,9 @@
 
     <extension
         point="org.eclipse.ui.views">
-        <!-- After adding a new view, ensure that the view is included in the activities extension point to hide it from the Show View menu -->
+        <!-- If adding a new view: -->
+        <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
+        <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
  		<view
             id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
             name="Amazon Q Reauthenticate"
@@ -78,6 +80,7 @@
 	 </extension>
     <extension
         point="org.eclipse.ui.perspectiveExtensions">
+        <!-- These perspectiveExtensions ensure that the view is display in the appropriate portion of the layout. In most cases, it should stack the AmazonQChatWebview. -->
         <perspectiveExtension
             targetID="*">
             <view
@@ -94,6 +97,18 @@
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relationship="stack"
                 visible="false">

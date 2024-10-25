@@ -81,13 +81,15 @@ public final class ArtifactUtils {
         return true;
     }
 
-    public static void deleteFile(final Path filePath) {
+    public static boolean deleteFile(final Path filePath) {
         try {
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
             }
+            return true;
         } catch (IOException e) {
             Activator.getLogger().info("Error deleting file: " + filePath.toString());
+            return false;
         }
     }
 }

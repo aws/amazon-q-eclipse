@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 
 import java.io.IOException;
@@ -119,7 +122,7 @@ public final class VersionManifestFetcher {
                 .timeout(java.time.Duration.ofSeconds(TIMEOUT_SECONDS));
 
         Optional.ofNullable(etag).ifPresent(tag -> requestBuilder.header("If-None-Match", tag));
-
+        // TODO: Add retry to the web request
         var response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != HttpURLConnection.HTTP_OK && response.statusCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
             throw new AmazonQPluginException("Unexpected response code when fetching manifest: " + response.statusCode());

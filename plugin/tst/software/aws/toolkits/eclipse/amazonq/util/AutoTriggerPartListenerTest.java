@@ -30,6 +30,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -44,6 +45,7 @@ public class AutoTriggerPartListenerTest {
 
     private static BlockingQueue<String> channel = new ArrayBlockingQueue<>(10);
 
+    @ResourceLock("QEclipseEditorUtils")
     @BeforeAll
     public static void setUp() throws Exception {
         when(editorMock.getDocumentProvider().getDocument(any(IEditorInput.class))).thenReturn(docMock);

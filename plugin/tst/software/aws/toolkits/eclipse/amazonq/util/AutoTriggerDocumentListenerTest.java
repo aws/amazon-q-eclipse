@@ -17,6 +17,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.MockedStatic;
 
 public class AutoTriggerDocumentListenerTest {
@@ -27,6 +28,7 @@ public class AutoTriggerDocumentListenerTest {
 
     private static QInvocationSession sessionMock;
 
+    @ResourceLock("QEclipseEditorUtils")
     @BeforeAll
     public static void setUp() {
         sessionMockStatic = mockStatic(QInvocationSession.class);

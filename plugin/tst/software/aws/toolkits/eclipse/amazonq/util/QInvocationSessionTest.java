@@ -39,6 +39,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -64,6 +65,7 @@ public class QInvocationSessionTest {
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
 
+    @ResourceLock("QEclipseEditorUtils")
     @BeforeAll
     public static void setUp() throws Exception {
         prefMockStatic = mockStatic(Platform.class, RETURNS_DEEP_STUBS);

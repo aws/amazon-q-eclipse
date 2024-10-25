@@ -55,7 +55,9 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
     public boolean fetch(final PluginPlatform platform, final PluginArchitecture architecture, final Path destination) {
         Manifest manifestFile = null;
         try {
-            manifestFile = fetchManifest(manifestUrl);
+            var manifestFetcher = new VersionManifestFetcher(manifestUrl, httpClient);
+            manifestFile = manifestFetcher.fetch()
+                    .orElseThrow(() -> new AmazonQPluginException("Failed to retrieve language server manifest"));
         } catch (Exception e) {
             throw new AmazonQPluginException("Failed to retrieve language server manifest", e);
         }
@@ -91,21 +93,6 @@ public final class RemoteManifestLspFetcher implements LspFetcher {
         return targetVersion.flatMap(version -> version.targets().stream()
                 .filter(target -> target.platform().equalsIgnoreCase(platform.getValue()) && target.arch().equalsIgnoreCase(architecture.getValue()))
                 .findFirst());
-    }
-
-    private Manifest fetchManifest(final String manifestUrl) throws IOException, InterruptedException {
-        var request = HttpRequest.newBuilder()
-                .uri(URI.create(manifestUrl))
-                .timeout(java.time.Duration.ofSeconds(TIMEOUT_SECONDS))
-                .build();
-
-        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() == HttpURLConnection.HTTP_OK) {
-            return OBJECT_MAPPER.readValue(response.body(), Manifest.class);
-        } else {
-            throw new AmazonQPluginException("Unexpected response code when fetching manifest: " + response.statusCode());
-        }
     }
 
     private void downloadFile(final String fileUrl, final Path destination, final String filename, final List<String> expectedHashes)

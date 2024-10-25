@@ -38,6 +38,7 @@ import static org.mockito.Mockito.mockStatic;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
@@ -64,6 +65,14 @@ public class QInvocationSessionTest {
 
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
+
+    private static MockedStatic<Platform> prefMockStatic;
+    private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
+    private static MockedStatic<Display> displayMockStatic;
+    private static MockedStatic<ThreadingUtils> threadingUtilsMock;
+    private static MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock;
+    private static MockedStatic<LspProvider> lspProviderMock;
+    private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -100,11 +109,30 @@ public class QInvocationSessionTest {
 
     @AfterAll
     public static void tearDown() {
-        prefMockStatic.close();
-        platformUIMockStatic.close();
-        loginServiceMockStatic.close();
-        displayMockStatic.close();
-        editorUtilsMock.close();
+        if (prefMockStatic != null) {
+            prefMockStatic.close();
+        }
+        if (platformUIMockStatic != null) {
+            platformUIMockStatic.close();
+        }
+        if (loginServiceMockStatic != null) {
+            loginServiceMockStatic.close();
+        }
+        if (displayMockStatic != null) {
+            displayMockStatic.close();
+        }
+        if (threadingUtilsMock != null) {
+            threadingUtilsMock.close();
+        }
+        if (inlineCompletionUtilsMock != null) {
+            inlineCompletionUtilsMock.close();
+        }
+        if (lspProviderMock != null) {
+            lspProviderMock.close();
+        }
+        if (editorUtilsMock != null) {
+            editorUtilsMock.close();
+        }
     }
 
     @AfterEach
@@ -129,7 +157,7 @@ public class QInvocationSessionTest {
     // - Session should be ended after all requests in flight have resolved
     // - Session should not be ended if there are still requests in flight
     void testSessionEnd() throws InterruptedException, ExecutionException {
-        MockedStatic<ThreadingUtils> threadingUtilsMock = mockStatic(ThreadingUtils.class);
+        threadingUtilsMock = mockStatic(ThreadingUtils.class);
         threadingUtilsMock.when(() -> ThreadingUtils.executeAsyncTaskAndReturnFuture(any(Runnable.class)))
                 .thenAnswer(new Answer<Future<?>>() {
                     @Override
@@ -151,7 +179,7 @@ public class QInvocationSessionTest {
 
         // We need to mock the Display here because the latter half of the update is
         // done on the UI thread
-        MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock = mockStatic(InlineCompletionUtils.class);
+        inlineCompletionUtilsMock = mockStatic(InlineCompletionUtils.class);
 
         // Test case: when there are suggestions received
         inlineCompletionUtilsMock.when(() -> InlineCompletionUtils.cwParamsFromContext(any(ITextEditor.class),
@@ -216,7 +244,7 @@ public class QInvocationSessionTest {
     }
 
     static void mockLspProvider() {
-        MockedStatic<LspProvider> lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
+        lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
@@ -228,7 +256,7 @@ public class QInvocationSessionTest {
     }
 
     static void mockDisplayAsyncCall() {
-        MockedStatic<Display> displayMockStatic = mockStatic(Display.class);
+        displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);
         displayMockStatic.when(Display::getDefault).thenReturn(displayMock);
         doAnswer(new Answer<Runnable>() {

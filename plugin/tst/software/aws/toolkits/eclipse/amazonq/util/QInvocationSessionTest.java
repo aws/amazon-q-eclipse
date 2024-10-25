@@ -35,9 +35,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
@@ -62,12 +62,12 @@ public class QInvocationSessionTest {
 
     private static MockedStatic<Platform> prefMockStatic;
     private static MockedStatic<PlatformUI> platformUIMock;
+    private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
     private static MockedStatic<Display> displayMockStatic;
     private static MockedStatic<ThreadingUtils> threadingUtilsMock;
     private static MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock;
     private static MockedStatic<LspProvider> lspProviderMock;
     private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
-    private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -102,17 +102,16 @@ public class QInvocationSessionTest {
         }).when(displayMock).asyncExec(any(Runnable.class));
     }
 
-    @AfterEach
-    public final void afterEach() {
-        QInvocationSession.getInstance().endImmediately();
-    }
     @AfterAll
-    public static final void tearDownAll() {
+    public static void tearDown() {
         if (prefMockStatic != null) {
             prefMockStatic.close();
         }
         if (platformUIMock != null) {
             platformUIMock.close();
+        }
+        if (loginServiceMockStatic != null) {
+            loginServiceMockStatic.close();
         }
         if (displayMockStatic != null) {
             displayMockStatic.close();
@@ -129,9 +128,10 @@ public class QInvocationSessionTest {
         if (editorUtilsMock != null) {
             editorUtilsMock.close();
         }
-        if (editorUtilsMock != null) {
-            editorUtilsMock.close();
-        }
+    }
+    @AfterEach
+    public final void afterEach() {
+        QInvocationSession.getInstance().endImmediately();
     }
 
     @Test

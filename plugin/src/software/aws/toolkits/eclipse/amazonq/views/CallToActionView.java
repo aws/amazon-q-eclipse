@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
@@ -21,15 +24,15 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public abstract class CallToActionView extends ViewPart {
-	private String iconPath;
-	private String headerLabel;
-	private String detailMessage;
-	private String buttonLabel;
-	private SelectionListener buttonHandler;
-	private String linkLabel;
-	private SelectionListener linkHandler;
-	private Composite parentComposite;
-	
+    private String iconPath;
+    private String headerLabel;
+    private String detailMessage;
+    private String buttonLabel;
+    private SelectionListener buttonHandler;
+    private String linkLabel;
+    private SelectionListener linkHandler;
+    private Composite parentComposite;
+
     protected abstract String getIconPath();
     protected abstract String getHeaderLabel();
     protected abstract String getDetailMessage();
@@ -37,11 +40,11 @@ public abstract class CallToActionView extends ViewPart {
     protected abstract SelectionListener getButtonHandler();
     protected abstract String getLinkLabel();
     protected abstract SelectionListener getLinkHandler();
-	
-	@Override
-	public final void createPartControl(final Composite parent) {
-		this.parentComposite = parent;
-		this.iconPath = getIconPath();
+
+    @Override
+    public final void createPartControl(final Composite parent) {
+        this.parentComposite = parent;
+        this.iconPath = getIconPath();
         this.headerLabel = getHeaderLabel();
         this.detailMessage = getDetailMessage();
         this.buttonLabel = getButtonLabel();
@@ -49,16 +52,16 @@ public abstract class CallToActionView extends ViewPart {
         this.linkLabel = getLinkLabel();
         this.linkHandler = getLinkHandler();
         setupView();
-	}
+    }
 
     @Override
     public final void setFocus() {
         parentComposite.setFocus();
     }
 
-    private final void setupView() {
-    	// set margins for parent container
-    	var layout = new GridLayout(1, false);
+    private void setupView() {
+        // set margins for parent container
+        var layout = new GridLayout(1, false);
         layout.marginLeft = 20;
         layout.marginRight = 20;
         layout.marginTop = 10;
@@ -82,7 +85,7 @@ public abstract class CallToActionView extends ViewPart {
         parentComposite.layout(true, true);
     }
 
-    private final void setupIcon(final Composite composite) {
+    private void setupIcon(final Composite composite) {
         var iconLabel = new Label(composite, SWT.NONE);
         Image icon = loadImage(iconPath);
         iconLabel.setImage(icon);
@@ -95,8 +98,8 @@ public abstract class CallToActionView extends ViewPart {
         });
     }
 
-    private final void setupHeader(final Composite composite) {
-    	var header = new Label(composite,  SWT.CENTER | SWT.WRAP);
+    private void setupHeader(final Composite composite) {
+        var header = new Label(composite,  SWT.CENTER | SWT.WRAP);
         header.setText(headerLabel);
         header.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         var font = magnifyFontSize(parentComposite.getFont(), 18);
@@ -109,27 +112,27 @@ public abstract class CallToActionView extends ViewPart {
         });
     }
 
-    private final void setupDetailMessage(final Composite composite) {
+    private void setupDetailMessage(final Composite composite) {
         var textLabel = new Label(composite,  SWT.CENTER | SWT.WRAP);
         textLabel.setText(detailMessage);
         textLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
     }
 
-    private final void setupButton(final Composite composite) {
+    private void setupButton(final Composite composite) {
         var button = new Button(composite, SWT.PUSH);
         button.setText(buttonLabel);
         button.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
         button.addSelectionListener(buttonHandler);
     }
 
-    private final void setupLink(final Composite composite) {
-    	Link hyperlink = new Link(composite, SWT.NONE);
+    private void setupLink(final Composite composite) {
+        Link hyperlink = new Link(composite, SWT.NONE);
         hyperlink.setText("<a>" + linkLabel + "</a>");
         hyperlink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
         hyperlink.addSelectionListener(linkHandler);
     }
 
-    private final Image loadImage(final String imagePath) {
+    private Image loadImage(final String imagePath) {
         Image loadedImage = null;
         try {
             URL imageUrl = PluginUtils.getResource(imagePath);
@@ -142,7 +145,7 @@ public abstract class CallToActionView extends ViewPart {
         return loadedImage;
     }
 
-    private final Font magnifyFontSize(final Font originalFont, final int fontSize) {
+    private Font magnifyFontSize(final Font originalFont, final int fontSize) {
         FontData[] fontData = originalFont.getFontData();
         for (int i = 0; i < fontData.length; i++) {
             fontData[i].setHeight(fontSize);

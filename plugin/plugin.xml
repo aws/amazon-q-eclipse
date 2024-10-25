@@ -107,6 +107,18 @@
                 relationship="stack"
                 visible="false">
             </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
         </perspectiveExtension>
     </extension>
     <extension

@@ -4,6 +4,13 @@
 
     <extension
         point="org.eclipse.ui.views">
+        <!-- After adding a new view, ensure that the view is included in the activities extension point to hide it from the Show View menu -->
+ 		<view
+            id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+            name="Amazon Q Reauthenticate"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+        </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
             name="Amazon Q Error"
@@ -38,11 +45,15 @@
         </view>
     </extension>
     <extension point="org.eclipse.ui.activities">  
+      <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
+      <!-- AmazonQChatWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ToolkitLoginWebview" name="Amazon Q Login">
 	  </activity>
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
 	  </activity>
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
 	  </activity>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ToolkitLoginWebview"
@@ -58,6 +69,11 @@
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
 	  </activityPatternBinding>
 	 </extension>
     <extension

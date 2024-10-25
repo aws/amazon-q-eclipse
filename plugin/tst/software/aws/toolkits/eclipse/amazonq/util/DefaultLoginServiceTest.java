@@ -273,7 +273,7 @@ class DefaultLoginServiceTest {
             assertFalse(loginDetails.getIsLoggedIn());
             assertEquals(LoginType.NONE, loginDetails.getLoginType());
 
-//            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
+            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
        }
    }
 

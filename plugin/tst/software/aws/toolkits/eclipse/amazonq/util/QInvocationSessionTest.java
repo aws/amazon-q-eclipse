@@ -39,7 +39,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -61,11 +60,11 @@ public class QInvocationSessionTest {
     private static MockedStatic<PlatformUI> platformUIMockStatic;
     private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
     private static MockedStatic<Display> displayMockStatic;
+    private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
 
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
 
-    @ResourceLock("QEclipseEditorUtils")
     @BeforeAll
     public static void setUp() throws Exception {
         prefMockStatic = mockStatic(Platform.class, RETURNS_DEEP_STUBS);
@@ -105,6 +104,7 @@ public class QInvocationSessionTest {
         platformUIMockStatic.close();
         loginServiceMockStatic.close();
         displayMockStatic.close();
+        editorUtilsMock.close();
     }
 
     @AfterEach
@@ -242,7 +242,7 @@ public class QInvocationSessionTest {
     }
 
     static void mockQEclipseEditorUtils() {
-        MockedStatic<QEclipseEditorUtils> editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
+        editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
         ITextViewer viewerMock = mock(ITextViewer.class);
         Font fontMock = mock(Font.class);
         editorUtilsMock.when(() -> QEclipseEditorUtils.getActiveTextViewer(any(ITextEditor.class)))

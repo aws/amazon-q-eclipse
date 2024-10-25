@@ -19,6 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
     public static final String AUTO_TRIGGER_ENABLEMENT_KEY = "aws.q.autotrigger.eclipse";
+    private static final String PAUSE_TEXT = "Pause auto trigger";
+    private static final String RESUME_TEXT = "Resume auto trigger";
 
     private IViewSite viewSite;
     private Image pause;
@@ -45,9 +47,16 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
     @Override
     public void fill(final Menu menu, final int index) {
         String settingValue = PluginStore.get(AUTO_TRIGGER_ENABLEMENT_KEY);
-        boolean isEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
+        boolean isEnabled;
+        if (settingValue == null) {
+            // on by default
+            PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
+            isEnabled = true;
+        } else {
+            isEnabled = !settingValue.isBlank() && settingValue.equals("true");
+        }
         MenuItem menuItem = new MenuItem(menu, SWT.NONE, index);
-        menuItem.setText(isEnabled ? "Pause auto trigger" : "Resume auto trigger");
+        menuItem.setText(isEnabled ? PAUSE_TEXT : RESUME_TEXT);
         menuItem.setImage(isEnabled ? pause : resume);
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -55,11 +64,11 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
                 String settingValue = PluginStore.get(AUTO_TRIGGER_ENABLEMENT_KEY);
                 boolean wasEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
                 if (wasEnabled) {
-                    PluginStore.remove(AUTO_TRIGGER_ENABLEMENT_KEY);
+                    PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
                 } else {
                     PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
                 }
-                menuItem.setText(wasEnabled ? "Resume auto trigger" : "Pause auto trigger");
+                menuItem.setText(wasEnabled ? RESUME_TEXT : PAUSE_TEXT);
                 menuItem.setImage(wasEnabled ? resume : pause);
             }
         });

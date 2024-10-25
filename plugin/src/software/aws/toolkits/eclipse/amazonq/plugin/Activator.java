@@ -42,16 +42,16 @@ public class Activator extends AbstractUIPlugin {
         defaultLogger = PluginLogger.getInstance();
         authPollingJob = new AuthPollingJob();
     }
-    
+
     @Override
-    public void start(BundleContext context) throws Exception {
-    	authPollingJob.start();
+    public final void start(final BundleContext context) throws Exception {
+        authPollingJob.start();
     }
 
     @Override
     public final void stop(final BundleContext context) throws Exception {
-    	super.stop(context);
-    	authPollingJob.stop();
+        super.stop(context);
+        authPollingJob.stop();
         plugin = null;
     }
 

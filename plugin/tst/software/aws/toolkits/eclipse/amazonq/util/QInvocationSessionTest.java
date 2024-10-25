@@ -77,7 +77,7 @@ public class QInvocationSessionTest {
         IWorkbench wbMock = mock(IWorkbench.class);
         platformUIMockStatic.when(PlatformUI::getWorkbench).thenReturn(wbMock);
 
-        mockQEclipseEditorUtils();
+        editorUtilsMock = mockQEclipseEditorUtils();
 
         loginServiceMockStatic = mockStatic(DefaultLoginService.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
@@ -241,8 +241,8 @@ public class QInvocationSessionTest {
         }).when(displayMock).asyncExec(any(Runnable.class));
     }
 
-    static void mockQEclipseEditorUtils() {
-        editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
+    static MockedStatic<QEclipseEditorUtils> mockQEclipseEditorUtils() {
+        MockedStatic<QEclipseEditorUtils> editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
         ITextViewer viewerMock = mock(ITextViewer.class);
         Font fontMock = mock(Font.class);
         editorUtilsMock.when(() -> QEclipseEditorUtils.getActiveTextViewer(any(ITextEditor.class)))
@@ -257,5 +257,7 @@ public class QInvocationSessionTest {
         StyledText mockStyledText = mock(StyledText.class);
         when(viewerMock.getTextWidget()).thenReturn(mockStyledText);
         when(mockStyledText.getCaretOffset()).thenReturn(0);
+
+        return editorUtilsMock;
     }
 }

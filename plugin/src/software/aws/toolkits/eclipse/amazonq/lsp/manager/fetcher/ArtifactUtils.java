@@ -18,6 +18,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.osgi.framework.Version;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class ArtifactUtils {
     private ArtifactUtils() {
@@ -78,5 +79,17 @@ public final class ArtifactUtils {
             return false;
         }
         return true;
+    }
+
+    public static boolean deleteFile(final Path filePath) {
+        try {
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+            }
+            return true;
+        } catch (IOException e) {
+            Activator.getLogger().info("Error deleting file: " + filePath.toString());
+            return false;
+        }
     }
 }

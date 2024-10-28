@@ -12,6 +12,9 @@ public class LoginDetails {
     @JsonProperty("isLoggedIn")
     private boolean isLoggedIn;
 
+    @JsonProperty("issuerUrl")
+    private String issuerUrl;
+
     public final void setLoginType(final LoginType loginType) {
         this.loginType = loginType;
     }
@@ -26,5 +29,13 @@ public class LoginDetails {
 
     public final boolean getIsLoggedIn() {
         return this.isLoggedIn;
+    }
+
+    public final void setIssuerUrl(final String issuerUrl) {
+        this.issuerUrl = issuerUrl;
+    }
+
+    public final String getIssuerUrl() {
+        return this.issuerUrl;
     }
 }

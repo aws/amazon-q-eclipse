@@ -7,6 +7,7 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
@@ -72,6 +73,16 @@ public final class DefaultLoginService implements LoginService {
     private static void removeItemsFromPluginStore() {
         PluginStore.remove(Constants.LOGIN_TYPE_KEY);
         PluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
+    }
+
+    private String getIssuerUrl(final boolean isLoggedIn) {
+        if (!isLoggedIn || currentLogin.equals(LoginType.NONE)) {
+            return null;
+        }
+        if (currentLogin.equals(LoginType.BUILDER_ID)) {
+            return Constants.AWS_BUILDER_ID_URL;
+        }
+        return Objects.isNull(loginParams) || Objects.isNull(loginParams.getLoginIdcParams()) ? null : loginParams.getLoginIdcParams().getUrl();
     }
 
     private CompletableFuture<SsoToken> getToken(final boolean triggerSignIn) {
@@ -194,6 +205,7 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.supplyAsync(() -> {
                 loginDetails.setIsLoggedIn(false);
                 loginDetails.setLoginType(LoginType.NONE);
+                loginDetails.setIssuerUrl(null);
                 notifyAuthStatusChanged(loginDetails);
                 return loginDetails;
             });
@@ -203,6 +215,7 @@ public final class DefaultLoginService implements LoginService {
                     boolean isLoggedIn = ssoToken != null;
                     loginDetails.setIsLoggedIn(isLoggedIn);
                     loginDetails.setLoginType(isLoggedIn ? currentLogin : LoginType.NONE);
+                    loginDetails.setIssuerUrl(getIssuerUrl(isLoggedIn));
                     notifyAuthStatusChanged(loginDetails);
                     return loginDetails;
                 })
@@ -210,6 +223,7 @@ public final class DefaultLoginService implements LoginService {
                     Activator.getLogger().error("Failed to check login status", throwable);
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);
+                    loginDetails.setIssuerUrl(null);
                     return loginDetails;
                 });
     }

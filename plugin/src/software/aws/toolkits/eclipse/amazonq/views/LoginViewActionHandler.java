@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Display;
@@ -17,52 +18,57 @@ import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public class LoginViewActionHandler implements ViewActionHandler {
 
     private static final JsonHandler JSON_HANDLER = new JsonHandler();
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
+    private Future<?> loginTask;
+    private boolean isLoginTaskRunning = false;
 
     @Override
     public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
         Object params = parsedCommand.getParams();
         switch (parsedCommand.getCommand()) {
             case LOGIN_BUILDER_ID:
-                ThreadingUtils.executeAsyncTask(() -> {
-                    try {
-                        DefaultLoginService.getInstance().login(LoginType.BUILDER_ID, new LoginParams()).get();
-                        Display.getDefault().asyncExec(() -> {
-                            browser.setText("Login succeeded");
-                            AmazonQView.showView(AmazonQChatWebview.ID);
-                        });
-                    } catch (Exception e) {
-                        Activator.getLogger().error("Failed to update token", e);
-                    }
-                });
-                break;
             case LOGIN_IDC:
-                Activator.getLogger().info("loginIdc command received");
-                ThreadingUtils.executeAsyncTask(() -> {
+                if (isLoginTaskRunning) {
+                    loginTask.cancel(true);
+                }
+                isLoginTaskRunning = true;
+                loginTask = ThreadingUtils.executeAsyncTaskAndReturnFuture(() -> {
                     try {
-                        LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(params, LoginIdcParams.class);
-                        var url = loginIdcParams.getUrl();
-                        var region = loginIdcParams.getRegion();
-                        if (StringUtils.isEmpty(url) || StringUtils.isEmpty(region)) {
-                            throw new IllegalArgumentException("Url/Region parameters cannot be null or empty");
+                        if (parsedCommand.getCommand() == Command.LOGIN_BUILDER_ID) {
+                            DefaultLoginService.getInstance().login(LoginType.BUILDER_ID, new LoginParams()).get();
+                        } else {
+                            LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(params, LoginIdcParams.class);
+                            var url = loginIdcParams.getUrl();
+                            var region = loginIdcParams.getRegion();
+                            if (StringUtils.isEmpty(url) || StringUtils.isEmpty(region)) {
+                                throw new IllegalArgumentException("Url/Region parameters cannot be null or empty");
+                            }
+                            DefaultLoginService.getInstance().login(LoginType.IAM_IDENTITY_CENTER,
+                                    new LoginParams().setLoginIdcParams(loginIdcParams)).get();
                         }
-                        DefaultLoginService.getInstance().login(LoginType.IAM_IDENTITY_CENTER, new LoginParams().setLoginIdcParams(loginIdcParams)).get();
+                        isLoginTaskRunning = false;
                         Display.getDefault().asyncExec(() -> {
                             browser.setText("Login succeeded");
                             AmazonQView.showView(AmazonQChatWebview.ID);
                         });
                     } catch (Exception e) {
+                        isLoginTaskRunning = false;
                         Activator.getLogger().error("Failed to update token", e);
                     }
                 });
                 break;
             case CANCEL_LOGIN:
                 Activator.getLogger().info("cancelLogin command received");
+                if (isLoginTaskRunning) {
+                    loginTask.cancel(true);
+                    isLoginTaskRunning = false;
+                }
                 break;
             case ON_LOAD:
                 OidcServiceMetadata oidcMetadata = new OidcServiceMetadata();

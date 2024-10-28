@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
@@ -25,6 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -34,9 +36,14 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final CompletableFuture<ConnectionMetadata> getConnectionMetadata() {
-        // TODO don't hardcode start URL
         SsoProfileData sso = new SsoProfileData();
-        sso.setStartUrl("https://view.awsapps.com/start");
+        String startUrl = Constants.AWS_BUILDER_ID_URL;
+        try {
+            startUrl = DefaultLoginService.getInstance().getLoginDetails().get().getIssuerUrl();
+        } catch (InterruptedException | ExecutionException e) {
+            Activator.getLogger().warn("Error while fetching the issuerUrl", e);
+        }
+        sso.setStartUrl(startUrl);
         ConnectionMetadata metadata = new ConnectionMetadata();
         metadata.setSso(sso);
         return CompletableFuture.completedFuture(metadata);

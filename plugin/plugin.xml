@@ -7,7 +7,7 @@
         <!-- If adding a new view: -->
         <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
         <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
- 		<view
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
             name="Amazon Q Reauthenticate"
             icon="icons/AmazonQ.png"
@@ -67,7 +67,7 @@
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
 	  </activityPatternBinding>
-	  <activityPatternBinding
+	  <!-- <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
@@ -76,7 +76,7 @@
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
-	  </activityPatternBinding>
+	  </activityPatternBinding> -->
 	 </extension>
     <extension
         point="org.eclipse.ui.perspectiveExtensions">

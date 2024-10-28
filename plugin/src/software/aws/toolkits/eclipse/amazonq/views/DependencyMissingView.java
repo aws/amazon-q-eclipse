@@ -3,9 +3,13 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Link;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
@@ -58,16 +62,14 @@ public final class DependencyMissingView extends CallToActionView {
     }
 
     @Override
-    protected String getLinkLabel() {
-        return LINK_LABEL;
+    protected void setupButtonFooterContent(Composite composite) {
+    	String url = getLearnMoreUrl();
+        Link hyperlink = new Link(composite, SWT.NONE);
+        hyperlink.setText("<a>" + LINK_LABEL + "</a>");
+        hyperlink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+        hyperlink.addSelectionListener(openSelectionInWeb(url));
     }
-
-    @Override
-    protected SelectionListener getLinkHandler() {
-        String url = getLearnMoreUrl();
-        return openSelectionInWeb(url);
-    }
-
+    
     private String getInstallUrl() {
         return platform == PluginPlatform.WINDOWS ? EDGE_INSTALL : WEBKIT_INSTALL;
 

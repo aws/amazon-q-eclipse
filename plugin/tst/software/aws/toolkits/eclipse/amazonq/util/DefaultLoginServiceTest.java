@@ -272,6 +272,7 @@ class DefaultLoginServiceTest {
             LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
             assertFalse(loginDetails.getIsLoggedIn());
             assertEquals(LoginType.NONE, loginDetails.getLoginType());
+            assertNull(loginDetails.getIssuerUrl());
 
             mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
        }
@@ -295,6 +296,7 @@ class DefaultLoginServiceTest {
             LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
             assertTrue(loginDetails.getIsLoggedIn());
             assertEquals(LoginType.BUILDER_ID, loginDetails.getLoginType());
+            assertEquals(loginDetails.getIssuerUrl(), Constants.AWS_BUILDER_ID_URL);
             mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), eq(null), eq(false)), times(2));
             mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
             mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
@@ -323,6 +325,7 @@ class DefaultLoginServiceTest {
             verify(mockLogger).error(eq("Failed to check login status"), any(Throwable.class));
             assertFalse(loginDetails.getIsLoggedIn());
             assertEquals(LoginType.NONE, loginDetails.getLoginType());
+            assertNull(loginDetails.getIssuerUrl());
             mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), eq(null), eq(false)), times(2));
             mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
             mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()), never());

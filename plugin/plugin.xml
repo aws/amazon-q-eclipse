@@ -67,7 +67,7 @@
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
 	  </activityPatternBinding>
-	  <!-- <activityPatternBinding
+	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
@@ -76,7 +76,7 @@
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
-	  </activityPatternBinding> -->
+	  </activityPatternBinding>
 	 </extension>
     <extension
         point="org.eclipse.ui.perspectiveExtensions">

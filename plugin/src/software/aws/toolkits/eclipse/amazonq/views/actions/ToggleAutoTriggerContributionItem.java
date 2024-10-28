@@ -46,11 +46,11 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
     @Override
     public void fill(final Menu menu, final int index) {
-        String settingValue = PluginStore.getInstance().get(AUTO_TRIGGER_ENABLEMENT_KEY);
+        String settingValue = DefaultPluginStore.getInstance().get(AUTO_TRIGGER_ENABLEMENT_KEY);
         boolean isEnabled;
         if (settingValue == null) {
             // on by default
-            PluginStore.put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
+            DefaultPluginStore.getInstance().put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
             isEnabled = true;
         } else {
             isEnabled = !settingValue.isBlank() && settingValue.equals("true");
@@ -64,7 +64,7 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
                 String settingValue = DefaultPluginStore.getInstance().get(AUTO_TRIGGER_ENABLEMENT_KEY);
                 boolean wasEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
                 if (wasEnabled) {
-                    PluginStore.getInstance().put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
+                    DefaultPluginStore.getInstance().put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
                 } else {
                     DefaultPluginStore.getInstance().put(AUTO_TRIGGER_ENABLEMENT_KEY, "true");
                 }

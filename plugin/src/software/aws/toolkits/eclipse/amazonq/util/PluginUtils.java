@@ -88,6 +88,20 @@ public final class PluginUtils {
         }
         return result[0];
     }
+    
+    public static void showErrorDialog(final String title, final String message) {
+        try {
+            Display.getDefault().syncExec(new Runnable() {
+                @Override
+                public void run() {
+                    MessageDialog.openError(Display.getDefault().getActiveShell(), title, message);
+                }
+            });
+        } catch (Exception ex) {
+            Activator.getLogger().error(ex.getMessage());
+        }
+        return;
+    }
 
     public static void handleExternalLinkClick(final String link) {
         try {

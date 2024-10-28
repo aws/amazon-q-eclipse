@@ -55,7 +55,7 @@ public class QInlineRendererListener implements PaintListener {
         QInvocationSession session = QInvocationSession.getInstance();
         InlineCompletionItem currentSuggestion = session.getCurrentSuggestion();
         InlineCompletionReference[] referencesForCurrentSuggestion = currentSuggestion.getReferences();
-        if (referencesForCurrentSuggestion.length == 0) {
+        if (referencesForCurrentSuggestion == null || referencesForCurrentSuggestion.length == 0) {
             return;
         }
         var widget = session.getViewer().getTextWidget();

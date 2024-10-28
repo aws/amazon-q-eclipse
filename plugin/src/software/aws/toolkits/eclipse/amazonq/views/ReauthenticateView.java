@@ -48,7 +48,7 @@ public final class ReauthenticateView extends CallToActionView {
         return new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                // TODO
+                // TODO waiting for Auth module handler to implement re-authenticate
             }
         };
     }

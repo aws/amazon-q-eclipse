@@ -52,9 +52,9 @@ public final class ReauthenticateView extends CallToActionView {
             }
         };
     }
-    
+
     @Override
-    protected void setupButtonFooterContent(Composite composite) {
+    protected void setupButtonFooterContent(final Composite composite) {
         Link hyperlink = new Link(composite, SWT.NONE);
         hyperlink.setText("<a>" + LINK_LABEL + "</a>");
         hyperlink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));

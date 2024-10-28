@@ -88,7 +88,7 @@ public final class PluginUtils {
         }
         return result[0];
     }
-    
+
     public static void showErrorDialog(final String title, final String message) {
         try {
             Display.getDefault().syncExec(new Runnable() {

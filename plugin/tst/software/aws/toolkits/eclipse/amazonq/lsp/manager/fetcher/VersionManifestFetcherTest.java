@@ -6,8 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -16,35 +14,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.MockedStatic;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
+@ExtendWith(ActivatorStaticMockExtension.class)
 public final class VersionManifestFetcherTest {
     private static final String INVALID_DATA = "{\r\n    \"schemaVersion\": \"0.1\",\r\n}";
     private String sampleManifestFile = "sample-manifest.json";
     private VersionManifestFetcher fetcher;
-    private MockedStatic<Activator> mockedActivator;
-    private LoggingService mockedLogger;
-
-    @BeforeEach
-    void setUp() {
-        mockedLogger = mock(LoggingService.class);
-        mockedActivator = mockStatic(Activator.class);
-        mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
-    }
-
-    @AfterEach
-    void tearDown() {
-        mockedActivator.close();
-    }
 
     @Test
     public void fetchWhenCacheEmptyAndNoUrl(@TempDir final Path tempDir) {

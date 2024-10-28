@@ -171,8 +171,9 @@ public final class DefaultTelemetryServiceTest {
     private void setupMockActivatorWithTelemetryOptIn(final boolean telemetryOptIn) {
         IPreferenceStore mockPreferenceStore = mock(IPreferenceStore.class);
         when(mockPreferenceStore.getBoolean(eq(AmazonQPreferencePage.TELEMETRY_OPT_IN))).thenReturn(telemetryOptIn);
-        Optional<Activator> activatorMock = ActivatorStaticMockExtension.getMock(Activator.class);
-        activatorMock.ifPresent(activator -> when(activator.getPreferenceStore()).thenReturn(mockPreferenceStore));
+        Optional<Activator> activatorMockOptional = ActivatorStaticMockExtension.getMock(Activator.class);
+        activatorMockOptional.ifPresent(activatorMock ->
+                when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore));
     }
 
     private final class MockClientMetadata implements ClientMetadata {

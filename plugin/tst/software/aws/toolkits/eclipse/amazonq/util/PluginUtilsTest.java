@@ -56,8 +56,8 @@ public class PluginUtilsTest {
         IPath mockPath = mock(IPath.class);
         when(mockPath.toOSString()).thenReturn(tempDir.toString());
 
-        Optional<Activator> mockActivator = ActivatorStaticMockExtension.getMock(Activator.class);
-        mockActivator.ifPresent(activator -> when(activator.getStateLocation()).thenReturn(mockPath));
+        Optional<Activator> mockActivatorOptional = ActivatorStaticMockExtension.getMock(Activator.class);
+        mockActivatorOptional.ifPresent(activatorMock -> when(activatorMock.getStateLocation()).thenReturn(mockPath));
     }
 
     @Test
@@ -174,8 +174,8 @@ public class PluginUtilsTest {
                 mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
                 mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), times(1));
 
-                Optional<LoggingService> mockLogger = ActivatorStaticMockExtension.getMock(LoggingService.class);
-                mockLogger.ifPresent(Mockito::verifyNoInteractions);
+                Optional<LoggingService> mockLoggerOptional = ActivatorStaticMockExtension.getMock(LoggingService.class);
+                mockLoggerOptional.ifPresent(Mockito::verifyNoInteractions);
         }
     }
     @Test
@@ -189,8 +189,8 @@ public class PluginUtilsTest {
                 mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
                 mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), never());
 
-                Optional<LoggingService> mockLogger = ActivatorStaticMockExtension.getMock(LoggingService.class);
-                mockLogger.ifPresent(Mockito::verifyNoInteractions);
+                Optional<LoggingService> mockLoggerOptional = ActivatorStaticMockExtension.getMock(LoggingService.class);
+                mockLoggerOptional.ifPresent(Mockito::verifyNoInteractions);
         }
     }
     @Test
@@ -204,8 +204,8 @@ public class PluginUtilsTest {
             mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
             mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), never());
 
-            Optional<LoggingService> mockLogger = ActivatorStaticMockExtension.getMock(LoggingService.class);
-            mockLogger.ifPresent(logger -> verify(logger).error(eq("Failed to open url in browser"),
+            Optional<LoggingService> mockLoggerOptional = ActivatorStaticMockExtension.getMock(LoggingService.class);
+            mockLoggerOptional.ifPresent(loggerMock -> verify(loggerMock).error(eq("Failed to open url in browser"),
                     any(RuntimeException.class)));
         }
     }

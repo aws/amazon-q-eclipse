@@ -3,9 +3,13 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Link;
 
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
 
@@ -48,21 +52,18 @@ public final class ReauthenticateView extends CallToActionView {
             }
         };
     }
-
+    
     @Override
-    protected String getLinkLabel() {
-        return LINK_LABEL;
-    }
-
-    @Override
-    protected SelectionListener getLinkHandler() {
-        return new SelectionAdapter() {
+    protected void setupButtonFooterContent(Composite composite) {
+        Link hyperlink = new Link(composite, SWT.NONE);
+        hyperlink.setText("<a>" + LINK_LABEL + "</a>");
+        hyperlink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+        hyperlink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 SignoutAction signoutAction = new SignoutAction();
                 signoutAction.run();
             }
-        };
+        });
     }
-
 }

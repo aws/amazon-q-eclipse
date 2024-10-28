@@ -17,7 +17,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Link;
 import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -29,8 +28,6 @@ public abstract class CallToActionView extends ViewPart {
     private String detailMessage;
     private String buttonLabel;
     private SelectionListener buttonHandler;
-    private String linkLabel;
-    private SelectionListener linkHandler;
     private Composite parentComposite;
 
     protected abstract String getIconPath();
@@ -38,8 +35,7 @@ public abstract class CallToActionView extends ViewPart {
     protected abstract String getDetailMessage();
     protected abstract String getButtonLabel();
     protected abstract SelectionListener getButtonHandler();
-    protected abstract String getLinkLabel();
-    protected abstract SelectionListener getLinkHandler();
+    protected abstract void setupButtonFooterContent(Composite composite);
 
     @Override
     public final void createPartControl(final Composite parent) {
@@ -49,8 +45,6 @@ public abstract class CallToActionView extends ViewPart {
         this.detailMessage = getDetailMessage();
         this.buttonLabel = getButtonLabel();
         this.buttonHandler = getButtonHandler();
-        this.linkLabel = getLinkLabel();
-        this.linkHandler = getLinkHandler();
         setupView();
     }
 
@@ -80,8 +74,8 @@ public abstract class CallToActionView extends ViewPart {
         setupHeader(contentComposite);
         setupDetailMessage(contentComposite);
         setupButton(contentComposite);
-        setupLink(contentComposite);
-
+        setupButtonFooterContent(contentComposite);
+        
         parentComposite.layout(true, true);
     }
 
@@ -123,13 +117,6 @@ public abstract class CallToActionView extends ViewPart {
         button.setText(buttonLabel);
         button.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
         button.addSelectionListener(buttonHandler);
-    }
-
-    private void setupLink(final Composite composite) {
-        Link hyperlink = new Link(composite, SWT.NONE);
-        hyperlink.setText("<a>" + linkLabel + "</a>");
-        hyperlink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
-        hyperlink.addSelectionListener(linkHandler);
     }
 
     private Image loadImage(final String imagePath) {

@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -80,7 +81,7 @@ class DefaultLoginServiceTest {
    @Test
    public void testSucessfulLogin() {
        resetLoginService();
-       LoginType loginType = LoginType.BUILDER_ID;
+       LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
        SsoToken mockToken = mock(SsoToken.class);
        LoginIdcParams idcParams = new LoginIdcParams();
        LoginParams loginParams = new LoginParams();
@@ -91,7 +92,7 @@ class DefaultLoginServiceTest {
            CompletableFuture<Void> result = loginService.login(loginType, loginParams);
 
            assertDoesNotThrow(() -> result.get());
-           assertEquals("BUILDER_ID", mockPluginStore.get("LOGIN_TYPE"));
+           assertEquals("IAM_IDENTITY_CENTER", mockPluginStore.get("LOGIN_TYPE"));
            assertSame(idcParams, mockPluginStore.getObject("IDC_PARAMS", LoginIdcParams.class));
            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), eq(loginParams), eq(true)));
            mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken));
@@ -157,44 +158,44 @@ class DefaultLoginServiceTest {
         }
     }
 
-   @Test
-   public void testLogoutSuccess() throws Exception {
-    SsoToken mockToken = new SsoToken("id", "accesstoken");
-    mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
-    mockPluginStore.put("IDC_PARAMS", "someValue");
-    try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
+    @Test
+    public void testLogoutSuccess() throws Exception {
+        SsoToken mockToken = new SsoToken("id", "accesstoken");
+        mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
+        mockPluginStore.put("IDC_PARAMS", "someValue");
+        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
         MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
 
-        mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
-        .thenAnswer(invocation -> {
-            return null;
-        });
-        setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
-        resetLoginService();
+            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
+            .thenAnswer(invocation -> {
+                return null;
+            });
+            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
+            resetLoginService();
 
-        assertNotNull(mockPluginStore.get("LOGIN_TYPE"));
-        when(mockLspProvider.getAuthServer()).thenReturn(CompletableFuture.completedFuture(mockAuthServer));
-        when(mockAuthServer.invalidateSsoToken(any())).thenReturn(CompletableFuture.completedFuture(null));
+            assertNotNull(mockPluginStore.get("LOGIN_TYPE"));
+            when(mockLspProvider.getAuthServer()).thenReturn(CompletableFuture.completedFuture(mockAuthServer));
+            when(mockAuthServer.invalidateSsoToken(any())).thenReturn(CompletableFuture.completedFuture(null));
 
-        CompletableFuture<Void> result = loginService.logout();
-        assertDoesNotThrow(() -> result.get());
-        mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), eq(LoginType.BUILDER_ID), any(), eq(false)), times(2));
+            CompletableFuture<Void> result = loginService.logout();
+            assertDoesNotThrow(() -> result.get());
+            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), eq(LoginType.BUILDER_ID), any(), eq(false)), times(2));
 
-        verify(mockAuthServer).invalidateSsoToken(argThat(param ->
-                param instanceof InvalidateSsoTokenParams
-                && ((InvalidateSsoTokenParams) param).ssoTokenId().equals("id")
-            ));
+            verify(mockAuthServer).invalidateSsoToken(argThat(param ->
+                    param instanceof InvalidateSsoTokenParams
+                    && ((InvalidateSsoTokenParams) param).ssoTokenId().equals("id")
+                ));
 
-        mockedAuthStatusProvider.verify(() ->
-            AuthStatusProvider.notifyAuthStatusChanged(argThat(details ->
-                !details.getIsLoggedIn() && details.getLoginType() == LoginType.NONE
-            ))
-        );
+            mockedAuthStatusProvider.verify(() ->
+                AuthStatusProvider.notifyAuthStatusChanged(argThat(details ->
+                    !details.getIsLoggedIn() && details.getLoginType() == LoginType.NONE
+                ))
+            );
 
-        assertNull(mockPluginStore.get("LOGIN_TYPE"));
-        assertNull(mockPluginStore.get("IDC_PARAMS"));
+            assertNull(mockPluginStore.get("LOGIN_TYPE"));
+            assertNull(mockPluginStore.get("IDC_PARAMS"));
+        }
     }
-   }
 
    //resetting LoginService without calling login() or manually adding a loginType to the mocked PluginStore
    //will create the loginService with a LoginType of NONE
@@ -260,9 +261,9 @@ class DefaultLoginServiceTest {
         }
     }
 
-   @Test
-   public void testGetLoginDetailsWhileLoggedOut() throws InterruptedException {
-       try (MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
+    @Test
+    public void testGetLoginDetailsWhileLoggedOut() throws InterruptedException {
+        try (MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
             mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
             .thenAnswer(invocation -> {
                 return null;
@@ -275,11 +276,11 @@ class DefaultLoginServiceTest {
             assertNull(loginDetails.getIssuerUrl());
 
             mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
-       }
-   }
+        }
+    }
 
     @Test
-    public void testGetLoginDetailsSuccess() {
+    public void testGetLoginDetailsSuccessWithBuilderId() {
         mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
         SsoToken mockToken = mock(SsoToken.class);
         try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
@@ -298,6 +299,33 @@ class DefaultLoginServiceTest {
             assertEquals(LoginType.BUILDER_ID, loginDetails.getLoginType());
             assertEquals(loginDetails.getIssuerUrl(), Constants.AWS_BUILDER_ID_URL);
             mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), eq(null), eq(false)), times(2));
+            mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
+            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
+        }
+    }
+    @Test
+    public void testGetLoginDetailsSuccessWithIdc() {
+        mockPluginStore.put("LOGIN_TYPE", "IAM_IDENTITY_CENTER");
+        LoginIdcParams idcParams = new LoginIdcParams();
+        idcParams.setUrl("idcTestUrl");
+        mockPluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, idcParams);
+        SsoToken mockToken = mock(SsoToken.class);
+        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
+            MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
+            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
+            .thenAnswer(invocation -> {
+                return null;
+            });
+            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
+            resetLoginService();
+
+            CompletableFuture<LoginDetails> result = loginService.getLoginDetails();
+
+            LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
+            assertTrue(loginDetails.getIsLoggedIn());
+            assertEquals(LoginType.IAM_IDENTITY_CENTER, loginDetails.getLoginType());
+            assertEquals(loginDetails.getIssuerUrl(), "idcTestUrl");
+            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), notNull(LoginParams.class), eq(false)), times(2));
             mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
             mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
         }

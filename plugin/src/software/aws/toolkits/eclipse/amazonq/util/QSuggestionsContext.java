@@ -36,5 +36,9 @@ public class QSuggestionsContext {
             currentIndex--;
         }
     }
+
+    public final int getNumberOfSuggestions() {
+        return details.size();
+    }
 }
 

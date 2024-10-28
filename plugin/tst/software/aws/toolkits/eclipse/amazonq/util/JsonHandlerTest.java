@@ -47,9 +47,8 @@ public class JsonHandlerTest {
     private static JsonHandler jsonHandler;
 
     private static MockedStatic<Activator> mockedActivator;
-    private static Activator mockActivator;
 
-    @BeforeEach()
+    @BeforeEach
         final void setUpMocksBeforeEach() {
         mockObjectMapper = mock(ObjectMapper.class);
         jsonHandler = new JsonHandler(mockObjectMapper);
@@ -60,8 +59,7 @@ public class JsonHandlerTest {
         mockLogger = mock(LoggingService.class);
         mockObjectMapper = mock(ObjectMapper.class);
         mockedActivator = mockStatic(Activator.class);
-        mockActivator = mock(Activator.class);
-        when(mockActivator.getLogger()).thenReturn(mockLogger);
+        mockedActivator.when(Activator::getLogger).thenReturn(mockLogger);
         doNothing().when(mockLogger).error(anyString(), any(Exception.class));
     }
 

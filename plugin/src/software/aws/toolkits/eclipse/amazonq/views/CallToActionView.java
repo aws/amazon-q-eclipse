@@ -75,7 +75,7 @@ public abstract class CallToActionView extends ViewPart {
         setupDetailMessage(contentComposite);
         setupButton(contentComposite);
         setupButtonFooterContent(contentComposite);
-        
+
         parentComposite.layout(true, true);
     }
 

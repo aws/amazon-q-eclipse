@@ -62,14 +62,14 @@ public final class DependencyMissingView extends CallToActionView {
     }
 
     @Override
-    protected void setupButtonFooterContent(Composite composite) {
-    	String url = getLearnMoreUrl();
+    protected void setupButtonFooterContent(final Composite composite) {
+        String url = getLearnMoreUrl();
         Link hyperlink = new Link(composite, SWT.NONE);
         hyperlink.setText("<a>" + LINK_LABEL + "</a>");
         hyperlink.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
         hyperlink.addSelectionListener(openSelectionInWeb(url));
     }
-    
+
     private String getInstallUrl() {
         return platform == PluginPlatform.WINDOWS ? EDGE_INSTALL : WEBKIT_INSTALL;
 

@@ -347,5 +347,16 @@
                 </command>
             </menu>
         </menuContribution>
+        <menuContribution
+              allPopups="false"
+              locationURI="toolbar:org.eclipse.ui.trim.status">
+              <toolbar id="software.aws.toolkits.eclipse.amazonq.statusbar">
+                <control
+                class="software.aws.toolkits.eclipse.amazonq.views.actions.InlineQueryStatusBarContribution"
+                id="software.aws.toolkits.eclipse.amazonq.views.actions.InlineQueryStatusBarContribution"
+                >
+                </control>
+           </toolbar>
+        </menuContribution>
     </extension>
 </plugin>

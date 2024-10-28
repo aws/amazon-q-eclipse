@@ -63,6 +63,9 @@ public final class QInvocationSession extends QResource {
     private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Consumer<Integer> unsetVerticalIndent;
     private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
+    private Runnable changeStatusToQuerying;
+    private Runnable changeStatusToIdle;
+    private Runnable changeStatusToPreviewing;
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -123,7 +126,7 @@ public final class QInvocationSession extends QResource {
                 return false;
             }
             System.out.println("Session starting");
-            state = QInvocationSessionState.INVOKING;
+            transitionToInvokingState();
 
             // Start session logic here
             this.editor = editor;
@@ -295,7 +298,7 @@ public final class QInvocationSession extends QResource {
                 System.out.println(element);
             }
             dispose();
-            state = QInvocationSessionState.INACTIVE;
+            transitionToInactiveState();
             // End session logic here
             System.out.println("Session ended.");
         } else if (!unresolvedTasks.isEmpty()) {
@@ -307,7 +310,7 @@ public final class QInvocationSession extends QResource {
     public void endImmediately() {
         if (isActive()) {
             dispose();
-            state = QInvocationSessionState.INACTIVE;
+            transitionToInactiveState();
             System.out.println("Session terminated");
         }
     }
@@ -328,15 +331,24 @@ public final class QInvocationSession extends QResource {
     public synchronized void transitionToPreviewingState() {
         assert state == QInvocationSessionState.INVOKING;
         state = QInvocationSessionState.SUGGESTION_PREVIEWING;
+        if (changeStatusToPreviewing != null) {
+            changeStatusToPreviewing.run();
+        }
     }
 
     public void transitionToInvokingState() {
         assert state == QInvocationSessionState.INACTIVE;
         state = QInvocationSessionState.INVOKING;
+        if (changeStatusToQuerying != null) {
+            changeStatusToQuerying.run();
+        }
     }
 
     public void transitionToInactiveState() {
         state = QInvocationSessionState.INACTIVE;
+        if (changeStatusToIdle != null) {
+            changeStatusToIdle.run();
+        }
     }
 
     public void transitionToDecisionMade() {
@@ -508,6 +520,18 @@ public final class QInvocationSession extends QResource {
                 throw e;
             }
         }
+    }
+
+    public void assignQueryingCallback(final Runnable runnable) {
+        changeStatusToQuerying = runnable;
+    }
+
+    public void assignIdlingCallback(final Runnable runnable) {
+        changeStatusToIdle = runnable;
+    }
+
+    public void assignPreviewingCallback(final Runnable runnable) {
+        changeStatusToPreviewing = runnable;
     }
 
     // Additional methods for the session can be added here

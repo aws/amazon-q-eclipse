@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,10 +17,15 @@ import java.util.concurrent.ExecutionException;
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
+import org.eclipse.lsp4j.ShowDocumentParams;
+import org.eclipse.lsp4j.ShowDocumentResult;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
@@ -36,17 +43,19 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final CompletableFuture<ConnectionMetadata> getConnectionMetadata() {
-        SsoProfileData sso = new SsoProfileData();
-        String startUrl = Constants.AWS_BUILDER_ID_URL;
-        try {
-            startUrl = DefaultLoginService.getInstance().getLoginDetails().get().getIssuerUrl();
-        } catch (InterruptedException | ExecutionException e) {
-            Activator.getLogger().warn("Error while fetching the issuerUrl", e);
-        }
-        sso.setStartUrl(startUrl);
-        ConnectionMetadata metadata = new ConnectionMetadata();
-        metadata.setSso(sso);
-        return CompletableFuture.completedFuture(metadata);
+        return CompletableFuture.supplyAsync(() -> {
+            SsoProfileData sso = new SsoProfileData();
+            String startUrl = Constants.AWS_BUILDER_ID_URL;
+            try {
+                startUrl = DefaultLoginService.getInstance().getLoginDetails().get().getIssuerUrl();
+            } catch (InterruptedException | ExecutionException e) {
+                Activator.getLogger().warn("Error while fetching the issuerUrl", e);
+            }
+            sso.setStartUrl(startUrl);
+            ConnectionMetadata metadata = new ConnectionMetadata();
+            metadata.setSso(sso);
+            return metadata;
+        });
     }
 
     @Override
@@ -120,5 +129,24 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 Activator.getLogger().error("Error occurred when submitting feedback", e);
             }
         }
+    }
+
+    @Override
+    public final CompletableFuture<ShowDocumentResult> showDocument(final ShowDocumentParams params) {
+        Activator.getLogger().info("Opening redirect URL: " + params.getUri());
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(params.getUri()));
+                return new ShowDocumentResult(true);
+            } catch (PartInitException | MalformedURLException e) {
+                Activator.getLogger().error("Error opening URL: " + params.getUri(), e);
+                return new ShowDocumentResult(false);
+            }
+        });
+    }
+
+    @Override
+    public final void ssoTokenChanged(final SsoTokenChangedParams params) {
+        Activator.getLogger().info("Token changed: " + params.kind());
     }
 }

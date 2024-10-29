@@ -3,34 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-import java.util.List;
-
 public class SsoSession extends Section {
-    private String ssoStartUrl;
-    private String ssoRegion;
-    private List<String> ssoRegistrationScopes;
+    private SsoSessionSettings settings;
 
-    public final String getSsoStartUrl() {
-        return ssoStartUrl;
+    public final SsoSessionSettings getSsoSessionSettings() {
+        return settings;
     }
 
-    public final void setSsoStartUrl(final String ssoStartUrl) {
-        this.ssoStartUrl = ssoStartUrl;
-    }
-
-    public final String getSsoRegion() {
-        return ssoRegion;
-    }
-
-    public final void setSsoRegion(final String ssoRegion) {
-        this.ssoRegion = ssoRegion;
-    }
-
-    public final List<String> getSsoRegistrationScopes() {
-        return ssoRegistrationScopes;
-    }
-
-    public final void setSsoRegistrationScopes(final List<String> ssoRegistrationScopes) {
-        this.ssoRegistrationScopes = ssoRegistrationScopes;
+    public final void setSsoSessionSettings(final SsoSessionSettings settings) {
+        this.settings = settings;
     }
 }

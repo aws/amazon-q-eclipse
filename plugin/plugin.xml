@@ -94,14 +94,6 @@
             launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServerBuilder"
             singleton="true">
         </server>
-        <server
-            class="software.aws.toolkits.eclipse.amazonq.lsp.connection.AuthLspConnectionProvider"
-            clientImpl="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspClientImpl"
-            id="software.aws.toolkits.eclipse.amazonq.authServer"
-            label="Auth LSP Server"
-            launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspServerBuilder"
-            singleton="true">
-        </server>
         <contentTypeMapping
             contentType="org.eclipse.jdt.core.javaSource"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
@@ -110,10 +102,6 @@
         <contentTypeMapping
             contentType="org.eclipse.core.runtime.text"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver">
-        </contentTypeMapping>
-        <contentTypeMapping
-            contentType="org.eclipse.core.runtime.text"
-            id="software.aws.toolkits.eclipse.amazonq.authServer">
         </contentTypeMapping>
         <contentTypeMapping
               contentType="org.eclipse.wst.jsdt.core.jsSource"

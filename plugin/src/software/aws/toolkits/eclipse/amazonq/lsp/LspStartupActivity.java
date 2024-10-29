@@ -71,10 +71,6 @@ public class LspStartupActivity implements IStartup {
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);
-
-                    var authServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.authServer");
-                    LanguageServiceAccessor.startLanguageServer(authServerDefinition);
-
                     attachAutoTriggerListenersIfApplicable();
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);

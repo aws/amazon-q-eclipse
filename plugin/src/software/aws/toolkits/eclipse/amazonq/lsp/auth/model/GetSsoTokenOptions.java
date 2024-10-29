@@ -3,4 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-public record GetSsoTokenOptions(boolean autoRefresh, boolean changeNotifications, boolean loginOnInvalidToken) { }
+public record GetSsoTokenOptions(boolean loginOnInvalidToken) { }

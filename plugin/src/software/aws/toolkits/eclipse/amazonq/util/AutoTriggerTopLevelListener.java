@@ -43,14 +43,11 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
 
             @Override
             public void windowDeactivated(final IWorkbenchWindow window) {
-                System.out.println("window listener removed from deactivated");
-                partListener.onShutdown();
-                window.getPartService().removePartListener(partListener);
+                // noop
             }
 
             @Override
             public void windowClosed(final IWorkbenchWindow window) {
-                System.out.println("window listener removed from closed");
                 partListener.onShutdown();
                 window.getPartService().removePartListener(partListener);
             }

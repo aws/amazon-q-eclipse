@@ -35,9 +35,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
@@ -61,13 +61,13 @@ public class QInvocationSessionTest {
     private static InlineCompletionResponse impotentResponse;
 
     private static MockedStatic<Platform> prefMockStatic;
-    private static MockedStatic<PlatformUI> platformUIMock;
     private static MockedStatic<DefaultLoginService> loginServiceMockStatic;
     private static MockedStatic<Display> displayMockStatic;
     private static MockedStatic<ThreadingUtils> threadingUtilsMock;
     private static MockedStatic<InlineCompletionUtils> inlineCompletionUtilsMock;
     private static MockedStatic<LspProvider> lspProviderMock;
     private static MockedStatic<QEclipseEditorUtils> editorUtilsMock;
+    private static MockedStatic<PlatformUI> platformUIMockStatic;
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -77,11 +77,11 @@ public class QInvocationSessionTest {
         when(prefMock.getBoolean(anyString(), any(Boolean.class))).thenReturn(true);
         when(prefMock.getInt(anyString(), any(Integer.class))).thenReturn(4);
 
-        platformUIMock = mockStatic(PlatformUI.class);
+        platformUIMockStatic = mockStatic(PlatformUI.class);
         IWorkbench wbMock = mock(IWorkbench.class);
-        platformUIMock.when(PlatformUI::getWorkbench).thenReturn(wbMock);
+        platformUIMockStatic.when(PlatformUI::getWorkbench).thenReturn(wbMock);
 
-        mockQEclipseEditorUtils();
+        editorUtilsMock = mockQEclipseEditorUtils();
 
         loginServiceMockStatic = mockStatic(DefaultLoginService.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
@@ -107,8 +107,8 @@ public class QInvocationSessionTest {
         if (prefMockStatic != null) {
             prefMockStatic.close();
         }
-        if (platformUIMock != null) {
-            platformUIMock.close();
+        if (platformUIMockStatic != null) {
+            platformUIMockStatic.close();
         }
         if (loginServiceMockStatic != null) {
             loginServiceMockStatic.close();
@@ -129,6 +129,7 @@ public class QInvocationSessionTest {
             editorUtilsMock.close();
         }
     }
+
     @AfterEach
     public final void afterEach() {
         QInvocationSession.getInstance().endImmediately();
@@ -237,8 +238,8 @@ public class QInvocationSessionTest {
         return items;
     }
 
-    static void mockLspProvider() {
-        lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
+    static MockedStatic<LspProvider> mockLspProvider() {
+        MockedStatic<LspProvider> lspProviderMock = mockStatic(LspProvider.class, RETURNS_DEEP_STUBS);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
@@ -247,10 +248,12 @@ public class QInvocationSessionTest {
                 .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
         lspProviderMock.when(() -> LspProvider.getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
                 .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
+
+        return lspProviderMock;
     }
 
-    static void mockDisplayAsyncCall() {
-        displayMockStatic = mockStatic(Display.class);
+    static MockedStatic<Display> mockDisplayAsyncCall() {
+        MockedStatic<Display> displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);
         displayMockStatic.when(Display::getDefault).thenReturn(displayMock);
         doAnswer(new Answer<Runnable>() {
@@ -261,10 +264,12 @@ public class QInvocationSessionTest {
                 return null;
             }
         }).when(displayMock).asyncExec(any(Runnable.class));
+
+        return displayMockStatic;
     }
 
-    static void mockQEclipseEditorUtils() {
-        editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
+    static MockedStatic<QEclipseEditorUtils> mockQEclipseEditorUtils() {
+        MockedStatic<QEclipseEditorUtils> editorUtilsMock = mockStatic(QEclipseEditorUtils.class);
         ITextViewer viewerMock = mock(ITextViewer.class);
         Font fontMock = mock(Font.class);
         editorUtilsMock.when(() -> QEclipseEditorUtils.getActiveTextViewer(any(ITextEditor.class)))
@@ -279,5 +284,7 @@ public class QInvocationSessionTest {
         StyledText mockStyledText = mock(StyledText.class);
         when(viewerMock.getTextWidget()).thenReturn(mockStyledText);
         when(mockStyledText.getCaretOffset()).thenReturn(0);
+
+        return editorUtilsMock;
     }
 }

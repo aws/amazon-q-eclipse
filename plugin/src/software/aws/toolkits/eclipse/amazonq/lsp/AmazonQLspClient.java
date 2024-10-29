@@ -5,14 +5,19 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 
 public interface AmazonQLspClient extends LanguageClient {
 
     @JsonRequest("aws/credentials/getConnectionMetadata")
     CompletableFuture<ConnectionMetadata> getConnectionMetadata();
+
+    @JsonNotification("aws/identity/ssoTokenChanged")
+    void ssoTokenChanged(SsoTokenChangedParams params);
 
 }

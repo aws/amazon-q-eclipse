@@ -4,9 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -139,11 +137,7 @@ public final class CustomizationDialog extends Dialog {
             Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
         } else if (Objects.nonNull(this.getSelectedCustomization()) && StringUtils.isNotBlank(this.getSelectedCustomization().getName())) {
             PluginStore.putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.getSelectedCustomization());
-            Map<String, Object> updatedSettings = new HashMap<>();
-            Map<String, String> internalMap = new HashMap<>();
-            internalMap.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, this.getSelectedCustomization().getArn());
-            updatedSettings.put(Constants.LSP_Q_CONFIGURATION_KEY, internalMap);
-            ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification(updatedSettings));
+            ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
             Display.getCurrent().asyncExec(() -> showNotification(String.format("%s customization", this.getSelectedCustomization().getName())));
         }
         super.okPressed();

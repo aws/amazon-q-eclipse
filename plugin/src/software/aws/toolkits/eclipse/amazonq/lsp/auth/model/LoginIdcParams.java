@@ -3,16 +3,11 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class LoginIdcParams {
-    @JsonProperty("url")
     private String url;
 
-    @JsonProperty("region")
     private String region;
 
-    @JsonProperty("feature")
     private String feature;
 
     public final String getUrl() {

@@ -75,7 +75,6 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         return amazonQCommonActions;
     }
 
-
     protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         // if browser setup fails, don't set up rest of the content
         if (!setupBrowser(parent)) {

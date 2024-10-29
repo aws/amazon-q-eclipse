@@ -3,6 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-public enum ProfileKind {
-    SsoToken
-}
+public record SsoTokenChangedParams(String kind, String ssoTokenId) { }

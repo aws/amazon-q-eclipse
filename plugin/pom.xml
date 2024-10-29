@@ -280,6 +280,10 @@
                             <includes>
                                 <include>software/aws/toolkits/eclipse/amazonq/**</include>
                             </includes>
+                            <excludes>
+                                <exclude>**/*$Builder.class</exclude>
+                                <exclude>**/Builder.class</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                     <execution>
@@ -291,6 +295,10 @@
                             <includes>
                                 <include>software/aws/toolkits/eclipse/amazonq/**</include>
                             </includes>
+                            <excludes>
+                                <exclude>**/*$Builder.class</exclude>
+                                <exclude>**/Builder.class</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>

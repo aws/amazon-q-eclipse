@@ -3,8 +3,10 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 import org.eclipse.jface.action.Action;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.AmazonQView;
 import software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview;
 
@@ -15,7 +17,13 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
 
     @Override
     public void run() {
-        DefaultLoginService.getInstance().logout();
+        ThreadingUtils.executeAsyncTask(() -> {
+            try {
+                DefaultLoginService.getInstance().logout().get();
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to logout", e);
+            }
+        });
         AmazonQView.showView(ToolkitLoginWebview.ID);
     }
 

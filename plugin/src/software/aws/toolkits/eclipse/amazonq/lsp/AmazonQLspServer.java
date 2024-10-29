@@ -13,6 +13,13 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionPar
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenError;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ListProfilesResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
@@ -59,4 +66,16 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonNotification("telemetry/event")
     void sendTelemetryEvent(Object params);
+
+    @JsonRequest("aws/identity/listProfiles")
+    CompletableFuture<ListProfilesResult> listProfiles() throws GetSsoTokenError;
+
+    @JsonRequest("aws/identity/getSsoToken")
+    CompletableFuture<GetSsoTokenResult> getSsoToken(GetSsoTokenParams params);
+
+    @JsonRequest("aws/identity/invalidateSsoToken")
+    CompletableFuture<InvalidateSsoTokenResult> invalidateSsoToken(InvalidateSsoTokenParams params);
+
+    @JsonRequest("aws/identity/updateProfile")
+    CompletableFuture<Void> updateProfile(UpdateProfileParams params);
 }

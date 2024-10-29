@@ -1,1 +1,0 @@
-{"version":3,"file":"ssoTokenChanged.js","sourceRoot":"","sources":["../src/ssoTokenChanged.ts"],"names":[],"mappings":";;;AAAA,mFAAyE;AAc5D,QAAA,mBAAmB,GAAG;IAClC,OAAO,EAAE,SAAS;IAClB,SAAS,EAAE,WAAW;IACtB,OAAO,EAAE,SAAS;IAClB,WAAW,EAAE,aAAa;CACjB,CAAA;AAOV,MAAa,+BAAgC,SAC5C,yDAAqD;IACrD;QAEC,KAAK,CAAC,+BAA+B,CAAC,CAAC;IACxC,CAAC;CACD;AAND,0EAMC"}

@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
-import software.aws.toolkits.eclipse.amazonq.lsp.AuthLspServer;
 
 public final class LspProvider {
 
@@ -47,11 +46,9 @@ public final class LspProvider {
                           .thenApply(lspServer -> (T) lspServer);
         }
     }
+
     public static CompletableFuture<AmazonQLspServer> getAmazonQServer() {
         return getServer(AmazonQLspServer.class);
     }
 
-    public static CompletableFuture<AuthLspServer> getAuthServer() {
-        return getServer(AuthLspServer.class);
-    }
 }

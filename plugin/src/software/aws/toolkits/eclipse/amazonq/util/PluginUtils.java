@@ -98,9 +98,8 @@ public final class PluginUtils {
                 }
             });
         } catch (Exception ex) {
-            Activator.getLogger().error(ex.getMessage());
+            Activator.getLogger().error("Failed to show error dialog", ex);
         }
-        return;
     }
 
     public static void handleExternalLinkClick(final String link) {

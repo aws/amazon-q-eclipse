@@ -80,6 +80,8 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
             gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
             gc.setFont(qInvocationSessionInstance.getInlineTextFont());
         }
+        int scrollOffsetY = widget.getTopPixel();
+        y -= scrollOffsetY;
         gc.drawText(String.valueOf(symbol), x, y, true);
     }
 

@@ -439,6 +439,14 @@ public final class QInvocationSession extends QResource {
         return details.get(index).getInlineCompletionItem();
     }
 
+    public int getNumberOfSuggestions() {
+        return suggestionsContext.getNumberOfSuggestions();
+    }
+
+    public int getCurrentSuggestionNumber() {
+        return suggestionsContext.getCurrentIndex() + 1;
+    }
+
     public void decrementCurrentSuggestionIndex() {
         if (suggestionsContext != null) {
             suggestionsContext.decrementIndex();
@@ -502,6 +510,7 @@ public final class QInvocationSession extends QResource {
 
     public void primeListeners() {
         inputListener.onNewSuggestion();
+        paintListener.onNewSuggestion();
     }
 
     public int getLastKnownLine() {
@@ -562,6 +571,7 @@ public final class QInvocationSession extends QResource {
         }
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         if (paintListener != null) {
+            paintListener.beforeRemoval();
             widget.removePaintListener(paintListener);
         }
         if (caretListener != null) {

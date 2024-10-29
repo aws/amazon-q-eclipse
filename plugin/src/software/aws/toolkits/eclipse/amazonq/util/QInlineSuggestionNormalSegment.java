@@ -67,6 +67,9 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
             textToRender = text.substring(idxInLine);
         }
 
+        int scrollOffsetY = widget.getTopPixel();
+        y -= scrollOffsetY;
+
         gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
         gc.setFont(qInvocationSessionInstance.getInlineTextFont());
         gc.drawText(textToRender, x, y, true);

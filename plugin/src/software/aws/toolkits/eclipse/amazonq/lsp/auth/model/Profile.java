@@ -3,14 +3,25 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-public class Profile extends Section {
-    private String region;
+import java.util.List;
 
-    public final String getRegion() {
-        return region;
+public class Profile extends Section {
+    private List<String> kinds;
+    private ProfileSettings settings;
+
+    public final List<String> getProfileKinds() {
+        return kinds;
     }
 
-    public final void setRegion(final String region) {
-        this.region = region;
+    public final void setProfileKinds(final List<String> kinds) {
+        this.kinds = kinds;
+    }
+
+    public final ProfileSettings getProfileSettings() {
+        return settings;
+    }
+
+    public final void setProfileSettings(final ProfileSettings settings) {
+        this.settings = settings;
     }
 }

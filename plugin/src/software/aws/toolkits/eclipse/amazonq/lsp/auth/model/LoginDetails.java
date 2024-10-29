@@ -3,16 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class LoginDetails {
-    @JsonProperty("loginType")
     private LoginType loginType;
-
-    @JsonProperty("isLoggedIn")
     private boolean isLoggedIn;
-
-    @JsonProperty("issuerUrl")
     private String issuerUrl;
 
     public final void setLoginType(final LoginType loginType) {

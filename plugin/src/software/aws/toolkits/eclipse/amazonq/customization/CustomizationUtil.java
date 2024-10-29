@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.customization;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -23,11 +22,11 @@ public final class CustomizationUtil {
         // to avoid initiation
     }
 
-    public static void triggerChangeConfigurationNotification(final Map<String, Object> settings) {
+    public static void triggerChangeConfigurationNotification() {
         try {
-            Activator.getLogger().info("Sending configuration update notification to Amazon Q LSP server");
+            Activator.getLogger().info("Triggering configuration pull from Amazon Q LSP server");
             LspProvider.getAmazonQServer()
-            .thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams(settings)));
+            .thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams()));
         } catch (Exception e) {
             Activator.getLogger().error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
             throw new AmazonQPluginException(e);

@@ -105,10 +105,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-		    <groupId>com.nimbusds</groupId>
-		    <artifactId>nimbus-jose-jwt</artifactId>
-		    <version>9.41.2</version>
-		</dependency>
+            <groupId>com.nimbusds</groupId>
+           <artifactId>nimbus-jose-jwt</artifactId>
+          <version>9.41.2</version>
+        </dependency>
     </dependencies>
     
     <build>
@@ -341,16 +341,6 @@
                         </goals>
                         <configuration>
                             <arguments>run build-ui</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>build auth-module</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <workingDirectory>${project.basedir}/auth</workingDirectory>
-                            <arguments>install</arguments>
                         </configuration>
                     </execution>
                 </executions>

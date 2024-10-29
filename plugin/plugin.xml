@@ -313,8 +313,8 @@
            <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated">
                 <command id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated.command"
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
-                    icon="icons/FrownyFace.png" 
-                    tooltip="Amazon Q"> <!-- TODO replace icon with disconnected icon from designer -->
+                    icon="icons/AmazonQDisconnected.png" 
+                    tooltip="Amazon Q">
                     <visibleWhen checkEnabled="false">
                         <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
                             <equals value="false"/>

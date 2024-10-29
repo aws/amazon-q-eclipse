@@ -25,6 +25,7 @@ import org.eclipse.ui.PlatformUI;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
@@ -142,5 +143,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 return new ShowDocumentResult(false);
             }
         });
+    }
+
+    @Override
+    public final void ssoTokenChanged(final SsoTokenChangedParams params) {
+        Activator.getLogger().info("Token changed: " + params.kind());
     }
 }

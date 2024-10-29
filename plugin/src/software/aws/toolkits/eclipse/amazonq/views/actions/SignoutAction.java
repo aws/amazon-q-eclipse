@@ -22,7 +22,7 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
     public void run() {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                PluginStore.putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, null);
+                PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
                 ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
                 DefaultLoginService.getInstance().logout().get();
             } catch (Exception e) {

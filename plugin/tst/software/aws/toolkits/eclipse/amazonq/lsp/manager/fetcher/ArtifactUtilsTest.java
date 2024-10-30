@@ -14,6 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -56,7 +57,7 @@ class ArtifactUtilsTest {
         Files.writeString(file, "Test!");
         List<String> hashes = Arrays.asList("sha384:invalidhash");
 
-        assertThrows(IOException.class, () -> ArtifactUtils.validateHash(file, hashes, true));
+        assertFalse(ArtifactUtils.validateHash(file, hashes, true));
     }
 
     private void createTestZipFile(final Path zipFile, final String... fileNames) throws IOException {

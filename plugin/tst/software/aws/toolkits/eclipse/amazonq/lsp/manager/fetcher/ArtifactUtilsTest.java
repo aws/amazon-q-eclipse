@@ -45,7 +45,7 @@ class ArtifactUtilsTest {
         Files.writeString(file, "Test!");
         List<String> hashes = Arrays.asList("sha384:cf6ee7334a7fd9cb24a4a6a0fd9bb6eadc73c6724c7ddfe983b82dcff68164247788de24a5b601c95748111b368db4e2");
 
-        boolean result = ArtifactUtils.validateHash(file, hashes, true);
+        boolean result = ArtifactUtils.validateHash(file, hashes, false);
 
         assertTrue(result);
     }
@@ -56,7 +56,7 @@ class ArtifactUtilsTest {
         Files.writeString(file, "Test!");
         List<String> hashes = Arrays.asList("sha384:invalidhash");
 
-        assertFalse(ArtifactUtils.validateHash(file, hashes, true));
+        assertFalse(ArtifactUtils.validateHash(file, hashes, false));
     }
 
     private void createTestZipFile(final Path zipFile, final String... fileNames) throws IOException {

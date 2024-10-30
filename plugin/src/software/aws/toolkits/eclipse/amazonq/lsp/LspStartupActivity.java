@@ -71,11 +71,7 @@ public class LspStartupActivity implements IStartup {
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);
-
-                    var authServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.authServer");
-                    LanguageServiceAccessor.startLanguageServer(authServerDefinition);
-
-                    attachAutoTriggerListenersIfApplicable();
+                    Display.getDefault().asyncExec(() -> attachAutoTriggerListenersIfApplicable());
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
                 }
@@ -132,7 +128,9 @@ public class LspStartupActivity implements IStartup {
                         var autoTriggerPartListener = new AutoTriggerPartListener<AutoTriggerDocumentListener>(documentListener);
                         autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
                     }
-                    autoTriggerTopLevelListener.onStart();
+                    Display.getDefault().asyncExec(() -> {
+                        autoTriggerTopLevelListener.onStart();
+                    });
                 } else {
                     // Note to future maintainers: this has to be called from the UI thread or it would not do anything
                     Display.getDefault().asyncExec(() -> {

@@ -3,6 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-import java.util.List;
-
-public record GetSsoTokenParams(GetSsoTokenSource source, List<String> scopes, GetSsoTokenOptions options) { }
+public record GetSsoTokenParams(GetSsoTokenSource source, String clientName, GetSsoTokenOptions options) { }

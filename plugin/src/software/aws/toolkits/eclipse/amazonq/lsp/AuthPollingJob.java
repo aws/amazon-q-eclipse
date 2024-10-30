@@ -3,11 +3,16 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
+
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 
 /*
  * The Auth Polling Job periodically checks if a user is authenticated. The main purpose is to update the toolbar
@@ -44,16 +49,20 @@ public final class AuthPollingJob extends Job {
             return Status.warning("Unable to update authentication status. No AuthSourceProvider instance retrieved.");
         }
 
-        Boolean isAuthenticated = checkUserIsAuthenticated();
+        Boolean isAuthenticated;
+        try {
+            isAuthenticated = checkUserIsAuthenticated();
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to retrieve authentication status", e);
+            scheduleNextOccurence();
+            return Status.error("Failed to retrieve authentication status.");
+        }
 
         Display.getDefault().asyncExec(() -> {
             authSourceProvider.setIsAuthenticated(isAuthenticated);
         });
 
-        // Schedule next occurence
-        cancelExistingJobs();  // ensure only one job is scheduled
-        schedule(POLLING_INTERVAL);
-
+        scheduleNextOccurence();
         return Status.OK_STATUS;
     }
 
@@ -66,14 +75,21 @@ public final class AuthPollingJob extends Job {
         cancelExistingJobs();
     }
 
+    private void scheduleNextOccurence() {
+        cancelExistingJobs();  // ensure only one job is scheduled
+        schedule(POLLING_INTERVAL);
+    }
+
     private void cancelExistingJobs() {
         Job.getJobManager().cancel(FAMILY);
     }
 
     private Boolean checkUserIsAuthenticated() {
-        // TODO: Replace with logic that verifies user is authenticated
-        AuthSourceProvider authProvider = AuthSourceProvider.getProvider();
-        boolean isAuthenticated = (boolean) authProvider.getCurrentState().get(AuthSourceProvider.IS_AUTHENTICATED_VARIABLE_ID);
-        return !isAuthenticated;
+        try {
+            return DefaultLoginService.getInstance().getLoginDetails()
+                .thenApply(loginDetails -> loginDetails.getIsLoggedIn()).get();
+        } catch (Exception e) {
+            throw new AmazonQPluginException("Error occurred while retrieving authentications status", e);
+        }
     }
 }

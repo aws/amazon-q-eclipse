@@ -6,15 +6,25 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
-public final class AuthSourceProvider extends AbstractSourceProvider {
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
+
+public final class AuthSourceProvider extends AbstractSourceProvider implements AuthStatusChangedListener {
     public static final String IS_AUTHENTICATED_VARIABLE_ID = "is_authenticated";
     private boolean isAuthenticated = false;
+
+    public AuthSourceProvider() {
+        DefaultLoginService.getInstance();
+        DefaultLoginService.addAuthStatusChangeListener(this);
+    }
 
     @Override
     public Map<String, Object> getCurrentState() {
@@ -44,8 +54,18 @@ public final class AuthSourceProvider extends AbstractSourceProvider {
 
     public static AuthSourceProvider getProvider() {
         IWorkbench workbench = PlatformUI.getWorkbench();
-        ISourceProviderService sourceProviderService = (ISourceProviderService) workbench.getService(ISourceProviderService.class);
-        AuthSourceProvider provider = (AuthSourceProvider) sourceProviderService.getSourceProvider(AuthSourceProvider.IS_AUTHENTICATED_VARIABLE_ID);
+        ISourceProviderService sourceProviderService = (ISourceProviderService) workbench
+                .getService(ISourceProviderService.class);
+        AuthSourceProvider provider = (AuthSourceProvider) sourceProviderService
+                .getSourceProvider(AuthSourceProvider.IS_AUTHENTICATED_VARIABLE_ID);
         return provider;
+    }
+
+    @Override
+    public void onAuthStatusChanged(final LoginDetails loginDetails) {
+        boolean isAuthenticated = loginDetails.getIsLoggedIn();
+        Display.getDefault().asyncExec(() -> {
+            setIsAuthenticated(isAuthenticated);
+        });
     }
 }

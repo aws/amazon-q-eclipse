@@ -6,7 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.providers;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.DefaultLspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteManifestLspFetcher;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteLspFetcher;
 
 public final class LspManagerProvider {
 
@@ -30,9 +30,7 @@ public final class LspManagerProvider {
     private static LspManager createLspManager() {
         return DefaultLspManager.builder()
             .withLspExecutablePrefix(LspConstants.CW_LSP_FILENAME)
-            .withFetcher(RemoteManifestLspFetcher.builder()
-                .withManifestUrl(LspConstants.CW_MANIFEST_URL)
-                .build())
+            .withManifestUrl(LspConstants.CW_MANIFEST_URL)
             .build();
     }
 

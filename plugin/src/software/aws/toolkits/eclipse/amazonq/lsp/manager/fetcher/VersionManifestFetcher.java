@@ -33,14 +33,14 @@ public final class VersionManifestFetcher {
     private final HttpClient httpClient;
     private final Path manifestPath;
 
-    public VersionManifestFetcher(final String manifestUrl, final HttpClient httpClient) {
-        this(manifestUrl, httpClient, null);
+    public VersionManifestFetcher(final String manifestUrl) {
+        this(manifestUrl, null);
     }
 
-    public VersionManifestFetcher(final String manifestUrl, final HttpClient httpClient, final Path manifestPath) {
+    public VersionManifestFetcher(final String manifestUrl, final Path manifestPath) {
         this.manifestUrl = manifestUrl;
-        this.httpClient = httpClient != null ? httpClient : HttpClientFactory.getInstance();
-        this.manifestPath = manifestPath != null ? manifestPath : PluginUtils.getPluginDir(LspConstants.LSP_SUBDIRECTORY).resolve("manifest.json");
+        this.httpClient = HttpClientFactory.getInstance();
+        this.manifestPath = manifestPath != null ? manifestPath : PluginUtils.getPluginDir(LspConstants.AMAZONQ_LSP_SUBDIRECTORY).resolve("manifest.json");
     }
 
     /*

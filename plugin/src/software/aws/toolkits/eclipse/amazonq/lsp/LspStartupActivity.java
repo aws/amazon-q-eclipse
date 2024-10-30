@@ -26,6 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -80,6 +81,7 @@ public class LspStartupActivity implements IStartup {
         };
         job.schedule();
         if (PluginStore.get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
+            LspProvider.getAmazonQServer();
             this.launchWebview();
         }
     }

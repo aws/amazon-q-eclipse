@@ -5,6 +5,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.osgi.framework.Version;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
@@ -12,10 +13,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.Collections;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ArtifactUtilsTest {
 
@@ -57,6 +62,21 @@ class ArtifactUtilsTest {
         List<String> hashes = Arrays.asList("sha384:invalidhash");
 
         assertThrows(IOException.class, () -> ArtifactUtils.validateHash(file, hashes, true));
+    }
+
+    @Test
+    void testHasPosixFilePermissions() {
+        Path mockPath = mock(Path.class);
+        FileSystem mockFileSystem = mock(FileSystem.class);
+        when(mockPath.getFileSystem()).thenReturn(mockFileSystem);
+
+        //Posix Systems
+        when(mockFileSystem.supportedFileAttributeViews()).thenReturn(Collections.singleton("posix"));
+        assertTrue(ArtifactUtils.hasPosixFilePermissions(mockPath));
+
+        //Windows/Non-Posix Systems
+        when(mockFileSystem.supportedFileAttributeViews()).thenReturn(Collections.singleton("basic"));
+        assertFalse(ArtifactUtils.hasPosixFilePermissions(mockPath));
     }
 
     private void createTestZipFile(final Path zipFile, final String... fileNames) throws IOException {

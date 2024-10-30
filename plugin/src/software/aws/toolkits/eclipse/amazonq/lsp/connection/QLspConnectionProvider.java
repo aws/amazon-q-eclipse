@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,9 +22,14 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     public QLspConnectionProvider() throws IOException {
         super();
         LspManager lspManager = LspManagerProvider.getInstance();
+        var lspInstallResult = lspManager.getLspInstallation();
+
+        setWorkingDirectory(lspInstallResult.getServerDirectory());
+
+        var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
         List<String> commands = new ArrayList<>();
-        commands.add(lspManager.getLspInstallation().nodeExecutable().toString());
-        commands.add(lspManager.getLspInstallation().lspJs().toString());
+        commands.add(serverCommand.toString());
+        commands.add(lspInstallResult.getServerCommandArgs());
         commands.add("--nolazy");
         commands.add("--inspect=5599");
         commands.add("--stdio");

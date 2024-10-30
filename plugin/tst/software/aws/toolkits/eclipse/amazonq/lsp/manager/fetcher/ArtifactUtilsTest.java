@@ -15,9 +15,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.Collections;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -50,7 +49,7 @@ class ArtifactUtilsTest {
         Files.writeString(file, "Test!");
         List<String> hashes = Arrays.asList("sha384:cf6ee7334a7fd9cb24a4a6a0fd9bb6eadc73c6724c7ddfe983b82dcff68164247788de24a5b601c95748111b368db4e2");
 
-        boolean result = ArtifactUtils.validateHash(file, hashes, true);
+        boolean result = ArtifactUtils.validateHash(file, hashes, false);
 
         assertTrue(result);
     }
@@ -61,7 +60,7 @@ class ArtifactUtilsTest {
         Files.writeString(file, "Test!");
         List<String> hashes = Arrays.asList("sha384:invalidhash");
 
-        assertThrows(IOException.class, () -> ArtifactUtils.validateHash(file, hashes, true));
+        assertFalse(ArtifactUtils.validateHash(file, hashes, false));
     }
 
     @Test

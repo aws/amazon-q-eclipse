@@ -10,7 +10,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
-public class FileSystemLspFetcher implements LspFetcher {
+public class FileSystemLspFetcher {
 
     private final Path sourceFile;
 
@@ -22,7 +22,6 @@ public class FileSystemLspFetcher implements LspFetcher {
         return new Builder();
     }
 
-    @Override
     public final boolean fetch(final PluginPlatform platform, final PluginArchitecture architecture, final Path destination) {
         try {
             if (Files.isDirectory(sourceFile)) {

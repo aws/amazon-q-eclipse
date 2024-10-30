@@ -31,7 +31,7 @@ public final class VersionManifestFetcherTest {
     @Test
     public void fetchWhenCacheEmptyAndNoUrl(@TempDir final Path tempDir) {
         var manifestPath = tempDir.resolve("manifest.json");
-        fetcher = new VersionManifestFetcher(null, null, manifestPath);
+        fetcher = new VersionManifestFetcher(null, manifestPath);
 
         assertTrue(fetcher.fetch().isEmpty());
         assertFalse(cacheExists(manifestPath));
@@ -43,7 +43,7 @@ public final class VersionManifestFetcherTest {
         var resourcePath = getResourcePath(sampleManifestFile);
         copyFile(resourcePath.toAbsolutePath(), manifestPath);
 
-        fetcher = new VersionManifestFetcher(null, null, manifestPath);
+        fetcher = new VersionManifestFetcher(null, manifestPath);
 
         var content = fetcher.fetch();
         assertTrue(content.isPresent());
@@ -55,7 +55,7 @@ public final class VersionManifestFetcherTest {
         var manifestPath = tempDir.resolve("manifest.json");
         Files.writeString(manifestPath, INVALID_DATA);
 
-        fetcher = new VersionManifestFetcher(null, null, manifestPath);
+        fetcher = new VersionManifestFetcher(null, manifestPath);
 
         assertTrue(cacheExists(manifestPath));
 
@@ -71,7 +71,7 @@ public final class VersionManifestFetcherTest {
 
         assertFalse(cacheExists(manifestPath));
 
-        fetcher = new VersionManifestFetcher(LspConstants.CW_MANIFEST_URL, null, manifestPath);
+        fetcher = new VersionManifestFetcher(LspConstants.CW_MANIFEST_URL, manifestPath);
         var content = fetcher.fetch();
         assertTrue(content.isPresent());
         // verify cache and etag is updated
@@ -88,7 +88,7 @@ public final class VersionManifestFetcherTest {
 
         assertTrue(cacheExists(manifestPath));
 
-        fetcher = new VersionManifestFetcher(LspConstants.CW_MANIFEST_URL, null, manifestPath);
+        fetcher = new VersionManifestFetcher(LspConstants.CW_MANIFEST_URL, manifestPath);
 
         var content = fetcher.fetch();
         assertTrue(content.isPresent());

@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.manager;
 
+import java.nio.file.Paths;
+
 import org.eclipse.osgi.service.resolver.VersionRange;
 
 public final class LspConstants {
@@ -14,9 +16,14 @@ public final class LspConstants {
     public static final int MANIFEST_MAJOR_VERSION = 0;
 
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
-    public static final String NODE_EXECUTABLE_PREFIX = "node";
+    public static final String NODE_EXECUTABLE_WINDOWS = "node.exe";
+    public static final String NODE_EXECUTABLE_OSX = "node";
+    public static final String CHAT_UI_FILENAME = "amazonq-ui.js";
+    public static final String LSP_CLIENT_FOLDER = "clients";
+    public static final String LSP_SERVER_FOLDER = "servers";
 
     public static final String LSP_SUBDIRECTORY = "lsp";
+    public static final String AMAZONQ_LSP_SUBDIRECTORY = Paths.get(LSP_SUBDIRECTORY, "AmazonQ").toString();
 
     // TODO: constrain these prior to launch
     public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = new VersionRange("[0.0.0, 10.0.0]");

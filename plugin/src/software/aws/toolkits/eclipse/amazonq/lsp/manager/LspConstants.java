@@ -16,7 +16,8 @@ public final class LspConstants {
     public static final int MANIFEST_MAJOR_VERSION = 0;
 
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
-    public static final String NODE_EXECUTABLE = "node.exe";
+    public static final String NODE_EXECUTABLE_WINDOWS = "node.exe";
+    public static final String NODE_EXECUTABLE_OSX = "node";
     public static final String CHAT_UI_FILENAME = "amazonq-ui.js";
     public static final String LSP_CLIENT_FOLDER = "clients";
     public static final String LSP_SERVER_FOLDER = "servers";

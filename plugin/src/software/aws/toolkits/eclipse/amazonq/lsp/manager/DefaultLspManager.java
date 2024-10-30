@@ -77,7 +77,7 @@ public final class DefaultLspManager implements LspManager {
         result.setVersion(fetchResult.version());
         result.setServerDirectory(Paths.get(fetchResult.assetDirectory(), LspConstants.LSP_SERVER_FOLDER).toString());
         result.setClientDirectory(Paths.get(fetchResult.assetDirectory(), LspConstants.LSP_CLIENT_FOLDER).toString());
-        result.setServerCommand(LspConstants.NODE_EXECUTABLE);
+        result.setServerCommand(getNodeForPlatform());
         result.setServerCommandArgs(lspExecutablePrefix);
 
         return result;
@@ -101,7 +101,8 @@ public final class DefaultLspManager implements LspManager {
         }
 
         var serverCommand = result.getServerCommand();
-        if (!serverCommand.equalsIgnoreCase(LspConstants.NODE_EXECUTABLE) || !Files.exists(serverDirPath.resolve(serverCommand))) {
+        var expectedServerCommand = getNodeForPlatform();
+        if (!serverCommand.equalsIgnoreCase(expectedServerCommand) || !Files.exists(serverDirPath.resolve(serverCommand))) {
             throw new AmazonQPluginException("Error finding Amazon Q Language Server Command");
         }
 
@@ -114,6 +115,11 @@ public final class DefaultLspManager implements LspManager {
         // TODO: Maybe validate the client directory also exists?
         var nodeExecutable = serverDirPath.resolve(serverCommand);
         makeExecutable(nodeExecutable);
+    }
+
+    private String getNodeForPlatform() {
+        var platform = platformOverride != null ? platformOverride : PluginUtils.getPlatform();
+        return platform == PluginPlatform.WINDOWS ? LspConstants.NODE_EXECUTABLE_WINDOWS : LspConstants.NODE_EXECUTABLE_OSX;
     }
 
     private LspFetcher createLspFetcher(final Manifest manifest) {

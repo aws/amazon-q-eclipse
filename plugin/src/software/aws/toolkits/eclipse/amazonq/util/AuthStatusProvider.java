@@ -9,6 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 
 public final class AuthStatusProvider {
     private static final List<AuthStatusChangedListener> LISTENERS = new ArrayList<>();
+    private static LoginDetails prevLoginDetails;
 
     private AuthStatusProvider() {
         //prevent instantiation
@@ -23,6 +24,12 @@ public final class AuthStatusProvider {
     }
 
     protected static void notifyAuthStatusChanged(final LoginDetails loginDetails) {
+        if (prevLoginDetails != null && prevLoginDetails.equals(loginDetails)) {
+            return;
+        }
+
+        prevLoginDetails = loginDetails;
+
         for (AuthStatusChangedListener listener : LISTENERS) {
             listener.onAuthStatusChanged(loginDetails);
         }

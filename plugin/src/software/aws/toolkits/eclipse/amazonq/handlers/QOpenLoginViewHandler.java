@@ -7,7 +7,6 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview;
 import software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview;
 
 public class QOpenLoginViewHandler extends AbstractHandler {

@@ -17,4 +17,12 @@ public enum LoginType {
     public String getValue() {
         return value;
     }
+
+    public Boolean equals(final LoginType loginType2) {
+        if (loginType2 == null) {
+            return false;
+        }
+
+        return this.value.equals(loginType2.getValue());
+    }
 }

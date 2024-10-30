@@ -24,12 +24,12 @@ public final class InlineCompletionUtils {
         System.out.println("Param made with invocation offset of " + invocationOffset);
         var document = viewer.getDocument();
 
-        var openFilePath = QEclipseEditorUtils.getOpenFilePath(editor.getEditorInput());
+        var openFileUri = QEclipseEditorUtils.getOpenFileUri(editor.getEditorInput());
 
         var params = new InlineCompletionParams();
-        var identifier = new TextDocumentIdentifier();
-        identifier.setUri("file://" + openFilePath);
-        params.setTextDocument(identifier);
+        openFileUri.ifPresent(filePathUri -> {
+            params.setTextDocument(new TextDocumentIdentifier(filePathUri));
+        });
 
         var inlineCompletionContext = new InlineCompletionContext();
         inlineCompletionContext.setTriggerKind(triggerKind);

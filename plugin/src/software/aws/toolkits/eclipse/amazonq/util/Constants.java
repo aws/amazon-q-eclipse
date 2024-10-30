@@ -26,5 +26,5 @@ public final class Constants {
     public static final String AWS_BUILDER_ID_URL = "https://view.awsapps.com/start";
     public static final String IDC_PROFILE_NAME = "eclipse-q-profile";
     public static final String IDC_SESSION_NAME = "eclipse-q-session";
-
+    public static final String IDC_PROFILE_KIND = "SsoTokenProfile";
 }

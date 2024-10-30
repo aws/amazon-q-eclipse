@@ -196,7 +196,7 @@ public final class DefaultLoginService implements LoginService {
                     if (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER) && triggerSignIn) {
                         var profile = new Profile();
                         profile.setName(Constants.IDC_PROFILE_NAME);
-                        profile.setProfileKinds(Collections.singletonList(Constants.IDC_SESSION_NAME));
+                        profile.setProfileKinds(Collections.singletonList(Constants.IDC_PROFILE_KIND));
                         profile.setProfileSettings(new ProfileSettings(loginParams.getLoginIdcParams().getRegion(), Constants.IDC_SESSION_NAME));
                         var ssoSession = new SsoSession();
                         ssoSession.setName(Constants.IDC_SESSION_NAME);

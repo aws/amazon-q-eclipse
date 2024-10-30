@@ -107,6 +107,17 @@ public final class QEclipseEditorUtils {
         }
     }
 
+    public static Optional<String> getOpenFileUri(final IEditorInput editorInput) {
+        try {
+            var filePath = getOpenFilePath(editorInput);
+            var fileUri = Paths.get(filePath).toUri().toString();
+            return Optional.of(fileUri);
+        } catch (Exception e) {
+            Activator.getLogger().error("Unexpected error when determining open file path", e);
+            return Optional.empty();
+        }
+    }
+
     private static Optional<String> getOpenFilePath() {
         var editor = getActiveTextEditor();
         if (editor == null) {

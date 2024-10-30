@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.providers;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.DefaultLspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteLspFetcher;
 
 public final class LspManagerProvider {
 

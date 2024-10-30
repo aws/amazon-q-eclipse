@@ -157,4 +157,8 @@ public final class ArtifactUtils {
             return false;
         }
     }
+
+    public static boolean hasPosixFilePermissions(final Path filePath) {
+        return filePath.getFileSystem().supportedFileAttributeViews().contains("posix");
+    }
 }

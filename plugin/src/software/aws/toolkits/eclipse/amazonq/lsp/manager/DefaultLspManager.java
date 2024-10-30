@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteLspFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.VersionManifestFetcher;
@@ -122,17 +123,13 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private static void makeExecutable(final Path filePath) throws IOException {
-        if (!hasPosixFilePermissions(filePath)) {
+        if (!ArtifactUtils.hasPosixFilePermissions(filePath)) {
             return;
         }
         var permissions = new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
                 PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
                 PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE));
         Files.setPosixFilePermissions(filePath, permissions);
-    }
-
-    private static boolean hasPosixFilePermissions(final Path path) {
-        return path.getFileSystem().supportedFileAttributeViews().contains("posix");
     }
 
     public static class Builder {

@@ -202,7 +202,7 @@ public final class DefaultLoginService implements LoginService {
 
         return lspProvider.getAmazonQServer()
                 .thenApply(server -> {
-                    if (triggerSignIn) {
+                    if (triggerSignIn && currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)) {
                         var profile = new Profile();
                         profile.setName(Constants.IDC_PROFILE_NAME);
                         profile.setProfileKinds(Collections.singletonList(Constants.IDC_PROFILE_KIND));
@@ -226,7 +226,7 @@ public final class DefaultLoginService implements LoginService {
                 })
                 .thenCompose(server -> server.getSsoToken(params)
                         .thenApply(response -> {
-                            if (response != null && response.ssoToken() != null && triggerSignIn) {
+                            if (triggerSignIn) {
                                 LoginDetails loginDetails = new LoginDetails();
                                 loginDetails.setIsLoggedIn(true);
                                 loginDetails.setLoginType(currentLogin);

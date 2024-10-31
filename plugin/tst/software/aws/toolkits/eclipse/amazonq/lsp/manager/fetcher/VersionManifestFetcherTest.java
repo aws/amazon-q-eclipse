@@ -25,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
+import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;

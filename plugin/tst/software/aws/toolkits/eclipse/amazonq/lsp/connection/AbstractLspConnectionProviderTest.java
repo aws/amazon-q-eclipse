@@ -1,8 +1,7 @@
-package software.aws.toolkits.eclipse.amazonq.connections;
+package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import software.aws.toolkits.eclipse.amazonq.lsp.connection.AbstractLspConnectionProvider;
 
 import java.io.IOException;
 import java.util.List;

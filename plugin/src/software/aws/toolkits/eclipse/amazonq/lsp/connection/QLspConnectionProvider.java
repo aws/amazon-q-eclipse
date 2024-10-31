@@ -48,7 +48,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
     @Override
     public final void start() throws IOException {
-        super.start();
+        startProcess();
 
         Activator.getLogger().info("Initializing encrypted communication with Amazon Q Lsp Server");
 
@@ -60,5 +60,9 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         } catch (Exception e) {
             Activator.getLogger().error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
         }
+    }
+
+    protected final void startProcess() throws IOException {
+        super.start();
     }
 }

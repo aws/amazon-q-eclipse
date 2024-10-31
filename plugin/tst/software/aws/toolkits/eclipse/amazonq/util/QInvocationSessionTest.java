@@ -44,6 +44,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.osgi.service.prefs.Preferences;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;
@@ -235,16 +236,21 @@ public class QInvocationSessionTest {
     }
 
     static MockedStatic<Activator> mockLspProvider() {
+        MockedStatic<Activator> localizedActivatorMock = mockStatic(Activator.class);
+        LspProvider mockLspProvider = mock(LspProvider.class);
+        AmazonQLspServer mockAmazonQServer = mock(AmazonQLspServer.class);
+        localizedActivatorMock.when(Activator::getLspProvider).thenReturn(mockLspProvider);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
-        activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(POTENT_PARAM))
-                .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
-        activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
-                .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
 
-        return activatorMockStatic;
+        when(mockLspProvider.getAmazonQServer()).thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
+        when(mockAmazonQServer.inlineCompletionWithReferences(POTENT_PARAM))
+                .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
+        when(mockAmazonQServer.inlineCompletionWithReferences(IMPOTENT_PARAM))
+                .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
+        return localizedActivatorMock;
     }
 
     static MockedStatic<Display> mockDisplayAsyncCall() {

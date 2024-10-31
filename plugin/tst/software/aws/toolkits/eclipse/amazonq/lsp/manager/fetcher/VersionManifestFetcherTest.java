@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
+import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 
 @ExtendWith(ActivatorStaticMockExtension.class)

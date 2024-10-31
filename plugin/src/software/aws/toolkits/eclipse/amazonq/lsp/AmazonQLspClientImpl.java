@@ -24,7 +24,6 @@ import org.eclipse.ui.PlatformUI;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
@@ -33,7 +32,6 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -47,7 +45,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             SsoProfileData sso = new SsoProfileData();
             String startUrl = Constants.AWS_BUILDER_ID_URL;
             try {
-                startUrl = DefaultLoginService.getInstance().getLoginDetails().get().getIssuerUrl();
+                startUrl = Activator.getLoginService().getLoginDetails().get().getIssuerUrl();
             } catch (InterruptedException | ExecutionException e) {
                 Activator.getLogger().warn("Error while fetching the issuerUrl", e);
             }
@@ -66,7 +64,9 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         List<Object> output = new ArrayList<>();
         configurationParams.getItems().forEach(item -> {
             if (item.getSection().equals(Constants.LSP_Q_CONFIGURATION_KEY)) {
-                Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+                Customization storedCustomization = Activator.getPluginStore().getObject(
+                        Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,
+                        Customization.class);
                 Map<String, Object> qConfig = new HashMap<>();
                 qConfig.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, Objects.nonNull(storedCustomization) ? storedCustomization.getArn() : null);
                 qConfig.put(Constants.LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY, false);

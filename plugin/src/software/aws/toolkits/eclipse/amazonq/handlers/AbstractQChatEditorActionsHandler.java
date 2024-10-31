@@ -14,7 +14,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
@@ -23,7 +22,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
     @Override
     public final boolean isEnabled() {
         try {
-            return DefaultLoginService.getInstance().getLoginDetails()
+            return Activator.getLoginService().getLoginDetails()
                     .thenApply(loginDetails -> loginDetails.getIsLoggedIn())
                     .get(5, TimeUnit.SECONDS);
         }  catch (TimeoutException e) {

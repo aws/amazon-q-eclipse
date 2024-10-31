@@ -25,7 +25,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -67,7 +66,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);
 
-        DefaultLoginService.getInstance().getLoginDetails().thenAcceptAsync(loginDetails -> {
+        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
             handleAuthStatusChange(loginDetails);
         }, ThreadingUtils::executeAsyncTask);
 

@@ -18,8 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
-import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 
 @ExtendWith(ActivatorStaticMockExtension.class)
@@ -76,7 +75,7 @@ public final class VersionManifestFetcherTest {
         assertTrue(content.isPresent());
         // verify cache and etag is updated
         assertTrue(cacheExists(manifestPath));
-        assertFalse(PluginStore.get(LspConstants.CW_MANIFEST_URL).isEmpty());
+        assertFalse(DefaultPluginStore.getInstance().get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
 
     @Test
@@ -95,7 +94,7 @@ public final class VersionManifestFetcherTest {
 
         // verify cache and etag updated
         assertTrue(cacheExists(manifestPath));
-        assertFalse(PluginStore.get(LspConstants.CW_MANIFEST_URL).isEmpty());
+        assertFalse(DefaultPluginStore.getInstance().get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
 
     private boolean cacheExists(final Path manifestPath) {

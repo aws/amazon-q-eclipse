@@ -15,7 +15,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
@@ -53,7 +53,7 @@ public final class VersionManifestFetcher {
         if (manifestUrl == null) {
             return cachedManifest;
         }
-        var cachedEtag = PluginStore.get(manifestUrl);
+        var cachedEtag = DefaultPluginStore.getInstance().get(manifestUrl);
         // only use cached content if it is valid and a cached etag exists
         var etagToRequest = cachedManifest.isPresent() && cachedEtag != null ? cachedEtag : null;
 
@@ -144,7 +144,7 @@ public final class VersionManifestFetcher {
                     StandardOpenOption.TRUNCATE_EXISTING);
             var etag = response.headers().firstValue("ETag");
             if (etag.isPresent()) {
-                PluginStore.put(manifestUrl, etag.get());
+                DefaultPluginStore.getInstance().put(manifestUrl, etag.get());
             }
             Activator.getLogger().info("Validated and fetched latest manifest");
             return manifest;

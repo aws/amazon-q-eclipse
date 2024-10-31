@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import software.amazon.awssdk.utils.StringUtils;
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -133,10 +133,10 @@ public final class CustomizationDialog extends Dialog {
     @Override
     protected void okPressed() {
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
-            PluginStore.remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+            DefaultPluginStore.getInstance().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
             Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
         } else if (Objects.nonNull(this.getSelectedCustomization()) && StringUtils.isNotBlank(this.getSelectedCustomization().getName())) {
-            PluginStore.putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.getSelectedCustomization());
+            DefaultPluginStore.getInstance().putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.getSelectedCustomization());
             ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
             Display.getCurrent().asyncExec(() -> showNotification(String.format("%s customization", this.getSelectedCustomization().getName())));
         }

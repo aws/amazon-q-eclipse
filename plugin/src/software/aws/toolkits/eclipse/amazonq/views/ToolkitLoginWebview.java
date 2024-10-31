@@ -66,8 +66,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         }, ThreadingUtils::executeAsyncTask);
     }
 
-    @Override
-    public void onAuthStatusChanged(final LoginDetails loginDetails) {
+    protected void handleAuthStatusChange(final LoginDetails loginDetails) {
         var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());

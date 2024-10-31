@@ -53,7 +53,6 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         }
                         isLoginTaskRunning = false;
                         Display.getDefault().asyncExec(() -> {
-                            browser.setText("Login succeeded");
                             AmazonQView.showView(AmazonQChatWebview.ID);
                         });
                     } catch (Exception e) {

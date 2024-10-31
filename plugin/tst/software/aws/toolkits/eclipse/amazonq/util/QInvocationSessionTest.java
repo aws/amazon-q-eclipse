@@ -235,11 +235,9 @@ public class QInvocationSessionTest {
         return items;
     }
 
-    static LspProvider mockLspProvider() {
+    static MockedStatic<Activator> mockLspProvider() {
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
-        LspProvider mockLspProvider = mock(LspProvider.class, RETURNS_DEEP_STUBS);
-        activatorMockStatic.when(Activator::getLspProvider).thenReturn(mockLspProvider);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
         activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(POTENT_PARAM))
@@ -247,7 +245,7 @@ public class QInvocationSessionTest {
         activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
                 .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
 
-        return mockLspProvider;
+        return activatorMockStatic;
     }
 
     static MockedStatic<Display> mockDisplayAsyncCall() {

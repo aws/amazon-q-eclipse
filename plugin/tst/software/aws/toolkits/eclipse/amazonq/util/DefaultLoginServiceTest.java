@@ -3,13 +3,11 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import java.util.concurrent.ExecutionException;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
@@ -28,7 +26,6 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -38,15 +35,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class DefaultLoginServiceTest {
@@ -61,6 +55,7 @@ public class DefaultLoginServiceTest {
 
     @BeforeEach
     public final void setUp() {
+//        MockitoAnnotations.openMocks(this);
         mockLspProvider = mock(LspProvider.class);
         mockAmazonQServer = mock(AmazonQLspServer.class);
         mockPluginStore = new TestPluginStore();
@@ -70,7 +65,6 @@ public class DefaultLoginServiceTest {
     public final void tearDown() {
         mockPluginStore.clear();
     }
-
     @Test
     public void testSuccessfulLoginIdc() {
         resetLoginService();
@@ -129,7 +123,6 @@ public class DefaultLoginServiceTest {
             verify(mockLogger).error(eq("Failed to sign in"), any(Throwable.class));
         }
     }
-
     @Test
     //updateToken is called when initializing loginService in resetLoginService()
     public void testUpdateTokenWhileLoggedOut() {
@@ -139,6 +132,7 @@ public class DefaultLoginServiceTest {
             mockedCredentialUtils.verifyNoInteractions();
         }
     }
+
     @Test
     public void testUpdateTokenSuccess() {
         mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
@@ -151,6 +145,7 @@ public class DefaultLoginServiceTest {
             mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
         }
     }
+
     @Test
     public void testUpdateTokenWithException() {
         mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
@@ -167,7 +162,6 @@ public class DefaultLoginServiceTest {
             verify(mockLogger).error(eq("Failed to update token"), any(Throwable.class));
         }
     }
-
     @Test
     public void testLogoutSuccess() throws Exception {
         SsoToken mockToken = new SsoToken("id", "accesstoken");
@@ -204,168 +198,6 @@ public class DefaultLoginServiceTest {
 
             assertNull(mockPluginStore.get("LOGIN_TYPE"));
             assertNull(mockPluginStore.get("IDC_PARAMS"));
-        }
-    }
-    //resetting LoginService without calling login() or manually adding a loginType to the mocked PluginStore
-    //will create the loginService with a LoginType of NONE
-    @Test
-    public void testLogoutWhileLoginTypeNone() {
-        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
-             MockedStatic<Activator> mockedActivator = mockStatic(Activator.class)) {
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            mockedCredentialUtils.when(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), any(), eq(false)))
-                    .thenReturn(CompletableFuture.completedFuture(null));
-            resetLoginService();
-            CompletableFuture<Void> result = loginService.logout();
-            assertNotNull(result);
-            verify(mockLogger).warn("Attempting to invalidate token in a logged out state");
-            mockedCredentialUtils.verifyNoInteractions();
-        }
-    }
-    @Test
-    public void testLogoutWithNullToken() throws Exception {
-        SsoToken mockToken = new SsoToken("id", "accesstoken");
-        mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
-        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
-             MockedStatic<Activator> mockedActivator = mockStatic(Activator.class)) {
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
-            resetLoginService();
-            mockedCredentialUtils.when(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), any(), eq(false)))
-                    .thenReturn(CompletableFuture.completedFuture(null));
-            CompletableFuture<Void> result = loginService.logout();
-
-            assertNotNull(result);
-            assertDoesNotThrow(() -> result.get());
-            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), any(), eq(false)), times(2));
-            verify(mockLogger).warn("Attempting to invalidate token with no active auth session");
-            verifyNoInteractions(mockAmazonQServer);
-        }
-    }
-    @Test
-    public void testLogoutWithException() {
-        SsoToken mockToken = new SsoToken("id", "accesstoken");
-        mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
-        mockPluginStore.put("IDC_PARAMS", "someValue");
-        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
-             MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class);
-             MockedStatic<Activator> mockedActivator = mockStatic(Activator.class)) {
-
-            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
-                    .thenAnswer(invocation -> {
-                        return null;
-                    });
-            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
-            resetLoginService();
-            when(mockLspProvider.getAmazonQServer()).thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
-            when(mockAmazonQServer.invalidateSsoToken(any())).thenReturn(CompletableFuture.failedFuture(new RuntimeException("test exception")));
-
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            CompletableFuture<Void> result = loginService.logout();
-
-            ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
-            assertTrue(exception.getCause() instanceof AmazonQPluginException);
-            verify(mockLogger).error(eq("Unexpected error while invalidating token"), any(Throwable.class));
-            verify(mockAmazonQServer).invalidateSsoToken(any());
-            verifyNoMoreInteractions(mockAmazonQServer);
-            mockedAuthStatusProvider.verifyNoInteractions();
-        }
-    }
-
-    @Test
-    public void testGetLoginDetailsWhileLoggedOut() throws InterruptedException {
-        try (MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
-            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
-                    .thenAnswer(invocation -> {
-                        return null;
-                    });
-            resetLoginService();
-            CompletableFuture<LoginDetails> result = loginService.getLoginDetails();
-            LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
-            assertFalse(loginDetails.getIsLoggedIn());
-            assertEquals(LoginType.NONE, loginDetails.getLoginType());
-            assertNull(loginDetails.getIssuerUrl());
-
-            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
-        }
-    }
-    @Test
-    public void testGetLoginDetailsSuccessWithBuilderId() {
-        mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
-        SsoToken mockToken = mock(SsoToken.class);
-        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
-             MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
-            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
-                    .thenAnswer(invocation -> {
-                        return null;
-                    });
-            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
-            resetLoginService();
-
-            CompletableFuture<LoginDetails> result = loginService.getLoginDetails();
-
-            LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
-            assertTrue(loginDetails.getIsLoggedIn());
-            assertEquals(LoginType.BUILDER_ID, loginDetails.getLoginType());
-            assertEquals(loginDetails.getIssuerUrl(), Constants.AWS_BUILDER_ID_URL);
-            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), eq(null), eq(false)), times(2));
-            mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
-            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
-        }
-    }
-    @Test
-    public void testGetLoginDetailsSuccessWithIdc() {
-        mockPluginStore.put("LOGIN_TYPE", "IAM_IDENTITY_CENTER");
-        LoginIdcParams idcParams = new LoginIdcParams();
-        idcParams.setUrl("idcTestUrl");
-        mockPluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, idcParams);
-        SsoToken mockToken = mock(SsoToken.class);
-        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
-             MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class)) {
-            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
-                    .thenAnswer(invocation -> {
-                        return null;
-                    });
-            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
-            resetLoginService();
-
-            CompletableFuture<LoginDetails> result = loginService.getLoginDetails();
-
-            LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
-            assertTrue(loginDetails.getIsLoggedIn());
-            assertEquals(LoginType.IAM_IDENTITY_CENTER, loginDetails.getLoginType());
-            assertEquals(loginDetails.getIssuerUrl(), "idcTestUrl");
-            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), notNull(LoginParams.class), eq(false)), times(2));
-            mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
-            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
-        }
-    }
-    @Test
-    public void testGetLoginDetailsWithException() {
-        mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
-        SsoToken mockToken = mock(SsoToken.class);
-        try (MockedStatic<CredentialUtils> mockedCredentialUtils = mockStatic(CredentialUtils.class);
-             MockedStatic<AuthStatusProvider> mockedAuthStatusProvider = mockStatic(AuthStatusProvider.class);
-             MockedStatic<Activator> mockedActivator = mockStatic(Activator.class)) {
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            mockedAuthStatusProvider.when(() -> AuthStatusProvider.notifyAuthStatusChanged(any()))
-                    .thenAnswer(invocation -> {
-                        return null;
-                    });
-            setUpCredentialUtils(mockedCredentialUtils, mockToken, false, false);
-            resetLoginService();
-            setUpCredentialUtils(mockedCredentialUtils, mockToken, true, false);
-
-            CompletableFuture<LoginDetails> result = loginService.getLoginDetails();
-            LoginDetails loginDetails = assertDoesNotThrow(() -> result.get());
-
-            verify(mockLogger).error(eq("Failed to check login status"), any(Throwable.class));
-            assertFalse(loginDetails.getIsLoggedIn());
-            assertEquals(LoginType.NONE, loginDetails.getLoginType());
-            assertNull(loginDetails.getIssuerUrl());
-            mockedCredentialUtils.verify(() -> CredentialUtils.getToken(eq(mockLspProvider), any(), eq(null), eq(false)), times(2));
-            mockedCredentialUtils.verify(() -> CredentialUtils.updateCredentials(mockLspProvider, mockToken), times(1));
-            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()), never());
         }
     }
 

@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import software.amazon.awssdk.utils.StringUtils;
-import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
@@ -16,7 +15,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class DefaultLoginService implements LoginService {
@@ -42,7 +40,12 @@ public final class DefaultLoginService implements LoginService {
     public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams) {
         updateConnectionDetails(loginType, loginParams);
         return CredentialUtils.getToken(lspProvider, currentLogin, loginParams, true)
-            .thenCompose(token -> CredentialUtils.updateCredentials(lspProvider, token))
+            .thenApply(token -> {
+                if (token == null) {
+                    throw new RuntimeException("Attempted login with null token");
+                }
+                return CredentialUtils.updateCredentials(lspProvider, token);
+            })
             .thenAccept((response) -> {
                 updatePluginStore(loginType, loginParams);
             })
@@ -181,7 +184,7 @@ public final class DefaultLoginService implements LoginService {
         private LspProvider lspProvider;
         private PluginStore pluginStore;
 
-        public final Builder withLspProvider(final LspProviderImpl lspProvider) {
+        public final Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
             return this;
         }
@@ -195,7 +198,7 @@ public final class DefaultLoginService implements LoginService {
                 lspProvider = Activator.getLspProvider();
             }
             if (pluginStore == null) {
-                pluginStore = DefaultPluginStore.getInstance();
+                pluginStore = Activator.getPluginStore();
             }
             DefaultLoginService instance = new DefaultLoginService(this);
             instance.updateToken();

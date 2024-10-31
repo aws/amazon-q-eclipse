@@ -2,7 +2,6 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
 
-import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -21,7 +20,7 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
     public void run() {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                DefaultPluginStore.getInstance().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
                 ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
                 Activator.getLoginService().logout().get();
             } catch (Exception e) {

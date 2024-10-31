@@ -39,6 +39,7 @@ public final class VersionManifestFetcherTest {
         mockedLogger = mock(LoggingService.class);
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
+        mockedActivator.when(Activator::getPluginStore).thenReturn(DefaultPluginStore.getInstance());
     }
 
     @AfterEach
@@ -94,7 +95,7 @@ public final class VersionManifestFetcherTest {
         assertTrue(content.isPresent());
         // verify cache and etag is updated
         assertTrue(cacheExists(manifestPath));
-        assertFalse(DefaultPluginStore.getInstance().get(LspConstants.CW_MANIFEST_URL).isEmpty());
+        assertFalse(Activator.getPluginStore().get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
 
     @Test
@@ -113,7 +114,7 @@ public final class VersionManifestFetcherTest {
 
         // verify cache and etag updated
         assertTrue(cacheExists(manifestPath));
-        assertFalse(DefaultPluginStore.getInstance().get(LspConstants.CW_MANIFEST_URL).isEmpty());
+        assertFalse(Activator.getPluginStore().get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
 
     private boolean cacheExists(final Path manifestPath) {

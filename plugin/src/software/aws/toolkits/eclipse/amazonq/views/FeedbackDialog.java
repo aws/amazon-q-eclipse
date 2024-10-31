@@ -5,6 +5,9 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -299,13 +302,13 @@ public class FeedbackDialog extends Dialog {
 
     private String getBodyMessageForReportIssueOrRequestFeature() {
         ClientMetadata metadata = PluginClientMetadata.getInstance();
-        return String.format(
+        return URLEncoder.encode(String.format(
             "--- \n"
             + "Toolkit: Amazon Q for %s\n"
             + "OS: %s %s\n"
             + "IDE: %s %s", metadata.getIdeName(), metadata.getOSName(),
             metadata.getOSVersion(), metadata.getIdeName(),
-            metadata.getIdeVersion()).stripIndent();
+            metadata.getIdeVersion()), StandardCharsets.UTF_8);
     }
 
     private void updateCharacterRemainingCount() {

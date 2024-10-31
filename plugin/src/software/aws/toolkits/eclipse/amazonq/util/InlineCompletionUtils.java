@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -37,8 +38,13 @@ public final class InlineCompletionUtils {
         params.setContext(inlineCompletionContext);
 
         var invocationPosition = new Position();
-        var startLine = document.getLineOfOffset(invocationOffset);
-        var lineOffset = invocationOffset - document.getLineOffset(startLine);
+        int adjustedInvocationOffset = invocationOffset;
+        if (viewer instanceof ITextViewerExtension5) {
+            ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
+            adjustedInvocationOffset = extension.widgetOffset2ModelOffset(invocationOffset);
+        }
+        var startLine = document.getLineOfOffset(adjustedInvocationOffset);
+        var lineOffset = adjustedInvocationOffset - document.getLineOffset(startLine);
         invocationPosition.setLine(startLine);
         invocationPosition.setCharacter(lineOffset);
         params.setPosition(invocationPosition);

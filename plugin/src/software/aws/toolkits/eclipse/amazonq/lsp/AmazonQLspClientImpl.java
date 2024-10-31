@@ -24,7 +24,6 @@ import org.eclipse.ui.PlatformUI;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
-import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
@@ -65,7 +64,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         List<Object> output = new ArrayList<>();
         configurationParams.getItems().forEach(item -> {
             if (item.getSection().equals(Constants.LSP_Q_CONFIGURATION_KEY)) {
-                Customization storedCustomization = DefaultPluginStore.getInstance().getObject(
+                Customization storedCustomization = Activator.getPluginStore().getObject(
                         Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,
                         Customization.class);
                 Map<String, Object> qConfig = new HashMap<>();

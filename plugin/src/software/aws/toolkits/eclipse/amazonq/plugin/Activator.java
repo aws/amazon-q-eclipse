@@ -6,6 +6,8 @@ package software.aws.toolkits.eclipse.amazonq.plugin;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
@@ -23,14 +25,19 @@ public class Activator extends AbstractUIPlugin {
     private static LoggingService defaultLogger;
     private static LspProvider lspProvider;
     private static LoginService loginService;
+    private static PluginStore pluginStore;
 
     public Activator() {
         super();
         plugin = this;
         telemetryService = DefaultTelemetryService.builder().build();
-        loginService = DefaultLoginService.builder().build();
-        defaultLogger = PluginLogger.getInstance();
         lspProvider = new LspProviderImpl();
+        pluginStore = DefaultPluginStore.getInstance();
+        loginService = DefaultLoginService.builder()
+                .withLspProvider(lspProvider)
+                .withPluginStore(pluginStore)
+                .build();
+        defaultLogger = PluginLogger.getInstance();
     }
 
     @Override
@@ -55,6 +62,9 @@ public class Activator extends AbstractUIPlugin {
     }
     public static LoginService getLoginService() {
         return loginService;
+    }
+    public static PluginStore getPluginStore() {
+        return pluginStore;
     }
 
 }

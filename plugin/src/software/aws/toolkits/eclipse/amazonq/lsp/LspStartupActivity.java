@@ -20,7 +20,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
-import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
@@ -79,7 +78,7 @@ public class LspStartupActivity implements IStartup {
             }
         };
         job.schedule();
-        if (DefaultPluginStore.getInstance().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
+        if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
             Activator.getLspProvider().getAmazonQServer();
             this.launchWebview();
         }
@@ -94,7 +93,7 @@ public class LspStartupActivity implements IStartup {
                     if (window != null) {
                         IWorkbenchPage page = window.getActivePage();
                         page.showView("software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview");
-                        DefaultPluginStore.getInstance().put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
+                        Activator.getPluginStore().put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
                     }
                 } catch (PartInitException e) {
                     Activator.getLogger().warn("Error occurred during auto loading of plugin", e);
@@ -104,7 +103,7 @@ public class LspStartupActivity implements IStartup {
     }
 
     private void attachAutoTriggerListenersIfApplicable() {
-        String autoTriggerPrefValue = DefaultPluginStore.getInstance().get(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY);
+        String autoTriggerPrefValue = Activator.getPluginStore().get(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY);
         boolean isEnabled = autoTriggerPrefValue != null && !autoTriggerPrefValue.isBlank()
                 && autoTriggerPrefValue.equals("true");
         var autoTriggerTopLevelListener = new AutoTriggerTopLevelListener<AutoTriggerPartListener<AutoTriggerDocumentListener>>();
@@ -141,7 +140,7 @@ public class LspStartupActivity implements IStartup {
                 System.out.println(keyChanged + " changed to " + newValue);
             }
         };
-        DefaultPluginStore.getInstance().addChangeListener(prefChangeListener);
+        Activator.getPluginStore().addChangeListener(prefChangeListener);
     }
 
 }

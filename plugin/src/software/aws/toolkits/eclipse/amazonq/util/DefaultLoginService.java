@@ -240,7 +240,7 @@ public final class DefaultLoginService implements LoginService {
                     LoginDetails loginDetails = new LoginDetails();
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);
-                    notifyAuthStatusChanged(loginDetails);
+                    AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                     throw new AmazonQPluginException(throwable);
                 });
     }

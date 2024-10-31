@@ -9,12 +9,19 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
 
 
-public final class ReauthenticateView extends CallToActionView {
+public final class ReauthenticateView extends CallToActionView implements AuthStatusChangedListener {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView";
 
     private static final String ICON_PATH = "icons/AmazonQ64.png";
@@ -22,6 +29,10 @@ public final class ReauthenticateView extends CallToActionView {
     private static final String DETAIL_MESSAGE = "Please re-authenticate to continue";
     private static final String BUTTON_LABEL = "Re-authenticate";
     private static final String LINK_LABEL = "Sign out";
+
+    public ReauthenticateView() {
+        DefaultLoginService.addAuthStatusChangeListener(this);
+    }
 
     @Override
     protected String getIconPath() {
@@ -48,7 +59,15 @@ public final class ReauthenticateView extends CallToActionView {
         return new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                // TODO waiting for Auth module handler to implement re-authenticate
+                ThreadingUtils.executeAsyncTask(() -> {
+                    try {
+                        Activator.getLogger().info("Attempt to re-authenticate...");
+                        DefaultLoginService.getInstance().reAuthenticate().get();
+                    } catch (Exception ex) {
+                        PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to re-reauthenticate. Please try again.");
+                        Activator.getLogger().error("Failed to re-authenticate", ex);
+                    }
+                });
             }
         };
     }
@@ -65,5 +84,19 @@ public final class ReauthenticateView extends CallToActionView {
                 signoutAction.run();
             }
         });
+    }
+
+    @Override
+    public void onAuthStatusChanged(final LoginDetails loginDetails) {
+        Display.getDefault().asyncExec(() -> {
+            if (loginDetails.getIsLoggedIn()) {
+                AmazonQView.showView(AmazonQChatWebview.ID);
+            }
+        });
+    }
+
+    @Override
+    public void dispose() {
+        DefaultLoginService.removeAuthStatusChangeListener(this);
     }
 }

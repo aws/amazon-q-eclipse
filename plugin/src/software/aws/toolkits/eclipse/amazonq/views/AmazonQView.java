@@ -20,7 +20,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 
-public abstract class AmazonQView extends ViewPart {
+public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
 
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
@@ -31,7 +31,6 @@ public abstract class AmazonQView extends ViewPart {
 
     private Browser browser;
     private AmazonQCommonActions amazonQCommonActions;
-    private AuthStatusChangedListener authStatusChangedListener;
     private AmazonQViewController viewController;
 
     protected AmazonQView() {
@@ -75,8 +74,6 @@ public abstract class AmazonQView extends ViewPart {
     public final AmazonQCommonActions getAmazonQCommonActions() {
         return amazonQCommonActions;
     }
-
-    protected abstract void handleAuthStatusChange(LoginDetails loginDetails);
 
     protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         // if browser setup fails, don't set up rest of the content

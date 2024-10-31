@@ -139,17 +139,16 @@ public final class DefaultLoginService implements LoginService {
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);
                     loginDetails.setIssuerUrl(null);
+                    notifyAuthStatusChanged(loginDetails);
                     return loginDetails;
                 });
     }
 
     public CompletableFuture<Boolean> reAuthenticate() {
-        if (currentLogin.equals(LoginType.NONE)) {
-            Activator.getLogger().warn("Reauthenticate called without an active login");
-            return CompletableFuture.completedFuture(false);
-        }
+        LoginType loginType = getLoginTypeFromPluginStore();
+        LoginParams loginIdcParams = getLoginParamsFromPluginStore();
 
-        return login(currentLogin, loginParams)
+        return login(loginType, loginIdcParams)
                 .thenApply(loggedIn -> {
                     Activator.getLogger().info("Successfully reauthenticated");
                     return true;
@@ -177,6 +176,25 @@ public final class DefaultLoginService implements LoginService {
     private void updatePluginStore(final LoginType type, final LoginParams params) {
         pluginStore.put(Constants.LOGIN_TYPE_KEY, type.name());
         pluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, params.getLoginIdcParams());
+    }
+
+    private LoginType getLoginTypeFromPluginStore() {
+        String storedValue = pluginStore.get(Constants.LOGIN_TYPE_KEY);
+
+         if (storedValue.equals(LoginType.BUILDER_ID.name())) {
+            return LoginType.BUILDER_ID;
+        } else if (storedValue.equals(LoginType.IAM_IDENTITY_CENTER.name())) {
+            return LoginType.IAM_IDENTITY_CENTER;
+        } else {
+            return LoginType.NONE;
+        }
+    }
+
+    private LoginParams getLoginParamsFromPluginStore() {
+        LoginIdcParams loginIdcParams = pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class);
+        LoginParams loginParams = new LoginParams();
+        loginParams.setLoginIdcParams(loginIdcParams);
+        return loginParams;
     }
 
     private void removeItemsFromPluginStore() {

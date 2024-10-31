@@ -12,7 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class ChatMessageProvider {
 
@@ -22,7 +22,7 @@ public final class ChatMessageProvider {
     private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
     public static CompletableFuture<ChatMessageProvider> createAsync() {
-        return LspProvider.getAmazonQServer()
+        return Activator.getLspProvider().getAmazonQServer()
                 .thenApply(ChatMessageProvider::new);
     }
 

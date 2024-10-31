@@ -8,6 +8,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
@@ -38,9 +39,14 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
             IDocument doc = viewer.getDocument();
             var widget = viewer.getTextWidget();
             var insertOffset = widget.getCaretOffset();
+            int adjustedOffset = insertOffset;
+            if (viewer instanceof ITextViewerExtension5) {
+                ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
+                adjustedOffset = extension.widgetOffset2ModelOffset(insertOffset);
+            }
             int startIdx = widget.getCaretOffset() - qSes.getInvocationOffset();
             String adjustedSuggestion = suggestion.substring(startIdx);
-            doc.replace(insertOffset, 0, adjustedSuggestion);
+            doc.replace(adjustedOffset, 0, adjustedSuggestion);
             widget.setCaretOffset(insertOffset + adjustedSuggestion.length());
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
             QInvocationSession.getInstance().executeCallbackForCodeReference();

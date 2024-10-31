@@ -17,7 +17,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 import com.google.gson.ToNumberPolicy;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResult;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 
@@ -33,7 +33,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
            builder.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE);
         });
         Launcher<AmazonQLspServer> launcher = super.create();
-        LspProvider.setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
+        Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
         return launcher;
     }
 

@@ -8,8 +8,7 @@ import java.util.Optional;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.widgets.Display;
-
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class ThemeDetector {
     private static final String THEME_STORE_LOCATION_FOR_ECLIPSE = "org.eclipse.e4.ui.css.swt.theme";
@@ -42,11 +41,11 @@ public final class ThemeDetector {
     }
 
     private void setThemePreference(final String theme) {
-        PluginStore.put(THEME_KEY_FOR_AMAZON_Q, theme);
+        Activator.getPluginStore().put(THEME_KEY_FOR_AMAZON_Q, theme);
     }
 
     private Optional<Boolean> isDarkThemeFromAmazonQPreferences() {
-        String theme = PluginStore.get(THEME_KEY_FOR_ECLIPSE);
+        String theme = Activator.getPluginStore().get(THEME_KEY_FOR_ECLIPSE);
 
         if (theme == null || theme.isBlank()) {
             return Optional.empty();

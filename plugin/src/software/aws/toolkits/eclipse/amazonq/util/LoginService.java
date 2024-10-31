@@ -14,4 +14,5 @@ public interface LoginService {
     CompletableFuture<Void> logout();
     CompletableFuture<Void> updateToken();
     CompletableFuture<LoginDetails> getLoginDetails();
+    CompletableFuture<Boolean> reAuthenticate();
 }

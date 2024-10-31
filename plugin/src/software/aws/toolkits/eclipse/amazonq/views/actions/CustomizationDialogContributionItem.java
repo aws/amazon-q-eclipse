@@ -14,7 +14,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
 import jakarta.inject.Inject;
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
@@ -22,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class CustomizationDialogContributionItem extends ContributionItem implements AuthStatusChangedListener {
     private static final String CUSTOMIZATION_MENU_ITEM_TEXT = "Select Customization";
@@ -56,7 +56,9 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 CustomizationDialog dialog = new CustomizationDialog(shell);
-                Customization storedCustomization = PluginStore.getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+                Customization storedCustomization = Activator.getPluginStore().getObject(
+                        Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,
+                        Customization.class);
                 if (Objects.isNull(storedCustomization)) {
                     dialog.setResponseSelection(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
                     dialog.setSelectedCustomization(null);

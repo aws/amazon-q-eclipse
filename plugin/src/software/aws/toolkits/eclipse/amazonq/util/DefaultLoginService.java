@@ -3,11 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
-
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -27,9 +23,9 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.Profile;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ProfileSettings;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSession;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSessionSettings;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
@@ -38,35 +34,34 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public final class DefaultLoginService implements LoginService {
-    private static DefaultLoginService instance;
-    private static LoginType currentLogin;
-    private static LoginParams loginParams;
-    private static final List<AuthStatusChangedListener> LISTENERS = new ArrayList<>();
+import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 
-    private DefaultLoginService() {
-        // prevent initialization
+public final class DefaultLoginService implements LoginService {
+    private LspProvider lspProvider;
+    private PluginStore pluginStore;
+    private LoginType currentLogin;
+    private LoginParams loginParams;
+
+    private DefaultLoginService(final Builder builder) {
+        this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
+        this.pluginStore = Objects.requireNonNull(builder.pluginStore, "pluginStore cannot be null");
+        String loginType = pluginStore.get(Constants.LOGIN_TYPE_KEY);
+        currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
+        loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
+                ? new LoginParams().setLoginIdcParams(pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)) : null;
     }
 
-    public static synchronized DefaultLoginService getInstance() {
-        if (instance == null) {
-            instance = new DefaultLoginService();
-            String loginType = PluginStore.get(Constants.LOGIN_TYPE_KEY);
-            currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
-            loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
-                    ? new LoginParams().setLoginIdcParams(PluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)) : null;
-            instance.updateToken();
-        }
-        return instance;
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
     public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams) {
         updateConnectionDetails(loginType, loginParams);
         return getToken(true)
-            .thenCompose(DefaultLoginService::updateCredentials)
+            .thenApply(this::updateCredentials)
             .thenAccept((response) -> {
-                DefaultLoginService.updatePluginStore(loginType, loginParams);
+                updatePluginStore(loginType, loginParams);
             })
             .exceptionally(throwable -> {
                 Activator.getLogger().error("Failed to sign in", throwable);
@@ -88,13 +83,13 @@ public final class DefaultLoginService implements LoginService {
                     }
                     String ssoTokenId = currentToken.id();
                     InvalidateSsoTokenParams params = new InvalidateSsoTokenParams(ssoTokenId);
-                    return LspProvider.getAmazonQServer()
+                    return lspProvider.getAmazonQServer()
                                       .thenCompose(server -> server.invalidateSsoToken(params))
                                       .thenRun(() -> {
                                           LoginDetails loginDetails = new LoginDetails();
                                           loginDetails.setIsLoggedIn(false);
                                           loginDetails.setLoginType(LoginType.NONE);
-                                          notifyAuthStatusChanged(loginDetails);
+                                          AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                                           removeItemsFromPluginStore();
                                           updateConnectionDetails(LoginType.NONE, new LoginParams().setLoginIdcParams(null));
                                       })
@@ -107,12 +102,13 @@ public final class DefaultLoginService implements LoginService {
 
     @Override
     public CompletableFuture<Void> updateToken() {
+        // TODO: do not expose this method to callers. token updates should be handled by the login service
+        // upon initialization, login/logout, token update, or reauth.
         if (currentLogin.equals(LoginType.NONE)) {
             return CompletableFuture.completedFuture(null);
         }
         return getToken(false)
-                .thenCompose(DefaultLoginService::updateCredentials)
-                .thenRun(() -> CompletableFuture.completedFuture(null))
+                .thenAccept(this::updateCredentials)
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to update token", throwable);
                     throw new AmazonQPluginException(throwable);
@@ -123,13 +119,11 @@ public final class DefaultLoginService implements LoginService {
     public CompletableFuture<LoginDetails> getLoginDetails() {
         LoginDetails loginDetails = new LoginDetails();
         if (currentLogin.equals(LoginType.NONE)) {
-            return CompletableFuture.supplyAsync(() -> {
-                loginDetails.setIsLoggedIn(false);
-                loginDetails.setLoginType(LoginType.NONE);
-                loginDetails.setIssuerUrl(null);
-                notifyAuthStatusChanged(loginDetails);
-                return loginDetails;
-            });
+            loginDetails.setIsLoggedIn(false);
+            loginDetails.setLoginType(LoginType.NONE);
+            loginDetails.setIssuerUrl(null);
+            AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
+            return CompletableFuture.completedFuture(loginDetails);
         }
         return getToken(false)
                 .thenApply(ssoToken -> {
@@ -137,7 +131,7 @@ public final class DefaultLoginService implements LoginService {
                     loginDetails.setIsLoggedIn(isLoggedIn);
                     loginDetails.setLoginType(isLoggedIn ? currentLogin : LoginType.NONE);
                     loginDetails.setIssuerUrl(getIssuerUrl(isLoggedIn));
-                    notifyAuthStatusChanged(loginDetails);
+                    AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                     return loginDetails;
                 })
                 .exceptionally(throwable -> {
@@ -146,6 +140,23 @@ public final class DefaultLoginService implements LoginService {
                     loginDetails.setLoginType(LoginType.NONE);
                     loginDetails.setIssuerUrl(null);
                     return loginDetails;
+                });
+    }
+
+    public CompletableFuture<Boolean> reAuthenticate() {
+        if (currentLogin.equals(LoginType.NONE)) {
+            Activator.getLogger().warn("Reauthenticate called without an active login");
+            return CompletableFuture.completedFuture(false);
+        }
+
+        return login(currentLogin, loginParams)
+                .thenApply(loggedIn -> {
+                    Activator.getLogger().info("Successfully reauthenticated");
+                    return true;
+                })
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to reauthenticate", throwable);
+                    return false;
                 });
     }
 
@@ -163,14 +174,14 @@ public final class DefaultLoginService implements LoginService {
         loginParams = params;
     }
 
-    private static void updatePluginStore(final LoginType type, final LoginParams params) {
-        PluginStore.put(Constants.LOGIN_TYPE_KEY, type.name());
-        PluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, params.getLoginIdcParams());
+    private void updatePluginStore(final LoginType type, final LoginParams params) {
+        pluginStore.put(Constants.LOGIN_TYPE_KEY, type.name());
+        pluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, params.getLoginIdcParams());
     }
 
-    private static void removeItemsFromPluginStore() {
-        PluginStore.remove(Constants.LOGIN_TYPE_KEY);
-        PluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
+    private void removeItemsFromPluginStore() {
+        pluginStore.remove(Constants.LOGIN_TYPE_KEY);
+        pluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
     }
 
     private String getIssuerUrl(final boolean isLoggedIn) {
@@ -182,18 +193,16 @@ public final class DefaultLoginService implements LoginService {
         }
         return Objects.isNull(loginParams) || Objects.isNull(loginParams.getLoginIdcParams()) ? null : loginParams.getLoginIdcParams().getUrl();
     }
+    CompletableFuture<SsoToken> getToken(final boolean triggerSignIn) {
 
-    private CompletableFuture<SsoToken> getToken(final boolean triggerSignIn) {
-        GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
-                ? new GetSsoTokenSource(LoginType.IAM_IDENTITY_CENTER.getValue(), null, Constants.IDC_PROFILE_NAME)
-                : new GetSsoTokenSource(LoginType.BUILDER_ID.getValue(), Q_SCOPES, null);
+        GetSsoTokenParams params = getSsoTokenParams(currentLogin, triggerSignIn);
+        String issuerUrl = (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER))
+                ? loginParams.getLoginIdcParams().getUrl()
+                : Constants.AWS_BUILDER_ID_URL;
 
-        GetSsoTokenOptions options = new GetSsoTokenOptions(triggerSignIn);
-        GetSsoTokenParams params = new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
-
-        return LspProvider.getAmazonQServer()
+        return lspProvider.getAmazonQServer()
                 .thenApply(server -> {
-                    if (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER) && triggerSignIn) {
+                    if (triggerSignIn) {
                         var profile = new Profile();
                         profile.setName(Constants.IDC_PROFILE_NAME);
                         profile.setProfileKinds(Collections.singletonList(Constants.IDC_PROFILE_KIND));
@@ -217,11 +226,12 @@ public final class DefaultLoginService implements LoginService {
                 })
                 .thenCompose(server -> server.getSsoToken(params)
                         .thenApply(response -> {
-                            if (triggerSignIn) {
+                            if (response != null && response.ssoToken() != null && triggerSignIn) {
                                 LoginDetails loginDetails = new LoginDetails();
                                 loginDetails.setIsLoggedIn(true);
                                 loginDetails.setLoginType(currentLogin);
-                                notifyAuthStatusChanged(loginDetails);
+                                loginDetails.setIssuerUrl(issuerUrl);
+                                AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                             }
                             return response.ssoToken();
                         }))
@@ -231,7 +241,7 @@ public final class DefaultLoginService implements LoginService {
                 });
     }
 
-    private static CompletableFuture<ResponseMessage> updateCredentials(final SsoToken ssoToken) {
+    CompletableFuture<ResponseMessage> updateCredentials(final SsoToken ssoToken) {
         BearerCredentials credentials = new BearerCredentials();
         var decryptedToken = LspEncryptionManager.getInstance().decrypt(ssoToken.accessToken());
         decryptedToken = decryptedToken.substring(1, decryptedToken.length() - 1);
@@ -239,26 +249,45 @@ public final class DefaultLoginService implements LoginService {
         UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload();
         updateCredentialsPayload.setData(credentials);
         updateCredentialsPayload.setEncrypted(false);
-        return LspProvider.getAmazonQServer()
-                           .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))
-                           .exceptionally(throwable -> {
-                               Activator.getLogger().error("Failed to update credentials with AmazonQ server", throwable);
-                               throw new AmazonQPluginException(throwable);
-                           });
+        return lspProvider.getAmazonQServer()
+                .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to update credentials with AmazonQ server", throwable);
+                    throw new AmazonQPluginException(throwable);
+                });
     }
 
-    public static void addAuthStatusChangeListener(final AuthStatusChangedListener listener) {
-        LISTENERS.add(listener);
+    private static GetSsoTokenParams getSsoTokenParams(final LoginType currentLogin, final boolean triggerSignIn) {
+        GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
+                ? new GetSsoTokenSource(LoginType.IAM_IDENTITY_CENTER.getValue(), null, Constants.IDC_PROFILE_NAME)
+                : new GetSsoTokenSource(LoginType.BUILDER_ID.getValue(), Q_SCOPES, null);
+        GetSsoTokenOptions options = new GetSsoTokenOptions(triggerSignIn);
+        return new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
     }
 
-    public static void removeAuthStatusChangeListener(final AuthStatusChangedListener listener) {
-        LISTENERS.remove(listener);
-    }
+    public static class Builder {
+        private LspProvider lspProvider;
+        private PluginStore pluginStore;
 
-    private static void notifyAuthStatusChanged(final LoginDetails loginDetails) {
-        for (AuthStatusChangedListener listener : LISTENERS) {
-            listener.onAuthStatusChanged(loginDetails);
+        public final Builder withLspProvider(final LspProvider lspProvider) {
+            this.lspProvider = lspProvider;
+            return this;
+        }
+        public final Builder withPluginStore(final PluginStore pluginStore) {
+            this.pluginStore = pluginStore;
+            return this;
+        }
+
+        public final DefaultLoginService build() {
+            if (lspProvider == null) {
+                lspProvider = Activator.getLspProvider();
+            }
+            if (pluginStore == null) {
+                pluginStore = Activator.getPluginStore();
+            }
+            DefaultLoginService instance = new DefaultLoginService(this);
+            instance.updateToken();
+            return instance;
         }
     }
-
 }

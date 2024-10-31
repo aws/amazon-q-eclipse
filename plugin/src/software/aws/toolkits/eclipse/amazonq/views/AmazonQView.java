@@ -146,6 +146,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
+        browser.dispose();
         super.dispose();
     }
 

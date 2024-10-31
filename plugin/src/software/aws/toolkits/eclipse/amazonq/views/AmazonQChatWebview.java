@@ -103,10 +103,11 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
             if (!loginDetails.getIsLoggedIn()) {
-                browser.setText("Signed Out");
                 AmazonQView.showView(ToolkitLoginWebview.ID);
             } else {
-                browser.setText(getContent());
+                if (!browser.isDisposed()) {
+                    browser.setText(getContent());
+                }
             }
         });
     }

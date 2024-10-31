@@ -72,9 +72,10 @@ public final class ToolkitLoginWebview extends AmazonQView {
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
             if (!loginDetails.getIsLoggedIn()) {
-                browser.setText(getContent());
+                if (!browser.isDisposed()) {
+                    browser.setText(getContent());
+                }
             } else {
-                browser.setText("Signed in");
                 AmazonQView.showView(AmazonQChatWebview.ID);
             }
         });

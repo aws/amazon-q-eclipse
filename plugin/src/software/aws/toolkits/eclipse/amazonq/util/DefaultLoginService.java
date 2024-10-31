@@ -237,6 +237,10 @@ public final class DefaultLoginService implements LoginService {
                         }))
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to fetch SSO token from LSP", throwable);
+                    LoginDetails loginDetails = new LoginDetails();
+                    loginDetails.setIsLoggedIn(false);
+                    loginDetails.setLoginType(LoginType.NONE);
+                    AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                     throw new AmazonQPluginException(throwable);
                 });
     }

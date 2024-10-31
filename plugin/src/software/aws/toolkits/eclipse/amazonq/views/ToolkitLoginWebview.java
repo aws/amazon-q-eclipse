@@ -37,22 +37,18 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void createPartControl(final Composite parent) {
-        LoginDetails loginInfo = new LoginDetails();
-        loginInfo.setIsLoggedIn(true);
-        loginInfo.setLoginType(LoginType.BUILDER_ID);
-        var result = setupAmazonQView(parent, loginInfo);
+        LoginDetails initialLoginDetails = new LoginDetails();
+        initialLoginDetails.setIsLoggedIn(false);
+        initialLoginDetails.setLoginType(LoginType.NONE);
+
+        var result = setupAmazonQView(parent, initialLoginDetails);
         // if setup of amazon q view fails due to missing webview dependency, switch to that view
         if (!result) {
             showDependencyMissingView();
             return;
         }
+
         var browser = getBrowser();
-        amazonQCommonActions = getAmazonQCommonActions();
-
-        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
-            handleAuthStatusChange(loginDetails);
-        }, ThreadingUtils::executeAsyncTask);
-
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
             @Override
             public Object function(final Object[] arguments) {
@@ -61,16 +57,25 @@ public final class ToolkitLoginWebview extends AmazonQView {
                 return null;
             }
         };
+
+        amazonQCommonActions = getAmazonQCommonActions();
+
+        // Check if user is authenticated and build view accordingly
+        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
+            onAuthStatusChanged(loginDetails);
+        }, ThreadingUtils::executeAsyncTask);
     }
 
-    protected void handleAuthStatusChange(final LoginDetails loginDetails) {
+    @Override
+    public void onAuthStatusChanged(final LoginDetails loginDetails) {
         var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
             if (!loginDetails.getIsLoggedIn()) {
-                browser.setText(getContent());
+                if (!browser.isDisposed()) {
+                    browser.setText(getContent());
+                }
             } else {
-                browser.setText("Signed in");
                 AmazonQView.showView(AmazonQChatWebview.ID);
             }
         });

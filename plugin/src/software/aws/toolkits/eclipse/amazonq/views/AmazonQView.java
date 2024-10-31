@@ -16,9 +16,9 @@ import org.eclipse.ui.part.ViewPart;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 
 public abstract class AmazonQView extends ViewPart {
 
@@ -126,9 +126,9 @@ public abstract class AmazonQView extends ViewPart {
 
     private void setupAuthStatusListeners() {
         authStatusChangedListener = this::handleAuthStatusChange;
-        DefaultLoginService.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
-        DefaultLoginService.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
-        DefaultLoginService.addAuthStatusChangeListener(amazonQCommonActions.getCustomizationDialogContributionAction());
+        AuthStatusProvider.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
+        AuthStatusProvider.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
+        AuthStatusProvider.addAuthStatusChangeListener(amazonQCommonActions.getCustomizationDialogContributionAction());
     }
 
     @Override
@@ -147,7 +147,7 @@ public abstract class AmazonQView extends ViewPart {
      */
     @Override
     public void dispose() {
-        DefaultLoginService.removeAuthStatusChangeListener(authStatusChangedListener);
+        AuthStatusProvider.removeAuthStatusChangeListener(authStatusChangedListener);
         super.dispose();
     }
 

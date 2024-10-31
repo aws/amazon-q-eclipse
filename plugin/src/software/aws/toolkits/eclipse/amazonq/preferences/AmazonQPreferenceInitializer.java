@@ -10,7 +10,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public class AmazonQPreferenceInitializer extends AbstractPreferenceInitializer {
@@ -22,7 +21,7 @@ public class AmazonQPreferenceInitializer extends AbstractPreferenceInitializer 
         store.setDefault(AmazonQPreferencePage.Q_DATA_SHARING, true);
         store.addPropertyChangeListener(event -> {
             ThreadingUtils.executeAsyncTask(() -> {
-                LspProvider.getAmazonQServer()
+                Activator.getLspProvider().getAmazonQServer()
                     .thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(
                             new DidChangeConfigurationParams(Collections.EMPTY_MAP)));
             });

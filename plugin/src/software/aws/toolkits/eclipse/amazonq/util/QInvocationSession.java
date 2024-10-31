@@ -20,7 +20,6 @@ import org.osgi.service.prefs.Preferences;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import java.util.List;
@@ -115,11 +114,11 @@ public final class QInvocationSession extends QResource {
     public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
             try {
-                if (!DefaultLoginService.getInstance().getLoginDetails().get().getIsLoggedIn()) {
+                if (!Activator.getLoginService().getLoginDetails().get().getIsLoggedIn()) {
                     this.end();
                     return false;
                 } else {
-                    DefaultLoginService.getInstance().updateToken();
+                    Activator.getLoginService().updateToken();
                 }
             } catch (InterruptedException e) {
                 Activator.getLogger().info("Invocation start interrupted", e);
@@ -202,7 +201,7 @@ public final class QInvocationSession extends QResource {
             try {
                 var session = QInvocationSession.getInstance();
 
-                List<InlineCompletionItem> newSuggestions = LspProvider.getAmazonQServer().get()
+                List<InlineCompletionItem> newSuggestions = Activator.getLspProvider().getAmazonQServer().get()
                         .inlineCompletionWithReferences(params)
                         .thenApply(result -> result.getItems().parallelStream().map(item -> {
                             if (isTabOnly) {

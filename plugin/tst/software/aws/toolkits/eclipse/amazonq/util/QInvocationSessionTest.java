@@ -44,12 +44,14 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.osgi.service.prefs.Preferences;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
 public class QInvocationSessionTest {
 
@@ -82,7 +84,7 @@ public class QInvocationSessionTest {
 
         editorUtilsMock = mockQEclipseEditorUtils();
 
-        activatorMockStatic = mockStatic(Activator.class, RETURNS_DEEP_STUBS);
+        activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
         activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
@@ -235,16 +237,21 @@ public class QInvocationSessionTest {
     }
 
     static MockedStatic<Activator> mockLspProvider() {
+        MockedStatic<Activator> localizedActivatorMock = mockStatic(Activator.class);
+        LspProvider mockLspProvider = mock(LspProvider.class);
+        AmazonQLspServer mockAmazonQServer = mock(AmazonQLspServer.class);
+        localizedActivatorMock.when(Activator::getLspProvider).thenReturn(mockLspProvider);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
-        activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(POTENT_PARAM))
-                .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
-        activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
-                .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
 
-        return activatorMockStatic;
+        when(mockLspProvider.getAmazonQServer()).thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
+        when(mockAmazonQServer.inlineCompletionWithReferences(POTENT_PARAM))
+                .thenReturn(CompletableFuture.supplyAsync(() -> potentResponse));
+        when(mockAmazonQServer.inlineCompletionWithReferences(IMPOTENT_PARAM))
+                .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
+        return localizedActivatorMock;
     }
 
     static MockedStatic<Display> mockDisplayAsyncCall() {

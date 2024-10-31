@@ -138,6 +138,8 @@ public final class QInvocationSession extends QResource {
             }
 
             var widget = viewer.getTextWidget();
+            terminationListener = QEclipseEditorUtils.getInlineTerminationListener();
+            widget.addFocusListener(terminationListener);
 
             suggestionsContext = new QSuggestionsContext();
             inlineTextFont = QEclipseEditorUtils.getInlineTextFont(widget, Q_INLINE_HINT_TEXT_STYLE);
@@ -169,9 +171,6 @@ public final class QInvocationSession extends QResource {
 
         caretListener = new QInlineCaretListener(widget);
         widget.addCaretListener(caretListener);
-
-        terminationListener = QEclipseEditorUtils.getInlineTerminationListener();
-        widget.addFocusListener(terminationListener);
     }
 
     public void invoke(final int invocationOffset) {

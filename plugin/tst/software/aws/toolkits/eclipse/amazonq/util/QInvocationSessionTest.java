@@ -50,6 +50,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
 public class QInvocationSessionTest {
 
@@ -82,7 +83,7 @@ public class QInvocationSessionTest {
 
         editorUtilsMock = mockQEclipseEditorUtils();
 
-        activatorMockStatic = mockStatic(Activator.class, RETURNS_DEEP_STUBS);
+        activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
         activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
@@ -234,9 +235,11 @@ public class QInvocationSessionTest {
         return items;
     }
 
-    static void mockLspProvider() {
+    static LspProvider mockLspProvider() {
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
+        LspProvider mockLspProvider = mock(LspProvider.class, RETURNS_DEEP_STUBS);
+        activatorMockStatic.when(Activator::getLspProvider).thenReturn(mockLspProvider);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
         activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(POTENT_PARAM))
@@ -244,7 +247,7 @@ public class QInvocationSessionTest {
         activatorMockStatic.when(() -> Activator.getLspProvider().getAmazonQServer().get().inlineCompletionWithReferences(IMPOTENT_PARAM))
                 .thenReturn(CompletableFuture.supplyAsync(() -> impotentResponse));
 
-        return;
+        return mockLspProvider;
     }
 
     static MockedStatic<Display> mockDisplayAsyncCall() {

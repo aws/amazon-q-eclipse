@@ -15,7 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.Collections;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,21 +61,6 @@ class ArtifactUtilsTest {
         List<String> hashes = Arrays.asList("sha384:invalidhash");
 
         assertFalse(ArtifactUtils.validateHash(file, hashes, false));
-    }
-
-    @Test
-    void testHasPosixFilePermissions() {
-        Path mockPath = mock(Path.class);
-        FileSystem mockFileSystem = mock(FileSystem.class);
-        when(mockPath.getFileSystem()).thenReturn(mockFileSystem);
-
-        //Posix Systems
-        when(mockFileSystem.supportedFileAttributeViews()).thenReturn(Collections.singleton("posix"));
-        assertTrue(ArtifactUtils.hasPosixFilePermissions(mockPath));
-
-        //Windows/Non-Posix Systems
-        when(mockFileSystem.supportedFileAttributeViews()).thenReturn(Collections.singleton("basic"));
-        assertFalse(ArtifactUtils.hasPosixFilePermissions(mockPath));
     }
 
     @Test

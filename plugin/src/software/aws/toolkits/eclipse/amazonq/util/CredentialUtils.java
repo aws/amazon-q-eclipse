@@ -39,11 +39,12 @@ public final class CredentialUtils {
     final LoginType currentLogin,
     final LoginParams loginParams,
     final boolean triggerSignIn) {
+        GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
+                ? new GetSsoTokenSource(LoginType.IAM_IDENTITY_CENTER.getValue(), null, Constants.IDC_PROFILE_NAME)
+                : new GetSsoTokenSource(LoginType.BUILDER_ID.getValue(), Q_SCOPES, null);
 
-        GetSsoTokenParams params = getSsoTokenParams(currentLogin, triggerSignIn);
-        String issuerUrl = (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER))
-                ? loginParams.getLoginIdcParams().getUrl()
-                : Constants.AWS_BUILDER_ID_URL;
+        GetSsoTokenOptions options = new GetSsoTokenOptions(triggerSignIn);
+        GetSsoTokenParams params = new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
 
         return lspProvider.getAmazonQServer()
                 .thenApply(server -> {
@@ -71,11 +72,10 @@ public final class CredentialUtils {
                 })
                 .thenCompose(server -> server.getSsoToken(params)
                         .thenApply(response -> {
-                            if (response != null && response.ssoToken() != null && triggerSignIn) {
+                            if (triggerSignIn) {
                                 LoginDetails loginDetails = new LoginDetails();
                                 loginDetails.setIsLoggedIn(true);
                                 loginDetails.setLoginType(currentLogin);
-                                loginDetails.setIssuerUrl(issuerUrl);
                                 AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                             }
                             return response.ssoToken();
@@ -99,12 +99,5 @@ public final class CredentialUtils {
                     Activator.getLogger().error("Failed to update credentials with AmazonQ server", throwable);
                     throw new AmazonQPluginException(throwable);
                 });
-    }
-    private static GetSsoTokenParams getSsoTokenParams(final LoginType currentLogin, final boolean triggerSignIn) {
-        GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
-                ? new GetSsoTokenSource(LoginType.IAM_IDENTITY_CENTER.getValue(), null, Constants.IDC_PROFILE_NAME)
-                : new GetSsoTokenSource(LoginType.BUILDER_ID.getValue(), Q_SCOPES, null);
-        GetSsoTokenOptions options = new GetSsoTokenOptions(triggerSignIn);
-        return new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
     }
 }

@@ -1,18 +1,21 @@
-package software.aws.toolkits.eclipse.amazonq.extensions;
+package software.aws.toolkits.eclipse.amazonq.extensions.implementation;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.mockito.MockedStatic;
+import software.aws.toolkits.eclipse.amazonq.extensions.api.StaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 import static org.mockito.Mockito.mockStatic;
 
-public final class ProxyUtilsStaticMockExtension implements BeforeAllCallback, AfterAllCallback {
+public final class ProxyUtilsStaticMockExtension extends StaticMockExtension<ProxyUtil>
+        implements BeforeAllCallback, AfterAllCallback {
 
-    private static MockedStatic<ProxyUtil> proxyUtilStaticMock;
+    private MockedStatic<ProxyUtil> proxyUtilStaticMock;
 
-    public static MockedStatic<ProxyUtil> getStaticMock() {
+    @Override
+    public MockedStatic<ProxyUtil> getStaticMock() {
         return proxyUtilStaticMock;
     }
 

@@ -9,17 +9,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.util.stream.Stream;
 
 import org.eclipse.swt.SWT;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
-@ExtendWith(ActivatorStaticMockExtension.class)
 public final class AmazonQViewControllerTest {
     private AmazonQViewController viewController;
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorExtension = new ActivatorStaticMockExtension();
 
     @ParameterizedTest
     @MethodSource("provideBrowserStyleData")

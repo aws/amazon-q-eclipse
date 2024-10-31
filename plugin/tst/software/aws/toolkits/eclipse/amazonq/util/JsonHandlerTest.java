@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -21,12 +21,14 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 
 import java.util.Optional;
 
-@ExtendWith(ActivatorStaticMockExtension.class)
 public class JsonHandlerTest {
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
 
     private class TestObject {
         private String field;
@@ -74,7 +76,7 @@ public class JsonHandlerTest {
         assertNull(result);
         verify(mockObjectMapper).writeValueAsString(objectToSerialize);
 
-        Optional<LoggingService> mockLoggerOptional = ActivatorStaticMockExtension.getMock(LoggingService.class);
+        Optional<LoggingService> mockLoggerOptional = activatorStaticMockExtension.getMock(LoggingService.class);
         mockLoggerOptional.ifPresent(loggerMock ->
                 verify(loggerMock).error(eq("Error occurred while serializing object: "
                         + objectToSerialize), eq(testExceptionThrown)));
@@ -102,7 +104,7 @@ public class JsonHandlerTest {
         assertNull(deserializedObject);
         verify(mockObjectMapper).readValue(jsonStringToDeserialize, TestObject.class);
 
-        Optional<LoggingService> mockLoggerOptional = ActivatorStaticMockExtension.getMock(LoggingService.class);
+        Optional<LoggingService> mockLoggerOptional = activatorStaticMockExtension.getMock(LoggingService.class);
         mockLoggerOptional.ifPresent(loggerMock ->
                 verify(loggerMock).error(eq("Error occurred while deserializing jsonString: "
                         + jsonStringToDeserialize), eq(testExceptionThrown)));

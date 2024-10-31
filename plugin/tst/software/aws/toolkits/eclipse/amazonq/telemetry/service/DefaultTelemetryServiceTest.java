@@ -18,7 +18,7 @@ import java.util.Optional;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 
 import software.amazon.awssdk.services.toolkittelemetry.ToolkitTelemetryClient;
@@ -27,14 +27,16 @@ import software.amazon.awssdk.services.toolkittelemetry.model.MetricDatum;
 import software.amazon.awssdk.services.toolkittelemetry.model.PostFeedbackRequest;
 import software.amazon.awssdk.services.toolkittelemetry.model.PostMetricsRequest;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
-import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 
-@ExtendWith(ActivatorStaticMockExtension.class)
 public final class DefaultTelemetryServiceTest {
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
 
     private DefaultTelemetryService service;
     private ToolkitTelemetryClient mockClient;
@@ -171,7 +173,7 @@ public final class DefaultTelemetryServiceTest {
     private void setupMockActivatorWithTelemetryOptIn(final boolean telemetryOptIn) {
         IPreferenceStore mockPreferenceStore = mock(IPreferenceStore.class);
         when(mockPreferenceStore.getBoolean(eq(AmazonQPreferencePage.TELEMETRY_OPT_IN))).thenReturn(telemetryOptIn);
-        Optional<Activator> activatorMockOptional = ActivatorStaticMockExtension.getMock(Activator.class);
+        Optional<Activator> activatorMockOptional = activatorStaticMockExtension.getMock(Activator.class);
         activatorMockOptional.ifPresent(activatorMock ->
                 when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore));
     }

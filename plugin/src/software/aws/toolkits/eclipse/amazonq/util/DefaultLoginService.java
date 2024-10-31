@@ -107,12 +107,13 @@ public final class DefaultLoginService implements LoginService {
 
     @Override
     public CompletableFuture<Void> updateToken() {
+        // TODO: do not expose this method to callers. token updates should be handled by the login service
+        // upon initialization, login/logout, token update, or reauth.
         if (currentLogin.equals(LoginType.NONE)) {
             return CompletableFuture.completedFuture(null);
         }
         return getToken(false)
-                .thenCompose(DefaultLoginService::updateCredentials)
-                .thenRun(() -> CompletableFuture.completedFuture(null))
+                .thenAccept(DefaultLoginService::updateCredentials)
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to update token", throwable);
                     throw new AmazonQPluginException(throwable);
@@ -123,13 +124,11 @@ public final class DefaultLoginService implements LoginService {
     public CompletableFuture<LoginDetails> getLoginDetails() {
         LoginDetails loginDetails = new LoginDetails();
         if (currentLogin.equals(LoginType.NONE)) {
-            return CompletableFuture.supplyAsync(() -> {
-                loginDetails.setIsLoggedIn(false);
-                loginDetails.setLoginType(LoginType.NONE);
-                loginDetails.setIssuerUrl(null);
-                notifyAuthStatusChanged(loginDetails);
-                return loginDetails;
-            });
+            loginDetails.setIsLoggedIn(false);
+            loginDetails.setLoginType(LoginType.NONE);
+            loginDetails.setIssuerUrl(null);
+            notifyAuthStatusChanged(loginDetails);
+            return CompletableFuture.completedFuture(loginDetails);
         }
         return getToken(false)
                 .thenApply(ssoToken -> {
@@ -146,6 +145,23 @@ public final class DefaultLoginService implements LoginService {
                     loginDetails.setLoginType(LoginType.NONE);
                     loginDetails.setIssuerUrl(null);
                     return loginDetails;
+                });
+    }
+
+    public CompletableFuture<Boolean> reAuthenticate() {
+        if (currentLogin.equals(LoginType.NONE)) {
+            Activator.getLogger().warn("Reauthenticate called without an active login");
+            return CompletableFuture.completedFuture(false);
+        }
+
+        return login(currentLogin, loginParams)
+                .thenApply(loggedIn -> {
+                    Activator.getLogger().info("Successfully reauthenticated");
+                    return true;
+                })
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to reauthenticate", throwable);
+                    return false;
                 });
     }
 

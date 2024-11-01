@@ -31,6 +31,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -250,9 +251,9 @@ public final class DefaultLoginService implements LoginService {
         var decryptedToken = LspEncryptionManager.getInstance().decrypt(ssoToken.accessToken());
         decryptedToken = decryptedToken.substring(1, decryptedToken.length() - 1);
         credentials.setToken(decryptedToken);
-        UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload();
-        updateCredentialsPayload.setData(credentials);
-        updateCredentialsPayload.setEncrypted(false);
+        UpdateCredentialsPayloadData data = new UpdateCredentialsPayloadData(credentials);
+        String encryptedData = LspEncryptionManager.getInstance().encrypt(data);
+        UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload(encryptedData, true);
         return lspProvider.getAmazonQServer()
                 .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))
                 .exceptionally(throwable -> {

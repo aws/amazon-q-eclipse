@@ -5,8 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record UpdateCredentialsPayload(
-        @JsonProperty("data") String data,
-        @JsonProperty("encrypted") Boolean encrypted
+public record UpdateCredentialsPayloadData(
+        @JsonProperty("data") BearerCredentials data
     ) {
 }

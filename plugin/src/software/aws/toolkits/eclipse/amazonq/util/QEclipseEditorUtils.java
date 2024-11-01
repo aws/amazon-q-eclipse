@@ -246,9 +246,6 @@ public final class QEclipseEditorUtils {
             ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
             adjustedOffset = extension.widgetOffset2ModelOffset(caretOffsetFromWidget);
         }
-        if (adjustedOffset == -1) {
-            System.out.println("adjusted offset is -1");
-        }
 
         return adjustedOffset > -1 ? adjustedOffset : caretOffsetFromWidget;
     }

@@ -54,8 +54,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     @Override
     public final void createPartControl(final Composite parent) {
         LoginDetails loginInfo = new LoginDetails();
-        loginInfo.setIsLoggedIn(true);
-        loginInfo.setLoginType(LoginType.BUILDER_ID);
+        loginInfo.setIsLoggedIn(false);
+        loginInfo.setLoginType(LoginType.NONE);
+
         var result = setupAmazonQView(parent, loginInfo);
         // if setup of amazon q view fails due to missing webview dependency, switch to that view
         if (!result) {
@@ -65,10 +66,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         var browser = getBrowser();
         amazonQCommonActions = getAmazonQCommonActions();
         chatCommunicationManager.setChatUiRequestListener(this);
-
-        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
-            handleAuthStatusChange(loginDetails);
-        }, ThreadingUtils::executeAsyncTask);
 
         new BrowserFunction(browser, "ideCommand") {
             @Override
@@ -91,6 +88,26 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         Activator.getLogger().info("Error occurred while injecting theme", e);
                     }
                 });
+            }
+        });
+
+        // Check if user is authenticated and build view accordingly
+        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
+            onAuthStatusChanged(loginDetails);
+        }, ThreadingUtils::executeAsyncTask);
+    }
+
+    @Override
+    public final void onAuthStatusChanged(final LoginDetails loginDetails) {
+        var browser = getBrowser();
+        Display.getDefault().asyncExec(() -> {
+            amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
+            if (!loginDetails.getIsLoggedIn()) {
+                AmazonQView.showView(ToolkitLoginWebview.ID);
+            } else {
+                if (!browser.isDisposed()) {
+                    browser.setText(getContent());
+                }
             }
         });
     }
@@ -196,20 +213,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
             return "";
         }
-    }
-
-    @Override
-    protected final void handleAuthStatusChange(final LoginDetails loginDetails) {
-        var browser = getBrowser();
-        Display.getDefault().asyncExec(() -> {
-            amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
-            if (!loginDetails.getIsLoggedIn()) {
-                browser.setText("Signed Out");
-                AmazonQView.showView(ToolkitLoginWebview.ID);
-            } else {
-                browser.setText(getContent());
-            }
-        });
     }
 
     @Override

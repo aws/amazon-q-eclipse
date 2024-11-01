@@ -4,29 +4,32 @@
 
     <extension
         point="org.eclipse.ui.views">
-        <view
-            id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
-            name="Amazon Q Error"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
-        </view>
+        <!-- If adding a new view: -->
+        <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
+        <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
         <category
             name="Amazon Q"
             id="amazonq">
         </category>
         <view
+            id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-            name="Amazon Q Login"
+            name="Amazon Q"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+            category="amazonq"
             inject="true">
         </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            name="Amazon Q Chat"
+            name="Amazon Q"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            category="amazonq"
             inject="true">
         </view>
         <view
@@ -38,16 +41,18 @@
         </view>
     </extension>
     <extension point="org.eclipse.ui.activities">  
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ToolkitLoginWebview" name="Amazon Q Login">
+      <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
+      <!-- ToolkitLoginWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview" name="Amazon Q Chat">
 	  </activity>
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
 	  </activity>
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
 	  </activity>
 	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ToolkitLoginWebview"
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
 	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview">
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview">
 	  </activityPatternBinding>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
@@ -62,23 +67,30 @@
 	 </extension>
     <extension
         point="org.eclipse.ui.perspectiveExtensions">
+        <!-- These perspectiveExtensions ensure that the view is display in the appropriate portion of the layout. In most cases, it should stack the ToolkitLoginWebview. -->
         <perspectiveExtension
             targetID="*">
             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relative="org.eclipse.ui.editorss"
                 relationship="right"
                 visible="false">
             </view>
             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">
             </view>
@@ -178,8 +190,8 @@
         </command>
         <command
             categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
-            name="Open Amazon Q Chat View"
-            id="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView">
+            name="Open Amazon Q Login View"
+            id="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView">
         </command>
     </extension>
 
@@ -225,8 +237,8 @@
               commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt">
         </handler>
         <handler
-        	class="software.aws.toolkits.eclipse.amazonq.handlers.QOpenChatViewHandler"
-        	commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView">
+        	class="software.aws.toolkits.eclipse.amazonq.handlers.QOpenLoginViewHandler"
+        	commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView">
         </handler>
     </extension>
 
@@ -284,7 +296,7 @@
         <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?endof">
             <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar">
                 <command id="software.aws.toolkits.eclipse.amazonq.toolbar.command"
-                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
                     icon="icons/AmazonQ.png"
                     tooltip="Amazon Q">
                 </command>
@@ -292,7 +304,7 @@
        </menuContribution>
        <menuContribution locationURI="menu:showView?before=viewsShortlist">
             <command
-                commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
+                commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
                 icon="icons/AmazonQ.png"
                 label="Amazon Q"
                 style="push">

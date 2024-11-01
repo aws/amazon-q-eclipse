@@ -31,4 +31,26 @@ public class LoginDetails {
     public final String getIssuerUrl() {
         return this.issuerUrl;
     }
+
+    public final boolean equals(final LoginDetails loginDetails2) {
+        if (loginDetails2 == null) {
+            return false;
+        }
+
+        LoginType loginType2 = loginDetails2.getLoginType();
+        boolean isLoggedIn2 = loginDetails2.getIsLoggedIn();
+        String issuerUrl2 = loginDetails2.getIssuerUrl();
+
+        if (loginType == null && loginType2 != null || loginType != null && loginType2 == null) {
+            return false;
+        }
+
+        if (issuerUrl == null && issuerUrl2 != null || issuerUrl != null && issuerUrl2 == null) {
+            return false;
+        }
+
+        return isLoggedIn == isLoggedIn2
+                && (loginType == null && loginType2 == null || loginType.equals(loginType2))
+                && (issuerUrl == null && issuerUrl2 == null || issuerUrl.equals(issuerUrl2));
+    }
 }

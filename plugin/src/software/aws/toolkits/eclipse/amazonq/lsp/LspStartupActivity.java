@@ -7,12 +7,12 @@ import org.eclipse.core.net.proxy.IProxyChangeEvent;
 import org.eclipse.core.net.proxy.IProxyChangeListener;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.ui.IStartup;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
@@ -113,11 +113,11 @@ public class LspStartupActivity implements IStartup {
             autoTriggerTopLevelListener.addPartListener(autoTriggerPartListener);
             autoTriggerTopLevelListener.onStart();
         }
-        var prefChangeListener = new PreferenceChangeListener() {
+        var prefChangeListener = new IPreferenceChangeListener() {
             @Override
             public void preferenceChange(final PreferenceChangeEvent evt) {
                 String keyChanged = evt.getKey();
-                String newValue = evt.getNewValue();
+                String newValue = (String) evt.getNewValue();
                 if (!keyChanged.equals(ToggleAutoTriggerContributionItem.AUTO_TRIGGER_ENABLEMENT_KEY)) {
                     return;
                 }

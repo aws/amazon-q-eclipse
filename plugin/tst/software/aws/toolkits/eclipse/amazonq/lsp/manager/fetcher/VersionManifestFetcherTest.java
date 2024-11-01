@@ -14,12 +14,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import org.eclipse.core.internal.preferences.EclipsePreferences;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
-import software.aws.toolkits.eclipse.amazonq.extensions.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 
 @ExtendWith(ActivatorStaticMockExtension.class)
@@ -27,6 +30,25 @@ public final class VersionManifestFetcherTest {
     private static final String INVALID_DATA = "{\r\n    \"schemaVersion\": \"0.1\",\r\n}";
     private String sampleManifestFile = "sample-manifest.json";
     private VersionManifestFetcher fetcher;
+    private MockedStatic<Activator> mockedActivator;
+    private LoggingService mockedLogger;
+    private IEclipsePreferences testPreferences;
+
+    @BeforeEach
+    @SuppressWarnings("restriction")
+    void setUp() {
+        mockedLogger = mock(LoggingService.class);
+        testPreferences = new EclipsePreferences();
+        mockedActivator = mockStatic(Activator.class);
+        mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
+        mockedActivator.when(Activator::getPluginStore).thenReturn(new DefaultPluginStore(testPreferences));
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mockedActivator.close();
+        testPreferences.clear();
+    }
 
     @Test
     public void fetchWhenCacheEmptyAndNoUrl(@TempDir final Path tempDir) {
@@ -76,7 +98,7 @@ public final class VersionManifestFetcherTest {
         assertTrue(content.isPresent());
         // verify cache and etag is updated
         assertTrue(cacheExists(manifestPath));
-        assertFalse(DefaultPluginStore.getInstance().get(LspConstants.CW_MANIFEST_URL).isEmpty());
+        assertFalse(Activator.getPluginStore().get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
 
     @Test
@@ -95,7 +117,7 @@ public final class VersionManifestFetcherTest {
 
         // verify cache and etag updated
         assertTrue(cacheExists(manifestPath));
-        assertFalse(DefaultPluginStore.getInstance().get(LspConstants.CW_MANIFEST_URL).isEmpty());
+        assertFalse(Activator.getPluginStore().get(LspConstants.CW_MANIFEST_URL).isEmpty());
     }
 
     private boolean cacheExists(final Path manifestPath) {

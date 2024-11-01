@@ -31,7 +31,7 @@ public class Activator extends AbstractUIPlugin {
         super();
         plugin = this;
         telemetryService = DefaultTelemetryService.builder().build();
-        lspProvider = new LspProviderImpl();
+        lspProvider = LspProviderImpl.getInstance();
         pluginStore = DefaultPluginStore.getInstance();
         loginService = DefaultLoginService.builder()
                 .withLspProvider(lspProvider)

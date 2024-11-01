@@ -13,21 +13,21 @@ import org.eclipse.lsp4j.services.LanguageServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 
 public final class LspProviderImpl implements LspProvider {
-//    private static final LspProviderImpl INSTANCE = new LspProviderImpl();
+    private static final LspProviderImpl INSTANCE = new LspProviderImpl();
 
     private static final long TIMEOUT_SECONDS = 10L;
 
     private final Map<Class<? extends LanguageServer>, CompletableFuture<LanguageServer>> futures;
     private final Map<Class<? extends LanguageServer>, LanguageServer> servers;
 
-    public LspProviderImpl() {
+    private LspProviderImpl() {
         this.futures = new ConcurrentHashMap<>();
         this.servers = new ConcurrentHashMap<>();
     }
 
-//    public static LspProvider getInstance() {
-//        return INSTANCE;
-//    }
+    public static LspProvider getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public <T extends LanguageServer> void setServer(final Class<T> lspType, final T server) {

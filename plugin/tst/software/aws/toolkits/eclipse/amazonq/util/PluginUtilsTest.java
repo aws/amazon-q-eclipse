@@ -14,6 +14,12 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.browser.IWebBrowser;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbench;
 
 import java.io.IOException;
 import java.net.URI;
@@ -25,13 +31,15 @@ import org.eclipse.core.runtime.Platform;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -166,6 +174,70 @@ public class PluginUtilsTest {
             assertEquals("Detected unsupported architecture: unsupported_arch", exception.getMessage());
         }
     }
+    @Test
+    public void testOpenWebpageSuccess() throws Exception {
+        IWebBrowser mockExternalBrowser = mock(IWebBrowser.class);
+        try (MockedStatic<PlatformUI> mockedPlatformUI = mockStatic(PlatformUI.class, RETURNS_DEEP_STUBS)) {
+            mockedPlatformUI.when(() -> PlatformUI
+                    .getWorkbench()
+                    .getBrowserSupport()
+                    .getExternalBrowser())
+                    .thenReturn(mockExternalBrowser);
+            String testUrl = "https://amazon.com";
+            PluginUtils.openWebpage(testUrl);
+            verify(mockExternalBrowser).openURL(new URL(testUrl));
+        }
+    }
+
+    @Test
+    public void testOpenWebpageFailure() {
+        try (MockedStatic<PlatformUI> mockedPlatformUI = mockStatic(PlatformUI.class, RETURNS_DEEP_STUBS)) {
+            LoggingService mockLogger = mockLoggingService(mockedActivator);
+            mockedPlatformUI.when(() -> PlatformUI
+                    .getWorkbench()
+                    .getBrowserSupport()
+                    .getExternalBrowser())
+                    .thenThrow(new PartInitException("thrown exception"));
+
+            String testUrl = "https://amazon.com";
+            PluginUtils.openWebpage(testUrl);
+            verify(mockLogger).warn(eq("Error while trying to open an external web page:"), any(Throwable.class));
+        }
+    }
+
+    @Test
+    public void testShowView() throws Exception {
+        String testId = "testViewId";
+        IWorkbench mockWorkbench = mock(IWorkbench.class);
+        IWorkbenchWindow mockWindow = mock(IWorkbenchWindow.class);
+        IWorkbenchPage mockPage = mock(IWorkbenchPage.class);
+        try (MockedStatic<PlatformUI> mockedPlatformUI = mockStatic(PlatformUI.class)) {
+            LoggingService mockLogger = mockLoggingService(mockedActivator);
+            mockedPlatformUI.when(PlatformUI::getWorkbench).thenReturn(mockWorkbench);
+
+            //window is null
+            when(mockWorkbench.getActiveWorkbenchWindow()).thenReturn(null);
+            PluginUtils.showView(testId);
+            verifyNoInteractions(mockLogger);
+
+            //page is null
+            when(mockWorkbench.getActiveWorkbenchWindow()).thenReturn(mockWindow);
+            when(mockWindow.getActivePage()).thenReturn(null);
+            PluginUtils.showView(testId);
+            verifyNoInteractions(mockLogger);
+
+            //success case
+            when(mockWindow.getActivePage()).thenReturn(mockPage);
+            PluginUtils.showView(testId);
+            verify(mockPage).showView(testId);
+            verify(mockLogger).info("Showing view " + testId);
+
+            //test failure case
+            doThrow(new PartInitException("Test exception")).when(mockPage).showView(anyString());
+            PluginUtils.showView(testId);
+            verify(mockLogger).error(eq("Error occurred while opening view " + testId), any(Throwable.class));
+        }
+    }
 
     @Test
     public void testHandleExternalLinkClickConfirmed() {
@@ -213,8 +285,9 @@ public class PluginUtilsTest {
 
     private LoggingService mockLoggingService(final MockedStatic<Activator> mockedActivator) {
         LoggingService mockLogger = mock(LoggingService.class);
-        mockedActivator.when(() -> Activator.getLogger()).thenReturn(mockLogger);
+        mockedActivator.when(Activator::getLogger).thenReturn(mockLogger);
         doNothing().when(mockLogger).error(anyString(), any(Exception.class));
+        doNothing().when(mockLogger).warn(anyString(), any(Exception.class));
         return mockLogger;
     }
     private void testGetPlatformHelper(final boolean windows, final boolean mac, final boolean linux) {

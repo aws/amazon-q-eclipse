@@ -30,7 +30,7 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
                 return;
             }
         }
-        qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset() + e.getText().length());
+        qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset(), e.getText().length());
     }
 
     private boolean shouldSendQuery(final DocumentEvent e, final QInvocationSession session) {

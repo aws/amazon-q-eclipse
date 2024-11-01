@@ -169,13 +169,15 @@ public final class QInvocationSession extends QResource {
         widget.addCaretListener(caretListener);
     }
 
-    public void invoke(final int invocationOffset) {
+    public void invoke(final int invocationOffset, final int inputLength) {
         var session = QInvocationSession.getInstance();
 
         try {
+            int adjustedInvocationOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer,
+                    invocationOffset) + inputLength;
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
-                    invocationOffset, InlineCompletionTriggerKind.Automatic);
-            queryAsync(params, invocationOffset);
+                    adjustedInvocationOffset, InlineCompletionTriggerKind.Automatic);
+            queryAsync(params, invocationOffset + inputLength);
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
             Activator.getLogger().error("Unable to compute inline completion request from document", e);
@@ -186,8 +188,10 @@ public final class QInvocationSession extends QResource {
         var session = QInvocationSession.getInstance();
 
         try {
+            int adjustedInvocationOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer,
+                    session.getInvocationOffset());
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
-                    session.getInvocationOffset(), InlineCompletionTriggerKind.Invoke);
+                    adjustedInvocationOffset, InlineCompletionTriggerKind.Invoke);
             queryAsync(params, session.getInvocationOffset());
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());

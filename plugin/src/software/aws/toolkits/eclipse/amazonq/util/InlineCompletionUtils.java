@@ -37,9 +37,8 @@ public final class InlineCompletionUtils {
         params.setContext(inlineCompletionContext);
 
         var invocationPosition = new Position();
-        int adjustedInvocationOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, invocationOffset);
-        var startLine = document.getLineOfOffset(adjustedInvocationOffset);
-        var lineOffset = adjustedInvocationOffset - document.getLineOffset(startLine);
+        var startLine = document.getLineOfOffset(invocationOffset);
+        var lineOffset = invocationOffset - document.getLineOffset(startLine);
         invocationPosition.setLine(startLine);
         invocationPosition.setCharacter(lineOffset);
         params.setPosition(invocationPosition);

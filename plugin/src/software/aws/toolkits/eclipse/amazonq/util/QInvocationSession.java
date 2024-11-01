@@ -55,6 +55,7 @@ public final class QInvocationSession extends QResource {
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
+    private QInlineTerminationListener terminationListener = null;
     private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
@@ -136,6 +137,8 @@ public final class QInvocationSession extends QResource {
             }
 
             var widget = viewer.getTextWidget();
+            terminationListener = QEclipseEditorUtils.getInlineTerminationListener();
+            widget.addFocusListener(terminationListener);
 
             suggestionsContext = new QSuggestionsContext();
             inlineTextFont = QEclipseEditorUtils.getInlineTextFont(widget, Q_INLINE_HINT_TEXT_STYLE);
@@ -288,16 +291,8 @@ public final class QInvocationSession extends QResource {
     // Method to end the session
     public void end() {
         if (isActive() && unresolvedTasks.isEmpty()) {
-            // Get the current thread's stack trace
-            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-
-            // Log the stack trace
-            System.out.println("Stack trace:");
-            for (StackTraceElement element : stackTraceElements) {
-                System.out.println(element);
-            }
-            dispose();
             transitionToInactiveState();
+            dispose();
             // End session logic here
             System.out.println("Session ended.");
         } else if (!unresolvedTasks.isEmpty()) {
@@ -308,8 +303,8 @@ public final class QInvocationSession extends QResource {
 
     public void endImmediately() {
         if (isActive()) {
-            dispose();
             transitionToInactiveState();
+            dispose();
             System.out.println("Session terminated");
         }
     }
@@ -344,6 +339,10 @@ public final class QInvocationSession extends QResource {
     }
 
     public void transitionToInactiveState() {
+        if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
+            int lastKnownLine = getLastKnownLine();
+            unsetVerticalIndent(lastKnownLine + 1);
+        }
         state = QInvocationSessionState.INACTIVE;
         if (changeStatusToIdle != null) {
             changeStatusToIdle.run();
@@ -568,6 +567,9 @@ public final class QInvocationSession extends QResource {
             widget.removeVerifyKeyListener(inputListener);
             widget.removeMouseListener(inputListener);
         }
+        if (terminationListener != null) {
+            widget.removeFocusListener(terminationListener);
+        }
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         if (paintListener != null) {
             paintListener.beforeRemoval();
@@ -579,6 +581,7 @@ public final class QInvocationSession extends QResource {
         paintListener = null;
         caretListener = null;
         inputListener = null;
+        terminationListener = null;
         invocationOffset = -1;
         invocationTimeInMs = -1L;
         editor = null;

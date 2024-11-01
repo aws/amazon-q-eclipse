@@ -238,4 +238,8 @@ public final class QEclipseEditorUtils {
     public static QInlineInputListener getInlineInputListener(final StyledText widget) {
         return new QInlineInputListener(widget);
     }
+
+    public static QInlineTerminationListener getInlineTerminationListener() {
+        return new QInlineTerminationListener();
+    }
 }

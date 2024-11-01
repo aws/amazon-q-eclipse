@@ -312,7 +312,7 @@
            </toolbar>
            <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated">
                 <command id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated.command"
-                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQChatView"
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
                     icon="icons/AmazonQDisconnected.png" 
                     tooltip="Amazon Q">
                     <visibleWhen checkEnabled="false">

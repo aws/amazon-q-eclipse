@@ -15,15 +15,14 @@ import org.eclipse.ui.services.ISourceProviderService;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 
 public final class AuthSourceProvider extends AbstractSourceProvider implements AuthStatusChangedListener {
     public static final String IS_AUTHENTICATED_VARIABLE_ID = "is_authenticated";
     private boolean isAuthenticated = false;
 
     public AuthSourceProvider() {
-        DefaultLoginService.getInstance();
-        DefaultLoginService.addAuthStatusChangeListener(this);
+        AuthStatusProvider.addAuthStatusChangeListener(this);
     }
 
     @Override

@@ -10,7 +10,6 @@ import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
-import software.aws.toolkits.eclipse.amazonq.lsp.AuthPollingJob;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
@@ -27,7 +26,6 @@ public class Activator extends AbstractUIPlugin {
     private static LspProvider lspProvider;
     private static LoginService loginService;
     private static PluginStore pluginStore;
-    private AuthPollingJob authPollingJob;
 
     public Activator() {
         super();
@@ -40,18 +38,11 @@ public class Activator extends AbstractUIPlugin {
                 .withPluginStore(pluginStore)
                 .build();
         defaultLogger = PluginLogger.getInstance();
-        authPollingJob = new AuthPollingJob();
-    }
-
-    @Override
-    public final void start(final BundleContext context) throws Exception {
-        authPollingJob.start();
     }
 
     @Override
     public final void stop(final BundleContext context) throws Exception {
         super.stop(context);
-        authPollingJob.stop();
         plugin = null;
     }
 

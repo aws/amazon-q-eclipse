@@ -1,9 +1,0 @@
-**/target/
-packageInfo
-**/node_modules/
-**/.gradle/
-**/.metadata/
-**/node/
-**.DS_Store**
-.idea/
-plugin/.idea

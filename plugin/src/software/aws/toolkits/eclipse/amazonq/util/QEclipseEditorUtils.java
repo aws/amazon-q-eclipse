@@ -249,4 +249,8 @@ public final class QEclipseEditorUtils {
 
         return adjustedOffset > -1 ? adjustedOffset : caretOffsetFromWidget;
     }
+
+    public static QInlineTerminationListener getInlineTerminationListener() {
+        return new QInlineTerminationListener();
+    }
 }

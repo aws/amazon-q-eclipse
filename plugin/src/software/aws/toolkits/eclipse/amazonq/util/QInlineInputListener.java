@@ -248,10 +248,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {
-        boolean res;
-        if (input.length() > 1) {
+        boolean res = false;
+        if (input.length() > 1 && input.length() <= currentSuggestion.length()) {
             res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
-        } else {
+        } else if (input.length() == 1) {
             res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
         }
         return res;

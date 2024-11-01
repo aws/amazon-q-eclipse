@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import org.eclipse.core.internal.preferences.EclipsePreferences;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,18 +35,22 @@ public final class VersionManifestFetcherTest {
     private VersionManifestFetcher fetcher;
     private MockedStatic<Activator> mockedActivator;
     private LoggingService mockedLogger;
+    private IEclipsePreferences testPreferences;
 
     @BeforeEach
+    @SuppressWarnings("restriction")
     void setUp() {
         mockedLogger = mock(LoggingService.class);
+        testPreferences = new EclipsePreferences();
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
-        mockedActivator.when(Activator::getPluginStore).thenReturn(DefaultPluginStore.getInstance());
+        mockedActivator.when(Activator::getPluginStore).thenReturn(new DefaultPluginStore(testPreferences));
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         mockedActivator.close();
+        testPreferences.clear();
     }
 
     @Test

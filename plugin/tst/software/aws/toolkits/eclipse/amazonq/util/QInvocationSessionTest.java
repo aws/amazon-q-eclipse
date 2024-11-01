@@ -84,7 +84,7 @@ public class QInvocationSessionTest {
 
         editorUtilsMock = mockQEclipseEditorUtils();
 
-        activatorMockStatic = mockStatic(Activator.class, RETURNS_DEEP_STUBS);
+        activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
         activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);

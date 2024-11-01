@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Link;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
@@ -31,7 +31,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     private static final String LINK_LABEL = "Sign out";
 
     public ReauthenticateView() {
-        DefaultLoginService.addAuthStatusChangeListener(this);
+        AuthStatusProvider.addAuthStatusChangeListener(this);
     }
 
     @Override
@@ -62,7 +62,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
                         Activator.getLogger().info("Attempt to re-authenticate...");
-                        DefaultLoginService.getInstance().reAuthenticate().get();
+                        Activator.getLoginService().reAuthenticate().get();
                     } catch (Exception ex) {
                         PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to re-reauthenticate. Please try again.");
                         Activator.getLogger().error("Failed to re-authenticate", ex);
@@ -97,6 +97,6 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
 
     @Override
     public void dispose() {
-        DefaultLoginService.removeAuthStatusChangeListener(this);
+        AuthStatusProvider.removeAuthStatusChangeListener(this);
     }
 }

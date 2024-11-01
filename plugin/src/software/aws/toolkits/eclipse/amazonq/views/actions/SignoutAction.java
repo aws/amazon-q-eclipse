@@ -21,7 +21,10 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
     public void run() {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                DefaultLoginService.getInstance().logout().get();
+                LoginDetails loginDetails = Activator.getLoginService().getLoginDetails().get();
+                if (loginDetails.getIsLoggedIn()) {
+                    Activator.getLoginService().logout().get();
+                }
             } catch (Exception e) {
                 PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to sign out of Amazon Q. Please try again.");
                 Activator.getLogger().error("Failed to sign out", e);

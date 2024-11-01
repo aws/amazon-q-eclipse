@@ -139,7 +139,7 @@ public final class DefaultLoginService implements LoginService {
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);
                     loginDetails.setIssuerUrl(null);
-                    notifyAuthStatusChanged(loginDetails);
+                    AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                     return loginDetails;
                 });
     }

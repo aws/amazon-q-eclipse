@@ -27,7 +27,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
@@ -48,14 +48,14 @@ public final class ChatCommunicationManager {
     private final JsonHandler jsonHandler;
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultMap chatPartialResultMap;
-    private final LspEncryptionManager lspEncryptionManager;
+    private final DefaultLspEncryptionManager lspEncryptionManager;
     private ChatUiRequestListener chatUiRequestListener;
 
     private ChatCommunicationManager() {
         this.jsonHandler = new JsonHandler();
         this.chatMessageProvider = ChatMessageProvider.createAsync();
         this.chatPartialResultMap = new ChatPartialResultMap();
-        this.lspEncryptionManager = LspEncryptionManager.getInstance();
+        this.lspEncryptionManager = DefaultLspEncryptionManager.getInstance();
     }
 
     public static synchronized ChatCommunicationManager getInstance() {

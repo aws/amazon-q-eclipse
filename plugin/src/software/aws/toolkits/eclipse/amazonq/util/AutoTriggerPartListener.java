@@ -73,14 +73,15 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         Display.getDefault().timerExec(1000, new Runnable() {
             @Override
             public void run() {
+                System.out.println("looking for active doc");
                 var editor = getActiveTextEditor();
-                var activeDoc = getActiveDocument();
-                if (editor != null && activeDoc == null) {
+                if (editor != null) {
                     var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
                     if (document == null) {
                         Display.getDefault().timerExec(1000, this);
                         return;
                     }
+                    System.out.println("document: " + document.toString());
                     setActiveDocument(document);
                     document.addDocumentListener(docListener);
                     System.out.println("Document listener added from UI thread");

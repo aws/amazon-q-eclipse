@@ -12,6 +12,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.custom.StyledText;
@@ -237,5 +238,18 @@ public final class QEclipseEditorUtils {
 
     public static QInlineInputListener getInlineInputListener(final StyledText widget) {
         return new QInlineInputListener(widget);
+    }
+
+    public static int getOffsetInFullyExpandedDocument(final ITextViewer viewer, final int caretOffsetFromWidget) {
+        int adjustedOffset = caretOffsetFromWidget;
+        if (viewer instanceof ITextViewerExtension5) {
+            ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
+            adjustedOffset = extension.widgetOffset2ModelOffset(caretOffsetFromWidget);
+        }
+        if (adjustedOffset == -1) {
+            System.out.println("adjusted offset is -1");
+        }
+
+        return adjustedOffset > -1 ? adjustedOffset : caretOffsetFromWidget;
     }
 }

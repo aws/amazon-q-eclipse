@@ -89,6 +89,7 @@ public class LspStartupActivity implements IStartup {
         workbench.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 try {
+                    showTelemetryNotification();
                     IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
                     if (window != null) {
                         IWorkbenchPage page = window.getActivePage();
@@ -141,6 +142,13 @@ public class LspStartupActivity implements IStartup {
             }
         };
         Activator.getPluginStore().addChangeListener(prefChangeListener);
+    }
+
+    private void showTelemetryNotification() {
+        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                Constants.TELEMETRY_NOTIFICATION_TITLE,
+                Constants.TELEMETRY_NOTIFICATION_BODY);
+        notification.open();
     }
 
 }

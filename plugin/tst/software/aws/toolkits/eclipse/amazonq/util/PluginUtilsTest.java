@@ -127,15 +127,12 @@ public class PluginUtilsTest {
     }
 
     @Test
-    public void testGetPlatformWindows() throws AmazonQPluginException {
+    public void testGetPlatformSuccess() throws AmazonQPluginException {
+        //Windows
         testGetPlatformHelper(true, false, false);
-    }
-    @Test
-    public void testGetPlatformMac() throws AmazonQPluginException {
+        //Mac
         testGetPlatformHelper(false, true, false);
-    }
-    @Test
-    public void testGetPlatformLinux() throws AmazonQPluginException {
+        //Linux
         testGetPlatformHelper(false, false, true);
     }
     @Test
@@ -152,28 +149,24 @@ public class PluginUtilsTest {
     }
 
     @Test
-    public void testGetArchitectureWithX86() {
+    public void testGetArchitecture() {
         try (MockedStatic<Platform> mockedPlatform = mockStatic(Platform.class)) {
+            //x86
             mockedPlatform.when(Platform::getOSArch).thenReturn(Platform.ARCH_X86_64);
             assertEquals(PluginArchitecture.X86_64, PluginUtils.getArchitecture());
-        }
-    }
-    @Test
-    public void testGetArchitectureWithARm64() {
-        try (MockedStatic<Platform> mockedPlatform = mockStatic(Platform.class)) {
+
+            //arm64
             mockedPlatform.when(Platform::getOSArch).thenReturn(Platform.ARCH_AARCH64);
             assertEquals(PluginArchitecture.ARM_64, PluginUtils.getArchitecture());
-        }
-    }
-    @Test
-    public void testGetArchitectureUnsupportedArchitecture() {
-        try (MockedStatic<Platform> mockedPlatform = mockStatic(Platform.class)) {
+
+            //unsupported architecture
             mockedPlatform.when(Platform::getOSArch).thenReturn("unsupported_arch");
             AmazonQPluginException exception = assertThrows(AmazonQPluginException.class,
-                PluginUtils::getArchitecture);
+                    PluginUtils::getArchitecture);
             assertEquals("Detected unsupported architecture: unsupported_arch", exception.getMessage());
         }
     }
+
     @Test
     public void testOpenWebpageSuccess() throws Exception {
         IWebBrowser mockExternalBrowser = mock(IWebBrowser.class);
@@ -202,6 +195,52 @@ public class PluginUtilsTest {
             String testUrl = "https://amazon.com";
             PluginUtils.openWebpage(testUrl);
             verify(mockLogger).warn(eq("Error while trying to open an external web page:"), any(Throwable.class));
+        }
+    }
+
+    @Test
+    public void testHandleExternalLinkClickConfirmed() {
+        String externalLink = "https://amazon.com";
+        String expectedDialogString = "Do you want to open the external website?\n\n" + externalLink;
+        try (MockedStatic<PluginUtils> mockedPluginUtils = mockStatic(PluginUtils.class)) {
+                LoggingService mockLogger = mockLoggingService(mockedActivator);
+                mockedPluginUtils.when(() -> PluginUtils.handleExternalLinkClick(anyString())).thenCallRealMethod();
+                mockedPluginUtils.when(() -> PluginUtils.showConfirmDialog(anyString(), anyString())).thenReturn(true);
+                mockedPluginUtils.when(() -> PluginUtils.openWebpage(anyString())).then(invocation -> null);
+
+                PluginUtils.handleExternalLinkClick(externalLink);
+                mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), eq(expectedDialogString)));
+                mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), times(1));
+                verifyNoInteractions(mockLogger);
+        }
+    }
+    @Test
+    public void testHandleExternalLinkClickDenied() {
+        String externalLink = "https://amazon.com";
+        String expectedDialogString = "Do you want to open the external website?\n\n" + externalLink;
+        try (MockedStatic<PluginUtils> mockedPluginUtils = mockStatic(PluginUtils.class)) {
+                LoggingService mockLogger = mockLoggingService(mockedActivator);
+                mockedPluginUtils.when(() -> PluginUtils.handleExternalLinkClick(anyString())).thenCallRealMethod();
+                mockedPluginUtils.when(() -> PluginUtils.showConfirmDialog(anyString(), anyString())).thenReturn(false);
+
+                PluginUtils.handleExternalLinkClick(externalLink);
+                mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), eq(expectedDialogString)));
+                mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), never());
+                verifyNoInteractions(mockLogger);
+        }
+    }
+    @Test
+        public void testHandleExternalLinkClickWithException() {
+        String externalLink = "https://amazon.com";
+        try (MockedStatic<PluginUtils> mockedPluginUtils = mockStatic(PluginUtils.class)) {
+            LoggingService mockLogger = mockLoggingService(mockedActivator);
+            mockedPluginUtils.when(() -> PluginUtils.handleExternalLinkClick(anyString())).thenCallRealMethod();
+            mockedPluginUtils.when(() -> PluginUtils.showConfirmDialog(anyString(), anyString())).thenThrow(new RuntimeException("Test Exception"));
+
+            PluginUtils.handleExternalLinkClick(externalLink);
+            mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
+            mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), never());
+            verify(mockLogger).error(eq("Failed to open url in browser"), any(RuntimeException.class));
         }
     }
 
@@ -236,50 +275,6 @@ public class PluginUtilsTest {
             doThrow(new PartInitException("Test exception")).when(mockPage).showView(anyString());
             PluginUtils.showView(testId);
             verify(mockLogger).error(eq("Error occurred while opening view " + testId), any(Throwable.class));
-        }
-    }
-
-    @Test
-    public void testHandleExternalLinkClickConfirmed() {
-        String externalLink = "https://amazon.com";
-        try (MockedStatic<PluginUtils> mockedPluginUtils = mockStatic(PluginUtils.class)) {
-                LoggingService mockLogger = mockLoggingService(mockedActivator);
-                mockedPluginUtils.when(() -> PluginUtils.handleExternalLinkClick(anyString())).thenCallRealMethod();
-                mockedPluginUtils.when(() -> PluginUtils.showConfirmDialog(anyString(), anyString())).thenReturn(true);
-                mockedPluginUtils.when(() -> PluginUtils.openWebpage(anyString())).then(invocation -> null);
-
-                PluginUtils.handleExternalLinkClick(externalLink);
-                mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
-                mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), times(1));
-                verifyNoInteractions(mockLogger);
-        }
-    }
-    @Test
-    public void testHandleExternalLinkClickDenied() {
-        String externalLink = "https://amazon.com";
-        try (MockedStatic<PluginUtils> mockedPluginUtils = mockStatic(PluginUtils.class)) {
-                LoggingService mockLogger = mockLoggingService(mockedActivator);
-                mockedPluginUtils.when(() -> PluginUtils.handleExternalLinkClick(anyString())).thenCallRealMethod();
-                mockedPluginUtils.when(() -> PluginUtils.showConfirmDialog(anyString(), anyString())).thenReturn(false);
-
-                PluginUtils.handleExternalLinkClick(externalLink);
-                mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
-                mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), never());
-                verifyNoInteractions(mockLogger);
-        }
-    }
-    @Test
-        public void testHandleExternalLinkClickWithException() {
-        String externalLink = "https://amazon.com";
-        try (MockedStatic<PluginUtils> mockedPluginUtils = mockStatic(PluginUtils.class)) {
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            mockedPluginUtils.when(() -> PluginUtils.handleExternalLinkClick(anyString())).thenCallRealMethod();
-            mockedPluginUtils.when(() -> PluginUtils.showConfirmDialog(anyString(), anyString())).thenThrow(new RuntimeException("Test Exception"));
-
-            PluginUtils.handleExternalLinkClick(externalLink);
-            mockedPluginUtils.verify(() -> PluginUtils.showConfirmDialog(anyString(), anyString()));
-            mockedPluginUtils.verify(() -> PluginUtils.openWebpage(externalLink), never());
-            verify(mockLogger).error(eq("Failed to open url in browser"), any(RuntimeException.class));
         }
     }
 

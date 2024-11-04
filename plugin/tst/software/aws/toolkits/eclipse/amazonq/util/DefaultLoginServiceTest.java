@@ -320,7 +320,7 @@ public class DefaultLoginServiceTest {
             assertEquals(LoginType.NONE, loginDetails.getLoginType());
             assertNull(loginDetails.getIssuerUrl());
             verify(loginService).getToken(eq(false));
-            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()), never());
+            mockedAuthStatusProvider.verify(() -> AuthStatusProvider.notifyAuthStatusChanged(any()));
         }
     }
     @Test
@@ -344,16 +344,6 @@ public class DefaultLoginServiceTest {
         }
     }
     @Test
-    public void testReAuthenticateWhileLoggedOut() {
-        resetLoginService();
-        try (MockedStatic<Activator> mockedActivator = mockStatic(Activator.class)) {
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            boolean result = assertDoesNotThrow(() -> loginService.reAuthenticate().get());
-            verify(mockLogger).warn(eq("Reauthenticate called without an active login"));
-            assertFalse(result);
-        }
-    }
-    @Test
     public void testReAuthenticateWithException() {
         mockPluginStore.put("LOGIN_TYPE", "BUILDER_ID");
         resetLoginService();
@@ -367,8 +357,9 @@ public class DefaultLoginServiceTest {
     }
     @Test
     public void testSuccessfulReAuthenticate() {
-        assertTrue(reAuthenticateWith("BUILDER_ID"));
-        assertTrue(reAuthenticateWith("IAM_IDENTITY_CENTER"));
+        assertTrue(reAuthenticateWith(LoginType.BUILDER_ID.name()));
+        assertTrue(reAuthenticateWith(LoginType.NONE.name()));
+        assertTrue(reAuthenticateWith(LoginType.IAM_IDENTITY_CENTER.name()));
     }
     @Test
     public void testGetTokenSuccessWithIdc() {
@@ -596,6 +587,7 @@ public class DefaultLoginServiceTest {
             resetLoginService();
             doReturn(CompletableFuture.completedFuture(null)).when(loginService).login(any(LoginType.class), nullable(LoginParams.class));
             boolean result = assertDoesNotThrow(() -> loginService.reAuthenticate().get());
+            verify(mockLogger).info("Attempting to re-authenticate using login type " + loginType);
             verify(mockLogger).info("Successfully reauthenticated");
             return result;
         }

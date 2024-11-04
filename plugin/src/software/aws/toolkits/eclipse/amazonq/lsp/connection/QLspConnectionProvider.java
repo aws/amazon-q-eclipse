@@ -41,6 +41,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     protected final void addEnvironmentVariables(final Map<String, String> env) {
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
+        env.put("AWS_Q_ENDPOINT_URL", "https://rts.gamma-us-west-2.codewhisperer.ai.aws.dev/");
         if (!StringUtils.isEmpty(ProxyUtil.getHttpsProxyUrl())) {
             env.put("HTTPS_PROXY", ProxyUtil.getHttpsProxyUrl());
         }

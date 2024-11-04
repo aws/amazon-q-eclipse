@@ -28,6 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
@@ -43,6 +44,7 @@ public final class QInvocationSession extends QResource {
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
+    private ReentrantLock sessionLock = new ReentrantLock();
 
     private QSuggestionsContext suggestionsContext = null;
 
@@ -297,9 +299,15 @@ public final class QInvocationSession extends QResource {
     // Method to end the session
     public void end() {
         if (isActive() && unresolvedTasks.isEmpty()) {
-            transitionToInactiveState();
+            if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
+                int lastKnownLine = getLastKnownLine();
+                unsetVerticalIndent(lastKnownLine + 1);
+            }
+            if (changeStatusToIdle != null) {
+                changeStatusToIdle.run();
+            }
             dispose();
-            // End session logic here
+            state = QInvocationSessionState.INACTIVE;
             System.out.println("Session ended.");
         } else if (!unresolvedTasks.isEmpty()) {
             System.out.println(
@@ -309,8 +317,15 @@ public final class QInvocationSession extends QResource {
 
     public void endImmediately() {
         if (isActive()) {
-            transitionToInactiveState();
+            if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
+                int lastKnownLine = getLastKnownLine();
+                unsetVerticalIndent(lastKnownLine + 1);
+            }
+            if (changeStatusToIdle != null) {
+                changeStatusToIdle.run();
+            }
             dispose();
+            state = QInvocationSessionState.INACTIVE;
             System.out.println("Session terminated");
         }
     }
@@ -341,17 +356,6 @@ public final class QInvocationSession extends QResource {
         state = QInvocationSessionState.INVOKING;
         if (changeStatusToQuerying != null) {
             changeStatusToQuerying.run();
-        }
-    }
-
-    public void transitionToInactiveState() {
-        if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
-            int lastKnownLine = getLastKnownLine();
-            unsetVerticalIndent(lastKnownLine + 1);
-        }
-        state = QInvocationSessionState.INACTIVE;
-        if (changeStatusToIdle != null) {
-            changeStatusToIdle.run();
         }
     }
 

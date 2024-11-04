@@ -5,3 +5,5 @@ packageInfo
 **/.metadata/
 **/node/
 **.DS_Store**
+.idea/
+plugin/.idea

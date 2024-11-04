@@ -41,7 +41,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     protected final void addEnvironmentVariables(final Map<String, String> env) {
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
-        env.put("AWS_Q_ENDPOINT_URL", "https://rts.gamma-us-west-2.codewhisperer.ai.aws.dev/");
+        env.put("AWS_Q_ENDPOINT_URL", "https://rts.gamma-us-east-1.codewhisperer.ai.aws.dev/");
         if (!StringUtils.isEmpty(ProxyUtil.getHttpsProxyUrl())) {
             env.put("HTTPS_PROXY", ProxyUtil.getHttpsProxyUrl());
         }
@@ -49,7 +49,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
     @Override
     public final void start() throws IOException {
-        super.start();
+        startProcess();
 
         Activator.getLogger().info("Initializing encrypted communication with Amazon Q Lsp Server");
 
@@ -61,5 +61,9 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         } catch (Exception e) {
             Activator.getLogger().error("Error occured while initializing encrypted communication with Amazon Q Lsp Server", e);
         }
+    }
+
+    protected final void startProcess() throws IOException {
+        super.start();
     }
 }

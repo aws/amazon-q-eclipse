@@ -136,6 +136,7 @@ public final class DefaultLoginService implements LoginService {
                     return loginDetails;
                 })
                 .exceptionally(throwable -> {
+                    // TODO update to attempt a sign in if token retrieval fails https://sim.amazon.com/issues/ECLIPSE-457
                     Activator.getLogger().error("Failed to check login status", throwable);
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);

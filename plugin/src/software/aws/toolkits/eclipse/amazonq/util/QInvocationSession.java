@@ -49,6 +49,7 @@ public final class QInvocationSession extends QResource {
     private ITextEditor editor = null;
     private ITextViewer viewer = null;
     private Font inlineTextFont = null;
+    private Font inlineTextFontBold = null;
     private int invocationOffset = -1;
     private int tabSize;
     private long invocationTimeInMs = -1L;
@@ -142,6 +143,7 @@ public final class QInvocationSession extends QResource {
 
             suggestionsContext = new QSuggestionsContext();
             inlineTextFont = QEclipseEditorUtils.getInlineTextFont(widget, Q_INLINE_HINT_TEXT_STYLE);
+            inlineTextFontBold = QEclipseEditorUtils.getInlineCloseBracketFontBold(widget);
             invocationOffset = widget.getCaretOffset();
             invocationTimeInMs = System.currentTimeMillis();
             System.out.println("Session started.");
@@ -541,6 +543,10 @@ public final class QInvocationSession extends QResource {
         changeStatusToPreviewing = runnable;
     }
 
+    public Font getBoldInlineFont() {
+        return inlineTextFontBold;
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
@@ -548,7 +554,9 @@ public final class QInvocationSession extends QResource {
 
         suggestionsContext = null;
         inlineTextFont.dispose();
+        inlineTextFontBold.dispose();
         inlineTextFont = null;
+        inlineTextFontBold = null;
         closingBrackets = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;

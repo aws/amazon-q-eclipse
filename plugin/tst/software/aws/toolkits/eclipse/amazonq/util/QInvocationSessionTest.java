@@ -278,6 +278,8 @@ public class QInvocationSessionTest {
                 .thenReturn(viewerMock);
         editorUtilsMock.when(() -> QEclipseEditorUtils.getInlineTextFont(any(StyledText.class), any(Integer.class)))
                 .thenReturn(fontMock);
+        editorUtilsMock.when(() -> QEclipseEditorUtils.getInlineCloseBracketFontBold(any(StyledText.class)))
+                .thenReturn(fontMock);
 
         QInlineInputListener inputListenerMock = mock(QInlineInputListener.class);
         editorUtilsMock.when(() -> QEclipseEditorUtils.getInlineInputListener(any(StyledText.class)))

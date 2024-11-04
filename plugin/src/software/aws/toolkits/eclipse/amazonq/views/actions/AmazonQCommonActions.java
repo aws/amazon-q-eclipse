@@ -95,7 +95,7 @@ public final class AmazonQCommonActions {
     }
 
     private void fillLocalToolBar(final IToolBarManager manager) {
-        manager.add(changeThemeAction);
+        // No actions added to the view toolbar at this time
     }
 
     public void updateActionVisibility(final LoginDetails loginDetails, final IViewSite viewSite) {

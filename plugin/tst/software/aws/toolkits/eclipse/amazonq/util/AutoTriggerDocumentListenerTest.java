@@ -61,24 +61,25 @@ public class AutoTriggerDocumentListenerTest {
         AutoTriggerDocumentListener listener = new AutoTriggerDocumentListener();
 
         listener.documentChanged(eventMock);
-        verify(sessionMock, times(0)).invoke(any(Integer.class));
+        verify(sessionMock, times(0)).invoke(any(Integer.class), any(Integer.class));
         verify(sessionMock, times(0)).start(any(ITextEditor.class));
 
         when(eventMock.getText()).thenReturn(TEXT_STUB);
+        when(eventMock.getLength()).thenReturn(TEXT_STUB.length());
         listener.documentChanged(eventMock);
-        verify(sessionMock, times(0)).invoke(any(Integer.class));
+        verify(sessionMock, times(0)).invoke(any(Integer.class), any(Integer.class));
 
         when(sessionMock.isPreviewingSuggestions()).thenReturn(false);
         listener.documentChanged(eventMock);
-        verify(sessionMock, times(0)).invoke(any(Integer.class));
+        verify(sessionMock, times(0)).invoke(any(Integer.class), any(Integer.class));
 
         when(sessionMock.isDecisionMade()).thenReturn(false);
         listener.documentChanged(eventMock);
-        verify(sessionMock, times(1)).invoke(TEXT_STUB.length());
+        verify(sessionMock, times(1)).invoke(0, TEXT_STUB.length());
 
         when(sessionMock.isActive()).thenReturn(true);
         listener.documentChanged(eventMock);
         verify(sessionMock, times(1)).start(any(ITextEditor.class));
-        verify(sessionMock, times(2)).invoke(TEXT_STUB.length());
+        verify(sessionMock, times(2)).invoke(0, TEXT_STUB.length());
     }
 }

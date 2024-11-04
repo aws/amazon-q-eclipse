@@ -27,4 +27,7 @@ public final class Constants {
     public static final String IDC_PROFILE_NAME = "eclipse-q-profile";
     public static final String IDC_SESSION_NAME = "eclipse-q-session";
     public static final String IDC_PROFILE_KIND = "SsoTokenProfile";
+    public static final String TELEMETRY_NOTIFICATION_TITLE = "AWS IDE plugins telemetry";
+    public static final String TELEMETRY_NOTIFICATION_BODY = "Usage metrics are collected by default. This can be changed in the \"Amazon Q\" section"
+            + " of the IDE preferences.";
 }

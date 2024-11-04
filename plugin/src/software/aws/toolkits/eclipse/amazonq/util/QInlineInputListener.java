@@ -132,7 +132,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                     toAppend += autoCloseContent;
                 }
             }
-            bracket.dispose();
         }
 
         IDocument doc = qSes.getViewer().getDocument();
@@ -229,11 +228,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
 
         boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-            // System.out.println("input is: "
-            //        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-            // System.out.println("suggestion is: "
-            //        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-            //                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+//             System.out.println("input is: "
+//                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+//             System.out.println("suggestion is: "
+//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+//                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             qInvocationSessionInstance.transitionToDecisionMade();
             qInvocationSessionInstance.end();
             return;
@@ -248,10 +247,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {
-        boolean res;
-        if (input.length() > 1) {
+        boolean res = false;
+        if (input.length() > 1 && input.length() <= currentSuggestion.length()) {
             res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
-        } else {
+        } else if (input.length() == 1) {
             res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);
         }
         return res;

@@ -12,8 +12,10 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -235,7 +237,30 @@ public final class QEclipseEditorUtils {
         return new Font(widget.getDisplay(), fontData);
     }
 
+    public static Font getInlineCloseBracketFontBold(final StyledText widget) {
+        Font font = widget.getFont();
+        FontData[] fontData = font.getFontData();
+        for (FontData fontDatum : fontData) {
+            fontDatum.setStyle(fontDatum.getStyle() | SWT.BOLD);
+        }
+        return new Font(widget.getDisplay(), fontData);
+    }
+
     public static QInlineInputListener getInlineInputListener(final StyledText widget) {
         return new QInlineInputListener(widget);
+    }
+
+    public static int getOffsetInFullyExpandedDocument(final ITextViewer viewer, final int caretOffsetFromWidget) {
+        int adjustedOffset = caretOffsetFromWidget;
+        if (viewer instanceof ITextViewerExtension5) {
+            ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
+            adjustedOffset = extension.widgetOffset2ModelOffset(caretOffsetFromWidget);
+        }
+
+        return adjustedOffset > -1 ? adjustedOffset : caretOffsetFromWidget;
+    }
+
+    public static QInlineTerminationListener getInlineTerminationListener() {
+        return new QInlineTerminationListener();
     }
 }

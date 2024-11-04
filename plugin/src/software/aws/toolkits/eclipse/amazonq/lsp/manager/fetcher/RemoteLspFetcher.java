@@ -56,13 +56,14 @@ public final class RemoteLspFetcher implements LspFetcher {
             final Path destination) {
         var artifactVersion = resolveVersion(manifest, platform, architecture);
         var target = resolveTarget(artifactVersion, platform, architecture);
-        var serverVersion = artifactVersion.get().serverVersion();
-
         if (!target.isPresent()) {
-            throw new AmazonQPluginException(
-                    "No language server found for platform " + platform + " and architecture " + architecture);
+            throw new AmazonQPluginException(String.format(
+                    "Unable to find a language server that satisfies one or more of these conditions:"
+                    + " version in range [%s), matching system's architecture: %s and platform: %s",
+                    versionRange.toString(), architecture, platform));
         }
 
+        var serverVersion = artifactVersion.get().serverVersion();
         var contents = target.get().contents();
         var downloadDirectory = Paths.get(destination.toString(), serverVersion.toString());
 
@@ -118,7 +119,7 @@ public final class RemoteLspFetcher implements LspFetcher {
     }
 
     private void logMessageWithLicense(final String message, final String attributionUrl) {
-        if (!attributionUrl.isEmpty()) {
+        if (attributionUrl != null && !attributionUrl.isEmpty()) {
             var attributionMessage =
                     String.format(" (Attribution notice for %s can be found at: %s)", LspConstants.CW_LSP_FILENAME, attributionUrl);
             Activator.getLogger().info(message + attributionMessage);
@@ -128,18 +129,35 @@ public final class RemoteLspFetcher implements LspFetcher {
     }
 
     private Optional<ArtifactVersion> resolveVersion(final Manifest manifestFile, final PluginPlatform platform, final PluginArchitecture architecture) {
+        if (manifestFile == null) {
+            throw new AmazonQPluginException("No valid manifest version data was received. An error could have caused this. Please check logs.");
+        }
+
         return manifestFile.versions().stream()
-                .filter(version -> !version.isDelisted())
+                .filter(version -> isCompatibleVersion(version))
                 .filter(version -> version.targets().stream()
-                        .anyMatch(target -> target.platform().equalsIgnoreCase(platform.getValue()) && target.arch().equalsIgnoreCase(architecture.getValue())))
-                .filter(version -> versionRange.includes(ArtifactUtils.parseVersion(version.serverVersion())))
+                        .anyMatch(target -> hasRequiredTargetContent(target, platform, architecture)))
                 .findFirst();
+    }
+
+    private boolean hasRequiredTargetContent(final Target target, final PluginPlatform platform, final PluginArchitecture architecture) {
+        var result = isCompatibleTarget(target, platform, architecture);
+        return result && target.contents() != null && !target.contents().isEmpty();
+    }
+
+    private boolean isCompatibleTarget(final Target target, final PluginPlatform platform,
+            final PluginArchitecture architecture) {
+        return target.platform().equalsIgnoreCase(platform.getValue()) && target.arch().equalsIgnoreCase(architecture.getValue());
+    }
+
+    private boolean isCompatibleVersion(final ArtifactVersion version) {
+        return versionRange.includes(ArtifactUtils.parseVersion(version.serverVersion())) && !version.isDelisted();
     }
 
     private Optional<Target> resolveTarget(final Optional<ArtifactVersion> targetVersion, final PluginPlatform platform,
             final PluginArchitecture architecture) {
         return targetVersion.flatMap(version -> version.targets().stream()
-                .filter(target -> target.platform().equalsIgnoreCase(platform.getValue()) && target.arch().equalsIgnoreCase(architecture.getValue()))
+                .filter(target -> isCompatibleTarget(target, platform, architecture))
                 .findFirst());
     }
 
@@ -171,8 +189,8 @@ public final class RemoteLspFetcher implements LspFetcher {
             if (response.statusCode() == HttpURLConnection.HTTP_OK) {
                 // if validation succeeds move it to download directory
                 // if it fails, delete the temp directory
-                if (ArtifactUtils.validateHash(tempFile, content.hashes(), true)) {
-                    Files.copy(tempFile, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+                if (ArtifactUtils.validateHash(response.body(), content.hashes(), true)) {
+                    Files.copy(response.body(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
                     Activator.getLogger().info("Downloaded " + content.filename() + " to " + downloadDirectory);
                     return true;
                 } else {

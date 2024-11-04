@@ -9,16 +9,22 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 public final class LspEncryptionManager {
 
     private static LspEncryptionManager instance;
-    private LspEncryptionKey lspEncryptionKey;
+    private final LspEncryptionKey lspEncryptionKey;
 
-    private LspEncryptionManager() {
-        lspEncryptionKey = new LspEncryptionKey();
+
+    private LspEncryptionManager(final Builder builder) {
+        lspEncryptionKey = builder.lspEncryptionKey != null ? builder.lspEncryptionKey : new LspEncryptionKey();
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static synchronized LspEncryptionManager getInstance() {
         if (instance == null) {
             try {
-                instance = new LspEncryptionManager();
+                instance = LspEncryptionManager.builder()
+                    .build();
             } catch (Exception e) {
                 throw new AmazonQPluginException("Failed to initialize LspEncryptionManager", e);
             }
@@ -59,4 +65,19 @@ public final class LspEncryptionManager {
             throw new AmazonQPluginException("Failed to initialize encrypted communication", e);
         }
     }
+
+    public static class Builder {
+
+        private LspEncryptionKey lspEncryptionKey;
+
+        public final Builder withLspEncryptionKey(final LspEncryptionKey lspEncryptionKey) {
+            this.lspEncryptionKey = lspEncryptionKey;
+            return this;
+        }
+
+        public final LspEncryptionManager build() {
+            return new LspEncryptionManager(this);
+        }
+    }
+
 }

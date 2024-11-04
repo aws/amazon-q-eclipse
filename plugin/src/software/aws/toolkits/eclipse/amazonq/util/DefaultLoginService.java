@@ -148,6 +148,8 @@ public final class DefaultLoginService implements LoginService {
         LoginType loginType = getLoginTypeFromPluginStore();
         LoginParams loginIdcParams = getLoginParamsFromPluginStore();
 
+        Activator.getLogger().info("Attempting to re-authenticate using login type " + loginType.name());
+
         return login(loginType, loginIdcParams)
                 .thenApply(loggedIn -> {
                     Activator.getLogger().info("Successfully reauthenticated");

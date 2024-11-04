@@ -31,6 +31,8 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     private static final String LINK_LABEL = "Sign out";
 
     public ReauthenticateView() {
+         // It is necessary for this view to be an `AuthStatusChangedListener` to switch the view back to Q Chat after the authentication
+         // flow is successful. Without this listener, the re-authentication will succeed but the view will remain present.
         AuthStatusProvider.addAuthStatusChangeListener(this);
     }
 
@@ -61,7 +63,6 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
             public void widgetSelected(final SelectionEvent e) {
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
-                        Activator.getLogger().info("Attempt to re-authenticate...");
                         Activator.getLoginService().reAuthenticate().get();
                     } catch (Exception ex) {
                         PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to re-reauthenticate. Please try again.");

@@ -27,7 +27,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
@@ -508,6 +508,7 @@ public class DefaultLoginServiceTest {
         resetLoginService();
         SsoToken mockSsoToken = mock(SsoToken.class);
         String expectedToken = "decryptedAccessToken";
+        String expectedEncryptedData = "someStringOfEncryptedData";
         updateCredentialsTestHelper(mockSsoToken, false);
 
         CompletableFuture<ResponseMessage> result = loginService.updateCredentials(mockSsoToken);
@@ -517,8 +518,7 @@ public class DefaultLoginServiceTest {
         verify(mockSsoToken).accessToken();
         verify(mockLspProvider).getAmazonQServer();
         verify(mockAmazonQServer).updateTokenCredentials(argThat(payload -> {
-            BearerCredentials credentials = (BearerCredentials) payload.getData();
-            return expectedToken.equals(credentials.getToken()) && !payload.isEncrypted();
+            return expectedEncryptedData.equals(payload.data()) && payload.encrypted();
         }));
     }
     @Test
@@ -543,6 +543,7 @@ public class DefaultLoginServiceTest {
     private void updateCredentialsTestHelper(final SsoToken mockSsoToken, final boolean throwsException) {
         when(mockSsoToken.accessToken()).thenReturn("encryptedAccessToken");
         when(mockEncryptionManager.decrypt("encryptedAccessToken")).thenReturn("-decryptedAccessToken-");
+        when(mockEncryptionManager.encrypt(any(UpdateCredentialsPayloadData.class))).thenReturn("someStringOfEncryptedData");
         when(mockLspProvider.getAmazonQServer()).thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
         if (throwsException) {
             when(mockAmazonQServer.updateTokenCredentials(any(UpdateCredentialsPayload.class)))

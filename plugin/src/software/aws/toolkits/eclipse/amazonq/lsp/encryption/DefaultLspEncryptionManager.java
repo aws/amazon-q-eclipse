@@ -8,7 +8,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 
 public final class DefaultLspEncryptionManager implements LspEncryptionManager {
 
-    private static LspEncryptionManager instance;
+    private static DefaultLspEncryptionManager instance;
     private final LspEncryptionKey lspEncryptionKey;
 
 
@@ -20,7 +20,7 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
         return new Builder();
     }
 
-    public static synchronized LspEncryptionManager getInstance() {
+    public static synchronized DefaultLspEncryptionManager getInstance() {
         if (instance == null) {
             try {
                 instance = DefaultLspEncryptionManager.builder()
@@ -75,7 +75,7 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
             return this;
         }
 
-        public final LspEncryptionManager build() {
+        public final DefaultLspEncryptionManager build() {
             return new DefaultLspEncryptionManager(this);
         }
     }

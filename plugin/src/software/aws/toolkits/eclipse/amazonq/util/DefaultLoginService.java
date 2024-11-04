@@ -276,7 +276,7 @@ public final class DefaultLoginService implements LoginService {
         decryptedToken = decryptedToken.substring(1, decryptedToken.length() - 1);
         credentials.setToken(decryptedToken);
         UpdateCredentialsPayloadData data = new UpdateCredentialsPayloadData(credentials);
-        String encryptedData = LspEncryptionManager.getInstance().encrypt(data);
+        String encryptedData = encryptionManager.encrypt(data);
         UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload(encryptedData, true);
         return lspProvider.getAmazonQServer()
                 .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))

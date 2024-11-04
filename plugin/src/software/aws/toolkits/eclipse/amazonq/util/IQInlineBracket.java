@@ -2,9 +2,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.ui.services.IDisposable;
-
-public interface IQInlineBracket extends IDisposable {
+public interface IQInlineBracket {
     void onTypeOver();
 
     void onDelete();

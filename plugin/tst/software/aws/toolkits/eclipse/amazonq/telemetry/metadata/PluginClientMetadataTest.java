@@ -1,0 +1,90 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+package software.aws.toolkits.eclipse.amazonq.telemetry.metadata;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import static org.mockito.Mockito.mockStatic;
+import org.mockito.MockedStatic;
+import org.eclipse.core.runtime.Platform;
+import org.osgi.framework.FrameworkUtil;
+//import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+
+public class PluginClientMetadataTest {
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
+
+    private static ClientMetadata instance;
+    private static MockedStatic<Platform> mockedPlatform;
+    private static MockedStatic<FrameworkUtil> mockedFrameworkUtil;
+
+    @BeforeAll
+    static void setUpAll() {
+        System.setProperty("os.name", "testOS");
+        System.setProperty("os.version", "testOSVersion");
+        System.setProperty("eclipse.buildId", "testBuildId");
+        mockedPlatform = mockStatic(Platform.class, RETURNS_DEEP_STUBS);
+        mockedPlatform.when(() -> Platform.getProduct().getName()).thenReturn("testIdeName");
+        mockedFrameworkUtil = mockStatic(FrameworkUtil.class, RETURNS_DEEP_STUBS);
+        mockedFrameworkUtil.when(() ->
+                FrameworkUtil.getBundle(PluginClientMetadata.class).getVersion().toString())
+                .thenReturn("testPluginVersion");
+        instance = PluginClientMetadata.getInstance();
+    }
+    @AfterAll
+    static void tearDown() {
+        mockedPlatform.close();
+        System.clearProperty("os.name");
+        System.clearProperty("os.version");
+        System.clearProperty("eclipse.buildId");
+    }
+
+    @Test
+    void testGetInstance() {
+        ClientMetadata secondInstance = PluginClientMetadata.getInstance();
+        assertEquals(instance, secondInstance);
+    }
+
+    @Test
+    void testGetOsName() {
+        assertEquals("testOS", instance.getOSName());
+    }
+
+    @Test
+    void testGetOsVersion() {
+        assertEquals("testOSVersion", instance.getOSVersion());
+    }
+
+    @Test
+    void testGetIdeName() {
+        assertEquals("testIdeName", instance.getIdeName());
+    }
+
+    @Test
+    void testGetIdeVersion() {
+        assertEquals("testBuildId", instance.getIdeVersion());
+    }
+
+    @Test
+    void testGetPluginName() {
+        assertEquals("Amazon Q For Eclipse", instance.getPluginName());
+    }
+    @Test
+    void testGetPluginVersion() {
+        assertEquals("testPluginVersion", instance.getPluginVersion());
+    }
+
+    @Test
+    void testGetClientId() {
+
+    }
+}

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
-import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspEncryptionManagerStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.DefaultLspEncryptionManagerStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspManagerProviderStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtilsStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
@@ -43,8 +43,8 @@ public final class QLspConnectionProviderTest {
             = new LspManagerProviderStaticMockExtension();
 
     @RegisterExtension
-    private static LspEncryptionManagerStaticMockExtension lspEncryptionManagerStaticMockExtension
-            = new LspEncryptionManagerStaticMockExtension();
+    private static DefaultLspEncryptionManagerStaticMockExtension lspEncryptionManagerStaticMockExtension
+            = new DefaultLspEncryptionManagerStaticMockExtension();
 
     @RegisterExtension
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();

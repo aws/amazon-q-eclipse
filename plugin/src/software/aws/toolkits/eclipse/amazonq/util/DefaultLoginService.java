@@ -28,6 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSessionSettings;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
@@ -40,12 +41,14 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 public final class DefaultLoginService implements LoginService {
     private LspProvider lspProvider;
     private PluginStore pluginStore;
+    private LspEncryptionManager encryptionManager;
     private LoginType currentLogin;
     private LoginParams loginParams;
 
     private DefaultLoginService(final Builder builder) {
         this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
         this.pluginStore = Objects.requireNonNull(builder.pluginStore, "pluginStore cannot be null");
+        this.encryptionManager = Objects.requireNonNull(builder.encryptionManager, "encryption manager cannot be null");
         String loginType = pluginStore.get(Constants.LOGIN_TYPE_KEY);
         currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
         loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
@@ -269,11 +272,11 @@ public final class DefaultLoginService implements LoginService {
 
     CompletableFuture<ResponseMessage> updateCredentials(final SsoToken ssoToken) {
         BearerCredentials credentials = new BearerCredentials();
-        var decryptedToken = LspEncryptionManager.getInstance().decrypt(ssoToken.accessToken());
+        var decryptedToken = encryptionManager.decrypt(ssoToken.accessToken());
         decryptedToken = decryptedToken.substring(1, decryptedToken.length() - 1);
         credentials.setToken(decryptedToken);
         UpdateCredentialsPayloadData data = new UpdateCredentialsPayloadData(credentials);
-        String encryptedData = LspEncryptionManager.getInstance().encrypt(data);
+        String encryptedData = encryptionManager.encrypt(data);
         UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload(encryptedData, true);
         return lspProvider.getAmazonQServer()
                 .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))
@@ -294,6 +297,8 @@ public final class DefaultLoginService implements LoginService {
     public static class Builder {
         private LspProvider lspProvider;
         private PluginStore pluginStore;
+        private LspEncryptionManager encryptionManager;
+        private boolean initializeOnStartUp;
 
         public final Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
@@ -301,6 +306,14 @@ public final class DefaultLoginService implements LoginService {
         }
         public final Builder withPluginStore(final PluginStore pluginStore) {
             this.pluginStore = pluginStore;
+            return this;
+        }
+        public final Builder withEncryptionManager(final LspEncryptionManager encryptionManager) {
+            this.encryptionManager = encryptionManager;
+            return this;
+        }
+        public final Builder initializeOnStartUp() {
+            this.initializeOnStartUp = true;
             return this;
         }
 
@@ -311,8 +324,13 @@ public final class DefaultLoginService implements LoginService {
             if (pluginStore == null) {
                 pluginStore = Activator.getPluginStore();
             }
+            if (encryptionManager == null) {
+                encryptionManager = DefaultLspEncryptionManager.getInstance();
+            }
             DefaultLoginService instance = new DefaultLoginService(this);
-            instance.updateToken();
+            if (initializeOnStartUp) {
+                instance.updateToken();
+            }
             return instance;
         }
     }

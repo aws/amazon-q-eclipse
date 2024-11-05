@@ -36,6 +36,7 @@ public class Activator extends AbstractUIPlugin {
         loginService = DefaultLoginService.builder()
                 .withLspProvider(lspProvider)
                 .withPluginStore(pluginStore)
+                .initializeOnStartUp()
                 .build();
         defaultLogger = PluginLogger.getInstance();
     }

@@ -11,30 +11,31 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import software.aws.toolkits.eclipse.amazonq.extensions.api.StaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 
 import java.util.Map;
 
 import static org.mockito.Mockito.mockStatic;
 
-public final class LspEncryptionManagerStaticMockExtension extends StaticMockExtension<LspEncryptionManager>
+public final class DefaultLspEncryptionManagerStaticMockExtension extends StaticMockExtension<DefaultLspEncryptionManager>
         implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
 
-    private MockedStatic<LspEncryptionManager> lspEncryptionManagerStaticMock = null;
+    private MockedStatic<DefaultLspEncryptionManager> lspEncryptionManagerStaticMock = null;
 
     @Override
-    public MockedStatic<LspEncryptionManager> getStaticMock() {
+    public MockedStatic<DefaultLspEncryptionManager> getStaticMock() {
         return lspEncryptionManagerStaticMock;
     }
 
     @Override
     public void beforeAll(final ExtensionContext context) {
-        lspEncryptionManagerStaticMock = mockStatic(LspEncryptionManager.class);
+        lspEncryptionManagerStaticMock = mockStatic(DefaultLspEncryptionManager.class);
     }
 
     @Override
     public void beforeEach(final ExtensionContext context) {
-        LspEncryptionManager lspEncryptionManagerMock = Mockito.mock(LspEncryptionManager.class);
-        lspEncryptionManagerStaticMock.when(LspEncryptionManager::getInstance).thenReturn(lspEncryptionManagerMock);
+        LspEncryptionManager lspEncryptionManagerMock = Mockito.mock(DefaultLspEncryptionManager.class);
+        lspEncryptionManagerStaticMock.when(DefaultLspEncryptionManager::getInstance).thenReturn(lspEncryptionManagerMock);
 
         Map<Class<?>, Object> newMocksMap = Map.of(
                 LspEncryptionManager.class, lspEncryptionManagerMock

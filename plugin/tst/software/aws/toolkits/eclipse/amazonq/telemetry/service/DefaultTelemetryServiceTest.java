@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.junit.jupiter.api.BeforeEach;
@@ -180,9 +179,8 @@ public final class DefaultTelemetryServiceTest {
     private void setupMockActivatorWithTelemetryOptIn(final boolean telemetryOptIn) {
         IPreferenceStore mockPreferenceStore = mock(IPreferenceStore.class);
         when(mockPreferenceStore.getBoolean(eq(AmazonQPreferencePage.TELEMETRY_OPT_IN))).thenReturn(telemetryOptIn);
-        Optional<Activator> activatorMockOptional = activatorStaticMockExtension.getMock(Activator.class);
-        activatorMockOptional.ifPresent(activatorMock ->
-                when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore));
+        Activator activatorMock = activatorStaticMockExtension.getMock(Activator.class);
+        when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore);
     }
 
     private final class MockClientMetadata implements ClientMetadata {

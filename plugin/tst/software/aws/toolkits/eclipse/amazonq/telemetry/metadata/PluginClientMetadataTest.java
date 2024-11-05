@@ -36,7 +36,7 @@ public class PluginClientMetadataTest {
     private static MockedStatic<FrameworkUtil> mockedFrameworkUtil;
 
     @BeforeEach
-    void setUp() {
+    final void setUp() {
         System.setProperty("os.name", "testOS");
         System.setProperty("os.version", "testOSVersion");
         System.setProperty("eclipse.buildId", "testBuildId");
@@ -49,7 +49,7 @@ public class PluginClientMetadataTest {
         instance = PluginClientMetadata.getInstance();
     }
     @AfterEach
-    void tearDown() {
+    final void tearDown() {
         if (mockedPlatform != null) {
             mockedPlatform.close();
         }

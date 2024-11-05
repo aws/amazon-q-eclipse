@@ -8,8 +8,6 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HIN
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension5;
@@ -204,29 +202,25 @@ public final class QEclipseEditorUtils {
         return Optional.empty();
     }
 
-    public static String getSelectedTextOrCurrentLine() {
-        ITextEditor editor = getActiveTextEditor();
+    public static Optional<String> getSelectedText() {
+        var editor = getActiveTextEditor();
+        if (editor == null) {
+            return Optional.empty();
+        }
         ISelection selection = getSelection(editor);
-
         try {
             if (selection instanceof ITextSelection) {
                 ITextSelection textSelection = (ITextSelection) selection;
                 String selectedText = textSelection.getText();
 
                 if (selectedText != null && !selectedText.isEmpty()) {
-                    return selectedText;
+                    return Optional.of(selectedText);
                 }
-
-                int lineNumber = textSelection.getStartLine();
-                IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-                IRegion lineInfo = document.getLineInformation(lineNumber);
-                String currentLine = document.get(lineInfo.getOffset(), lineInfo.getLength());
-                return currentLine;
             }
         } catch (Exception e) {
-            throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
+            throw new AmazonQPluginException("Error occurred while retrieving selected text", e);
         }
-        return null;
+        return Optional.empty();
     }
 
     public static Font getInlineTextFont(final StyledText widget, final int inlineTextStyle) {

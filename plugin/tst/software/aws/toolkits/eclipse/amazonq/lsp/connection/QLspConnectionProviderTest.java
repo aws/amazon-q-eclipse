@@ -22,7 +22,6 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -71,14 +70,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testConstructorInitializesCorrectly() throws IOException {
-        Optional<LspInstallResult> lspInstallResultMockOptional = lspManagerProviderStaticMockExtension.getMock(
-                LspInstallResult.class
-        );
-        lspInstallResultMockOptional.ifPresent(mock -> {
-            Mockito.when(mock.getServerDirectory()).thenReturn("/test/dir");
-            Mockito.when(mock.getServerCommand()).thenReturn("server.js");
-            Mockito.when(mock.getServerCommandArgs()).thenReturn("--test-arg");
-        });
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("--test-arg");
 
         var provider = new QLspConnectionProvider();
 
@@ -101,14 +96,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testAddEnvironmentVariablesWithoutProxy() throws IOException {
-        Optional<LspInstallResult> lspInstallResultMockOptional = lspManagerProviderStaticMockExtension.getMock(
-                LspInstallResult.class
-        );
-        lspInstallResultMockOptional.ifPresent(mock -> {
-            Mockito.when(mock.getServerDirectory()).thenReturn("/test/dir");
-            Mockito.when(mock.getServerCommand()).thenReturn("server.js");
-            Mockito.when(mock.getServerCommandArgs()).thenReturn("");
-        });
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
         MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("");
@@ -125,14 +116,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testAddEnvironmentVariablesWithProxy() throws IOException {
-        Optional<LspInstallResult> lspInstallResultMockOptional = lspManagerProviderStaticMockExtension.getMock(
-                LspInstallResult.class
-        );
-        lspInstallResultMockOptional.ifPresent(mock -> {
-            Mockito.when(mock.getServerDirectory()).thenReturn("/test/dir");
-            Mockito.when(mock.getServerCommand()).thenReturn("server.js");
-            Mockito.when(mock.getServerCommandArgs()).thenReturn("");
-        });
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
         MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("http://proxy:8080");
@@ -149,14 +136,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testStartInitializesEncryptedCommunication() throws IOException {
-        Optional<LspInstallResult> lspInstallResultMockOptional = lspManagerProviderStaticMockExtension.getMock(
-                LspInstallResult.class
-        );
-        lspInstallResultMockOptional.ifPresent(mock -> {
-            Mockito.when(mock.getServerDirectory()).thenReturn("/test/dir");
-            Mockito.when(mock.getServerCommand()).thenReturn("server.js");
-            Mockito.when(mock.getServerCommandArgs()).thenReturn("");
-        });
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
         var provider = Mockito.spy(new QLspConnectionProvider());
         doNothing().when(provider).startProcess();
@@ -166,26 +149,21 @@ public final class QLspConnectionProviderTest {
 
         provider.start();
 
-        Optional<LoggingService> loggerMockOptional = activatorStaticMockExtension.getMock(LoggingService.class);
-        loggerMockOptional.ifPresent(mock ->
-                verify(mock).info("Initializing encrypted communication with Amazon Q Lsp Server"));
+        LoggingService loggerMock = activatorStaticMockExtension.getMock(LoggingService.class);
+        verify(loggerMock).info("Initializing encrypted communication with Amazon Q Lsp Server");
 
-        Optional<LspEncryptionManager> lspEncryptionManagerMockOptional =
-                lspEncryptionManagerStaticMockExtension.getMock(LspEncryptionManager.class);
-        lspEncryptionManagerMockOptional.ifPresent(mock ->
-                verify(mock).initializeEncrypedCommunication(mockOutputStream));
+        LspEncryptionManager lspEncryptionManagerMock = lspEncryptionManagerStaticMockExtension.getMock(
+                LspEncryptionManager.class
+        );
+        verify(lspEncryptionManagerMock).initializeEncrypedCommunication(mockOutputStream);
     }
 
     @Test
     void testStartLogsErrorOnException() throws IOException {
-        Optional<LspInstallResult> lspInstallResultMockOptional = lspManagerProviderStaticMockExtension.getMock(
-                LspInstallResult.class
-        );
-        lspInstallResultMockOptional.ifPresent(mock -> {
-            Mockito.when(mock.getServerDirectory()).thenReturn("/test/dir");
-            Mockito.when(mock.getServerCommand()).thenReturn("server.js");
-            Mockito.when(mock.getServerCommandArgs()).thenReturn("");
-        });
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
         var provider = Mockito.spy(new QLspConnectionProvider());
         doNothing().when(provider).startProcess();
@@ -194,19 +172,18 @@ public final class QLspConnectionProviderTest {
         doReturn(mockOutputStream).when(provider).getOutputStream();
 
         RuntimeException testException = new RuntimeException("Test error");
-        Optional<LspEncryptionManager> lspEncryptionManagerMockOptional =
-                lspEncryptionManagerStaticMockExtension.getMock(LspEncryptionManager.class);
+        LspEncryptionManager lspEncryptionManagerMock = lspEncryptionManagerStaticMockExtension.getMock(
+                LspEncryptionManager.class
+        );
 
-        lspEncryptionManagerMockOptional.ifPresent(mock ->
-                doThrow(testException).when(mock)
-                        .initializeEncrypedCommunication(any()));
+        doThrow(testException).when(lspEncryptionManagerMock)
+                .initializeEncrypedCommunication(any());
 
         provider.start();
 
-        Optional<LoggingService> loggingServiceMockOptional = activatorStaticMockExtension.getMock(LoggingService.class);
-        loggingServiceMockOptional.ifPresent(mock -> verify(mock).error(
-                "Error occured while initializing encrypted communication with Amazon Q Lsp Server",
-                testException));
+        LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
+        verify(loggingServiceMock).error("Error occured while initializing encrypted communication with Amazon Q Lsp Server",
+                testException);
     }
 
 }

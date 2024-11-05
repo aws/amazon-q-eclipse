@@ -26,8 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 
-import java.util.Optional;
-
 public class JsonHandlerTest {
 
     @RegisterExtension
@@ -79,10 +77,9 @@ public class JsonHandlerTest {
         assertNull(result);
         verify(mockObjectMapper).writeValueAsString(objectToSerialize);
 
-        Optional<LoggingService> mockLoggerOptional = activatorStaticMockExtension.getMock(LoggingService.class);
-        mockLoggerOptional.ifPresent(loggerMock ->
-                verify(loggerMock).error(eq("Error occurred while serializing object: "
-                        + objectToSerialize), eq(testExceptionThrown)));
+        LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
+        verify(loggingServiceMock).error(eq("Error occurred while serializing object: "
+                + objectToSerialize), eq(testExceptionThrown));
     }
 
     @Test
@@ -107,11 +104,9 @@ public class JsonHandlerTest {
         assertNull(deserializedObject);
         verify(mockObjectMapper).readValue(jsonStringToDeserialize, TestObject.class);
 
-        Optional<LoggingService> mockLoggerOptional = activatorStaticMockExtension.getMock(LoggingService.class);
-        mockLoggerOptional.ifPresent(loggerMock ->
-                verify(loggerMock).error(eq("Error occurred while deserializing jsonString: "
-                        + jsonStringToDeserialize), eq(testExceptionThrown)));
-
+        LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
+        verify(loggingServiceMock).error(eq("Error occurred while deserializing jsonString: "
+                + jsonStringToDeserialize), eq(testExceptionThrown));
     }
 
     @Test

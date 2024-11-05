@@ -52,9 +52,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
         isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
         isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
-        preferences.putBoolean("closeBraces", false);
-        preferences.putBoolean("closeBrackets", false);
-        preferences.putBoolean("closeStrings", false);
+//        preferences.putBoolean("closeBraces", false);
+//        preferences.putBoolean("closeBrackets", false);
+//        preferences.putBoolean("closeStrings", false);
         this.widget = widget;
     }
 

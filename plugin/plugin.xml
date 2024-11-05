@@ -24,6 +24,12 @@
             class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
         </view>
         <view
+            id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
@@ -57,6 +63,8 @@
 	  </activity>
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
 	  </activity>
+      <activity id="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView" name="Amazon Q Chat Missing">
+	  </activity>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
 	     isEqualityPattern="true"
@@ -76,6 +84,11 @@
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+	  </activityPatternBinding>
+        <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
 	  </activityPatternBinding>
 	 </extension>
     <extension
@@ -115,6 +128,12 @@
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+             <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relationship="stack"
                 visible="false">

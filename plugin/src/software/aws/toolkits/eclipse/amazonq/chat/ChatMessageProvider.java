@@ -60,6 +60,7 @@ public final class ChatMessageProvider {
             inflightRequestByTabId.remove(tabId);
 
             if (exception != null) {
+                Activator.getLogger().error("An error occurred while processing chat request.", exception);
                 String errorTitle = "An error occurred while processing your request.";
                 String errorMessage = String.format("Details: %s", exception.getMessage());
                 ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);

@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -106,7 +107,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 AmazonQView.showView(ReauthenticateView.ID);
             } else {
                 if (!browser.isDisposed()) {
-                    browser.setText(getContent());
+                    getContent().ifPresentOrElse(
+                            content -> browser.setText(content),
+                            this::showChatAssetMissingView
+                        );
                 }
             }
         });
@@ -121,9 +125,14 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         }
     }
 
-    private String getContent() {
+    private Optional<String> getContent() {
         var chatUiDirectory = LspManagerProvider.getInstance().getLspInstallation().getClientDirectory();
-        // TODO: Show a notification if the directory does not exist and chat ui fails to load
+
+        if (!isValid(chatUiDirectory)) {
+            Activator.getLogger().error("Error loading Chat UI. If override used, please verify the override env variables else restart Eclipse");
+            return Optional.empty();
+        }
+
         String jsFile = Paths.get(chatUiDirectory).resolve("amazonq-ui.js").toString();
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
@@ -131,11 +140,14 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         webviewAssetServer = new WebviewAssetServer();
         var result = webviewAssetServer.resolve(jsDirectoryPath);
         if (!result) {
-            return "Failed to load JS";
+            Activator.getLogger().error(String.format(
+                    "Error loading Chat UI. Unable to find the `amazonq-ui.js` file in the directory: %s. Please verify and restart",
+                    chatUiDirectory));
+            return Optional.empty();
         }
 
         var chatJsPath = webviewAssetServer.getUri() + "amazonq-ui.js";
-        return String.format("""
+        return Optional.of(String.format("""
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -153,7 +165,11 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     %s
                 </body>
                 </html>
-                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath));
+                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
+    }
+
+    private boolean isValid(final String chatUiDirectory) {
+        return chatUiDirectory != null && !chatUiDirectory.isEmpty() && Files.exists(Paths.get(chatUiDirectory));
     }
 
     private String generateCss() {
@@ -231,5 +247,15 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         }
         chatCommunicationManager.removeListener();
         super.dispose();
+    }
+
+    private void showChatAssetMissingView() {
+        Display.getCurrent().asyncExec(() -> {
+            try {
+                showView(ChatAssetMissingView.ID);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occured while attempting to show chat asset missing view", e);
+            }
+        });
     }
 }

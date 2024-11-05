@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
@@ -25,7 +26,8 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     private static final Set<String> AMAZON_Q_VIEWS = Set.of(
             ToolkitLoginWebview.ID,
             AmazonQChatWebview.ID,
-            DependencyMissingView.ID
+            DependencyMissingView.ID,
+            ReauthenticateView.ID
         );
 
     private Browser browser;
@@ -43,27 +45,32 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             return;
         }
 
-        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-        if (page != null) {
-            // Hide all other Amazon Q Views
-            IViewReference[] viewReferences = page.getViewReferences();
-            for (IViewReference viewRef : viewReferences) {
-                if (AMAZON_Q_VIEWS.contains(viewRef.getId()) && !viewRef.getId().equalsIgnoreCase(viewId)) {
+        Display.getDefault().execute(() -> {
+            IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+            if (window != null) {
+                IWorkbenchPage page = window.getActivePage();
+                if (page != null) {
+                    // Hide all other Amazon Q Views
+                    IViewReference[] viewReferences = page.getViewReferences();
+                    for (IViewReference viewRef : viewReferences) {
+                        if (AMAZON_Q_VIEWS.contains(viewRef.getId()) && !viewRef.getId().equalsIgnoreCase(viewId)) {
+                            try {
+                                page.hideView(viewRef);
+                            } catch (Exception e) {
+                                Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
+                            }
+                        }
+                    }
+                    // Show requested view
                     try {
-                        page.hideView(viewRef);
+                        page.showView(viewId);
+                        Activator.getLogger().info("Showing view " + viewId);
                     } catch (Exception e) {
-                        Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
+                        Activator.getLogger().error("Error occurred while showing view " + viewId, e);
                     }
                 }
             }
-            // Show requested view
-            try {
-                page.showView(viewId);
-                Activator.getLogger().info("Showing view " + viewId);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error occurred while showing view " + viewId, e);
-            }
-        }
+        });
     }
 
     public final Browser getBrowser() {
@@ -73,7 +80,6 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     public final AmazonQCommonActions getAmazonQCommonActions() {
         return amazonQCommonActions;
     }
-
 
     protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         // if browser setup fails, don't set up rest of the content

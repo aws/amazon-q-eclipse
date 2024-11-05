@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.telemetry.service;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -27,6 +28,7 @@ import software.amazon.awssdk.services.toolkittelemetry.model.MetricDatum;
 import software.amazon.awssdk.services.toolkittelemetry.model.PostFeedbackRequest;
 import software.amazon.awssdk.services.toolkittelemetry.model.PostMetricsRequest;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ErrorData;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -56,7 +58,7 @@ public final class DefaultTelemetryServiceTest {
     public void testEmitTelemetryEventTelemetryDisabled() {
         setupMockActivatorWithTelemetryOptIn(false);
         when(mockClient.postMetrics((PostMetricsRequest) any())).thenReturn(null);
-        service.emitMetric(new TelemetryEvent("FooEvent", "FooResult", new HashMap<>()));
+        service.emitMetric(new TelemetryEvent("FooEvent", "FooResult", new HashMap<>(), null));
         verify(mockClient, never()).postMetrics(any(PostMetricsRequest.class));
     }
 
@@ -66,7 +68,7 @@ public final class DefaultTelemetryServiceTest {
         when(mockClient.postMetrics(any(PostMetricsRequest.class))).thenReturn(null);
         Map<String, Object> data = new HashMap<>();
         data.put("key", "value");
-        service.emitMetric(new TelemetryEvent("FooEvent", "FooResult", data));
+        service.emitMetric(new TelemetryEvent("FooEvent", "FooResult", data, null));
         verify(mockClient).postMetrics(any(PostMetricsRequest.class));
     }
 
@@ -134,17 +136,16 @@ public final class DefaultTelemetryServiceTest {
         assertEquals(1.0, requestDatum.value());
 
         assertEquals(requestDatum.metadata().size(), 1);
-        MetadataEntry metadataEntry = requestDatum.metadata().get(0);
-        assertEquals("foo", metadataEntry.key());
-        assertEquals("fooVal", metadataEntry.value());
+        assertTrue(requestDatum.metadata().stream()
+                .anyMatch(entry -> entry.key().equals("foo") && entry.value().equals("fooVal")));
     }
 
     @Test
     public void testEmitMetricTelemetryEvent() {
         setupMockActivatorWithTelemetryOptIn(true);
-
         Map<String, Object> metadata = Map.of("foo", "fooVal");
-        TelemetryEvent event = new TelemetryEvent("testEvent", "testResult", metadata);
+        ErrorData errorData = new ErrorData("fooReason", "fooError", 500);
+        TelemetryEvent event = new TelemetryEvent("testEvent", "testResult", metadata, errorData);
         ArgumentCaptor<PostMetricsRequest> requestCaptor = ArgumentCaptor.forClass(PostMetricsRequest.class);
         service.emitMetric(event);
         verify(mockClient).postMetrics(requestCaptor.capture());
@@ -163,12 +164,18 @@ public final class DefaultTelemetryServiceTest {
         assertEquals("testEvent", requestDatum.metricName());
         assertEquals("testEvent", requestDatum.metricName());
 
-        assertEquals(requestDatum.metadata().size(), 1);
-        MetadataEntry metadataEntry = requestDatum.metadata().get(0);
-        assertEquals("foo", metadataEntry.key());
-        assertEquals("fooVal", metadataEntry.value());
+        assertEquals(requestDatum.metadata().size(), 5);
+        assertTrue(requestDatum.metadata().stream()
+                .anyMatch(entry -> entry.key().equals("foo") && entry.value().equals("fooVal")));
+        assertTrue(requestDatum.metadata().stream()
+                .anyMatch(entry -> entry.key().equals("result") && entry.value().equals("testResult")));
+        assertTrue(requestDatum.metadata().stream()
+                .anyMatch(entry -> entry.key().equals("reason") && entry.value().equals("fooReason")));
+        assertTrue(requestDatum.metadata().stream()
+                .anyMatch(entry -> entry.key().equals("errorCode") && entry.value().equals("fooError")));
+        assertTrue(requestDatum.metadata().stream()
+                .anyMatch(entry -> entry.key().equals("httpStatusCode") && entry.value().equals("500")));
     }
-
 
     private void setupMockActivatorWithTelemetryOptIn(final boolean telemetryOptIn) {
         IPreferenceStore mockPreferenceStore = mock(IPreferenceStore.class);

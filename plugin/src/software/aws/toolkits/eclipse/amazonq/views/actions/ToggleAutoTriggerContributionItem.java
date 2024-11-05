@@ -30,8 +30,8 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
         var pauseImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.ui.navigator",
                 "icons/full/clcl16/pause.png");
         pause = pauseImageDescriptor.createImage(Display.getCurrent());
-        var resumeImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.wst.ws.explorer",
-                "wsexplorer/images/elcl16/actionengine_play.gif");
+        var resumeImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.ui.cheatsheets",
+                "icons/elcl16/start_task.png");
         resume = resumeImageDescriptor.createImage(Display.getCurrent());
     }
 

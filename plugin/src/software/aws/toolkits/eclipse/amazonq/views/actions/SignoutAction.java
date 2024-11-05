@@ -24,7 +24,6 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
                 LoginDetails loginDetails = Activator.getLoginService().getLoginDetails().get();
                 if (loginDetails.getIsLoggedIn()) {
                     Activator.getLoginService().logout().get();
-
                 }
                 return;
             } catch (Exception e) {

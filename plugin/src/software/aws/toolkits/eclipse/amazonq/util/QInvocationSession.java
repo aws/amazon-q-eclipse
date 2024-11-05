@@ -28,7 +28,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
@@ -44,7 +43,6 @@ public final class QInvocationSession extends QResource {
     private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
-    private ReentrantLock sessionLock = new ReentrantLock();
 
     private QSuggestionsContext suggestionsContext = null;
 

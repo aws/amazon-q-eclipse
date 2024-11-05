@@ -8,15 +8,23 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import org.mockito.MockedStatic;
 import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.FrameworkUtil;
-//import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class PluginClientMetadataTest {
 
@@ -42,7 +50,12 @@ public class PluginClientMetadataTest {
     }
     @AfterAll
     static void tearDown() {
-        mockedPlatform.close();
+        if (mockedPlatform != null) {
+            mockedPlatform.close();
+        }
+        if (mockedFrameworkUtil != null) {
+            mockedFrameworkUtil.close();
+        }
         System.clearProperty("os.name");
         System.clearProperty("os.version");
         System.clearProperty("eclipse.buildId");
@@ -84,7 +97,30 @@ public class PluginClientMetadataTest {
     }
 
     @Test
-    void testGetClientId() {
+    void testGetClientIdExists() {
+        String clientIdKey = "clientId";
+        String expectedClientId = "testClientId";
 
+        PluginStore pluginStoreMock = activatorStaticMockExtension.getMock(PluginStore.class);
+        when(pluginStoreMock.get(clientIdKey)).thenReturn("testClientId");
+
+        assertEquals(expectedClientId, instance.getClientId());
+        verify(pluginStoreMock).get(clientIdKey);
+        verify(pluginStoreMock, never()).put(eq(clientIdKey), anyString());
+    }
+    @Test
+    void testGetClientIdWhenNull() {
+        String clientIdKey = "clientId";
+        String expectedClientId = "testRandomUUID";
+        PluginStore pluginStoreMock = activatorStaticMockExtension.getMock(PluginStore.class);
+
+        try (MockedStatic<UUID> mockedUUID = mockStatic(UUID.class, RETURNS_DEEP_STUBS)) {
+            mockedUUID.when(() -> UUID.randomUUID().toString()).thenReturn(expectedClientId);
+            when(pluginStoreMock.get(clientIdKey)).thenReturn(null);
+
+            assertEquals(expectedClientId, instance.getClientId());
+            verify(pluginStoreMock, times(2)).get(clientIdKey);
+            verify(pluginStoreMock).put(clientIdKey, expectedClientId);
+        }
     }
 }

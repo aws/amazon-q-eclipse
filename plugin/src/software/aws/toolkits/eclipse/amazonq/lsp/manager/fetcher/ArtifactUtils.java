@@ -3,8 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +72,7 @@ public final class ArtifactUtils {
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("No SHA-384 hash found in manifest"));
 
-            var actualHash = DigestUtils.sha384Hex(new FileInputStream(file.toFile()));
+            var actualHash = calculateHash(file);
 
             if (!actualHash.equalsIgnoreCase(expectedHash)) {
                 if (strict) {
@@ -85,6 +85,12 @@ public final class ArtifactUtils {
             Activator.getLogger().error("Error validating hash for " + file.getFileName(), e);
         }
         return false;
+    }
+
+    public static String calculateHash(final Path filePath) throws IOException {
+        try (InputStream is = Files.newInputStream(filePath)) {
+            return DigestUtils.sha384Hex(is);
+        }
     }
 
     public static boolean deleteFile(final Path filePath) {

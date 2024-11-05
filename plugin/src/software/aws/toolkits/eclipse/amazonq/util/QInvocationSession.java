@@ -49,12 +49,14 @@ public final class QInvocationSession extends QResource {
     private ITextEditor editor = null;
     private ITextViewer viewer = null;
     private Font inlineTextFont = null;
+    private Font inlineTextFontBold = null;
     private int invocationOffset = -1;
     private int tabSize;
     private long invocationTimeInMs = -1L;
     private QInlineRendererListener paintListener = null;
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
+    private QInlineTerminationListener terminationListener = null;
     private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
@@ -136,9 +138,12 @@ public final class QInvocationSession extends QResource {
             }
 
             var widget = viewer.getTextWidget();
+            terminationListener = QEclipseEditorUtils.getInlineTerminationListener();
+            widget.addFocusListener(terminationListener);
 
             suggestionsContext = new QSuggestionsContext();
             inlineTextFont = QEclipseEditorUtils.getInlineTextFont(widget, Q_INLINE_HINT_TEXT_STYLE);
+            inlineTextFontBold = QEclipseEditorUtils.getInlineCloseBracketFontBold(widget);
             invocationOffset = widget.getCaretOffset();
             invocationTimeInMs = System.currentTimeMillis();
             System.out.println("Session started.");
@@ -169,13 +174,15 @@ public final class QInvocationSession extends QResource {
         widget.addCaretListener(caretListener);
     }
 
-    public void invoke(final int invocationOffset) {
+    public void invoke(final int invocationOffset, final int inputLength) {
         var session = QInvocationSession.getInstance();
 
         try {
+            int adjustedInvocationOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer,
+                    invocationOffset) + inputLength;
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
-                    invocationOffset, InlineCompletionTriggerKind.Automatic);
-            queryAsync(params, invocationOffset);
+                    adjustedInvocationOffset, InlineCompletionTriggerKind.Automatic);
+            queryAsync(params, invocationOffset + inputLength);
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
             Activator.getLogger().error("Unable to compute inline completion request from document", e);
@@ -186,8 +193,10 @@ public final class QInvocationSession extends QResource {
         var session = QInvocationSession.getInstance();
 
         try {
+            int adjustedInvocationOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer,
+                    session.getInvocationOffset());
             var params = InlineCompletionUtils.cwParamsFromContext(session.getEditor(), session.getViewer(),
-                    session.getInvocationOffset(), InlineCompletionTriggerKind.Invoke);
+                    adjustedInvocationOffset, InlineCompletionTriggerKind.Invoke);
             queryAsync(params, session.getInvocationOffset());
         } catch (BadLocationException e) {
             System.out.println("BadLocationException: " + e.getMessage());
@@ -288,16 +297,8 @@ public final class QInvocationSession extends QResource {
     // Method to end the session
     public void end() {
         if (isActive() && unresolvedTasks.isEmpty()) {
-            // Get the current thread's stack trace
-            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-
-            // Log the stack trace
-            System.out.println("Stack trace:");
-            for (StackTraceElement element : stackTraceElements) {
-                System.out.println(element);
-            }
-            dispose();
             transitionToInactiveState();
+            dispose();
             // End session logic here
             System.out.println("Session ended.");
         } else if (!unresolvedTasks.isEmpty()) {
@@ -308,8 +309,8 @@ public final class QInvocationSession extends QResource {
 
     public void endImmediately() {
         if (isActive()) {
-            dispose();
             transitionToInactiveState();
+            dispose();
             System.out.println("Session terminated");
         }
     }
@@ -344,6 +345,10 @@ public final class QInvocationSession extends QResource {
     }
 
     public void transitionToInactiveState() {
+        if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
+            int lastKnownLine = getLastKnownLine();
+            unsetVerticalIndent(lastKnownLine + 1);
+        }
         state = QInvocationSessionState.INACTIVE;
         if (changeStatusToIdle != null) {
             changeStatusToIdle.run();
@@ -542,6 +547,10 @@ public final class QInvocationSession extends QResource {
         changeStatusToPreviewing = runnable;
     }
 
+    public Font getBoldInlineFont() {
+        return inlineTextFontBold;
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
@@ -549,7 +558,9 @@ public final class QInvocationSession extends QResource {
 
         suggestionsContext = null;
         inlineTextFont.dispose();
+        inlineTextFontBold.dispose();
         inlineTextFont = null;
+        inlineTextFontBold = null;
         closingBrackets = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
@@ -568,6 +579,9 @@ public final class QInvocationSession extends QResource {
             widget.removeVerifyKeyListener(inputListener);
             widget.removeMouseListener(inputListener);
         }
+        if (terminationListener != null) {
+            widget.removeFocusListener(terminationListener);
+        }
         QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         if (paintListener != null) {
             paintListener.beforeRemoval();
@@ -579,6 +593,7 @@ public final class QInvocationSession extends QResource {
         paintListener = null;
         caretListener = null;
         inputListener = null;
+        terminationListener = null;
         invocationOffset = -1;
         invocationTimeInMs = -1L;
         editor = null;

@@ -3,6 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-import java.util.Map;
-
-public record TelemetryEvent(String name, String result, Map<String, Object> data, ErrorData errorData) { }
+public record ErrorData(String reason, String errorCode, int httpStatusCode) { }

@@ -54,11 +54,29 @@ public final class DefaultTelemetryService implements TelemetryService {
         }
 
         List<MetadataEntry> metadataEntries = new ArrayList<>();
+        metadataEntries.add(MetadataEntry.builder()
+                .key("result")
+                .value(event.result())
+                .build());
         for (Map.Entry<String, Object> entry : event.data().entrySet()) {
             MetadataEntry.Builder builder = MetadataEntry.builder();
             builder.key(entry.getKey());
             builder.value(entry.getValue().toString());
             metadataEntries.add(builder.build());
+        }
+        if (event.errorData() != null) {
+            metadataEntries.add(MetadataEntry.builder()
+                    .key("reason")
+                    .value(event.errorData().reason())
+                    .build());
+            metadataEntries.add(MetadataEntry.builder()
+                    .key("errorCode")
+                    .value(event.errorData().errorCode())
+                    .build());
+            metadataEntries.add(MetadataEntry.builder()
+                    .key("httpStatusCode")
+                    .value(String.valueOf(event.errorData().httpStatusCode()))
+                    .build());
         }
         MetricDatum datum = MetricDatum.builder()
                 .metricName(event.name())

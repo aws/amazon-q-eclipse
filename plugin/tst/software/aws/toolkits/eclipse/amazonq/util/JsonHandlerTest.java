@@ -1,22 +1,21 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -25,8 +24,12 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 
 public class JsonHandlerTest {
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
 
     private class TestObject {
         private String field;
@@ -40,32 +43,17 @@ public class JsonHandlerTest {
 
     @Mock
     private static ObjectMapper mockObjectMapper;
-
-    @Mock
-    private static LoggingService mockLogger;
-
     private static JsonHandler jsonHandler;
 
-    private static MockedStatic<Activator> mockedActivator;
-
     @BeforeEach
-        final void setUpMocksBeforeEach() {
+    final void setUpMocksBeforeEach() {
         mockObjectMapper = mock(ObjectMapper.class);
         jsonHandler = new JsonHandler(mockObjectMapper);
     }
 
     @BeforeAll
-        static final void setUpMocksBeforeAll() {
-        mockLogger = mock(LoggingService.class);
+    static final void setUpMocksBeforeAll() {
         mockObjectMapper = mock(ObjectMapper.class);
-        mockedActivator = mockStatic(Activator.class);
-        mockedActivator.when(Activator::getLogger).thenReturn(mockLogger);
-        doNothing().when(mockLogger).error(anyString(), any(Exception.class));
-    }
-
-    @AfterAll
-    static final void tearDownActivator() {
-        mockedActivator.close();
     }
 
     @Test
@@ -87,8 +75,11 @@ public class JsonHandlerTest {
         String result = jsonHandler.serialize(objectToSerialize);
 
         assertNull(result);
-        verify(mockLogger).error(eq("Error occurred while serializing object: " + objectToSerialize.toString()), eq(testExceptionThrown));
         verify(mockObjectMapper).writeValueAsString(objectToSerialize);
+
+        LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
+        verify(loggingServiceMock).error(eq("Error occurred while serializing object: "
+                + objectToSerialize), eq(testExceptionThrown));
     }
 
     @Test
@@ -112,7 +103,10 @@ public class JsonHandlerTest {
 
         assertNull(deserializedObject);
         verify(mockObjectMapper).readValue(jsonStringToDeserialize, TestObject.class);
-        verify(mockLogger).error(eq("Error occurred while deserializing jsonString: " + jsonStringToDeserialize), eq(testExceptionThrown));
+
+        LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
+        verify(loggingServiceMock).error(eq("Error occurred while deserializing jsonString: "
+                + jsonStringToDeserialize), eq(testExceptionThrown));
     }
 
     @Test

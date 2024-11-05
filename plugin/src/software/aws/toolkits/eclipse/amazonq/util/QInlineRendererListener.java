@@ -30,9 +30,17 @@ public class QInlineRendererListener implements PaintListener {
 
         var gc = e.gc;
         var widget = qInvocationSessionInstance.getViewer().getTextWidget();
-        var invocationLine = widget.getLineAtOffset(qInvocationSessionInstance.getInvocationOffset());
+        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
+        int currentOffset = widget.getCaretOffset();
+
+        if (currentOffset < invocationOffset) {
+            qInvocationSessionInstance.end();
+            return;
+        }
+
+        var invocationLine = widget.getLineAtOffset(invocationOffset);
         var segments = qInvocationSessionInstance.getSegments();
-        var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+        var caretLine = widget.getLineAtOffset(currentOffset);
         int numSuggestionLines = qInvocationSessionInstance.getNumSuggestionLines();
 
         if (shouldIndentVertically(widget, caretLine) && qInvocationSessionInstance.isPreviewingSuggestions()) {

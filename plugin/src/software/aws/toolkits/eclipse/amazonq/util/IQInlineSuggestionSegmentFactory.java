@@ -60,9 +60,6 @@ public final class IQInlineSuggestionSegmentFactory {
                             sb.setCharAt(j, ' ');
                             res.add(closeBracket);
                             res.add(top);
-                        } else {
-                            top.dispose();
-                            closeBracket.dispose();
                         }
                     }
                     break;

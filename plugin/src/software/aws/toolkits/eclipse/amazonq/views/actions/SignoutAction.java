@@ -8,6 +8,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.AmazonQView;
 import software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview;
 
@@ -20,14 +21,20 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
     public void run() {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-                ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
-                Activator.getLoginService().logout().get();
+                LoginDetails loginDetails = Activator.getLoginService().getLoginDetails().get();
+                if (loginDetails.getIsLoggedIn()) {
+                    Activator.getLoginService().logout().get();
+                    Activator.getLogger().info("Signed out of Amazon q");
+                    Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                    ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
+                    AmazonQView.showView(ToolkitLoginWebview.ID);
+                }
             } catch (Exception e) {
-                Activator.getLogger().error("Failed to logout", e);
+                PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to sign out of Amazon Q. Please try again.");
+                Activator.getLogger().error("Failed to sign out", e);
+                return;
             }
         });
-        AmazonQView.showView(ToolkitLoginWebview.ID);
     }
 
     public void updateVisibility(final LoginDetails loginDetails) {

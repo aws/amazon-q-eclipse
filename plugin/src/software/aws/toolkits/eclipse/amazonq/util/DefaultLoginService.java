@@ -28,9 +28,11 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSessionSettings;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -39,12 +41,14 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 public final class DefaultLoginService implements LoginService {
     private LspProvider lspProvider;
     private PluginStore pluginStore;
+    private LspEncryptionManager encryptionManager;
     private LoginType currentLogin;
     private LoginParams loginParams;
 
     private DefaultLoginService(final Builder builder) {
         this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
         this.pluginStore = Objects.requireNonNull(builder.pluginStore, "pluginStore cannot be null");
+        this.encryptionManager = Objects.requireNonNull(builder.encryptionManager, "encryption manager cannot be null");
         String loginType = pluginStore.get(Constants.LOGIN_TYPE_KEY);
         currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
         loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
@@ -135,21 +139,23 @@ public final class DefaultLoginService implements LoginService {
                     return loginDetails;
                 })
                 .exceptionally(throwable -> {
+                    // TODO update to attempt a sign in if token retrieval fails https://sim.amazon.com/issues/ECLIPSE-457
                     Activator.getLogger().error("Failed to check login status", throwable);
                     loginDetails.setIsLoggedIn(false);
                     loginDetails.setLoginType(LoginType.NONE);
                     loginDetails.setIssuerUrl(null);
+                    AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
                     return loginDetails;
                 });
     }
 
     public CompletableFuture<Boolean> reAuthenticate() {
-        if (currentLogin.equals(LoginType.NONE)) {
-            Activator.getLogger().warn("Reauthenticate called without an active login");
-            return CompletableFuture.completedFuture(false);
-        }
+        LoginType loginType = getLoginTypeFromPluginStore();
+        LoginParams loginIdcParams = getLoginParamsFromPluginStore();
 
-        return login(currentLogin, loginParams)
+        Activator.getLogger().info("Attempting to re-authenticate using login type " + loginType.name());
+
+        return login(loginType, loginIdcParams)
                 .thenApply(loggedIn -> {
                     Activator.getLogger().info("Successfully reauthenticated");
                     return true;
@@ -177,6 +183,25 @@ public final class DefaultLoginService implements LoginService {
     private void updatePluginStore(final LoginType type, final LoginParams params) {
         pluginStore.put(Constants.LOGIN_TYPE_KEY, type.name());
         pluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, params.getLoginIdcParams());
+    }
+
+    private LoginType getLoginTypeFromPluginStore() {
+        String storedValue = pluginStore.get(Constants.LOGIN_TYPE_KEY);
+
+         if (storedValue.equals(LoginType.BUILDER_ID.name())) {
+            return LoginType.BUILDER_ID;
+        } else if (storedValue.equals(LoginType.IAM_IDENTITY_CENTER.name())) {
+            return LoginType.IAM_IDENTITY_CENTER;
+        } else {
+            return LoginType.NONE;
+        }
+    }
+
+    private LoginParams getLoginParamsFromPluginStore() {
+        LoginIdcParams loginIdcParams = pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class);
+        LoginParams loginParams = new LoginParams();
+        loginParams.setLoginIdcParams(loginIdcParams);
+        return loginParams;
     }
 
     private void removeItemsFromPluginStore() {
@@ -247,12 +272,12 @@ public final class DefaultLoginService implements LoginService {
 
     CompletableFuture<ResponseMessage> updateCredentials(final SsoToken ssoToken) {
         BearerCredentials credentials = new BearerCredentials();
-        var decryptedToken = LspEncryptionManager.getInstance().decrypt(ssoToken.accessToken());
+        var decryptedToken = encryptionManager.decrypt(ssoToken.accessToken());
         decryptedToken = decryptedToken.substring(1, decryptedToken.length() - 1);
         credentials.setToken(decryptedToken);
-        UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload();
-        updateCredentialsPayload.setData(credentials);
-        updateCredentialsPayload.setEncrypted(false);
+        UpdateCredentialsPayloadData data = new UpdateCredentialsPayloadData(credentials);
+        String encryptedData = encryptionManager.encrypt(data);
+        UpdateCredentialsPayload updateCredentialsPayload = new UpdateCredentialsPayload(encryptedData, true);
         return lspProvider.getAmazonQServer()
                 .thenCompose(server -> server.updateTokenCredentials(updateCredentialsPayload))
                 .exceptionally(throwable -> {
@@ -272,6 +297,8 @@ public final class DefaultLoginService implements LoginService {
     public static class Builder {
         private LspProvider lspProvider;
         private PluginStore pluginStore;
+        private LspEncryptionManager encryptionManager;
+        private boolean initializeOnStartUp;
 
         public final Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
@@ -279,6 +306,14 @@ public final class DefaultLoginService implements LoginService {
         }
         public final Builder withPluginStore(final PluginStore pluginStore) {
             this.pluginStore = pluginStore;
+            return this;
+        }
+        public final Builder withEncryptionManager(final LspEncryptionManager encryptionManager) {
+            this.encryptionManager = encryptionManager;
+            return this;
+        }
+        public final Builder initializeOnStartUp() {
+            this.initializeOnStartUp = true;
             return this;
         }
 
@@ -289,8 +324,13 @@ public final class DefaultLoginService implements LoginService {
             if (pluginStore == null) {
                 pluginStore = Activator.getPluginStore();
             }
+            if (encryptionManager == null) {
+                encryptionManager = DefaultLspEncryptionManager.getInstance();
+            }
             DefaultLoginService instance = new DefaultLoginService(this);
-            instance.updateToken();
+            if (initializeOnStartUp) {
+                instance.updateToken();
+            }
             return instance;
         }
     }

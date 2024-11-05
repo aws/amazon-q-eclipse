@@ -16,6 +16,12 @@
             id="amazonq">
         </category>
         <view
+            id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
@@ -53,6 +59,8 @@
 	  </activity>
 	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
 	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
+	  </activity>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
 	     isEqualityPattern="true"
@@ -67,6 +75,11 @@
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
 	  </activityPatternBinding>
 	 </extension>
     <extension
@@ -95,6 +108,18 @@
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relationship="stack"
                 visible="false">
             </view>

@@ -5,39 +5,23 @@ package software.aws.toolkits.eclipse.amazonq.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 
 import java.util.stream.Stream;
 
 import org.eclipse.swt.SWT;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.MockedStatic;
 
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
 public final class AmazonQViewControllerTest {
     private AmazonQViewController viewController;
-    private MockedStatic<Activator> mockedActivator;
-    private LoggingService mockedLogger;
 
-    @BeforeEach
-    void setUp() {
-        mockedLogger = mock(LoggingService.class);
-        mockedActivator = mockStatic(Activator.class);
-        mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
-    }
-
-    @AfterEach
-    void tearDown() {
-        mockedActivator.close();
-    }
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorExtension = new ActivatorStaticMockExtension();
 
     @ParameterizedTest
     @MethodSource("provideBrowserStyleData")

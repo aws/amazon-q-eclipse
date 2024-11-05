@@ -3,8 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.telemetry.metadata;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -35,8 +35,8 @@ public class PluginClientMetadataTest {
     private static MockedStatic<Platform> mockedPlatform;
     private static MockedStatic<FrameworkUtil> mockedFrameworkUtil;
 
-    @BeforeAll
-    static void setUpAll() {
+    @BeforeEach
+    void setUp() {
         System.setProperty("os.name", "testOS");
         System.setProperty("os.version", "testOSVersion");
         System.setProperty("eclipse.buildId", "testBuildId");
@@ -48,8 +48,8 @@ public class PluginClientMetadataTest {
                 .thenReturn("testPluginVersion");
         instance = PluginClientMetadata.getInstance();
     }
-    @AfterAll
-    static void tearDown() {
+    @AfterEach
+    void tearDown() {
         if (mockedPlatform != null) {
             mockedPlatform.close();
         }

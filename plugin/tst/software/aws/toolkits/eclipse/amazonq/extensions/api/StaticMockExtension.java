@@ -7,13 +7,19 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class StaticMockExtension<T> implements MockRetrievable<T> {
+
     private Map<Class<?>, Object> mocksMap;
 
-    @Override
-    public final <U> Optional<U> getMock(final Class<U> type) {
+    private <U> Optional<U> getMockOptional(final Class<U> type) {
         return Optional.ofNullable(mocksMap.get(type))
                 .filter(type::isInstance)
                 .map(type::cast);
+    }
+
+    @Override
+    public final <U> U getMock(final Class<U> type) {
+        return getMockOptional(type)
+                .orElseThrow(() -> new IllegalArgumentException("No mock found for type: " + type));
     }
 
     public final Map<Class<?>, Object> getMocksMap() {

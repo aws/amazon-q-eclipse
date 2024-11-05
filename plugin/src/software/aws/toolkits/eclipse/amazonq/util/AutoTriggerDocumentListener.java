@@ -62,6 +62,8 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
 
         if (isChangeInducedByAcceptance) {
             // It is acceptable to alter the state here because:
+            // - This listener is the only thing that is consuming this state
+            // - `documentChanged` is called on a single thread. And therefore `shouldSendQuery` is also called on a single thread.
             isChangeInducedByAcceptance = false;
             return false;
         }

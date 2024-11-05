@@ -3,8 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.telemetry.metadata;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -35,8 +35,12 @@ public class PluginClientMetadataTest {
     private static MockedStatic<Platform> mockedPlatform;
     private static MockedStatic<FrameworkUtil> mockedFrameworkUtil;
 
-    @BeforeEach
-    final void setUp() {
+    private static String originalOsName = System.getProperty("os.name");
+    private static String originalVersion = System.getProperty("os.version");
+    private static String originalEclipseBuildId = System.getProperty("eclipse.buildId");
+
+    @BeforeAll
+    static void setUp() {
         System.setProperty("os.name", "testOS");
         System.setProperty("os.version", "testOSVersion");
         System.setProperty("eclipse.buildId", "testBuildId");
@@ -48,17 +52,24 @@ public class PluginClientMetadataTest {
                 .thenReturn("testPluginVersion");
         instance = PluginClientMetadata.getInstance();
     }
-    @AfterEach
-    final void tearDown() {
+
+    @AfterAll
+    static void tearDown() {
         if (mockedPlatform != null) {
             mockedPlatform.close();
         }
         if (mockedFrameworkUtil != null) {
             mockedFrameworkUtil.close();
         }
-        System.clearProperty("os.name");
-        System.clearProperty("os.version");
-        System.clearProperty("eclipse.buildId");
+        if (originalOsName != null) {
+            System.setProperty("os.name", originalOsName);
+        }
+        if (originalVersion != null) {
+            System.setProperty("os.version", originalVersion);
+        }
+        if (originalEclipseBuildId != null) {
+            System.setProperty("eclipse.buildId", originalEclipseBuildId);
+        }
     }
 
     @Test

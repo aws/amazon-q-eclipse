@@ -52,31 +52,15 @@ public final class DefaultTelemetryService implements TelemetryService {
         if (!telemetryEnabled()) {
             return;
         }
-
         List<MetadataEntry> metadataEntries = new ArrayList<>();
-        metadataEntries.add(MetadataEntry.builder()
-                .key("result")
-                .value(event.result())
-                .build());
+        addMetadata("result", event.result(), metadataEntries);
         for (Map.Entry<String, Object> entry : event.data().entrySet()) {
-            MetadataEntry.Builder builder = MetadataEntry.builder();
-            builder.key(entry.getKey());
-            builder.value(entry.getValue().toString());
-            metadataEntries.add(builder.build());
+            addMetadata(entry.getKey(), entry.getValue(), metadataEntries);
         }
         if (event.errorData() != null) {
-            metadataEntries.add(MetadataEntry.builder()
-                    .key("reason")
-                    .value(event.errorData().reason())
-                    .build());
-            metadataEntries.add(MetadataEntry.builder()
-                    .key("errorCode")
-                    .value(event.errorData().errorCode())
-                    .build());
-            metadataEntries.add(MetadataEntry.builder()
-                    .key("httpStatusCode")
-                    .value(String.valueOf(event.errorData().httpStatusCode()))
-                    .build());
+            addMetadata("reason", event.errorData().reason(), metadataEntries);
+            addMetadata("errorCode", event.errorData().errorCode(), metadataEntries);
+            addMetadata("httpStatusCode", event.errorData().httpStatusCode(), metadataEntries);
         }
         MetricDatum datum = MetricDatum.builder()
                 .metricName(event.name())
@@ -149,6 +133,15 @@ public final class DefaultTelemetryService implements TelemetryService {
 
     public static boolean telemetryEnabled() {
         return Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.TELEMETRY_OPT_IN);
+    }
+
+    private void addMetadata(final String key, final Object value, final List<MetadataEntry> entries) {
+        if (key != null && value != null) {
+            entries.add(MetadataEntry.builder()
+                    .key(key)
+                    .value(String.valueOf(value))
+                    .build());
+        }
     }
 
     public static class Builder {

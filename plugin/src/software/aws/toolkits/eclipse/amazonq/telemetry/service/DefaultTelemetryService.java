@@ -70,7 +70,6 @@ public final class DefaultTelemetryService implements TelemetryService {
                 .unit(Unit.NONE)
                 .metadata(metadataEntries)
                 .build();
-        System.out.println("Telemetry: " + datum.toString());
         emitMetric(datum);
     }
 

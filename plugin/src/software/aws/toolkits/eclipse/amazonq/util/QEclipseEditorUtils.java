@@ -7,7 +7,11 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HIN
 
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.function.Consumer;
 
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.commands.IExecutionListener;
+import org.eclipse.core.commands.NotHandledException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
@@ -262,5 +266,26 @@ public final class QEclipseEditorUtils {
 
     public static QInlineTerminationListener getInlineTerminationListener() {
         return new QInlineTerminationListener();
+    }
+
+    public static IExecutionListener getAutoTriggerExecutionListener(final Consumer<String> callback) {
+        return new IExecutionListener() {
+            @Override
+            public void notHandled(final String commandId, final NotHandledException exception) {
+                return;
+            }
+            @Override
+            public void postExecuteFailure(final String commandId, final org.eclipse.core.commands.ExecutionException exception) {
+                return;
+            }
+            @Override
+            public void postExecuteSuccess(final String commandId, final Object returnValue) {
+                return;
+            }
+            @Override
+            public void preExecute(final String commandId, final ExecutionEvent event) {
+                callback.accept(commandId);
+            }
+        };
     }
 }

@@ -3,9 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.IExecutionListener;
-import org.eclipse.core.commands.NotHandledException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.PlatformUI;
@@ -23,27 +21,11 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
 
     public AutoTriggerDocumentListener() {
         ICommandService commandService = PlatformUI.getWorkbench().getService(ICommandService.class);
-        executionListener = new IExecutionListener() {
-            @Override
-            public void notHandled(final String commandId, final NotHandledException exception) {
-                return;
+        executionListener = QEclipseEditorUtils.getAutoTriggerExecutionListener((commandId) -> {
+            if (commandId.equals(ACCEPTANCE_COMMAND_ID)) {
+                isChangeInducedByAcceptance = true;
             }
-            @Override
-            public void postExecuteFailure(final String commandId, final org.eclipse.core.commands.ExecutionException exception) {
-                return;
-            }
-            @Override
-            public void postExecuteSuccess(final String commandId, final Object returnValue) {
-                return;
-            }
-            @Override
-            public void preExecute(final String commandId, final ExecutionEvent event) {
-                if (commandId.equals(ACCEPTANCE_COMMAND_ID)) {
-                    System.out.println("command detected");
-                    isChangeInducedByAcceptance = true;
-                }
-            }
-        };
+        });
         commandService.addExecutionListener(executionListener);
     }
 
@@ -66,7 +48,6 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
                 return;
             }
         }
-        System.out.println("making an auto query");
         qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset(), e.getText().length());
     }
 

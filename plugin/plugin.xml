@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-
+    <extension point="org.eclipse.ui.services">
+	   <sourceProvider provider="software.aws.toolkits.eclipse.amazonq.lsp.AuthSourceProvider">
+	      <variable name="is_authenticated" priorityLevel="workbench"/>
+	   </sourceProvider>
+	</extension>
     <extension
         point="org.eclipse.ui.views">
         <!-- If adding a new view: -->
@@ -343,6 +347,23 @@
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
                     icon="icons/AmazonQ.png"
                     tooltip="Amazon Q">
+                    <visibleWhen checkEnabled="false">
+                        <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
+                            <equals value="true"/>
+                        </with>
+                    </visibleWhen>
+                </command>
+           </toolbar>
+           <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated">
+                <command id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated.command"
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
+                    icon="icons/AmazonQDisconnected.png" 
+                    tooltip="Amazon Q">
+                    <visibleWhen checkEnabled="false">
+                        <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
+                            <equals value="false"/>
+                        </with>
+                    </visibleWhen>
                 </command>
            </toolbar>
        </menuContribution>

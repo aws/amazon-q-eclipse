@@ -15,6 +15,6 @@ public class OpenUrlAction extends Action {
 
     @Override
     public final void run() {
-        PluginUtils.handleExternalLinkClick(this.url);
+        PluginUtils.openWebpage(this.url);
     }
 }

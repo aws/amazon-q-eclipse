@@ -8,12 +8,11 @@ import java.util.Optional;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.widgets.Display;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class ThemeDetector {
     private static final String THEME_STORE_LOCATION_FOR_ECLIPSE = "org.eclipse.e4.ui.css.swt.theme";
     private static final String THEME_KEY_FOR_ECLIPSE = "themeid";
-    
+
     public boolean isDarkTheme() {
         Optional<Boolean> isDarkThemeFromEclipsePreferences = isDarkThemeFromEclipsePreferences();
 

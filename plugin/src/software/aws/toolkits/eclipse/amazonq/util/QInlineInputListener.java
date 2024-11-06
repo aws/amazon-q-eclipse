@@ -5,20 +5,20 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.VerifyEvent;
-import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public final class QInlineInputListener implements VerifyListener, VerifyKeyListener, MouseListener {
+public final class QInlineInputListener implements IDocumentListener, VerifyKeyListener, MouseListener {
 
     private StyledText widget = null;
     private int distanceTraversed = 0;
@@ -45,17 +45,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
      * @param widget
      */
     public QInlineInputListener(final StyledText widget) {
-        IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
-        // This needs to be defaulted to true. This key is only present in the
-        // preference store if it is set to false.
-        // Therefore if you can't find it, it has been set to true.
-        isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
-        isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
-        isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
-//        preferences.putBoolean("closeBraces", false);
-//        preferences.putBoolean("closeBrackets", false);
-//        preferences.putBoolean("closeStrings", false);
         this.widget = widget;
+        QInvocationSession session = QInvocationSession.getInstance();
+        ITextViewer viewer = session.getViewer();
+        IDocument doc = viewer.getDocument();
+        doc.addDocumentListener(this);
     }
 
     /**
@@ -135,6 +129,7 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         }
 
         IDocument doc = qSes.getViewer().getDocument();
+        doc.removeDocumentListener(this);
         if (!toAppend.isEmpty()) {
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(qSes.getViewer(),
@@ -144,11 +139,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
                 Activator.getLogger().error(e.toString());
             }
         }
-
-        IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
-        preferences.putBoolean("closeBraces", isBracesSetToAutoClose);
-        preferences.putBoolean("closeBrackets", isBracketsSetToAutoClose);
-        preferences.putBoolean("closeStrings", isStringSetToAutoClose);
     }
 
     @Override
@@ -194,13 +184,10 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
     }
 
     @Override
-    public void verifyText(final VerifyEvent event) {
-        switch (lastKeyStrokeType) {
-        case NORMAL_INPUT:
-            break;
-        case BACKSPACE:
+    public void documentChanged(final DocumentEvent event) {
+        if (event.getText().isEmpty()) {
             var qInvocationSessionInstance = QInvocationSession.getInstance();
-            int numCharDeleted = event.end - event.start;
+            int numCharDeleted = event.getLength();
             if (numCharDeleted > distanceTraversed) {
                 qInvocationSessionInstance.transitionToDecisionMade();
                 qInvocationSessionInstance.end();
@@ -213,8 +200,6 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             }
             distanceTraversed -= numCharDeleted;
             return;
-        default:
-            return;
         }
 
         var qInvocationSessionInstance = QInvocationSession.getInstance();
@@ -223,18 +208,18 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         }
 
         String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
-        String input = event.text;
+        String input = event.getText();
         int currentOffset = widget.getCaretOffset();
         qInvocationSessionInstance
                 .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
 
         boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-//             System.out.println("input is: "
-//                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-//             System.out.println("suggestion is: "
-//                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-//                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+             System.out.println("input is: "
+                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+             System.out.println("suggestion is: "
+                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             qInvocationSessionInstance.transitionToDecisionMade();
             qInvocationSessionInstance.end();
             return;
@@ -246,6 +231,11 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
             }
         }
         distanceTraversed += input.length();
+    }
+
+    @Override
+    public void documentAboutToBeChanged(final DocumentEvent e) {
+        // TODO Auto-generated method stub
     }
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {

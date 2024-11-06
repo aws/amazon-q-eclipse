@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import org.eclipse.core.commands.IExecutionListener;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
@@ -39,16 +38,6 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
     @Override
     public void documentChanged(final DocumentEvent e) {
         var qSes = QInvocationSession.getInstance();
-        String input = e.getText();
-        if (input.equals("()")) {
-            IDocument doc = e.getDocument();
-            try {
-                doc.replace(e.getOffset(), e.getLength() + 1, "˚");
-            } catch (BadLocationException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        }
         if (!shouldSendQuery(e, qSes)) {
             return;
         }

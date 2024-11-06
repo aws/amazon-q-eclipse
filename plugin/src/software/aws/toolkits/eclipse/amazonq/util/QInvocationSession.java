@@ -166,7 +166,6 @@ public final class QInvocationSession extends QResource {
         }
 
         inputListener = QEclipseEditorUtils.getInlineInputListener(widget);
-        widget.addVerifyListener(inputListener);
         widget.addVerifyKeyListener(inputListener);
         widget.addMouseListener(inputListener);
 
@@ -577,7 +576,6 @@ public final class QInvocationSession extends QResource {
         unresolvedTasks.clear();
         if (inputListener != null) {
             inputListener.beforeRemoval();
-            widget.removeVerifyListener(inputListener);
             widget.removeVerifyKeyListener(inputListener);
             widget.removeMouseListener(inputListener);
         }

@@ -13,10 +13,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 public final class ThemeDetector {
     private static final String THEME_STORE_LOCATION_FOR_ECLIPSE = "org.eclipse.e4.ui.css.swt.theme";
     private static final String THEME_KEY_FOR_ECLIPSE = "themeid";
-    private static final String THEME_KEY_FOR_AMAZON_Q = "themeid";
-    private static final String DARK_MODE_THEME_ID_FOR_AMAZON_Q = "dark";
-    private static final String LIGHT_MDOE_THEME_ID_FOR_AMAZON_Q = "light";
-
+    
     public boolean isDarkTheme() {
         Optional<Boolean> isDarkThemeFromEclipsePreferences = isDarkThemeFromEclipsePreferences();
 
@@ -25,18 +22,6 @@ public final class ThemeDetector {
         }
 
         return Display.isSystemDarkTheme();
-    }
-
-    public void setDarkModePreference() {
-        setThemePreference(DARK_MODE_THEME_ID_FOR_AMAZON_Q);
-    }
-
-    public void setLightModePreference() {
-        setThemePreference(LIGHT_MDOE_THEME_ID_FOR_AMAZON_Q);
-    }
-
-    private void setThemePreference(final String theme) {
-        Activator.getPluginStore().put(THEME_KEY_FOR_AMAZON_Q, theme);
     }
 
     private Optional<Boolean> isDarkThemeFromEclipsePreferences() {

@@ -14,6 +14,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -185,7 +186,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
     @Override
     public void documentChanged(final DocumentEvent event) {
-        if (event.getText().isEmpty()) {
+        String input = event.getText();
+        if (input.isEmpty()) {
             var qInvocationSessionInstance = QInvocationSession.getInstance();
             int numCharDeleted = event.getLength();
             if (numCharDeleted > distanceTraversed) {
@@ -207,21 +209,36 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             return;
         }
 
+        if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
+                || input.equals("\"\"") || input.equals("[]"))) {
+            String openBracket = input.substring(0, 1);
+            ITextViewer viewer = qInvocationSessionInstance.getViewer();
+            IDocument doc = viewer.getDocument();
+            int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, event.getOffset());
+            try {
+                doc.replace(expandedOffset, event.getLength() + 2, openBracket);
+            } catch (BadLocationException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
         String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
-        String input = event.getText();
         int currentOffset = widget.getCaretOffset();
         qInvocationSessionInstance
                 .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
 
         boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-             System.out.println("input is: "
+            System.out.println("input is: "
                     + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-             System.out.println("suggestion is: "
+            System.out.println("suggestion is: "
                     + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
                             .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
-            qInvocationSessionInstance.transitionToDecisionMade();
-            qInvocationSessionInstance.end();
+            Display.getCurrent().asyncExec(() -> {
+                qInvocationSessionInstance.transitionToDecisionMade();
+                qInvocationSessionInstance.end();
+            });
             return;
         }
         for (int i = distanceTraversed; i < distanceTraversed + input.length(); i++) {

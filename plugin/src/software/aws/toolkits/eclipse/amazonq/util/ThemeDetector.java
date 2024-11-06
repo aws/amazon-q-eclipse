@@ -18,12 +18,7 @@ public final class ThemeDetector {
     private static final String LIGHT_MDOE_THEME_ID_FOR_AMAZON_Q = "light";
 
     public boolean isDarkTheme() {
-        Optional<Boolean> isDarkThemeFromAmazonQPreferences = isDarkThemeFromAmazonQPreferences();
         Optional<Boolean> isDarkThemeFromEclipsePreferences = isDarkThemeFromEclipsePreferences();
-
-        if (isDarkThemeFromAmazonQPreferences.isPresent()) {
-            return isDarkThemeFromAmazonQPreferences.get();
-        }
 
         if (isDarkThemeFromEclipsePreferences.isPresent()) {
             return isDarkThemeFromEclipsePreferences.get();
@@ -42,17 +37,6 @@ public final class ThemeDetector {
 
     private void setThemePreference(final String theme) {
         Activator.getPluginStore().put(THEME_KEY_FOR_AMAZON_Q, theme);
-    }
-
-    private Optional<Boolean> isDarkThemeFromAmazonQPreferences() {
-        String theme = Activator.getPluginStore().get(THEME_KEY_FOR_ECLIPSE);
-
-        if (theme == null || theme.isBlank()) {
-            return Optional.empty();
-        }
-
-        Boolean isDarkTheme = theme.equals(DARK_MODE_THEME_ID_FOR_AMAZON_Q);
-        return Optional.ofNullable(isDarkTheme);
     }
 
     private Optional<Boolean> isDarkThemeFromEclipsePreferences() {

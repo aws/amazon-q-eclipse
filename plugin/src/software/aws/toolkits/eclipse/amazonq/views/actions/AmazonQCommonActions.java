@@ -15,7 +15,6 @@ import org.eclipse.swt.browser.Browser;
 
 public final class AmazonQCommonActions {
 
-    private ChangeThemeAction changeThemeAction;
     private SignoutAction signoutAction;
     private FeedbackDialogContributionItem feedbackDialogContributionItem;
     private CustomizationDialogContributionItem customizationDialogContributionItem;
@@ -30,10 +29,6 @@ public final class AmazonQCommonActions {
         createActions(browser, loginDetails, viewSite);
         contributeToActionBars(viewSite);
         updateActionVisibility(loginDetails, viewSite);
-    }
-
-    public ChangeThemeAction getChangeThemeAction() {
-        return changeThemeAction;
     }
 
     public SignoutAction getSignoutAction() {
@@ -53,7 +48,6 @@ public final class AmazonQCommonActions {
     }
 
     private void createActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
-        changeThemeAction = new ChangeThemeAction(browser);
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
@@ -84,7 +78,6 @@ public final class AmazonQCommonActions {
 
         manager.add(openCodeReferenceLogAction);
         manager.add(new Separator());
-        manager.add(changeThemeAction);
         manager.add(toggleAutoTriggerContributionItem);
         manager.add(customizationDialogContributionItem);
         manager.add(new Separator());

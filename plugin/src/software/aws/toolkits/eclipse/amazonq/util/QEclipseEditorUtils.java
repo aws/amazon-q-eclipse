@@ -6,14 +6,15 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
 
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.IExecutionListener;
 import org.eclipse.core.commands.NotHandledException;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension5;
@@ -186,11 +187,14 @@ public final class QEclipseEditorUtils {
                 int startOffset = textSelection.getOffset();
                 int startLine = document.getLineOfOffset(startOffset);
                 int startColumn = startOffset - document.getLineOffset(startLine);
+                // correctly indent/format text
+                var indentation = getIndentation(document, startOffset);
+                var indentedText = applyIndentation(text, indentation);
 
                 // insert text
-                document.replace(startOffset, 0, text);
+                document.replace(startOffset, 0, indentedText);
                 // compute end offset after text is inserted
-                int endOffset = startOffset + text.length();
+                int endOffset = startOffset + indentedText.length();
                 // Move the cursor to the end of the inserted text
                 editor.selectAndReveal(endOffset, 0);
 
@@ -208,29 +212,58 @@ public final class QEclipseEditorUtils {
         return Optional.empty();
     }
 
-    public static String getSelectedTextOrCurrentLine() {
-        ITextEditor editor = getActiveTextEditor();
+    public static Optional<String> getSelectedText() {
+        var editor = getActiveTextEditor();
+        if (editor == null) {
+            return Optional.empty();
+        }
         ISelection selection = getSelection(editor);
-
         try {
             if (selection instanceof ITextSelection) {
                 ITextSelection textSelection = (ITextSelection) selection;
                 String selectedText = textSelection.getText();
 
                 if (selectedText != null && !selectedText.isEmpty()) {
-                    return selectedText;
+                    return Optional.of(selectedText);
                 }
-
-                int lineNumber = textSelection.getStartLine();
-                IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-                IRegion lineInfo = document.getLineInformation(lineNumber);
-                String currentLine = document.get(lineInfo.getOffset(), lineInfo.getLength());
-                return currentLine;
             }
         } catch (Exception e) {
-            throw new AmazonQPluginException("Error occurred while retrieving selected text or current line", e);
+            throw new AmazonQPluginException("Error occurred while retrieving selected text", e);
         }
-        return null;
+        return Optional.empty();
+    }
+
+    private static String applyIndentation(final String text, final String indentation) {
+        var lines = List.of(text.split("\n"));
+        if (lines.isEmpty()) {
+            return text;
+        }
+        // skip indenting first line
+        StringBuilder indentedText = new StringBuilder(lines.get(0));
+        for (int i = 1; i < lines.size(); i++) {
+            indentedText.append("\n")
+            .append(lines.get(i).isEmpty() ? "" : indentation) // Don't apply the gap to empty lines (eg: end of string may end in a newline)
+            .append(lines.get(i));
+        }
+
+        return indentedText.toString();
+    }
+
+    private static String getIndentation(final IDocument document, final int offset) {
+        try {
+            int line = document.getLineOfOffset(offset);
+            int lineOffset = document.getLineOffset(line);
+            var content = document.get(lineOffset, offset - lineOffset);
+
+            if (content.trim().isEmpty()) {
+                // if current line is blank or contains only whitespace, return line as indentation
+                return content;
+            }
+            return content.substring(0, content.indexOf(content.trim()));
+        } catch (BadLocationException e) {
+            // swallow error and return 0 indent level
+            return "";
+        }
     }
 
     public static Font getInlineTextFont(final StyledText widget, final int inlineTextStyle) {

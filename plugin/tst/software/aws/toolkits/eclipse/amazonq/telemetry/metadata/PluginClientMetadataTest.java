@@ -128,7 +128,7 @@ public class PluginClientMetadataTest {
             verify(pluginStoreMock).put(clientIdKey, expectedClientId);
         }
     }
-    private static String resetSystemProperties(String propertyName, String originalName) {
+    private static String resetSystemProperties(final String propertyName, final String originalName) {
         return originalName != null ? System.setProperty(propertyName, originalName) : System.clearProperty(propertyName);
     }
 }

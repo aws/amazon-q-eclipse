@@ -22,7 +22,6 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 public final class QInlineInputListener implements IDocumentListener, VerifyKeyListener, MouseListener {
 
     private StyledText widget = null;
-    private int distanceTraversed = 0;
     private int numSuggestionLines = 0;
     private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
     private boolean isBracketsSetToAutoClose = false;
@@ -109,8 +108,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
      * </ul>
      */
     public void beforeRemoval() {
-        var qSes = QInvocationSession.getInstance();
-        if (qSes == null || !qSes.isActive() || brackets == null) {
+        var session = QInvocationSession.getInstance();
+        if (session == null || !session.isActive() || brackets == null) {
             return;
         }
 
@@ -120,7 +119,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             if (bracket == null) {
                 continue;
             }
-            if (!qSes.getSuggestionAccepted()) {
+            if (!session.getSuggestionAccepted()) {
                 String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
                         isStringSetToAutoClose);
                 if (autoCloseContent != null) {
@@ -129,8 +128,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             }
         }
 
-        IDocument doc = qSes.getViewer().getDocument();
+        IDocument doc = session.getViewer().getDocument();
         doc.removeDocumentListener(this);
+        int idx = widget.getCaretOffset() - session.getInvocationOffset();
         if (!toAppend.isEmpty()) {
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(qSes.getViewer(),
@@ -144,8 +144,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
     @Override
     public void verifyKey(final VerifyEvent event) {
-        var qInvocationSessionInstance = QInvocationSession.getInstance();
-        if (qInvocationSessionInstance == null || !qInvocationSessionInstance.isPreviewingSuggestions()) {
+        var session = QInvocationSession.getInstance();
+        if (session == null || !session.isPreviewingSuggestions()) {
             return;
         }
 
@@ -156,98 +156,146 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // user no longer has the intent for text input at its original location.
         if (event.keyCode == SWT.ARROW_UP || event.keyCode == SWT.ARROW_DOWN || event.keyCode == SWT.ARROW_LEFT
                 || event.keyCode == SWT.ARROW_RIGHT) {
-            qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOVEMENT_KEY);
+            session.setCaretMovementReason(CaretMovementReason.MOVEMENT_KEY);
             return;
         }
 
-        qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
+        session.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
 
         // Here we examine all other relevant keystrokes that may be relevant to the
         // preview's lifetime:
         // - CR (new line)
         // - BS (backspace)
+        int idx = widget.getCaretOffset() - session.getInvocationOffset();
         switch (event.keyCode) {
         case SWT.CR:
             lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
             return;
         case SWT.BS:
-            if (distanceTraversed == 0) {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
+            if (idx == 0) {
+                session.transitionToDecisionMade();
+                session.end();
                 return;
             }
             lastKeyStrokeType = LastKeyStrokeType.BACKSPACE;
             return;
         default:
             lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-            return;
+        }
+        // Here we want to check for the following:
+        // - If the input is a closing bracket
+        // - If it is, does it correspond to the most recent open bracket in the
+        // unresolved bracket list
+        // - If it does, we need to perform the following:
+        // - Adjust the caret offset backwards by one. This is because the caret offset
+        // in documentChanged is the offset before the change is made. Since this key
+        // event will not actually trigger documentChanged under the right condition
+        // (and what ends up triggering documentChanged is the doc.replace call), we
+        // will need to decrement the offset to prepare for when the documentChanged is
+        // triggered.
+        // - Insert the closing bracket into the buffer at the decremented position.
+        // This is because eclipse will not actually insert closing bracket when auto
+        // close is turned on.
+        if (event.character == ')') {
+            ITextViewer viewer = session.getViewer();
+            IDocument doc = viewer.getDocument();
+            int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, widget.getCaretOffset());
+            try {
+                widget.setCaretOffset(widget.getCaretOffset() - 1);
+                doc.replace(expandedOffset - 1, 0, String.valueOf(event.character));
+            } catch (BadLocationException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            System.out.println(event.text + " entered");
         }
     }
 
     @Override
     public void documentChanged(final DocumentEvent event) {
+        QInvocationSession session = QInvocationSession.getInstance();
+        int idx = widget.getCaretOffset() - session.getInvocationOffset();
+        System.out.println("offset from widget: " + widget.getCaretOffset() + " | offset from event: " + event.getOffset());
         String input = event.getText();
+        String currentSuggestion = session.getCurrentSuggestion().getInsertText();
+        int currentOffset = widget.getCaretOffset();
+        System.out.println("input: " + input + " | distranceTraversed: " + idx);
         if (input.isEmpty()) {
-            var qInvocationSessionInstance = QInvocationSession.getInstance();
+            // either that or user has hit backspace
             int numCharDeleted = event.getLength();
-            if (numCharDeleted > distanceTraversed) {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
+            if (numCharDeleted > idx) {
+                session.transitionToDecisionMade();
+                session.end();
             }
             for (int i = 1; i <= numCharDeleted; i++) {
-                var bracket = brackets[distanceTraversed - i];
+                var bracket = brackets[idx - i];
                 if (bracket != null) {
                     bracket.onDelete();
                 }
             }
-            distanceTraversed -= numCharDeleted;
             return;
         }
 
-        var qInvocationSessionInstance = QInvocationSession.getInstance();
-        if (qInvocationSessionInstance == null || !qInvocationSessionInstance.isPreviewingSuggestions()) {
+        if (session == null || !session.isPreviewingSuggestions()) {
             return;
         }
 
+        // Here we perform "pre open bracket insertion input sanitation", which consists
+        // of the following:
+        // - Checks to see if the input contains anything inserted on behalf of user by
+        // eclipse (i.e. auto closing bracket).
+        // - If it does, get rid of that portion (note that at this point the document
+        // has already been changed so we are really deleting the extra portion and
+        // replacing it with what should remain).
         if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
                 || input.equals("\"\"") || input.equals("[]"))) {
-            String openBracket = input.substring(0, 1);
-            ITextViewer viewer = qInvocationSessionInstance.getViewer();
+            input = input.substring(0, 1);
+            ITextViewer viewer = session.getViewer();
             IDocument doc = viewer.getDocument();
             int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, event.getOffset());
             try {
-                doc.replace(expandedOffset, event.getLength() + 2, openBracket);
+                doc.replace(expandedOffset, 2, input);
+                widget.setCaretOffset(event.getOffset());
             } catch (BadLocationException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
 
-        String currentSuggestion = qInvocationSessionInstance.getCurrentSuggestion().getInsertText();
-        int currentOffset = widget.getCaretOffset();
-        qInvocationSessionInstance
-                .setHasBeenTypedahead(currentOffset - qInvocationSessionInstance.getInvocationOffset() > 0);
+        session
+                .setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
 
-        boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
-        if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
+        boolean isOutOfBounds = idx >= currentSuggestion.length() || idx < 0;
+        if (isOutOfBounds || !isInputAMatch(currentSuggestion, idx, input)) {
             System.out.println("input is: "
                     + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
             System.out.println("suggestion is: "
-                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+                    + currentSuggestion.substring(idx, idx + input.length())
                             .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             Display.getCurrent().asyncExec(() -> {
-                qInvocationSessionInstance.transitionToDecisionMade();
-                qInvocationSessionInstance.end();
+                session.transitionToDecisionMade();
+                session.end();
             });
             return;
         }
-        for (int i = distanceTraversed; i < distanceTraversed + input.length(); i++) {
+
+        // Here we perform "post closing bracket insertion caret correction", which
+        // consists of the following:
+        // - Check if the input is a closing bracket
+        // - If it is, check to see if it corresponds to the most recent unresolved open
+        // bracket
+        // - If it is, we would need to increment the current caret offset, this is
+        // because the closing bracket would have been inserted by verifyKey and not
+        // organically, which does not advance the caret.
+        if (input.equals(")")) {
+            widget.setCaretOffset(currentOffset + 1);
+        }
+        for (int i = idx; i < idx + input.length(); i++) {
             var bracket = brackets[i];
             if (bracket != null) {
                 bracket.onTypeOver();
             }
         }
-        distanceTraversed += input.length();
     }
 
     @Override

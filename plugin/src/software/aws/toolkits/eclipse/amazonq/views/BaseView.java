@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
@@ -19,6 +20,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public abstract class BaseView extends ViewPart {
     private String iconPath;
@@ -30,9 +32,17 @@ public abstract class BaseView extends ViewPart {
     protected abstract String getIconPath();
     protected abstract String getHeaderLabel();
     protected abstract String getDetailMessage();
+    protected abstract CompletableFuture<Boolean> isViewDisplayable();
+    protected abstract void handleNonDisplayableView();
 
     @Override
     public final void createPartControl(final Composite parent) {
+        isViewDisplayable().thenAcceptAsync((isDisplayable) -> {
+            if (!isDisplayable) {
+                handleNonDisplayableView();
+            }
+        }, ThreadingUtils::executeAsyncTask);
+
         this.parentComposite = parent;
         this.iconPath = getIconPath();
         this.headerLabel = getHeaderLabel();

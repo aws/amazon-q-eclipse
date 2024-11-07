@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -11,7 +10,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public abstract class CallToActionView extends BaseView {
     private String buttonLabel;
@@ -20,8 +18,6 @@ public abstract class CallToActionView extends BaseView {
     protected abstract String getButtonLabel();
     protected abstract SelectionListener getButtonHandler();
     protected abstract void setupButtonFooterContent(Composite composite);
-    protected abstract CompletableFuture<Boolean> isViewDisplayable();
-    protected abstract void handleNonDisplayableView();
 
     @Override
      protected final void setupView() {
@@ -30,12 +26,6 @@ public abstract class CallToActionView extends BaseView {
         this.buttonHandler = getButtonHandler();
         setupButton(getContentComposite());
         setupButtonFooterContent(getContentComposite());
-
-        isViewDisplayable().thenAcceptAsync((isDisplayable) -> {
-            if (!isDisplayable) {
-                handleNonDisplayableView();
-            }
-        }, ThreadingUtils::executeAsyncTask);
     }
 
     private void setupButton(final Composite composite) {

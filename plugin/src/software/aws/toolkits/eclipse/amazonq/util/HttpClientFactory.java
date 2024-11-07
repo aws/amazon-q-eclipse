@@ -9,6 +9,8 @@ import java.net.ProxySelector;
 import java.net.URL;
 import java.net.http.HttpClient;
 
+import software.amazon.awssdk.utils.StringUtils;
+
 public final class HttpClientFactory {
 
     private static volatile HttpClient instance;
@@ -23,10 +25,13 @@ public final class HttpClientFactory {
                 if (instance == null) {
                     var builder = HttpClient.newBuilder();
                     var proxyUrl = ProxyUtil.getHttpsProxyUrl();
-                    if (!proxyUrl.isEmpty()) {
-                        InetSocketAddress proxyAddress = getProxyAddress(ProxyUtil.getHttpsProxyUrl());
+                    if (!StringUtils.isEmpty(proxyUrl)) {
+                        InetSocketAddress proxyAddress = getProxyAddress(ProxyUtil.getHttpsProxyUrlEnvVar());
                         builder.proxy(ProxySelector.of(proxyAddress));
-
+                    }
+                    var customSslContext = ProxyUtil.getCustomSslContext();
+                    if (customSslContext != null) {
+                        builder.sslContext(ProxyUtil.getCustomSslContext());
                     }
                     instance = builder.build();
                 }

@@ -125,6 +125,7 @@ public final class QLspConnectionProviderTest {
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("http://proxy:8080");
 
         Map<String, String> env = new HashMap<>();
+        env.put("HTTPS_PROXY", "http://proxy:8080");
 
         var provider = new TestQLspConnectionProvider();
         provider.testAddEnvironmentVariables(env);

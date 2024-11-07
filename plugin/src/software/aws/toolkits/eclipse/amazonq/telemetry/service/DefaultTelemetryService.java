@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.SdkHttpClient;
@@ -111,9 +115,12 @@ public final class DefaultTelemetryService implements TelemetryService {
     }
 
     private static ToolkitTelemetryClient createDefaultTelemetryClient(final Region region, final String endpoint, final String identityPool) {
+        SSLContext sslContext = ProxyUtil.getCustomSslContext();
+        SSLConnectionSocketFactory sslSocketFactory = sslContext != null ? new SSLConnectionSocketFactory(ProxyUtil.getCustomSslContext()) : null;
         SdkHttpClient sdkHttpClient = ApacheHttpClient.builder()
+                .socketFactory(sslSocketFactory)
                 .proxyConfiguration(ProxyConfiguration.builder()
-                        .endpoint(URI.create(ProxyUtil.getHttpsProxyUrl()))
+                        .endpoint(URI.create(ProxyUtil.getHttpsProxyUrlEnvVar()))
                         .build())
                 .build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()

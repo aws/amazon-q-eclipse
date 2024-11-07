@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ChatContentProvider;
 
 public final class ChatAssetMissingView extends BaseView {
@@ -38,8 +39,13 @@ public final class ChatAssetMissingView extends BaseView {
     @Override
     protected CompletableFuture<Boolean> isViewDisplayable() {
         return CompletableFuture.supplyAsync(() -> {
-            Optional<String> content = chatContentProvider.getContent();
-            return !content.isPresent();
+            try {
+                Optional<String> content = chatContentProvider.getContent();
+                return !content.isPresent();
+            } catch (Exception ex) {
+                Activator.getLogger().error("Failed to verify Chat content is retrievable", ex);
+                return true; // Safer to display chat asset missing view by default than give access
+            }
         });
     }
 

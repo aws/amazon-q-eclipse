@@ -108,7 +108,7 @@ public final class DependencyMissingView extends CallToActionView {
     protected CompletableFuture<Boolean> isViewDisplayable() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Display.getDefault().syncExec(() -> { // Must be executed synchronously to ensure the correct hasWebViewDependency() result 
+                Display.getDefault().syncExec(() -> { // Must be executed synchronously to ensure the correct hasWebViewDependency() result
                     Composite tempComposite = new Composite(getParentComposite(), SWT.NONE);
                     browserProvider.setupBrowser(tempComposite);
                     tempComposite.dispose();
@@ -116,7 +116,7 @@ public final class DependencyMissingView extends CallToActionView {
                 return !browserProvider.hasWebViewDependency();
             } catch (Exception ex) {
                 Activator.getLogger().error("Failed to check web view dependency", ex);
-                return true; // Safer to display re-authenticate view by default than give access
+                return true; // Safer to display dependency missing view by default than give access
             }
         });
     }

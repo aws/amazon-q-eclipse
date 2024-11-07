@@ -11,7 +11,6 @@ import org.eclipse.ui.IViewSite;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 
-import org.eclipse.swt.browser.Browser;
 
 public final class AmazonQCommonActions {
 
@@ -25,8 +24,8 @@ public final class AmazonQCommonActions {
     private ViewLogsAction viewLogsAction;
     private ReportAnIssueAction reportAnIssueAction;
 
-    public AmazonQCommonActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
-        createActions(browser, loginDetails, viewSite);
+    public AmazonQCommonActions(final LoginDetails loginDetails, final IViewSite viewSite) {
+        createActions(loginDetails, viewSite);
         contributeToActionBars(viewSite);
         updateActionVisibility(loginDetails, viewSite);
     }
@@ -47,7 +46,7 @@ public final class AmazonQCommonActions {
         return toggleAutoTriggerContributionItem;
     }
 
-    private void createActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
+    private void createActions(final LoginDetails loginDetails, final IViewSite viewSite) {
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);

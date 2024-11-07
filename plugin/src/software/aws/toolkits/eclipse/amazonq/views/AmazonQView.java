@@ -88,7 +88,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             return false;
         }
         setupBrowserBackground(parent);
-        setupActions(browser, loginDetails);
+        setupActions(loginDetails);
         setupAuthStatusListeners();
         return true;
     }
@@ -125,8 +125,8 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         });
     }
 
-    private void setupActions(final Browser browser, final LoginDetails loginDetails) {
-        amazonQCommonActions = new AmazonQCommonActions(browser, loginDetails, getViewSite());
+    private void setupActions(final LoginDetails loginDetails) {
+        amazonQCommonActions = new AmazonQCommonActions(loginDetails, getViewSite());
     }
 
     private void setupAuthStatusListeners() {

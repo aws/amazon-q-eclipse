@@ -11,11 +11,9 @@ import org.eclipse.ui.IViewSite;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 
-import org.eclipse.swt.browser.Browser;
 
 public final class AmazonQCommonActions {
 
-    private ChangeThemeAction changeThemeAction;
     private SignoutAction signoutAction;
     private FeedbackDialogContributionItem feedbackDialogContributionItem;
     private CustomizationDialogContributionItem customizationDialogContributionItem;
@@ -26,14 +24,10 @@ public final class AmazonQCommonActions {
     private ViewLogsAction viewLogsAction;
     private ReportAnIssueAction reportAnIssueAction;
 
-    public AmazonQCommonActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
-        createActions(browser, loginDetails, viewSite);
+    public AmazonQCommonActions(final LoginDetails loginDetails, final IViewSite viewSite) {
+        createActions(loginDetails, viewSite);
         contributeToActionBars(viewSite);
         updateActionVisibility(loginDetails, viewSite);
-    }
-
-    public ChangeThemeAction getChangeThemeAction() {
-        return changeThemeAction;
     }
 
     public SignoutAction getSignoutAction() {
@@ -52,8 +46,7 @@ public final class AmazonQCommonActions {
         return toggleAutoTriggerContributionItem;
     }
 
-    private void createActions(final Browser browser, final LoginDetails loginDetails, final IViewSite viewSite) {
-        changeThemeAction = new ChangeThemeAction(browser);
+    private void createActions(final LoginDetails loginDetails, final IViewSite viewSite) {
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
@@ -84,7 +77,6 @@ public final class AmazonQCommonActions {
 
         manager.add(openCodeReferenceLogAction);
         manager.add(new Separator());
-        manager.add(changeThemeAction);
         manager.add(toggleAutoTriggerContributionItem);
         manager.add(customizationDialogContributionItem);
         manager.add(new Separator());

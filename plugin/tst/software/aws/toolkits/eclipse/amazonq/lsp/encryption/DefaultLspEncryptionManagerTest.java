@@ -27,7 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public final class LspEncryptionManagerTest {
+public final class DefaultLspEncryptionManagerTest {
 
     @RegisterExtension
     private static LspJsonWebTokenStaticMockExtension lspJsonWebTokenStaticMockExtension
@@ -68,7 +68,7 @@ public final class LspEncryptionManagerTest {
     @BeforeEach
     void setupBeforeEach() {
         lspEncryptionKeyMock = mock(LspEncryptionKey.class);
-        lspEncryptionManager = LspEncryptionManager.builder()
+        lspEncryptionManager = DefaultLspEncryptionManager.builder()
                 .withLspEncryptionKey(lspEncryptionKeyMock)
                 .build();
     }

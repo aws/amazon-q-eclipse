@@ -27,7 +27,8 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             ToolkitLoginWebview.ID,
             AmazonQChatWebview.ID,
             DependencyMissingView.ID,
-            ReauthenticateView.ID
+            ReauthenticateView.ID,
+            ChatAssetMissingView.ID
         );
 
     private Browser browser;

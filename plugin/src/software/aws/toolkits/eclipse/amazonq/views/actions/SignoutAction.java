@@ -24,16 +24,17 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
                 LoginDetails loginDetails = Activator.getLoginService().getLoginDetails().get();
                 if (loginDetails.getIsLoggedIn()) {
                     Activator.getLoginService().logout().get();
-                    Activator.getLogger().info("Signed out of Amazon q");
-                    Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-                    ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
-                    AmazonQView.showView(ToolkitLoginWebview.ID);
                 }
             } catch (Exception e) {
                 PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to sign out of Amazon Q. Please try again.");
                 Activator.getLogger().error("Failed to sign out", e);
                 return;
             }
+
+            Activator.getLogger().info("Signed out of Amazon q");
+            Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+            ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
+            AmazonQView.showView(ToolkitLoginWebview.ID);
         });
     }
 

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import software.amazon.awssdk.utils.StringUtils;
-import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -54,7 +54,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         Activator.getLogger().info("Initializing encrypted communication with Amazon Q Lsp Server");
 
         try {
-            LspEncryptionManager lspEncryption = LspEncryptionManager.getInstance();
+            DefaultLspEncryptionManager lspEncryption = DefaultLspEncryptionManager.getInstance();
             OutputStream serverStdIn = getOutputStream();
 
             lspEncryption.initializeEncrypedCommunication(serverStdIn);

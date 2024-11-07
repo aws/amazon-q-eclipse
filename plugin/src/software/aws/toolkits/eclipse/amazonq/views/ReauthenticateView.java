@@ -114,7 +114,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     }
 
     @Override
-    protected void handleNonDisplayableView() {
+    protected void showAlternateView() {
         AmazonQView.showView(AmazonQChatWebview.ID);
     }
 }

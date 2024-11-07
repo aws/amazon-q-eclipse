@@ -34,7 +34,7 @@ public abstract class BaseView extends ViewPart {
     protected abstract String getHeaderLabel();
     protected abstract String getDetailMessage();
     protected abstract CompletableFuture<Boolean> isViewDisplayable();
-    protected abstract void handleNonDisplayableView();
+    protected abstract void showAlternateView();
 
     @Override
     public final void createPartControl(final Composite parent) {
@@ -47,7 +47,7 @@ public abstract class BaseView extends ViewPart {
 
         isViewDisplayable().thenAcceptAsync((isDisplayable) -> {
             if (!isDisplayable) {
-                handleNonDisplayableView();
+                showAlternateView();
             }
         }, ThreadingUtils::executeAsyncTask);
     }

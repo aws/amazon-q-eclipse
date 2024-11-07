@@ -122,7 +122,7 @@ public final class DependencyMissingView extends CallToActionView {
     }
 
     @Override
-    protected void handleNonDisplayableView() {
+    protected void showAlternateView() {
         AmazonQView.showView(AmazonQChatWebview.ID);
     }
 }

@@ -137,7 +137,9 @@ public final class QInlineInputListener implements VerifyListener, VerifyKeyList
         IDocument doc = qSes.getViewer().getDocument();
         if (!toAppend.isEmpty()) {
             try {
-                doc.replace(qSes.getInvocationOffset() + distanceTraversed, 0, toAppend);
+                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(qSes.getViewer(),
+                        qSes.getInvocationOffset()) + distanceTraversed;
+                doc.replace(adjustedOffset, 0, toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }

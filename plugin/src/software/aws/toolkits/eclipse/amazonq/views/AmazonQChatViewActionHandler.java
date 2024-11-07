@@ -25,6 +25,9 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpClickedParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpType;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -113,7 +116,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 handleCopyToClipboard(copyToClipboardParams.code());
                 break;
             case AUTH_FOLLOW_UP_CLICKED:
-                //TODO
+                AuthFollowUpClickedParams authFollowUpClickedParams = jsonHandler.convertObject(params, AuthFollowUpClickedParams.class);
+                handleAuthFollowUpClicked(authFollowUpClickedParams);
                 break;
             default:
                 throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
@@ -167,5 +171,38 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 clipboard.dispose();
             }
         });
+    }
+
+    private void handleAuthFollowUpClicked(final AuthFollowUpClickedParams params) {
+        String incomingType = params.authFollowupType();
+        String fullAuth =  AuthFollowUpType.FULL_AUTH.getValue();
+        String reAuth = AuthFollowUpType.RE_AUTH.getValue();
+        String missingScopes = AuthFollowUpType.MISSING_SCOPES.getValue();
+        String useSupportedAuth = AuthFollowUpType.USE_SUPPORTED_AUTH.getValue();
+
+        try {
+            if (incomingType.equals(reAuth) || incomingType.equals(missingScopes)) {
+                Activator.getLoginService().reAuthenticate().get();
+                return;
+            }
+        } catch (Exception ex) {
+            PluginUtils.showErrorDialog("Amazon Q", Constants.RE_AUTHENTICATE_FAILURE_MESSAGE);
+            throw new AmazonQPluginException("Failed to re-authenticate in auth follow up clicked handler", ex);
+        }
+
+        try {
+            if (incomingType.equals(fullAuth) || incomingType.equals(useSupportedAuth)) {
+                Display.getDefault().asyncExec(() -> {
+                    AmazonQView.showView(ToolkitLoginWebview.ID);
+                });
+                return;
+            }
+        } catch (Exception ex) {
+            PluginUtils.showErrorDialog("Amazon Q", Constants.AUTHENTICATE_FAILURE_MESSAGE);
+            throw new AmazonQPluginException("Failed to authenticate in auth follow up clicked handler", ex);
+        }
+
+        PluginUtils.showErrorDialog("Amazon Q", Constants.AUTHENTICATE_FAILURE_MESSAGE);
+        throw new AmazonQPluginException("Error occured while attempting to handle auth follow up clicked: Unknown AuthFollowUpType " + incomingType);
     }
 }

@@ -40,6 +40,10 @@ public abstract class BaseView extends ViewPart {
         setupView();
     }
 
+    public final Composite getParentComposite() {
+        return parentComposite;
+    }
+
     public final Composite getContentComposite() {
         return contentComposite;
     }

@@ -3,7 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -11,6 +14,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Link;
 
+import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -96,5 +100,21 @@ public final class DependencyMissingView extends CallToActionView {
 
     private String getDependency() {
         return PluginUtils.getPlatform() == PluginPlatform.WINDOWS ? "WebView2" : "WebKit";
+    }
+
+    @Override
+    protected CompletableFuture<Boolean> isViewDisplayable() {
+        return CompletableFuture.supplyAsync(() -> {
+            Composite parentComposite = getParentComposite();
+            AmazonQViewController viewController = new AmazonQViewController();
+            var browser = new Browser(parentComposite, viewController.getBrowserStyle());
+            viewController.checkWebViewCompatibility(browser.getBrowserType());
+            return viewController.hasWebViewDependency();
+        });
+    }
+
+    @Override
+    protected void handleNonDisplayableView() {
+        AmazonQView.showView(AmazonQChatWebview.ID);
     }
 }

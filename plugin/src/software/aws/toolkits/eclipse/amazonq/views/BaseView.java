@@ -37,17 +37,17 @@ public abstract class BaseView extends ViewPart {
 
     @Override
     public final void createPartControl(final Composite parent) {
-        isViewDisplayable().thenAcceptAsync((isDisplayable) -> {
-            if (!isDisplayable) {
-                handleNonDisplayableView();
-            }
-        }, ThreadingUtils::executeAsyncTask);
-
         this.parentComposite = parent;
         this.iconPath = getIconPath();
         this.headerLabel = getHeaderLabel();
         this.detailMessage = getDetailMessage();
         setupView();
+
+        isViewDisplayable().thenAcceptAsync((isDisplayable) -> {
+            if (!isDisplayable) {
+                handleNonDisplayableView();
+            }
+        }, ThreadingUtils::executeAsyncTask);
     }
 
     public final Composite getParentComposite() {

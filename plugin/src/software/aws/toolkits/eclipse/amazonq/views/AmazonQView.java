@@ -14,12 +14,12 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
-import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
+import software.aws.toolkits.eclipse.amazonq.util.BrowserProvider;
 
 public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
 
@@ -30,13 +30,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             ReauthenticateView.ID,
             ChatAssetMissingView.ID
         );
-
-    private Browser browser;
+    private BrowserProvider browserProvider;
     private AmazonQCommonActions amazonQCommonActions;
-    private AmazonQViewController viewController;
 
-    protected AmazonQView() {
-        this.viewController = new AmazonQViewController();
+    public AmazonQView() {
+        this.browserProvider = new BrowserProvider();
     }
 
     public static void showView(final String viewId) {
@@ -75,7 +73,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     }
 
     public final Browser getBrowser() {
-        return browser;
+        return browserProvider.getBrowser();
     }
 
     public final AmazonQCommonActions getAmazonQCommonActions() {
@@ -84,11 +82,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         // if browser setup fails, don't set up rest of the content
-        if (!setupBrowser(parent)) {
+        if (!browserProvider.setupBrowser(parent)) {
             return false;
         }
         setupBrowserBackground(parent);
-        setupActions(browser, loginDetails);
+        setupActions(getBrowser(), loginDetails);
         setupAuthStatusListeners();
         return true;
     }
@@ -97,23 +95,10 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         Display display = Display.getCurrent();
         Color black = display.getSystemColor(SWT.COLOR_BLACK);
         parent.setBackground(black);
-        browser.setBackground(black);
+        getBrowser().setBackground(black);
     }
 
-    /*
-     * Sets up the browser compatible with the platform
-     * returns boolean representing whether a browser type compatible with webview rendering for the current platform is found
-     * @param parent
-     */
-    protected final boolean setupBrowser(final Composite parent) {
-        var browser = new Browser(parent, viewController.getBrowserStyle());
-        viewController.checkWebViewCompatibility(browser.getBrowserType());
-        // only set the browser if compatible webview browser can be found for the platform
-        if (viewController.hasWebViewDependency()) {
-            this.browser = browser;
-        }
-        return viewController.hasWebViewDependency();
-    }
+
 
     protected final void showDependencyMissingView() {
         Display.getCurrent().asyncExec(() -> {
@@ -138,10 +123,10 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     @Override
     public final void setFocus() {
-        if (!viewController.hasWebViewDependency()) {
+        if (!browserProvider.hasWebViewDependency()) {
             return;
         }
-        browser.setFocus();
+        getBrowser().setFocus();
     }
 
     /**
@@ -153,7 +138,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
-        browser.dispose();
+        browserProvider.dispose();
         super.dispose();
     }
 

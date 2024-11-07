@@ -1,18 +1,15 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ReferenceTrackerInformation;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.ChatCodeReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.CodeReferenceLogItem;
 import software.aws.toolkits.eclipse.amazonq.views.model.InlineSuggestionCodeReference;
 
 public final class DefaultCodeReferenceLoggingService implements CodeReferenceLoggingService {
-    private static DefaultCodeReferenceLoggingService instance;
+    private static final String SEPARATOR = "----------------------------------------";
 
-    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm:ss a");
+    private static DefaultCodeReferenceLoggingService instance;
 
     private DefaultCodeReferenceLoggingService() {
         // Prevent instantiation
@@ -32,26 +29,31 @@ public final class DefaultCodeReferenceLoggingService implements CodeReferenceLo
         }
 
         for (var reference : codeReference.references()) {
-            String message = createInlineSuggestionLogMessage(reference, codeReference.suggestionText(), codeReference.filename(), codeReference.startLine());
+            String filename = codeReference.filename();
+            String suggestionText = codeReference.suggestionText();
+            int suggestionTextDepth = suggestionText.split("\n").length;
+            int startLine = codeReference.startLine();
+            int endLine = startLine + suggestionTextDepth;
+            String licenseName = reference.getLicenseName();
+            String referenceName = reference.getReferenceName();
+            String referenceUrl = reference.getReferenceUrl();
+
+            String message = createInlineSuggestionLogMessage(filename, startLine, endLine, licenseName, referenceName, referenceUrl, suggestionText);
             CodeReferenceLogItem logItem = new CodeReferenceLogItem(message);
             CodeReferenceLoggedProvider.notifyCodeReferenceLogged(logItem);
         }
     }
 
-    private String createInlineSuggestionLogMessage(final InlineCompletionReference reference,
-                final String suggestionText, final String filename, final int startLine) {
-        String formattedDateTime = getNowAsFormattedDate();
-        int suggestionTextDepth = suggestionText.split("\n").length;
-
+    private String createInlineSuggestionLogMessage(final String filename, final int startLine, final int endLine, final String licenseName,
+            final String referenceName, final String referenceUrl, final String suggestionText) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("[%s] Accepted recommendation with code\n", formattedDateTime));
+        sb.append(SEPARATOR);
+        sb.append(String.format("%s(%d,%d): Accepted recommendation with license: (%s)\n", filename, startLine, endLine, licenseName));
+        sb.append(String.format("From %s (%s):\n", referenceName, referenceUrl));
+        sb.append(SEPARATOR);
         sb.append(String.format("%s\n", suggestionText));
-        sb.append(String.format(
-                "provided with reference under %s from repository %s. Added to %s (lines from %d to %d)\n",
-                reference.getLicenseName(), reference.getReferenceUrl(), filename, startLine, startLine + suggestionTextDepth));
-        String message = sb.toString();
-
-        return message;
+        sb.append(SEPARATOR);
+        return sb.toString();
     }
 
     @Override
@@ -61,22 +63,21 @@ public final class DefaultCodeReferenceLoggingService implements CodeReferenceLo
         }
 
         for (ReferenceTrackerInformation reference : codeReference.references()) {
-            String message = createChatLogMessage();
+            String licenseName = reference.licenseName();
+            String repository = reference.repository();
+            String repositoryUrl = reference.url();
+
+            String message = createChatLogMessage(licenseName, repository, repositoryUrl);
             CodeReferenceLogItem logItem = new CodeReferenceLogItem(message);
             CodeReferenceLoggedProvider.notifyCodeReferenceLogged(logItem);
         }
     }
 
-    private String createChatLogMessage() {
-        // TODO waiting for message from design
+    private String createChatLogMessage(final String licenseName, final String repository, final String repositoryUrl) {
         StringBuilder sb = new StringBuilder();
-        String message = "";
-        return message;
-    }
-
-    private String getNowAsFormattedDate() {
-        LocalDateTime now = LocalDateTime.now();
-        String formattedDateTime = now.format(formatter);
-        return formattedDateTime;
+        sb.append(SEPARATOR);
+        sb.append(String.format("Reference with license: %s\n", licenseName));
+        sb.append(String.format("From %s (%s):\n", repository, repositoryUrl));
+        return sb.toString();
     }
 }

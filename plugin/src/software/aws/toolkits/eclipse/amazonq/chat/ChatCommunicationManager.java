@@ -13,6 +13,7 @@ import java.util.UUID;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
@@ -21,6 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ErrorParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
@@ -74,10 +76,10 @@ public final class ChatCommunicationManager {
                         ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
                         addEditorState(chatRequestParams);
                         sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
-                            String encryptedChatResult = lspEncryptionManager.encrypt(chatRequestParams);
+                            String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 
                             EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
-                                encryptedChatResult,
+                                encryptedMessage,
                                 token
                             );
 
@@ -87,14 +89,14 @@ public final class ChatCommunicationManager {
                     case CHAT_QUICK_ACTION:
                         QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);
                         sendEncryptedChatMessage(quickActionParams.getTabId(), token -> {
-                            String encryptedChatResult = lspEncryptionManager.encrypt(quickActionParams);
+                            String encryptedMessage = lspEncryptionManager.encrypt(quickActionParams);
 
                             EncryptedQuickActionParams encryptedQuickActionParams = new EncryptedQuickActionParams(
-                                encryptedChatResult,
+                                encryptedMessage,
                                 token
                             );
 
-                            return chatMessageProvider.sendQuickAction(encryptedQuickActionParams);
+                            return chatMessageProvider.sendQuickAction(quickActionParams.getTabId(), encryptedQuickActionParams);
                         });
                         break;
                     case CHAT_READY:
@@ -170,7 +172,7 @@ public final class ChatCommunicationManager {
     }
 
     private CompletableFuture<ChatResult> sendEncryptedChatMessage(final String tabId,
-            final Function<String, CompletableFuture<String>> action) {
+            final Function<String, CompletableFuture<Either<String, ErrorParams>>> action) {
         // Retrieving the chat result is expected to be a long-running process with
         // intermittent progress notifications being sent
         // from the LSP server. The progress notifications provide a token and a partial
@@ -179,19 +181,31 @@ public final class ChatCommunicationManager {
         // a message for the UI.
         String partialResultToken = addPartialChatMessage(tabId);
 
-        return action.apply(partialResultToken).thenApply(encryptedChatResult -> {
+        return action.apply(partialResultToken).thenApply(resultOrException -> {
             // The mapping entry no longer needs to be maintained once the final result is
             // retrieved.
             removePartialChatMessage(partialResultToken);
 
-            String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-            ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
+            if (resultOrException.isLeft()) {
+                String encryptedChatResult = resultOrException.getLeft();
 
-            // show chat response in Chat UI
-            ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                    ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
-            sendMessageToChatUI(chatUIInboundCommand);
-            return result;
+                String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+                ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
+
+                // show chat response in Chat UI
+                ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+                        ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
+                sendMessageToChatUI(chatUIInboundCommand);
+                return result;
+            } else {
+                ErrorParams errorParams = resultOrException.getRight();
+
+                // show error in Chat UI
+                ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+                        ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false);
+                sendMessageToChatUI(chatUIInboundCommand);
+                return null;
+            }
         });
     }
 

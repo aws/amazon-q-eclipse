@@ -19,6 +19,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
 
 public abstract class BaseView extends ViewPart {
     private String iconPath;
@@ -38,6 +39,7 @@ public abstract class BaseView extends ViewPart {
         this.headerLabel = getHeaderLabel();
         this.detailMessage = getDetailMessage();
         setupView();
+        setupStaticMenuActions();
     }
 
     public final Composite getContentComposite() {
@@ -47,6 +49,10 @@ public abstract class BaseView extends ViewPart {
     @Override
     public final void setFocus() {
         parentComposite.setFocus();
+    }
+
+    private void setupStaticMenuActions() {
+        new AmazonQStaticActions(getViewSite());
     }
 
     /**

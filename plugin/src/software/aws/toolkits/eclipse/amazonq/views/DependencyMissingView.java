@@ -14,8 +14,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
+import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.BrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
@@ -34,11 +34,11 @@ public final class DependencyMissingView extends CallToActionView {
 
 
     private PluginPlatform platform;
-    private BrowserProvider browserProvider;
+    private AmazonQViewController viewController;
 
     public DependencyMissingView() {
         platform = PluginUtils.getPlatform();
-        browserProvider = new BrowserProvider();
+        viewController = new AmazonQViewController();
     }
 
     @Override
@@ -110,10 +110,10 @@ public final class DependencyMissingView extends CallToActionView {
             try {
                 Display.getDefault().syncExec(() -> { // Must be executed synchronously to ensure the correct hasWebViewDependency() result
                     Composite tempComposite = new Composite(getParentComposite(), SWT.NONE);
-                    browserProvider.setupBrowser(tempComposite);
+                    viewController.setupBrowser(tempComposite);
                     tempComposite.dispose();
                 });
-                return !browserProvider.hasWebViewDependency();
+                return !viewController.hasWebViewDependency();
             } catch (Exception ex) {
                 Activator.getLogger().error("Failed to check web view dependency", ex);
                 return true; // Safer to display dependency missing view by default than give access

@@ -14,12 +14,12 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
-import software.aws.toolkits.eclipse.amazonq.util.BrowserProvider;
 
 public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
 
@@ -30,11 +30,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             ReauthenticateView.ID,
             ChatAssetMissingView.ID
         );
-    private BrowserProvider browserProvider;
+    private AmazonQViewController viewController;
     private AmazonQCommonActions amazonQCommonActions;
 
     public AmazonQView() {
-        this.browserProvider = new BrowserProvider();
+        this.viewController = new AmazonQViewController();
     }
 
     public static void showView(final String viewId) {
@@ -73,7 +73,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     }
 
     public final Browser getBrowser() {
-        return browserProvider.getBrowser();
+        return viewController.getBrowser();
     }
 
     public final AmazonQCommonActions getAmazonQCommonActions() {
@@ -82,7 +82,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         // if browser setup fails, don't set up rest of the content
-        if (!browserProvider.setupBrowser(parent)) {
+        if (!viewController.setupBrowser(parent)) {
             return false;
         }
         setupBrowserBackground(parent);
@@ -123,7 +123,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     @Override
     public final void setFocus() {
-        if (!browserProvider.hasWebViewDependency()) {
+        if (!viewController.hasWebViewDependency()) {
             return;
         }
         getBrowser().setFocus();
@@ -138,7 +138,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
-        browserProvider.dispose();
+        viewController.dispose();
         super.dispose();
     }
 

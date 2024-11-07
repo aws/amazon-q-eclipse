@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.eclipse.core.commands.IExecutionListener;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.PlatformUI;

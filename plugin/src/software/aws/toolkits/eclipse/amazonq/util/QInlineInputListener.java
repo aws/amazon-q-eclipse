@@ -133,8 +133,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         int idx = widget.getCaretOffset() - session.getInvocationOffset();
         if (!toAppend.isEmpty()) {
             try {
-                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(qSes.getViewer(),
-                        qSes.getInvocationOffset()) + distanceTraversed;
+                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        session.getInvocationOffset()) + idx;
                 doc.replace(adjustedOffset, 0, toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());

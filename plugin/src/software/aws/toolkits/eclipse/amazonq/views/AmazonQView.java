@@ -33,7 +33,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     private AmazonQViewController viewController;
     private AmazonQCommonActions amazonQCommonActions;
 
-    public AmazonQView() {
+    protected AmazonQView() {
         this.viewController = new AmazonQViewController();
     }
 

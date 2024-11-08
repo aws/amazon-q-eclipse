@@ -248,7 +248,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             return;
         }
 
-        // Here we perform "pre open bracket insertion input sanitation", which consists
+        // Here we perform "pre-open bracket insertion input sanitation", which consists
         // of the following:
         // - Checks to see if the input contains anything inserted on behalf of user by
         // eclipse (i.e. auto closing bracket).
@@ -294,13 +294,17 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         session
                 .setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
 
-        boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
+        boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-            System.out.println("input is: "
-                    + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-            System.out.println("suggestion is: "
-                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-                            .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+            if (!isOutOfBounds) {
+                System.out.println("input is: "
+                        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+                System.out.println("suggestion is: "
+                        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+                                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+            } else {
+                System.out.println("Out of bounds");
+            }
             Display.getCurrent().asyncExec(() -> {
                 session.transitionToDecisionMade();
                 session.end();
@@ -365,7 +369,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {
         boolean res = false;
-        if (input.length() > 1 && input.length() <= currentSuggestion.length()) {
+        if (input.length() > 1 && input.length() + startIdx <= currentSuggestion.length()) {
             res = currentSuggestion.substring(startIdx, startIdx + input.length()).equals(input);
         } else if (input.length() == 1) {
             res = String.valueOf(currentSuggestion.charAt(startIdx)).equals(input);

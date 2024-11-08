@@ -5,7 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.Objects;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.views.model.AuthState;
@@ -19,8 +19,8 @@ public final class AuthStateManager {
     private LoginParams loginParams;
     private String issuerUrl;
 
-    public AuthStateManager() {
-        this.authPluginStore = new AuthPluginStore();
+    public AuthStateManager(final PluginStore pluginStore) {
+        this.authPluginStore = new AuthPluginStore(pluginStore);
         syncAuthStateWithPluginStore();
     }
 
@@ -52,11 +52,7 @@ public final class AuthStateManager {
 
         // TODO: replace AuthStatusProvider and AuthStatusChangedListener to utilize AuthState directly
         AuthState authState = getAuthState();
-        LoginDetails loginDetails = new LoginDetails();
-        loginDetails.setIsLoggedIn(authState.isLoggedIn());
-        loginDetails.setIssuerUrl(authState.issuerUrl());
-        loginDetails.setLoginType(authState.loginType());
-        AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
+        AuthStatusProvider.notifyAuthStatusChanged(authState.toLoginDetails());
     }
 
     private String getIssuerUrl(final LoginType loginType, final LoginParams loginParams) {

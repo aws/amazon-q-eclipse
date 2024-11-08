@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.views.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 
@@ -25,5 +26,16 @@ public record AuthState(
 
     public Boolean isExpired() {
         return authStateType.equals(AuthStateType.EXPIRED);
+    }
+
+    // TODO LoginDetails should be replaced with AuthState throughout the plugin.
+    // When AuthStatusProvider and AuthStatusChangedListener is refactored to use
+    // AuthState, remove this method as well.
+    public LoginDetails toLoginDetails() {
+        LoginDetails loginDetails = new LoginDetails();
+        loginDetails.setIsLoggedIn(isLoggedIn());
+        loginDetails.setIssuerUrl(issuerUrl);
+        loginDetails.setLoginType(loginType);
+        return loginDetails;
     }
 }

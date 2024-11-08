@@ -109,9 +109,8 @@ public final class DependencyMissingView extends CallToActionView {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Display.getDefault().syncExec(() -> { // Must be executed synchronously to ensure the correct hasWebViewDependency() result
-                    Composite tempComposite = new Composite(getParentComposite(), SWT.NONE);
-                    viewController.setupBrowser(tempComposite);
-                    tempComposite.dispose();
+                    viewController.setupBrowser(getParentComposite());
+                    viewController.getBrowser().dispose();
                 });
                 return !viewController.hasWebViewDependency();
             } catch (Exception ex) {

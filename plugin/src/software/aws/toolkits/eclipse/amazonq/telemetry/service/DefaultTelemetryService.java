@@ -30,6 +30,7 @@ import software.amazon.awssdk.services.toolkittelemetry.model.PostFeedbackReques
 import software.amazon.awssdk.services.toolkittelemetry.model.PostMetricsRequest;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.amazon.awssdk.services.toolkittelemetry.model.Unit;
+import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -117,12 +118,18 @@ public final class DefaultTelemetryService implements TelemetryService {
     private static ToolkitTelemetryClient createDefaultTelemetryClient(final Region region, final String endpoint, final String identityPool) {
         SSLContext sslContext = ProxyUtil.getCustomSslContext();
         SSLConnectionSocketFactory sslSocketFactory = sslContext != null ? new SSLConnectionSocketFactory(ProxyUtil.getCustomSslContext()) : null;
-        SdkHttpClient sdkHttpClient = ApacheHttpClient.builder()
-                .socketFactory(sslSocketFactory)
-                .proxyConfiguration(ProxyConfiguration.builder()
-                        .endpoint(URI.create(ProxyUtil.getHttpsProxyUrlEnvVar()))
-                        .build())
-                .build();
+        var proxyUrl = ProxyUtil.getHttpsProxyUrlEnvVar();
+        var httpClientBuilder = ApacheHttpClient.builder();
+        if (!StringUtils.isEmpty(proxyUrl)) {
+            httpClientBuilder.proxyConfiguration(ProxyConfiguration.builder()
+                    .endpoint(URI.create(proxyUrl))
+                    .build());
+        }
+
+        if (sslContext != null) {
+            httpClientBuilder.socketFactory(sslSocketFactory);
+        }
+        SdkHttpClient sdkHttpClient = httpClientBuilder.build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()
                 .credentialsProvider(AnonymousCredentialsProvider.create())
                 .region(region)

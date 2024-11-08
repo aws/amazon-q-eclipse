@@ -98,6 +98,11 @@ public final class ToolkitLoginWebview extends AmazonQView {
                     <!DOCTYPE html>
                     <html>
                         <head>
+                            <meta
+                                http-equiv="Content-Security-Policy"
+                                content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
+                                img-src 'self' data:; object-src 'none'; base-uri 'none';"
+                            >
                             <title>AWS Q</title>
                         </head>
                         <body class="jb-light">
@@ -118,7 +123,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                             </script>
                         </body>
                     </html>
-                    """, loginJsPath);
+                    """, loginJsPath, loginJsPath, loginJsPath);
         } catch (IOException | URISyntaxException e) {
             return "Failed to load JS";
         }

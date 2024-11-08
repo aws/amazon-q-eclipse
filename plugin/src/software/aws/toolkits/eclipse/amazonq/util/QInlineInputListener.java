@@ -4,6 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
@@ -20,19 +22,21 @@ import org.eclipse.swt.events.MouseListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class QInlineInputListener implements IDocumentListener, VerifyKeyListener, MouseListener {
+    private static final Pattern CURLY_AUTO_CLOSE_MATCHER = Pattern.compile("\\n\\s*\\n\\s*\\}");
 
     private StyledText widget = null;
     private int numSuggestionLines = 0;
-    private LastKeyStrokeType lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
-    private boolean isBracketsSetToAutoClose = false;
-    private boolean isBracesSetToAutoClose = false;
-    private boolean isStringSetToAutoClose = false;
+    private boolean isBracketsSetToAutoClose = true;
+    private boolean isBracesSetToAutoClose = true;
+    private boolean isStringSetToAutoClose = true;
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
     private int distanceTraversed = 0;
 
-    private enum LastKeyStrokeType {
-        NORMAL_INPUT, BACKSPACE,
+    private enum PreprocessingCategory {
+        NONE,
+        NORMAL_BRACKETS,
+        CURLY_BRACES
     }
 
     /**
@@ -63,7 +67,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
      * toggled to.
      */
     public void onNewSuggestion() {
-        lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
         var qInvocationSessionInstance = QInvocationSession.getInstance();
         if (qInvocationSessionInstance == null) {
             return;
@@ -163,25 +166,11 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         session.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
 
-        // Here we examine all other relevant keystrokes that may be relevant to the
-        // preview's lifetime:
-        // - CR (new line)
-        // - BS (backspace)
         int idx = widget.getCaretOffset() - session.getInvocationOffset();
-        switch (event.keyCode) {
-        case SWT.CR:
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
+        if (event.keyCode == SWT.BS && idx == 0) {
+            session.transitionToDecisionMade();
+            session.end();
             return;
-        case SWT.BS:
-            if (idx == 0) {
-                session.transitionToDecisionMade();
-                session.end();
-                return;
-            }
-            lastKeyStrokeType = LastKeyStrokeType.BACKSPACE;
-            return;
-        default:
-            lastKeyStrokeType = LastKeyStrokeType.NORMAL_INPUT;
         }
         // Here we want to check for the following:
         // - If the input is a closing bracket
@@ -203,7 +192,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             IDocument doc = viewer.getDocument();
             int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, widget.getCaretOffset());
             try {
-                System.out.println("Insertion done from verifyKey: " + event.character);
                 widget.setCaretOffset(widget.getCaretOffset() - 1);
                 doc.replace(expandedOffset - 1, 0, String.valueOf(event.character));
             } catch (BadLocationException e) {
@@ -267,20 +255,40 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - If it does, get rid of that portion (note that at this point the document
         // has already been changed so we are really deleting the extra portion and
         // replacing it with what should remain).
-        if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
-                || input.equals("\"\"") || input.equals("[]"))) {
+        // - Lastly, we would want to return early for these two cases. This is because
+        // the very act of altering the document will trigger this callback once again
+        // so there is no need to validate the input this time around.
+        PreprocessingCategory category = getBufferPreprocessingCategory(input);
+        ITextViewer viewer = session.getViewer();
+        IDocument doc = viewer.getDocument();
+        int expandedOffset;
+        switch (category) {
+        case NORMAL_BRACKETS:
             input = input.substring(0, 1);
-            ITextViewer viewer = session.getViewer();
-            IDocument doc = viewer.getDocument();
-            int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, event.getOffset());
+            expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, event.getOffset());
             try {
                 doc.replace(expandedOffset, 2, input);
                 System.out.println("Insertion done from doc listener: " + input);
                 return;
             } catch (BadLocationException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Activator.getLogger().error("Error performing open bracket sanitation during typeahead", e);
             }
+            return;
+        case CURLY_BRACES:
+            int firstNewlineIndex = input.indexOf('\n');
+            int secondNewlineIndex = input.indexOf('\n', firstNewlineIndex + 1);
+            if (secondNewlineIndex != -1) {
+                String sanitizedInput = input.substring(0, secondNewlineIndex);
+                try {
+                    doc.replace(widget.getCaretOffset(), input.length(), sanitizedInput);
+                } catch (BadLocationException e) {
+                    Activator.getLogger().error("Error performing open braces sanitation during typeahead", e);
+                }
+                input = sanitizedInput;
+            }
+            return;
+        default:
+            break;
         }
 
         session
@@ -321,6 +329,18 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         distanceTraversed += input.length();
         System.out.println("From doc listener: " + input + " | distance: " + distanceTraversed);
+    }
+
+    private PreprocessingCategory getBufferPreprocessingCategory(final String input) {
+        if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
+                || input.equals("\"\"") || input.equals("[]"))) {
+            return PreprocessingCategory.NORMAL_BRACKETS;
+        }
+        Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);
+        if (matcher.find()) {
+            return PreprocessingCategory.CURLY_BRACES;
+        }
+        return PreprocessingCategory.NONE;
     }
 
     private boolean shouldIncrementCaret(final String input, final int offset) {

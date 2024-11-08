@@ -40,28 +40,21 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
 
 public final class DefaultLoginService implements LoginService {
     private LspProvider lspProvider;
-    private PluginStore pluginStore;
     private LspEncryptionManager encryptionManager;
-    private LoginType currentLogin;
-    private LoginParams loginParams;
+    private AuthStateManager authStateManager;
 
     private DefaultLoginService(final Builder builder) {
         this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
-        this.pluginStore = Objects.requireNonNull(builder.pluginStore, "pluginStore cannot be null");
         this.encryptionManager = Objects.requireNonNull(builder.encryptionManager, "encryption manager cannot be null");
-        String loginType = pluginStore.get(Constants.LOGIN_TYPE_KEY);
-        currentLogin = StringUtils.isEmpty(loginType) || !isValidLoginType(loginType) ? LoginType.NONE : LoginType.valueOf(loginType);
-        loginParams = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
-                ? new LoginParams().setLoginIdcParams(pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)) : null;
+        this.authStateManager = new AuthStateManager();
     }
-
+    
     public static Builder builder() {
         return new Builder();
     }
 
     @Override
     public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams) {
-        updateConnectionDetails(loginType, loginParams);
         return getToken(true)
             .thenApply(this::updateCredentials)
             .thenAccept((response) -> {
@@ -179,55 +172,19 @@ public final class DefaultLoginService implements LoginService {
         currentLogin = type;
         loginParams = params;
     }
-
-    private void updatePluginStore(final LoginType type, final LoginParams params) {
-        pluginStore.put(Constants.LOGIN_TYPE_KEY, type.name());
-        pluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, params.getLoginIdcParams());
-    }
-
-    private LoginType getLoginTypeFromPluginStore() {
-        String storedValue = pluginStore.get(Constants.LOGIN_TYPE_KEY);
-
-         if (storedValue.equals(LoginType.BUILDER_ID.name())) {
-            return LoginType.BUILDER_ID;
-        } else if (storedValue.equals(LoginType.IAM_IDENTITY_CENTER.name())) {
-            return LoginType.IAM_IDENTITY_CENTER;
-        } else {
-            return LoginType.NONE;
-        }
-    }
-
-    private LoginParams getLoginParamsFromPluginStore() {
-        LoginIdcParams loginIdcParams = pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class);
-        LoginParams loginParams = new LoginParams();
-        loginParams.setLoginIdcParams(loginIdcParams);
-        return loginParams;
-    }
-
-    private void removeItemsFromPluginStore() {
-        pluginStore.remove(Constants.LOGIN_TYPE_KEY);
-        pluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
-    }
-
-    private String getIssuerUrl(final boolean isLoggedIn) {
-        if (!isLoggedIn || currentLogin.equals(LoginType.NONE)) {
-            return null;
-        }
-        if (currentLogin.equals(LoginType.BUILDER_ID)) {
-            return Constants.AWS_BUILDER_ID_URL;
-        }
-        return Objects.isNull(loginParams) || Objects.isNull(loginParams.getLoginIdcParams()) ? null : loginParams.getLoginIdcParams().getUrl();
-    }
     CompletableFuture<SsoToken> getToken(final boolean triggerSignIn) {
+        
+        LoginType loginType = authStateManager.getLoginType();
+        LoginParams loginParams = authStateManager.getLoginParams();
 
-        GetSsoTokenParams params = getSsoTokenParams(currentLogin, triggerSignIn);
-        String issuerUrl = (currentLogin.equals(LoginType.IAM_IDENTITY_CENTER))
+        GetSsoTokenParams params = getSsoTokenParams(loginType, triggerSignIn);
+        String issuerUrl = (loginType.equals(LoginType.IAM_IDENTITY_CENTER))
                 ? loginParams.getLoginIdcParams().getUrl()
                 : Constants.AWS_BUILDER_ID_URL;
 
         return lspProvider.getAmazonQServer()
                 .thenApply(server -> {
-                    if (triggerSignIn && currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)) {
+                    if (triggerSignIn && loginType.equals(LoginType.IAM_IDENTITY_CENTER)) {
                         var profile = new Profile();
                         profile.setName(Constants.IDC_PROFILE_NAME);
                         profile.setProfileKinds(Collections.singletonList(Constants.IDC_PROFILE_KIND));
@@ -286,26 +243,23 @@ public final class DefaultLoginService implements LoginService {
                 });
     }
 
-    private static GetSsoTokenParams getSsoTokenParams(final LoginType currentLogin, final boolean triggerSignIn) {
+    private GetSsoTokenParams getSsoTokenParams(final LoginType currentLogin, final boolean triggerSignIn) {
         GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
                 ? new GetSsoTokenSource(LoginType.IAM_IDENTITY_CENTER.getValue(), null, Constants.IDC_PROFILE_NAME)
                 : new GetSsoTokenSource(LoginType.BUILDER_ID.getValue(), Q_SCOPES, null);
         GetSsoTokenOptions options = new GetSsoTokenOptions(triggerSignIn);
         return new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
     }
+    
+
 
     public static class Builder {
         private LspProvider lspProvider;
-        private PluginStore pluginStore;
         private LspEncryptionManager encryptionManager;
         private boolean initializeOnStartUp;
 
         public final Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
-            return this;
-        }
-        public final Builder withPluginStore(final PluginStore pluginStore) {
-            this.pluginStore = pluginStore;
             return this;
         }
         public final Builder withEncryptionManager(final LspEncryptionManager encryptionManager) {
@@ -320,9 +274,6 @@ public final class DefaultLoginService implements LoginService {
         public final DefaultLoginService build() {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
-            }
-            if (pluginStore == null) {
-                pluginStore = Activator.getPluginStore();
             }
             if (encryptionManager == null) {
                 encryptionManager = DefaultLspEncryptionManager.getInstance();

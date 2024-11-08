@@ -8,6 +8,7 @@ import java.util.Objects;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.views.model.AuthStateType;
 
@@ -25,6 +26,12 @@ public final class AuthStateManager {
     }
 
     public void toLoggedIn(final LoginType loginType, final LoginParams loginParams) {
+        if (loginType == null || loginType.equals(LoginType.NONE)) {
+            Activator.getLogger().error("Error occurred while switching to logged in auth state: "
+                    + "Missing required parameter.");
+            return;
+        }
+
         updateState(AuthStateType.LOGGED_IN, loginType, loginParams);
     }
 
@@ -33,7 +40,13 @@ public final class AuthStateManager {
     }
 
     public void toExpired() {
-        // Intentionally keep loginType and loginParmas the same
+        if (loginType == null || loginType.equals(LoginType.NONE)) {
+            Activator.getLogger().error("Error occurred while switching to expired auth state: "
+                    + "Missing parameters for re-authentication. Switching to logged out state instead.");
+            toLoggedOut();
+            return;
+        }
+
         updateState(AuthStateType.EXPIRED, loginType, loginParams);
     }
 
@@ -47,8 +60,12 @@ public final class AuthStateManager {
         this.loginParams = loginParams;
         this.issuerUrl = getIssuerUrl(loginType, loginParams);
 
-        authPluginStore.setLoginType(loginType);
-        authPluginStore.setLoginParams(loginParams);
+        if (loginType.equals(LoginType.NONE)) {
+            authPluginStore.clear();
+        } else {
+            authPluginStore.setLoginType(loginType);
+            authPluginStore.setLoginParams(loginParams);
+        }
 
         // TODO: replace AuthStatusProvider and AuthStatusChangedListener to utilize AuthState directly
         AuthState authState = getAuthState();

@@ -198,7 +198,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - Insert the closing bracket into the buffer at the decremented position.
         // This is because eclipse will not actually insert closing bracket when auto
         // close is turned on.
-        System.out.println("From verifyKey | key pressed: " + event.character + " | distance: " + distanceTraversed);
         if (shouldProcessInput(event, distanceTraversed)) {
             ITextViewer viewer = session.getViewer();
             IDocument doc = viewer.getDocument();
@@ -294,14 +293,12 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         PreprocessingCategory category = getBufferPreprocessingCategory(input);
         ITextViewer viewer = session.getViewer();
         IDocument doc = viewer.getDocument();
-        int expandedOffset;
+        // NOTE: here we are blessed with DocumentEvent, whose offset is the expanded offset.
         switch (category) {
         case NORMAL_BRACKETS:
             input = input.substring(0, 1);
-            expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, event.getOffset());
             try {
-                doc.replace(expandedOffset, 2, input);
-                System.out.println("Insertion done from doc listener: " + input);
+                doc.replace(event.getOffset(), 2, input);
                 return;
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error performing open bracket sanitation during typeahead", e);
@@ -313,7 +310,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             if (secondNewlineIndex != -1) {
                 String sanitizedInput = input.substring(0, secondNewlineIndex);
                 try {
-                    doc.replace(widget.getCaretOffset(), input.length(), sanitizedInput);
+                    doc.replace(event.getOffset(), input.length(), sanitizedInput);
                 } catch (BadLocationException e) {
                     Activator.getLogger().error("Error performing open braces sanitation during typeahead", e);
                 }
@@ -329,15 +326,15 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-            if (!isOutOfBounds) {
-                System.out.println("input is: "
-                        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-                System.out.println("suggestion is: "
-                        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-                                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
-            } else {
-                System.out.println("Out of bounds");
-            }
+//            if (!isOutOfBounds) {
+//                System.out.println("input is: "
+//                        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
+//                System.out.println("suggestion is: "
+//                        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
+//                                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
+//            } else {
+//                System.out.println("Out of bounds");
+//            }
             Display.getCurrent().asyncExec(() -> {
                 session.transitionToDecisionMade();
                 session.end();
@@ -365,7 +362,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
 
         distanceTraversed += input.length();
-        System.out.println("From doc listener: " + input + " | distance: " + distanceTraversed);
     }
 
     private PreprocessingCategory getBufferPreprocessingCategory(final String input) {

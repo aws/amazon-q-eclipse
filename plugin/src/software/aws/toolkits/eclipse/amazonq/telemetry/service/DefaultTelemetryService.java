@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.http.SdkHttpClient;
@@ -26,6 +30,7 @@ import software.amazon.awssdk.services.toolkittelemetry.model.PostFeedbackReques
 import software.amazon.awssdk.services.toolkittelemetry.model.PostMetricsRequest;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.amazon.awssdk.services.toolkittelemetry.model.Unit;
+import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -111,11 +116,20 @@ public final class DefaultTelemetryService implements TelemetryService {
     }
 
     private static ToolkitTelemetryClient createDefaultTelemetryClient(final Region region, final String endpoint, final String identityPool) {
-        SdkHttpClient sdkHttpClient = ApacheHttpClient.builder()
-                .proxyConfiguration(ProxyConfiguration.builder()
-                        .endpoint(URI.create(ProxyUtil.getHttpsProxyUrl()))
-                        .build())
-                .build();
+        SSLContext sslContext = ProxyUtil.getCustomSslContext();
+        SSLConnectionSocketFactory sslSocketFactory = sslContext != null ? new SSLConnectionSocketFactory(ProxyUtil.getCustomSslContext()) : null;
+        var proxyUrl = ProxyUtil.getHttpsProxyUrlEnvVar();
+        var httpClientBuilder = ApacheHttpClient.builder();
+        if (!StringUtils.isEmpty(proxyUrl)) {
+            httpClientBuilder.proxyConfiguration(ProxyConfiguration.builder()
+                    .endpoint(URI.create(proxyUrl))
+                    .build());
+        }
+
+        if (sslContext != null) {
+            httpClientBuilder.socketFactory(sslSocketFactory);
+        }
+        SdkHttpClient sdkHttpClient = httpClientBuilder.build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()
                 .credentialsProvider(AnonymousCredentialsProvider.create())
                 .region(region)

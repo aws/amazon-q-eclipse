@@ -4,6 +4,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -17,6 +18,7 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -29,6 +31,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     private boolean isBracketsSetToAutoClose = true;
     private boolean isBracesSetToAutoClose = true;
     private boolean isStringSetToAutoClose = true;
+    private boolean isAngleBracketsSetToAutoClose = true;
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
     private int distanceTraversed = 0;
@@ -55,6 +58,15 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         ITextViewer viewer = session.getViewer();
         IDocument doc = viewer.getDocument();
         doc.addDocumentListener(this);
+        ITextEditor editor = session.getEditor();
+        Optional<AutoCloseBracketConfig> bracketConfig = QEclipseEditorUtils.getAutoCloseSettings(editor);
+        if (bracketConfig.isPresent()) {
+            AutoCloseBracketConfig config = bracketConfig.get();
+            isBracketsSetToAutoClose = config.isParenAutoClosed();
+            isBracesSetToAutoClose = config.isBracesAutoClosed();
+            isStringSetToAutoClose = config.isStringAutoClosed();
+            isAngleBracketsSetToAutoClose = config.isAngleBracketAutoClosed();
+        }
     }
 
     /**
@@ -124,8 +136,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 continue;
             }
             if (!session.getSuggestionAccepted()) {
-                String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose, isBracesSetToAutoClose,
-                        isStringSetToAutoClose);
+                String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose,
+                        isAngleBracketsSetToAutoClose, isBracesSetToAutoClose, isStringSetToAutoClose);
                 if (autoCloseContent != null) {
                     toAppend += autoCloseContent;
                 }
@@ -211,6 +223,27 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         char input = event.character;
         if (bracket.getSymbol() != input) {
             return false;
+        }
+        switch (input) {
+        case ')':
+        case ']':
+            if (!isBracketsSetToAutoClose) {
+                return false;
+            }
+            break;
+        case '>':
+            if (!isAngleBracketsSetToAutoClose) {
+                return false;
+            }
+            break;
+        case '\"':
+        case '\'':
+            if (!isStringSetToAutoClose) {
+                return false;
+            }
+            break;
+        default:
+            break;
         }
         QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket();
         if (openBracket == null || openBracket.isResolved()) {
@@ -352,8 +385,29 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
             return false;
         }
-        if (bracket.getSymbol() != input.charAt(0)) {
+        if (bracket.getSymbol() != input.charAt(0) || input.length() > 1) {
             return false;
+        }
+        switch (input.charAt(0)) {
+        case ')':
+        case ']':
+            if (!isBracketsSetToAutoClose) {
+                return false;
+            }
+            break;
+        case '>':
+            if (!isAngleBracketsSetToAutoClose) {
+                return false;
+            }
+            break;
+        case '\"':
+        case '\'':
+            if (!isStringSetToAutoClose) {
+                return false;
+            }
+            break;
+        default:
+            break;
         }
         QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket();
         if (openBracket == null || openBracket.isResolved()) {
@@ -364,7 +418,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
     @Override
     public void documentAboutToBeChanged(final DocumentEvent e) {
-        // TODO Auto-generated method stub
     }
 
     private boolean isInputAMatch(final String currentSuggestion, final int startIdx, final String input) {

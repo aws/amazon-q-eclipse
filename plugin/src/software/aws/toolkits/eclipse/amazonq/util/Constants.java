@@ -30,4 +30,6 @@ public final class Constants {
     public static final String TELEMETRY_NOTIFICATION_TITLE = "AWS IDE plugins telemetry";
     public static final String TELEMETRY_NOTIFICATION_BODY = "Usage metrics are collected by default. This can be changed in the \"Amazon Q\" section"
             + " of the IDE preferences.";
+    public static final String RE_AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to re-authenticate. Please try again.";
+    public static final String AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to authenticate. Please try again.";
 }

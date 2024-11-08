@@ -3,8 +3,16 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import org.eclipse.core.net.proxy.IProxyData;
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class ProxyUtil {
 
@@ -16,6 +24,10 @@ public final class ProxyUtil {
 
     public static String getHttpsProxyUrl() {
         return proxyHttpsUrl;
+    }
+
+    public static String getHttpsProxyUrlEnvVar() {
+        return System.getenv("HTTPS_PROXY");
     }
 
     public static void updateHttpsProxyUrl(final String proxyHost) {
@@ -49,4 +61,35 @@ public final class ProxyUtil {
         }
         return proxiedHost;
     }
+
+    public static SSLContext getCustomSslContext() {
+        try {
+            String customCertPath = System.getenv("NODE_EXTRA_CA_CERTS");
+            if (customCertPath != null && !customCertPath.isEmpty()) {
+                CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+                X509Certificate cert;
+
+                try (FileInputStream fis = new FileInputStream(customCertPath)) {
+                    cert = (X509Certificate) certificateFactory.generateCertificate(fis);
+                }
+
+                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                keyStore.load(null, null);
+                keyStore.setCertificateEntry("custom-cert", cert);
+
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init(keyStore);
+
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, tmf.getTrustManagers(), null);
+                Activator.getLogger().info("Picked up custom CA cert.");
+
+                return sslContext;
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to set up SSL context. Additional certs will not be used.", e);
+        }
+        return null;
+    }
+
 }

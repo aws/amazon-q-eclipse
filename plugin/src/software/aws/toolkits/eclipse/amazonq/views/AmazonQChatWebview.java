@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -42,6 +40,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ViewActionHandler actionHandler;
     private ChatCommunicationManager chatCommunicationManager;
     private ChatTheme chatTheme;
+    private ChatAssetProvider chatAssetProvider;
 
     public AmazonQChatWebview() {
         super();
@@ -49,6 +48,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         this.chatTheme = new ChatTheme();
+        this.chatAssetProvider = new ChatAssetProvider();
     }
 
     @Override
@@ -106,7 +106,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 AmazonQView.showView(ReauthenticateView.ID);
             } else {
                 if (!browser.isDisposed()) {
-                    browser.setText(getContent());
+                    getContent().ifPresentOrElse(
+                            content -> browser.setText(content),
+                            this::showChatAssetMissingView
+                        );
                 }
             }
         });
@@ -121,21 +124,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         }
     }
 
-    private String getContent() {
-        var chatUiDirectory = LspManagerProvider.getInstance().getLspInstallation().getClientDirectory();
-        // TODO: Show a notification if the directory does not exist and chat ui fails to load
-        String jsFile = Paths.get(chatUiDirectory).resolve("amazonq-ui.js").toString();
-        var jsParent = Path.of(jsFile).getParent();
-        var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+    private Optional<String> getContent() {
+        var chatAsset = chatAssetProvider.get();
 
-        webviewAssetServer = new WebviewAssetServer();
-        var result = webviewAssetServer.resolve(jsDirectoryPath);
-        if (!result) {
-            return "Failed to load JS";
+        if (!chatAsset.isPresent()) {
+            return Optional.empty();
         }
 
-        var chatJsPath = webviewAssetServer.getUri() + "amazonq-ui.js";
-        return String.format("""
+        String chatJsPath = chatAsset.get();
+
+        return Optional.of(String.format("""
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -153,7 +151,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     %s
                 </body>
                 </html>
-                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath));
+                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
     }
 
     private String generateCss() {
@@ -230,6 +228,17 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             webviewAssetServer.stop();
         }
         chatCommunicationManager.removeListener();
+        chatAssetProvider.dispose();
         super.dispose();
+    }
+
+    private void showChatAssetMissingView() {
+        Display.getCurrent().asyncExec(() -> {
+            try {
+                showView(ChatAssetMissingView.ID);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occured while attempting to show chat asset missing view", e);
+            }
+        });
     }
 }

@@ -10,12 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
@@ -42,9 +40,6 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
         env.put("AWS_Q_ENDPOINT_URL", "https://rts.gamma-us-east-1.codewhisperer.ai.aws.dev/");
-        if (!StringUtils.isEmpty(ProxyUtil.getHttpsProxyUrl())) {
-            env.put("HTTPS_PROXY", ProxyUtil.getHttpsProxyUrl());
-        }
     }
 
     @Override

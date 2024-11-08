@@ -24,6 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMeta
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
     private static final String USER_AGENT_CLIENT_NAME = "AmazonQ-For-Eclipse";
+    private static Launcher<AmazonQLspServer> launcher;
 
     @Override
     public final Launcher<AmazonQLspServer> create() {
@@ -32,8 +33,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
            builder.registerTypeAdapterFactory(new QLspTypeAdapterFactory());
            builder.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE);
         });
-        Launcher<AmazonQLspServer> launcher = super.create();
-        Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
+        launcher = super.create();
         return launcher;
     }
 
@@ -66,6 +66,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
                 var awsServerCapabiltiesProvider = AwsServerCapabiltiesProvider.getInstance();
                 awsServerCapabiltiesProvider.setAwsServerCapabilties(result.getAwsServerCapabilities());
+                Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
             }
             consumer.consume(message);
         });

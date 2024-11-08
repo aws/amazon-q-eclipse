@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -16,6 +18,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
@@ -65,7 +68,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
                     try {
                         Activator.getLoginService().reAuthenticate().get();
                     } catch (Exception ex) {
-                        PluginUtils.showErrorDialog("Amazon Q", "An error occurred while attempting to re-reauthenticate. Please try again.");
+                        PluginUtils.showErrorDialog("Amazon Q", Constants.RE_AUTHENTICATE_FAILURE_MESSAGE);
                         Activator.getLogger().error("Failed to re-authenticate", ex);
                     }
                 });
@@ -99,5 +102,19 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
+    }
+
+    @Override
+    protected CompletableFuture<Boolean> isViewDisplayable() {
+        return Activator.getLoginService().getLoginDetails().thenApply(loginDetails -> !loginDetails.getIsLoggedIn())
+                .exceptionally(ex -> {
+                    Activator.getLogger().error("Failed to verify logged in status", ex);
+                    return true; // Safer to display re-authenticate view by default than give access
+                });
+    }
+
+    @Override
+    protected void showAlternateView() {
+        AmazonQView.showView(AmazonQChatWebview.ID);
     }
 }

@@ -29,6 +29,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     private boolean isStringSetToAutoClose = false;
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
+    private int distanceTraversed = 0;
 
     private enum LastKeyStrokeType {
         NORMAL_INPUT, BACKSPACE,
@@ -196,47 +197,66 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - Insert the closing bracket into the buffer at the decremented position.
         // This is because eclipse will not actually insert closing bracket when auto
         // close is turned on.
-        if (event.character == ')') {
+        System.out.println("From verifyKey | key pressed: " + event.character + " | distance: " + distanceTraversed);
+        if (shouldProcessInput(event, distanceTraversed)) {
             ITextViewer viewer = session.getViewer();
             IDocument doc = viewer.getDocument();
             int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, widget.getCaretOffset());
             try {
+                System.out.println("Insertion done from verifyKey: " + event.character);
                 widget.setCaretOffset(widget.getCaretOffset() - 1);
                 doc.replace(expandedOffset - 1, 0, String.valueOf(event.character));
             } catch (BadLocationException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Activator.getLogger().error("Error inserting close bracket during typeahead", e);
             }
-            System.out.println(event.text + " entered");
         }
+    }
+
+    private boolean shouldProcessInput(final VerifyEvent event, final int offset) {
+        if (brackets[offset] == null) {
+            return false;
+        }
+        IQInlineBracket bracket = brackets[offset];
+        if (!(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
+            return false;
+        }
+        char input = event.character;
+        if (bracket.getSymbol() != input) {
+            return false;
+        }
+        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket();
+        if (openBracket == null || openBracket.isResolved()) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public void documentChanged(final DocumentEvent event) {
         QInvocationSession session = QInvocationSession.getInstance();
-        int idx = widget.getCaretOffset() - session.getInvocationOffset();
-        System.out.println("offset from widget: " + widget.getCaretOffset() + " | offset from event: " + event.getOffset());
+
+        if (session == null || !session.isPreviewingSuggestions()) {
+            return;
+        }
+
         String input = event.getText();
         String currentSuggestion = session.getCurrentSuggestion().getInsertText();
         int currentOffset = widget.getCaretOffset();
-        System.out.println("input: " + input + " | distranceTraversed: " + idx);
         if (input.isEmpty()) {
             // either that or user has hit backspace
+            // note that when deleting an unresolved bracket when auto close is turned on, this function does not actually get called.
             int numCharDeleted = event.getLength();
-            if (numCharDeleted > idx) {
+            if (numCharDeleted > distanceTraversed) {
                 session.transitionToDecisionMade();
                 session.end();
             }
             for (int i = 1; i <= numCharDeleted; i++) {
-                var bracket = brackets[idx - i];
+                var bracket = brackets[distanceTraversed - i];
                 if (bracket != null) {
                     bracket.onDelete();
                 }
             }
-            return;
-        }
-
-        if (session == null || !session.isPreviewingSuggestions()) {
+            distanceTraversed -= numCharDeleted;
             return;
         }
 
@@ -255,7 +275,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, event.getOffset());
             try {
                 doc.replace(expandedOffset, 2, input);
-                widget.setCaretOffset(event.getOffset());
+                System.out.println("Insertion done from doc listener: " + input);
+                return;
             } catch (BadLocationException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -265,12 +286,12 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         session
                 .setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
 
-        boolean isOutOfBounds = idx >= currentSuggestion.length() || idx < 0;
-        if (isOutOfBounds || !isInputAMatch(currentSuggestion, idx, input)) {
+        boolean isOutOfBounds = distanceTraversed >= currentSuggestion.length() || distanceTraversed < 0;
+        if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
             System.out.println("input is: "
                     + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
             System.out.println("suggestion is: "
-                    + currentSuggestion.substring(idx, idx + input.length())
+                    + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
                             .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
             Display.getCurrent().asyncExec(() -> {
                 session.transitionToDecisionMade();
@@ -287,15 +308,34 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - If it is, we would need to increment the current caret offset, this is
         // because the closing bracket would have been inserted by verifyKey and not
         // organically, which does not advance the caret.
-        if (input.equals(")")) {
+        if (shouldIncrementCaret(input, distanceTraversed)) {
             widget.setCaretOffset(currentOffset + 1);
         }
-        for (int i = idx; i < idx + input.length(); i++) {
+
+        for (int i = distanceTraversed; i < distanceTraversed + input.length(); i++) {
             var bracket = brackets[i];
             if (bracket != null) {
                 bracket.onTypeOver();
             }
         }
+
+        distanceTraversed += input.length();
+        System.out.println("From doc listener: " + input + " | distance: " + distanceTraversed);
+    }
+
+    private boolean shouldIncrementCaret(final String input, final int offset) {
+        IQInlineBracket bracket = brackets[offset];
+        if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
+            return false;
+        }
+        if (bracket.getSymbol() != input.charAt(0)) {
+            return false;
+        }
+        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket();
+        if (openBracket == null || openBracket.isResolved()) {
+            return false;
+        }
+        return true;
     }
 
     @Override

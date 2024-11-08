@@ -104,4 +104,8 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     public char getSymbol() {
         return symbol;
     }
+
+    public QInlineSuggestionOpenBracketSegment getOpenBracket() {
+        return openBracket;
+    }
 }

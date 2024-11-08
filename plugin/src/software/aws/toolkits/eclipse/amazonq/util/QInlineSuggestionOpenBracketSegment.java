@@ -48,6 +48,10 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
         this.isResolved = isResolved;
     }
 
+    public boolean isResolved() {
+        return isResolved;
+    }
+
     public boolean hasPairedUp() {
         return closeBracket != null;
     }

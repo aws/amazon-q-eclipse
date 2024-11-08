@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.Objects;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.views.model.AuthState;
@@ -25,45 +26,15 @@ public final class AuthStateManager {
 
     public void toLoggedIn(final LoginType loginType, final LoginParams loginParams) {
         updateState(AuthStateType.LOGGED_IN, loginType, loginParams);
-        authPluginStore.setLoginType(loginType);
-        authPluginStore.setLoginParams(loginParams);
     }
 
     public void toLoggedOut() {
         updateState(AuthStateType.LOGGED_OUT, LoginType.NONE, null);
-        authPluginStore.setLoginType(loginType);
-        authPluginStore.setLoginParams(loginParams);
     }
 
     public void toExpired() {
-        updateState(AuthStateType.LOGGED_OUT, LoginType.NONE, null);
-        authStateType = AuthStateType.EXPIRED;
-    }
-
-    public void toExpired(final LoginType loginType, final LoginParams loginParams) {
-        this.authStateType = AuthStateType.EXPIRED;
-        this.loginType = loginType;
-        this.loginParams = loginParams;
-        this.issuerUrl = getIssuerUrl(loginType, loginParams);
-
-        authPluginStore.setLoginType(loginType);
-        authPluginStore.setLoginParams(loginParams);
-    }
-
-    public AuthStateType getAuthStateType() {
-        return authStateType;
-    }
-
-    public LoginType getLoginType() {
-        return loginType;
-    }
-
-    public LoginParams getLoginParams() {
-        return loginParams;
-    }
-
-    public String getIssuerUrl() {
-        return issuerUrl;
+        // Intentionally keep loginType and loginParmas the same
+        updateState(AuthStateType.EXPIRED, loginType, loginParams);
     }
 
     public AuthState getAuthState() {
@@ -76,7 +47,16 @@ public final class AuthStateManager {
         this.loginParams = loginParams;
         this.issuerUrl = getIssuerUrl(loginType, loginParams);
 
-        AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
+        authPluginStore.setLoginType(loginType);
+        authPluginStore.setLoginParams(loginParams);
+
+        // TODO: replace AuthStatusProvider and AuthStatusChangedListener to utilize AuthState directly
+        AuthState authState = getAuthState();
+        LoginDetails loginDetails = new LoginDetails();
+        loginDetails.setIsLoggedIn(authState.isLoggedIn());
+        loginDetails.setIssuerUrl(authState.issuerUrl());
+        loginDetails.setLoginType(authState.loginType());
+        AuthStatusProvider.notifyAuthStatusChanged(loginDetails);
     }
 
     private String getIssuerUrl(final LoginType loginType, final LoginParams loginParams) {
@@ -105,6 +85,6 @@ public final class AuthStateManager {
 
         // Default to expired. We have the loginType and params therefore we know the user
         // has previously authenticated. It would be unsafe to move to a LOGGED-IN state.
-        toExpired(loginType, loginParams);
+        updateState(AuthStateType.EXPIRED, loginType, loginParams);
     }
 }

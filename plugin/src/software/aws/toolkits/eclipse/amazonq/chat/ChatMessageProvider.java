@@ -81,11 +81,6 @@ public final class ChatMessageProvider {
         chatMessage.sendChatReady();
     }
 
-    public void sendTabAdd(final GenericTabParams tabParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendTabAdd(tabParams);
-    }
-
     public void sendTabRemove(final GenericTabParams tabParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         cancelInflightRequests(tabParams.tabId());

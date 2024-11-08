@@ -75,7 +75,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_TAB_ADD:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
+                // TOOD implement
                 break;
             case CHAT_TAB_REMOVE:
                 chatCommunicationManager.sendMessageToChatServer(command, params);

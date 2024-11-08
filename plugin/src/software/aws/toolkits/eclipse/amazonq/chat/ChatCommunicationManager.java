@@ -102,10 +102,6 @@ public final class ChatCommunicationManager {
                     case CHAT_READY:
                         chatMessageProvider.sendChatReady();
                         break;
-                    case CHAT_TAB_ADD:
-                        GenericTabParams tabParamsForAdd = jsonHandler.convertObject(params, GenericTabParams.class);
-                        chatMessageProvider.sendTabAdd(tabParamsForAdd);
-                        break;
                     case CHAT_TAB_REMOVE:
                         GenericTabParams tabParamsForRemove = jsonHandler.convertObject(params, GenericTabParams.class);
                         chatMessageProvider.sendTabRemove(tabParamsForRemove);

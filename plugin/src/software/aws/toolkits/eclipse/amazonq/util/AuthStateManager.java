@@ -28,7 +28,7 @@ public final class AuthStateManager {
     public void toLoggedIn(final LoginType loginType, final LoginParams loginParams) {
         if (loginType == null || loginType.equals(LoginType.NONE)) {
             Activator.getLogger().error("Error occurred while switching to logged in auth state: "
-                    + "Missing required parameter.");
+                    + "Missing required loginType parameter.");
             return;
         }
 
@@ -42,7 +42,7 @@ public final class AuthStateManager {
     public void toExpired() {
         if (loginType == null || loginType.equals(LoginType.NONE)) {
             Activator.getLogger().error("Error occurred while switching to expired auth state: "
-                    + "Missing parameters for re-authentication. Switching to logged out state instead.");
+                    + "Missing required loginType parameter. Switching to logged out state instead.");
             toLoggedOut();
             return;
         }

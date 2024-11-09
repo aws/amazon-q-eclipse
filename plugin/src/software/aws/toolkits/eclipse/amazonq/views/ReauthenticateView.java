@@ -14,7 +14,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
@@ -91,9 +91,9 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     }
 
     @Override
-    public void onAuthStatusChanged(final LoginDetails loginDetails) {
+    public void onAuthStatusChanged(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
-            if (loginDetails.getIsLoggedIn()) {
+            if (authState.isLoggedIn()) {
                 AmazonQView.showView(AmazonQChatWebview.ID);
             }
         });
@@ -106,11 +106,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
 
     @Override
     protected CompletableFuture<Boolean> isViewDisplayable() {
-        return Activator.getLoginService().getLoginDetails().thenApply(loginDetails -> !loginDetails.getIsLoggedIn())
-                .exceptionally(ex -> {
-                    Activator.getLogger().error("Failed to verify logged in status", ex);
-                    return true; // Safer to display re-authenticate view by default than give access
-                });
+        return CompletableFuture.completedFuture(Activator.getLoginService().getAuthState().isExpired());
     }
 
     @Override

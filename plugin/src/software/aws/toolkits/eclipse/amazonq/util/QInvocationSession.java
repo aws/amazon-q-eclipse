@@ -81,11 +81,12 @@ public final class QInvocationSession extends QResource {
     public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
             try {
-                if (!Activator.getLoginService().getLoginDetails().get().getIsLoggedIn()) {
+                if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
                     this.end();
                     return false;
-                } else {
-                    Activator.getLoginService().updateToken();
+                } else 
+                    // TODO check for expired state and attempt re-authentication?
+                    Activator.getLoginService().updateToken().get();
                 }
             } catch (InterruptedException e) {
                 Activator.getLogger().info("Invocation start interrupted", e);

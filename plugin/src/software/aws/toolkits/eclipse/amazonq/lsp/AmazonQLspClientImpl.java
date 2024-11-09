@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
@@ -44,11 +43,8 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         return CompletableFuture.supplyAsync(() -> {
             SsoProfileData sso = new SsoProfileData();
             String startUrl = Constants.AWS_BUILDER_ID_URL;
-            try {
-                startUrl = Activator.getLoginService().getLoginDetails().get().getIssuerUrl();
-            } catch (InterruptedException | ExecutionException e) {
-                Activator.getLogger().warn("Error while fetching the issuerUrl", e);
-            }
+            // TODO need to add a re-authenticate? 
+            startUrl = Activator.getLoginService().getAuthState().issuerUrl();
             sso.setStartUrl(startUrl);
             ConnectionMetadata metadata = new ConnectionMetadata();
             metadata.setSso(sso);

@@ -12,11 +12,12 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStateManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenSource;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.Profile;
@@ -32,7 +33,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
-import software.aws.toolkits.eclipse.amazonq.views.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;
@@ -119,34 +119,6 @@ public final class DefaultLoginService implements LoginService {
     }
 
     @Override
-    public CompletableFuture<LoginDetails> getLoginDetails() {
-        AuthState authState = authStateManager.getAuthState();
-        LoginType loginType = authState.loginType();
-        LoginParams loginParams = authState.loginParams();
-
-        if (authState.isLoggedOut()) {
-            return CompletableFuture.completedFuture(authState.toLoginDetails());
-        }
-
-        return getToken(loginType, loginParams, false)
-                .thenApply(ssoToken -> {
-                    boolean isLoggedIn = ssoToken != null;
-                    if (isLoggedIn) {
-                        authStateManager.toLoggedIn(loginType, loginParams);
-                    } else {
-                        authStateManager.toLoggedOut();
-                    }
-
-                    return authState.toLoginDetails();
-                })
-                .exceptionally(throwable -> {
-                    // TODO update to attempt a sign in if token retrieval fails https://sim.amazon.com/issues/ECLIPSE-457
-                    Activator.getLogger().error("Failed to check login status", throwable);
-                    authStateManager.toLoggedOut();
-                    return authState.toLoginDetails();
-                });
-    }
-
     public CompletableFuture<Boolean> reAuthenticate() {
         AuthState authState = authStateManager.getAuthState();
 
@@ -169,6 +141,11 @@ public final class DefaultLoginService implements LoginService {
                     Activator.getLogger().error("Failed to reauthenticate", throwable);
                     return false;
                 });
+    }
+
+    @Override
+    public AuthState getAuthState() {
+        return authStateManager.getAuthState();
     }
 
     CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean triggerSignIn) {
@@ -228,6 +205,8 @@ public final class DefaultLoginService implements LoginService {
                     throw new AmazonQPluginException(throwable);
                 });
     }
+
+
 
     private GetSsoTokenParams getSsoTokenParams(final LoginType currentLogin, final boolean triggerSignIn) {
         GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)

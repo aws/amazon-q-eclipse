@@ -9,7 +9,7 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 
 
 public final class AmazonQCommonActions {
@@ -24,10 +24,10 @@ public final class AmazonQCommonActions {
     private ViewLogsAction viewLogsAction;
     private ReportAnIssueAction reportAnIssueAction;
 
-    public AmazonQCommonActions(final LoginDetails loginDetails, final IViewSite viewSite) {
-        createActions(loginDetails, viewSite);
+    public AmazonQCommonActions(final AuthState authState, final IViewSite viewSite) {
+        createActions(viewSite);
         contributeToActionBars(viewSite);
-        updateActionVisibility(loginDetails, viewSite);
+        updateActionVisibility(authState, viewSite);
     }
 
     public SignoutAction getSignoutAction() {
@@ -46,7 +46,7 @@ public final class AmazonQCommonActions {
         return toggleAutoTriggerContributionItem;
     }
 
-    private void createActions(final LoginDetails loginDetails, final IViewSite viewSite) {
+    private void createActions(final IViewSite viewSite) {
         signoutAction = new SignoutAction();
         feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
         customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
@@ -90,11 +90,11 @@ public final class AmazonQCommonActions {
         // No actions added to the view toolbar at this time
     }
 
-    public void updateActionVisibility(final LoginDetails loginDetails, final IViewSite viewSite) {
-        signoutAction.updateVisibility(loginDetails);
-        feedbackDialogContributionItem.updateVisibility(loginDetails);
-        customizationDialogContributionItem.updateVisibility(loginDetails);
-        toggleAutoTriggerContributionItem.updateVisibility(loginDetails);
+    public void updateActionVisibility(final AuthState authState, final IViewSite viewSite) {
+        signoutAction.updateVisibility(authState);
+        feedbackDialogContributionItem.updateVisibility(authState);
+        customizationDialogContributionItem.updateVisibility(authState);
+        toggleAutoTriggerContributionItem.updateVisibility(authState);
     }
 
 }

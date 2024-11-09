@@ -1,16 +1,19 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.util;
+package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.Objects;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.views.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.views.model.AuthStateType;
+import software.aws.toolkits.eclipse.amazonq.util.AuthPluginStore;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
 public final class AuthStateManager {
     private final AuthPluginStore authPluginStore;
@@ -67,9 +70,7 @@ public final class AuthStateManager {
             authPluginStore.setLoginParams(loginParams);
         }
 
-        // TODO: replace AuthStatusProvider and AuthStatusChangedListener to utilize AuthState directly
-        AuthState authState = getAuthState();
-        AuthStatusProvider.notifyAuthStatusChanged(authState.toLoginDetails());
+        AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
     }
 
     private String getIssuerUrl(final LoginType loginType, final LoginParams loginParams) {
@@ -97,7 +98,7 @@ public final class AuthStateManager {
         }
 
         // Default to expired. We have the loginType and params therefore we know the user
-        // has previously authenticated. It would be unsafe to move to a LOGGED-IN state.
+        // has previously authenticated. It would be unsafe to move to a logged in state.
         updateState(AuthStateType.EXPIRED, loginType, loginParams);
     }
 }

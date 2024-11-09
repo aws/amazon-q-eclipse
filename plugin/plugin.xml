@@ -2,7 +2,7 @@
 <?eclipse version="3.4"?>
 <plugin>
     <extension point="org.eclipse.ui.services">
-	   <sourceProvider provider="software.aws.toolkits.eclipse.amazonq.lsp.AuthSourceProvider">
+	   <sourceProvider provider="software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthSourceProvider">
 	      <variable name="is_authenticated" priorityLevel="workbench"/>
 	   </sourceProvider>
 	</extension>

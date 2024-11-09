@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.lsp;
+package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +13,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 
@@ -61,8 +61,8 @@ public final class AuthSourceProvider extends AbstractSourceProvider implements 
     }
 
     @Override
-    public void onAuthStatusChanged(final LoginDetails loginDetails) {
-        boolean isAuthenticated = loginDetails.getIsLoggedIn();
+    public void onAuthStatusChanged(final AuthState authState) {
+        boolean isAuthenticated = authState.isLoggedIn();
         Display.getDefault().asyncExec(() -> {
             setIsAuthenticated(isAuthenticated);
         });

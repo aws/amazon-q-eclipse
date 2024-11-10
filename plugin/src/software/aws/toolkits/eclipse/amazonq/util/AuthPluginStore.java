@@ -4,13 +4,14 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class AuthPluginStore {
 
     private PluginStore pluginStore;
 
-    public AuthPluginStore(final PluginStore pluginStore) {
-        this.pluginStore = pluginStore;
+    public AuthPluginStore() {
+        this.pluginStore = Activator.getPluginStore();
     }
 
     public void setLoginType(final LoginType loginType) {
@@ -51,5 +52,6 @@ public final class AuthPluginStore {
     public void clear() {
         pluginStore.remove(Constants.LOGIN_TYPE_KEY);
         pluginStore.remove(Constants.LOGIN_IDC_PARAMS_KEY);
+        pluginStore.remove(Constants.SSO_TOKEN_ID);
     }
 }

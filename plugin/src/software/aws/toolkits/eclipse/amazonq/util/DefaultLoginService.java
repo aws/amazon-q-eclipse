@@ -11,9 +11,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStateManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultAuthStateManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
@@ -50,7 +50,7 @@ public final class DefaultLoginService implements LoginService {
 
         if (builder.initializeOnStartUp) {
             AuthState authState = authStateManager.getAuthState();
-            if (authState.isExpired()) {
+            if (authState.isLoggedIn()) {
                 reAuthenticate();
             }
         }
@@ -62,9 +62,16 @@ public final class DefaultLoginService implements LoginService {
 
     @Override
     public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams) {
-        final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
+        if (authStateManager.getAuthState().isLoggedIn()) {
+            Activator.getLogger().warn("Attempted to log in while already in a logged in state");
+            return CompletableFuture.completedFuture(null);
+        }
+
+        validateLoginParameters(loginType, loginParams);
 
         Activator.getLogger().info("Attempting to log in using LoginType " + loginType);
+
+        final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
 
         return getToken(loginType, loginParams, true)
             .thenCompose(ssoToken -> {
@@ -90,8 +97,9 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
-        if (authState.ssoTokenId().isBlank()) {
+        if (authState.ssoTokenId() == null || authState.ssoTokenId().isBlank()) {
             Activator.getLogger().warn("Attempted to log out with no ssoTokenId saved in auth state");
+            authStateManager.toLoggedOut();
             return CompletableFuture.completedFuture(null);
         }
 
@@ -119,12 +127,28 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
+        validateLoginParameters(authState.loginType(), authState.loginParams());
+
         return login(authState.loginType(), authState.loginParams());
     }
 
     @Override
     public AuthState getAuthState() {
         return authStateManager.getAuthState();
+    }
+
+    private void validateLoginParameters(final LoginType loginType, final LoginParams loginParams) {
+        if (loginType == null) {
+            throw new IllegalArgumentException("Missing required parameter: loginType cannot be null");
+        }
+
+        if (loginType.equals(LoginType.NONE)) {
+            throw new IllegalArgumentException("Invalid loginType: NONE is not a valid login type");
+        }
+
+        if (loginParams == null) {
+            throw new IllegalArgumentException("Missing required parameter: loginParams cannot be null");
+        }
     }
 
     private CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean triggerlogIn) {
@@ -198,7 +222,6 @@ public final class DefaultLoginService implements LoginService {
 
     public static class Builder {
         private LspProvider lspProvider;
-        private PluginStore pluginStore;
         private LspEncryptionManager encryptionManager;
         private AuthStateManager authStateManager;
         private boolean initializeOnStartUp;
@@ -207,15 +230,11 @@ public final class DefaultLoginService implements LoginService {
             this.lspProvider = lspProvider;
             return this;
         }
-        public final Builder withPluginStore(final PluginStore pluginStore) {
-            this.pluginStore = pluginStore;
-            return this;
-        }
         public final Builder withEncryptionManager(final LspEncryptionManager encryptionManager) {
             this.encryptionManager = encryptionManager;
             return this;
         }
-        public final Builder withAuthStateManager(final AuthStateManager authStateManager) {
+        public final Builder withAuthStateManager(final DefaultAuthStateManager authStateManager) {
             this.authStateManager = authStateManager;
             return this;
         }
@@ -228,14 +247,11 @@ public final class DefaultLoginService implements LoginService {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
             }
-            if (pluginStore == null) {
-                pluginStore = Activator.getPluginStore();
-            }
             if (encryptionManager == null) {
                 encryptionManager = DefaultLspEncryptionManager.getInstance();
             }
             if (authStateManager == null) {
-                authStateManager = new AuthStateManager(pluginStore);
+                authStateManager = DefaultAuthStateManager.getInstance();
             }
             DefaultLoginService instance = new DefaultLoginService(this);
             return instance;

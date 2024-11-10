@@ -24,6 +24,7 @@ import org.eclipse.ui.PlatformUI;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
@@ -146,6 +147,22 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void ssoTokenChanged(final SsoTokenChangedParams params) {
-        Activator.getLogger().info("Token changed: " + params.kind());
+        try {
+            SsoTokenChangedKind kind = SsoTokenChangedKind.valueOf(params.kind());
+            Activator.getLogger().info("Token changed: " + kind);
+
+            switch (kind) {
+                case EXPIRED:
+                    Activator.getLoginService().expire();
+                    return;
+                case REFRESHED:
+                    Activator.getLoginService().silentlyReAuthenticate();
+                    return;
+                default:
+                    Activator.getLogger().error("Error processing token changed: Unhandled kind " + kind);
+            }
+        } catch (IllegalArgumentException e) {
+            Activator.getLogger().error("Error processing token changed: Invalid kind " + params.kind());
+        }
     }
 }

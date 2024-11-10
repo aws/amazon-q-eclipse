@@ -51,7 +51,7 @@ public final class DefaultLoginService implements LoginService {
         if (builder.initializeOnStartUp) {
             AuthState authState = authStateManager.getAuthState();
             if (authState.isExpired()) {
-                reAuthenticate();
+                silentlyReAuthenticate();
             }
         }
     }
@@ -61,7 +61,7 @@ public final class DefaultLoginService implements LoginService {
     }
 
     @Override
-    public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams) {
+    public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
         if (authStateManager.getAuthState().isLoggedIn()) {
             Activator.getLogger().warn("Attempted to log in while already in a logged in state");
             return CompletableFuture.completedFuture(null);
@@ -73,7 +73,7 @@ public final class DefaultLoginService implements LoginService {
 
         final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
 
-        return getToken(loginType, loginParams, true)
+        return getToken(loginType, loginParams, loginOnInvalidToken)
             .thenCompose(ssoToken -> {
                 ssoTokenId.set(ssoToken.id());
                 return updateCredentials(ssoToken);
@@ -119,6 +119,21 @@ public final class DefaultLoginService implements LoginService {
     }
 
     @Override
+    public CompletableFuture<Void> expire() {
+        UpdateCredentialsPayload payload = createUpdateCredentialsPayload(null);
+        return lspProvider.getAmazonQServer()
+                .thenAccept(server -> {
+                    server.updateTokenCredentials(payload);
+                }).thenRun(() -> {
+                    authStateManager.toExpired();
+                    Activator.getLogger().info("Successfully expired credentials");
+                }).exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to expire credentials");
+                    throw new AmazonQPluginException(throwable);
+                });
+    }
+
+    @Override
     public CompletableFuture<Void> reAuthenticate() {
         AuthState authState = authStateManager.getAuthState();
 
@@ -129,8 +144,23 @@ public final class DefaultLoginService implements LoginService {
 
         validateLoginParameters(authState.loginType(), authState.loginParams());
 
-        return login(authState.loginType(), authState.loginParams());
+        return login(authState.loginType(), authState.loginParams(), true);
     }
+
+    @Override
+    public CompletableFuture<Void> silentlyReAuthenticate() {
+        AuthState authState = authStateManager.getAuthState();
+
+        if (authState.isLoggedOut()) {
+            Activator.getLogger().warn("Attempted to silently re-authenticate while user is in a logged out state");
+            return CompletableFuture.completedFuture(null);
+        }
+
+        validateLoginParameters(authState.loginType(), authState.loginParams());
+
+        return login(authState.loginType(), authState.loginParams(), false);
+    }
+
 
     @Override
     public AuthState getAuthState() {
@@ -151,11 +181,11 @@ public final class DefaultLoginService implements LoginService {
         }
     }
 
-    private CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean triggerlogIn) {
-        GetSsoTokenParams getSsoTokenParams = createGetSsoTokenParams(loginType, triggerlogIn);
+    private CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
+        GetSsoTokenParams getSsoTokenParams = createGetSsoTokenParams(loginType, loginOnInvalidToken);
         return lspProvider.getAmazonQServer()
                 .thenApply(server -> {
-                    if (triggerlogIn && loginType.equals(LoginType.IAM_IDENTITY_CENTER)) {
+                    if (loginOnInvalidToken && loginType.equals(LoginType.IAM_IDENTITY_CENTER)) {
                         var profile = new Profile();
                         profile.setName(Constants.IDC_PROFILE_NAME);
                         profile.setProfileKinds(Collections.singletonList(Constants.IDC_PROFILE_KIND));
@@ -212,11 +242,11 @@ public final class DefaultLoginService implements LoginService {
         return new UpdateCredentialsPayload(encryptedData, true);
     }
 
-    private GetSsoTokenParams createGetSsoTokenParams(final LoginType currentLogin, final boolean triggerlogIn) {
+    private GetSsoTokenParams createGetSsoTokenParams(final LoginType currentLogin, final boolean loginOnInvalidToken) {
         GetSsoTokenSource source = currentLogin.equals(LoginType.IAM_IDENTITY_CENTER)
                 ? new GetSsoTokenSource(LoginType.IAM_IDENTITY_CENTER.getValue(), null, Constants.IDC_PROFILE_NAME)
                 : new GetSsoTokenSource(LoginType.BUILDER_ID.getValue(), Q_SCOPES, null);
-        GetSsoTokenOptions options = new GetSsoTokenOptions(triggerlogIn);
+        GetSsoTokenOptions options = new GetSsoTokenOptions(loginOnInvalidToken);
         return new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
     }
 

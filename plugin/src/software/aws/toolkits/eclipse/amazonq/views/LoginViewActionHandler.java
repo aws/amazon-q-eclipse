@@ -40,7 +40,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 loginTask = ThreadingUtils.executeAsyncTaskAndReturnFuture(() -> {
                     try {
                         if (parsedCommand.getCommand() == Command.LOGIN_BUILDER_ID) {
-                            Activator.getLoginService().login(LoginType.BUILDER_ID, new LoginParams()).get();
+                            Activator.getLoginService().login(LoginType.BUILDER_ID, new LoginParams(), true).get();
                         } else {
                             LoginIdcParams loginIdcParams = JSON_HANDLER.convertObject(params, LoginIdcParams.class);
                             var url = loginIdcParams.getUrl();
@@ -49,7 +49,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                                 throw new IllegalArgumentException("Url/Region parameters cannot be null or empty");
                             }
                             Activator.getLoginService().login(LoginType.IAM_IDENTITY_CENTER,
-                                    new LoginParams().setLoginIdcParams(loginIdcParams)).get();
+                                    new LoginParams().setLoginIdcParams(loginIdcParams), true).get();
                         }
                         isLoginTaskRunning = false;
                         Display.getDefault().asyncExec(() -> {

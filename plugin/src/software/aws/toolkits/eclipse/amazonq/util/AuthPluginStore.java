@@ -29,15 +29,23 @@ public final class AuthPluginStore {
         }
     }
 
-    public void setLoginParams(final LoginParams loginParams) {
+    public void setLoginIdcParams(final LoginParams loginParams) {
         pluginStore.putObject(Constants.LOGIN_IDC_PARAMS_KEY, loginParams.getLoginIdcParams());
     }
 
-    public LoginParams getLoginParams() {
+    public LoginParams getLoginIdcParams() {
         LoginIdcParams loginIdcParams = pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class);
         LoginParams loginParams = new LoginParams();
         loginParams.setLoginIdcParams(loginIdcParams);
         return loginParams;
+    }
+
+    public void setSsoTokenId(final String ssoTokenId) {
+        pluginStore.putObject(Constants.SSO_TOKEN_ID, ssoTokenId);
+    }
+
+    public String getSsoTokenId() {
+        return pluginStore.getObject(Constants.SSO_TOKEN_ID, String.class);
     }
 
     public void clear() {

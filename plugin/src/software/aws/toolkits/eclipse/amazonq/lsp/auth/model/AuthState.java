@@ -9,7 +9,8 @@ public record AuthState(
         @JsonProperty("authStateType") AuthStateType authStateType,
         @JsonProperty("loginType") LoginType loginType,
         @JsonProperty("loginParams") LoginParams loginParams,
-        @JsonProperty("issuerUrl") String issuerUrl
+        @JsonProperty("issuerUrl") String issuerUrl,
+        @JsonProperty("ssoTokenId") String ssoTokenId
     ) {
 
     public Boolean isLoggedIn() {

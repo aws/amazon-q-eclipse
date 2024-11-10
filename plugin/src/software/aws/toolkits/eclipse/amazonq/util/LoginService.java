@@ -12,7 +12,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 public interface LoginService {
     CompletableFuture<Void> login(LoginType loginType, LoginParams loginParams);
     CompletableFuture<Void> logout();
-    CompletableFuture<Void> updateToken();
-    CompletableFuture<Boolean> reAuthenticate();
+    CompletableFuture<Void> reAuthenticate();
     AuthState getAuthState();
 }

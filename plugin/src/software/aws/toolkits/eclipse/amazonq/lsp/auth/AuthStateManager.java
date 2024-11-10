@@ -22,24 +22,25 @@ public final class AuthStateManager {
     private LoginType loginType;
     private LoginParams loginParams;
     private String issuerUrl;
+    private String ssoTokenId;
 
     public AuthStateManager(final PluginStore pluginStore) {
         this.authPluginStore = new AuthPluginStore(pluginStore);
         syncAuthStateWithPluginStore();
     }
 
-    public void toLoggedIn(final LoginType loginType, final LoginParams loginParams) {
+    public void toLoggedIn(final LoginType loginType, final LoginParams loginParams, final String ssoTokenId) {
         if (loginType == null || loginType.equals(LoginType.NONE)) {
             Activator.getLogger().error("Error occurred while switching to logged in auth state: "
                     + "Missing required loginType parameter.");
             return;
         }
 
-        updateState(AuthStateType.LOGGED_IN, loginType, loginParams);
+        updateState(AuthStateType.LOGGED_IN, loginType, loginParams, ssoTokenId);
     }
 
     public void toLoggedOut() {
-        updateState(AuthStateType.LOGGED_OUT, LoginType.NONE, null);
+        updateState(AuthStateType.LOGGED_OUT, LoginType.NONE, null, null);
     }
 
     public void toExpired() {
@@ -50,24 +51,25 @@ public final class AuthStateManager {
             return;
         }
 
-        updateState(AuthStateType.EXPIRED, loginType, loginParams);
+        updateState(AuthStateType.EXPIRED, loginType, loginParams, ssoTokenId);
     }
 
     public AuthState getAuthState() {
-        return new AuthState(authStateType, loginType, loginParams, issuerUrl);
+        return new AuthState(authStateType, loginType, loginParams, issuerUrl, ssoTokenId);
     }
 
-    private void updateState(final AuthStateType authStatusType, final LoginType loginType, final LoginParams loginParams) {
+    private void updateState(final AuthStateType authStatusType, final LoginType loginType, final LoginParams loginParams, final String ssoTokenId) {
         this.authStateType = authStatusType;
         this.loginType = loginType;
         this.loginParams = loginParams;
         this.issuerUrl = getIssuerUrl(loginType, loginParams);
+        this.ssoTokenId = ssoTokenId;
 
         if (loginType.equals(LoginType.NONE)) {
             authPluginStore.clear();
         } else {
             authPluginStore.setLoginType(loginType);
-            authPluginStore.setLoginParams(loginParams);
+            authPluginStore.setLoginIdcParams(loginParams);
         }
 
         AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
@@ -90,7 +92,7 @@ public final class AuthStateManager {
 
     private void syncAuthStateWithPluginStore() {
         LoginType loginType = authPluginStore.getLoginType();
-        LoginParams loginParams = authPluginStore.getLoginParams();
+        LoginParams loginParams = authPluginStore.getLoginIdcParams();
 
         if (loginType.equals(LoginType.NONE)) {
             toLoggedOut();
@@ -99,6 +101,6 @@ public final class AuthStateManager {
 
         // Default to expired. We have the loginType and params therefore we know the user
         // has previously authenticated. It would be unsafe to move to a logged in state.
-        updateState(AuthStateType.EXPIRED, loginType, loginParams);
+        updateState(AuthStateType.EXPIRED, loginType, loginParams, ssoTokenId);
     }
 }

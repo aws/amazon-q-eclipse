@@ -23,6 +23,7 @@ import org.eclipse.ui.PlatformUI;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
@@ -43,8 +44,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         return CompletableFuture.supplyAsync(() -> {
             SsoProfileData sso = new SsoProfileData();
             String startUrl = Constants.AWS_BUILDER_ID_URL;
-            // TODO need to add a re-authenticate? 
-            startUrl = Activator.getLoginService().getAuthState().issuerUrl();
+            AuthState authState = Activator.getLoginService().getAuthState();
+            if (authState.issuerUrl() != null) {
+                startUrl = authState.issuerUrl();
+            }
             sso.setStartUrl(startUrl);
             ConnectionMetadata metadata = new ConnectionMetadata();
             metadata.setSso(sso);

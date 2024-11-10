@@ -21,7 +21,9 @@ public final class AuthPluginStore {
     public LoginType getLoginType() {
         String storedValue = pluginStore.get(Constants.LOGIN_TYPE_KEY);
 
-         if (storedValue.equals(LoginType.BUILDER_ID.name())) {
+        if (storedValue == null) {
+            return LoginType.NONE;
+        } else if (storedValue.equals(LoginType.BUILDER_ID.name())) {
             return LoginType.BUILDER_ID;
         } else if (storedValue.equals(LoginType.IAM_IDENTITY_CENTER.name())) {
             return LoginType.IAM_IDENTITY_CENTER;

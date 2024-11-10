@@ -50,7 +50,7 @@ public final class DefaultLoginService implements LoginService {
 
         if (builder.initializeOnStartUp) {
             AuthState authState = authStateManager.getAuthState();
-            if (authState.isLoggedIn()) {
+            if (authState.isExpired()) {
                 reAuthenticate();
             }
         }
@@ -79,8 +79,8 @@ public final class DefaultLoginService implements LoginService {
                 return updateCredentials(ssoToken);
             })
             .thenRun(() -> {
-                Activator.getLogger().info("Successfully logged in");
                 authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
+                Activator.getLogger().info("Successfully logged in");
             })
             .exceptionally(throwable -> {
                 Activator.getLogger().error("Failed to log in");
@@ -98,8 +98,8 @@ public final class DefaultLoginService implements LoginService {
         }
 
         if (authState.ssoTokenId() == null || authState.ssoTokenId().isBlank()) {
-            Activator.getLogger().warn("Attempted to log out with no ssoTokenId saved in auth state");
             authStateManager.toLoggedOut();
+            Activator.getLogger().warn("Attempted to log out with no ssoTokenId saved in auth state");
             return CompletableFuture.completedFuture(null);
         }
 
@@ -110,8 +110,8 @@ public final class DefaultLoginService implements LoginService {
                     server.invalidateSsoToken(params);
                     server.deleteTokenCredentials();
                 }).thenRun(() -> {
-                    Activator.getLogger().info("Successfully logged out");
                     authStateManager.toLoggedOut();
+                    Activator.getLogger().info("Successfully logged out");
                 }).exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to log out");
                     throw new AmazonQPluginException(throwable);

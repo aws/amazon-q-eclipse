@@ -128,6 +128,6 @@ public final class DefaultAuthStateManager implements AuthStateManager {
             return;
         }
 
-        updateState(AuthStateType.LOGGED_IN, loginType, loginParams, ssoTokenId);
+        updateState(AuthStateType.EXPIRED, loginType, loginParams, ssoTokenId);
     }
 }

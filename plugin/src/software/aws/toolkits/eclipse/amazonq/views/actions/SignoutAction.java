@@ -24,7 +24,7 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
         ThreadingUtils.executeAsyncTask(() -> {
             try {
                 AuthState authState = Activator.getLoginService().getAuthState();
-                if (authState.isLoggedIn()) {
+                if (!authState.isLoggedOut()) {
                     Activator.getLoginService().logout().get();
                 }
             } catch (Exception e) {

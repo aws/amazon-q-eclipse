@@ -61,31 +61,13 @@ public final class DefaultLoginService implements LoginService {
     }
 
     @Override
-    public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
+    public CompletableFuture<Void> login(final LoginType loginType, final LoginParams loginParams) {
         if (authStateManager.getAuthState().isLoggedIn()) {
             Activator.getLogger().warn("Attempted to log in while already in a logged in state");
             return CompletableFuture.completedFuture(null);
         }
 
-        validateLoginParameters(loginType, loginParams);
-
-        Activator.getLogger().info("Attempting to log in using LoginType " + loginType);
-
-        final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
-
-        return getToken(loginType, loginParams, loginOnInvalidToken)
-            .thenCompose(ssoToken -> {
-                ssoTokenId.set(ssoToken.id());
-                return updateCredentials(ssoToken);
-            })
-            .thenRun(() -> {
-                authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
-                Activator.getLogger().info("Successfully logged in");
-            })
-            .exceptionally(throwable -> {
-                Activator.getLogger().error("Failed to log in");
-                throw new AmazonQPluginException(throwable);
-            });
+        return processLogin(loginType, loginParams, true);
     }
 
     @Override
@@ -142,9 +124,7 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
-        validateLoginParameters(authState.loginType(), authState.loginParams());
-
-        return login(authState.loginType(), authState.loginParams(), true);
+        return processLogin(authState.loginType(), authState.loginParams(), true);
     }
 
     @Override
@@ -156,9 +136,7 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
-        validateLoginParameters(authState.loginType(), authState.loginParams());
-
-        return login(authState.loginType(), authState.loginParams(), false);
+        return processLogin(authState.loginType(), authState.loginParams(), false);
     }
 
 
@@ -179,6 +157,28 @@ public final class DefaultLoginService implements LoginService {
         if (loginParams == null) {
             throw new IllegalArgumentException("Missing required parameter: loginParams cannot be null");
         }
+    }
+
+    private CompletableFuture<Void> processLogin(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
+        validateLoginParameters(loginType, loginParams);
+
+        Activator.getLogger().info("Attempting to log in using LoginType " + loginType);
+
+        final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
+
+        return getToken(loginType, loginParams, loginOnInvalidToken)
+            .thenCompose(ssoToken -> {
+                ssoTokenId.set(ssoToken.id());
+                return updateCredentials(ssoToken);
+            })
+            .thenRun(() -> {
+                authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
+                Activator.getLogger().info("Successfully logged in");
+            })
+            .exceptionally(throwable -> {
+                Activator.getLogger().error("Failed to log in");
+                throw new AmazonQPluginException(throwable);
+            });
     }
 
     private CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {

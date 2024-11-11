@@ -20,7 +20,7 @@ public final class WebviewAssetServer {
             server = new Server(0);
             var servletContext = new ContextHandler();
             servletContext.setContextPath("/");
-            servletContext.addVirtualHosts(new String[] {"localhost"});
+            servletContext.addVirtualHosts(new String[] {"127.0.0.1"});
 
             var handler = new ResourceHandler();
 

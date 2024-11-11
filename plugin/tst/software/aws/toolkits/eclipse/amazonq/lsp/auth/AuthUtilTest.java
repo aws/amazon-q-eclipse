@@ -57,4 +57,69 @@ class AuthUtilTest {
         assertEquals(null, issuerUrl);
     }
     
+    @Test 
+    void validateLoginParameters_WithNullLoginType_ThrowsException() {
+        LoginType loginType = null;
+        LoginParams loginParams = createValidLoginParams();
+        
+        try {
+            AuthUtil.validateLoginParameters(loginType, loginParams);
+            fail("Expected IllegalArgumentException to be thrown");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof IllegalArgumentException);
+            assertEquals("Missing required parameter: loginType cannot be null", 
+                ex.getMessage());
+        }
+    }
+    
+    @Test 
+    void validateLoginParameters_WithNoneLoginType_ThrowsException() {
+        LoginType loginType = LoginType.NONE;
+        LoginParams loginParams = createValidLoginParams();
+        
+        try {
+            AuthUtil.validateLoginParameters(loginType, loginParams);
+            fail("Expected IllegalArgumentException to be thrown");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof IllegalArgumentException);
+            assertEquals("Invalid loginType: NONE is not a valid login type", 
+                ex.getMessage());
+        }
+    }
+    
+    @Test 
+    void validateLoginParameters_WithNullLoginParams_ThrowsException() {
+        LoginType loginType = LoginType.BUILDER_ID;
+        LoginParams loginParams = null;
+        
+        try {
+            AuthUtil.validateLoginParameters(loginType, loginParams);
+            fail("Expected IllegalArgumentException to be thrown");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof IllegalArgumentException);
+            assertEquals("Missing required parameter: loginParams cannot be null", 
+                ex.getMessage());
+        }
+    }
+    
+    @Test 
+    void validateLoginParameters_WithValidParams_Success() {
+        LoginType loginType = LoginType.BUILDER_ID;
+        LoginParams loginParams = createValidLoginParams();
+        
+        try {
+            AuthUtil.validateLoginParameters(loginType, loginParams);
+        } catch (Exception ex) {
+            fail("Expected no exception");
+        }
+    }
+    
+    private LoginParams createValidLoginParams() {
+        LoginParams loginParams = new LoginParams();
+        LoginIdcParams idcParams = new LoginIdcParams();
+        idcParams.setRegion("test-region");
+        idcParams.setUrl("https://example.com");
+        loginParams.setLoginIdcParams(idcParams);
+        return loginParams;
+    }
 }

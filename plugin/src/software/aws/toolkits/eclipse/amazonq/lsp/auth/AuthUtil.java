@@ -25,4 +25,18 @@ public final class AuthUtil {
 
         return loginParams.getLoginIdcParams().getUrl();
     }
+
+    public static void validateLoginParameters(final LoginType loginType, final LoginParams loginParams) {
+        if (loginType == null) {
+            throw new IllegalArgumentException("Missing required parameter: loginType cannot be null");
+        }
+
+        if (loginType.equals(LoginType.NONE)) {
+            throw new IllegalArgumentException("Invalid loginType: NONE is not a valid login type");
+        }
+
+        if (loginParams == null) {
+            throw new IllegalArgumentException("Missing required parameter: loginParams cannot be null");
+        }
+    }
 }

@@ -11,7 +11,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.AuthPluginStore;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 

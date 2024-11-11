@@ -1,10 +1,11 @@
-package software.aws.toolkits.eclipse.amazonq.util;
+package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
 public final class AuthPluginStore {
 

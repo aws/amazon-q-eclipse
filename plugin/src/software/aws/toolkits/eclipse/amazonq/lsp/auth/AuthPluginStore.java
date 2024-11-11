@@ -47,11 +47,11 @@ public final class AuthPluginStore {
     }
 
     public void setSsoTokenId(final String ssoTokenId) {
-        pluginStore.putObject(Constants.SSO_TOKEN_ID, ssoTokenId);
+        pluginStore.put(Constants.SSO_TOKEN_ID, ssoTokenId);
     }
 
     public String getSsoTokenId() {
-        return pluginStore.getObject(Constants.SSO_TOKEN_ID, String.class);
+        return pluginStore.get(Constants.SSO_TOKEN_ID);
     }
 
     public void clear() {

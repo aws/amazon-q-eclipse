@@ -3,19 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
-import java.util.Objects;
-
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
-import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
 public final class DefaultAuthStateManager implements AuthStateManager {
-    private static DefaultAuthStateManager instance;
     private final AuthPluginStore authPluginStore;
 
     private AuthStateType authStateType;
@@ -24,20 +19,9 @@ public final class DefaultAuthStateManager implements AuthStateManager {
     private String issuerUrl;
     private String ssoTokenId;
 
-    private DefaultAuthStateManager(final PluginStore pluginStore) {
+    public DefaultAuthStateManager(final PluginStore pluginStore) {
         this.authPluginStore = new AuthPluginStore(pluginStore);
         syncAuthStateWithPluginStore();
-    }
-
-    public static synchronized DefaultAuthStateManager getInstance(final PluginStore pluginStore) {
-        if (instance == null) {
-            try {
-                instance = new DefaultAuthStateManager(pluginStore);
-            } catch (Exception e) {
-                throw new AmazonQPluginException("Failed to initialize LspEncryptionManager", e);
-            }
-        }
-        return instance;
     }
 
     @Override
@@ -88,7 +72,7 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         this.authStateType = authStatusType;
         this.loginType = loginType;
         this.loginParams = loginParams;
-        this.issuerUrl = getIssuerUrl(loginType, loginParams);
+        this.issuerUrl = AuthUtil.getIssuerUrl(loginType, loginParams);
         this.ssoTokenId = ssoTokenId;
 
         if (loginType.equals(LoginType.NONE)) {
@@ -100,21 +84,6 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         }
 
         AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
-    }
-
-    private String getIssuerUrl(final LoginType loginType, final LoginParams loginParams) {
-        if (loginType.equals(LoginType.NONE)) {
-            return null;
-        }
-        if (loginType.equals(LoginType.BUILDER_ID)) {
-            return Constants.AWS_BUILDER_ID_URL;
-        }
-
-        if (Objects.isNull(loginParams) || Objects.isNull(loginParams.getLoginIdcParams())) {
-            return null;
-        }
-
-        return loginParams.getLoginIdcParams().getUrl();
     }
 
     private void syncAuthStateWithPluginStore() {

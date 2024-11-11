@@ -311,7 +311,7 @@ public final class DefaultLoginService implements LoginService {
                 encryptionManager = DefaultLspEncryptionManager.getInstance();
             }
             if (authStateManager == null) {
-                authStateManager = DefaultAuthStateManager.getInstance(pluginStore);
+                authStateManager = new DefaultAuthStateManager(pluginStore);
             }
             DefaultLoginService instance = new DefaultLoginService(this);
             return instance;

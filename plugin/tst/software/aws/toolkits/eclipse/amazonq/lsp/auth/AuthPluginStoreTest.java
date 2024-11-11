@@ -101,13 +101,13 @@ public class AuthPluginStoreTest {
 
         authPluginStore.setSsoTokenId(tokenId);
 
-        verify(pluginStore).putObject(Constants.SSO_TOKEN_ID, tokenId);
+        verify(pluginStore).put(Constants.SSO_TOKEN_ID, tokenId);
     }
 
     @Test
     public void testGetSsoTokenId() {
         String expectedToken = "test-token-id";
-        when(pluginStore.getObject(Constants.SSO_TOKEN_ID, String.class)).thenReturn(expectedToken);
+        when(pluginStore.get(Constants.SSO_TOKEN_ID)).thenReturn(expectedToken);
 
         String result = authPluginStore.getSsoTokenId();
 

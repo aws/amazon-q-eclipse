@@ -21,13 +21,11 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class DefaultLoginService implements LoginService {
-    private LspProvider lspProvider;
     private AuthStateManager authStateManager;
     private AuthTokenService authTokenService;
     private AuthCredentialsService authCredentialsService;
 
     private DefaultLoginService(final Builder builder) {
-        this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
         this.authStateManager = Objects.requireNonNull(builder.authStateManager, "authStateManager cannot be null");
         this.authTokenService = Objects.requireNonNull(builder.authTokenService, "authTokenService cannot be null");
         this.authCredentialsService = Objects.requireNonNull(builder.authCredentialsService, "authCredentialsService cannot be null");
@@ -79,10 +77,9 @@ public final class DefaultLoginService implements LoginService {
 
         InvalidateSsoTokenParams params = new InvalidateSsoTokenParams(authState.ssoTokenId());
 
-        return lspProvider.getAmazonQServer()
-                .thenAccept(server -> {
-                    server.invalidateSsoToken(params);
-                    server.deleteTokenCredentials();
+        return authTokenService.invalidateSsoToken(params)
+                .thenRun(() -> {
+                    authCredentialsService.deleteTokenCredentials();
                 })
                 .thenRun(() -> {
                     authStateManager.toLoggedOut();

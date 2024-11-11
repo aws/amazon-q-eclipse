@@ -14,6 +14,8 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenSource;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.Profile;
@@ -71,7 +73,16 @@ public final class DefaultAuthTokenService implements AuthTokenService {
                     return response.ssoToken();
                 })
                 .exceptionally(throwable -> {
-                    throw new AmazonQPluginException("Failed to fetch SSO token from LSP", throwable);
+                    throw new AmazonQPluginException("Failed to fetch SSO token", throwable);
+                });
+    }
+
+    @Override
+    public CompletableFuture<InvalidateSsoTokenResult> invalidateSsoToken(final InvalidateSsoTokenParams invalidateSsoTokenParams) {
+        return lspProvider.getAmazonQServer()
+                .thenCompose(server -> server.invalidateSsoToken(invalidateSsoTokenParams))
+                .exceptionally(throwable -> {
+                    throw new AmazonQPluginException("Failed to invalidate SSO token", throwable);
                 });
     }
 

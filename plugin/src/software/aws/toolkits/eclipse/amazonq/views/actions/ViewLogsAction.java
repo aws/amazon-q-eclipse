@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public final class ViewLogsAction extends Action {
 
@@ -16,6 +17,7 @@ public final class ViewLogsAction extends Action {
 
     @Override
     public void run() {
+        UiTelemetryProvider.emitClickEventMetric("amazonq_openErrorLog");
         PluginUtils.showView(LOG_VIEW_ID);
     }
 }

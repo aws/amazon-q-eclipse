@@ -22,6 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public final class CustomizationDialogContributionItem extends ContributionItem implements AuthStatusChangedListener {
     private static final String CUSTOMIZATION_MENU_ITEM_TEXT = "Select Customization";
@@ -55,6 +56,7 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
+                UiTelemetryProvider.emitClickEventMetric("amazonq_selectCustomization");
                 CustomizationDialog dialog = new CustomizationDialog(shell);
                 Customization storedCustomization = Activator.getPluginStore().getObject(
                         Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,

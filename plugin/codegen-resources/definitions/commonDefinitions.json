@@ -7091,6 +7091,10 @@
             "metadata": [
                 {
                     "type": "elementId"
+                },
+                {
+                	"type": "result",
+                	"required": true
                 }
             ]
         },

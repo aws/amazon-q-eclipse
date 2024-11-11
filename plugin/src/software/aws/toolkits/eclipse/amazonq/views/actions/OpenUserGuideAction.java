@@ -8,6 +8,6 @@ import software.aws.toolkits.eclipse.amazonq.views.model.ExternalLink;
 public final class OpenUserGuideAction extends OpenUrlAction {
 
     public OpenUserGuideAction() {
-        super("Open User Guide", ExternalLink.QInIdeGuide);
+        super("Open User Guide", "amazonq_openUserGuide", ExternalLink.QInIdeGuide);
     }
 }

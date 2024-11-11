@@ -1,36 +1,37 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
-import static org.mockito.Mockito.mock;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
-import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.Profile;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ProfileSettings;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSession;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.QConstants;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,17 +39,15 @@ import static org.mockito.Mockito.*;
 
 public class NewDefaultLoginServiceTest {
 
-    private Method validateLoginParameters;
-    private Method getToken;
-    private Method processLogin;
-    private Method updateCredentials;
-
     private static DefaultLoginService loginService;
     private static LspProvider mockLspProvider;
     private static LspEncryptionManager mockEncryptionManager;
     private static AmazonQLspServer mockAmazonQServer;
     private static PluginStore mockPluginStore;
+    private static AuthStateManager mockAuthStateManager;
     private static GetSsoTokenResult mockSsoTokenResult;
+    private static MockedStatic<Activator> mockedActivator;
+    private static LoggingService mockLoggingService;
 
     @BeforeEach
     public final void setUp() {
@@ -56,7 +55,11 @@ public class NewDefaultLoginServiceTest {
         mockAmazonQServer = mock(AmazonQLspServer.class);
         mockEncryptionManager = mock(LspEncryptionManager.class);
         mockPluginStore = mock(DefaultPluginStore.class);
+        mockAuthStateManager = mock(DefaultAuthStateManager.class);
         mockSsoTokenResult = mock(GetSsoTokenResult.class);
+        mockLoggingService = mock(LoggingService.class);
+        mockedActivator = mockStatic(Activator.class);
+        mockedActivator.when(Activator::getLogger).thenReturn(mockLoggingService);
 
         resetLoginService();
         
@@ -65,137 +68,115 @@ public class NewDefaultLoginServiceTest {
         when(mockAmazonQServer.getSsoToken(any()))
             .thenReturn(CompletableFuture.completedFuture(mockSsoTokenResult));
     }
+    
+    @AfterEach
+    void tearDown() throws Exception {
+        mockedActivator.close();
+    }
 
     @Test
-    void processLogin_IDC_WithLoginOnInvalidToken_Success() throws Exception {
-        setupAccessToProcessLogin();
+    void processLogin_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
+        ArgumentCaptor<SsoToken> ssoTokenCaptor = ArgumentCaptor.forClass(SsoToken.class);
+        LoginType loginType = LoginType.BUILDER_ID;
+        LoginParams loginParams = createValidLoginParams();
+        boolean loginOnInvalidToken = false;
+        SsoToken expectedSsoToken = createSsoToken();
         
+        when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
+        when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
+        when(mockAmazonQServer.updateTokenCredentials(any())).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        
+        invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
+        
+        verify(loginService).validateLoginParameters(loginType, loginParams);
+        verify(loginService).getToken(loginType, loginParams, loginOnInvalidToken);
+        verify(loginService).updateCredentials(ssoTokenCaptor.capture());
+        String ssoTokenId = ssoTokenCaptor.getValue().id();
+        assertEquals(expectedSsoToken.id(), ssoTokenId);
+        verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, ssoTokenId);
+        verify(mockLoggingService).info("Successfully logged in");
+    }
+    
+    @Test
+    void processLogin_BuilderId_WithLoginOnInvalidToken_Success() throws Exception {
+        ArgumentCaptor<SsoToken> ssoTokenCaptor = ArgumentCaptor.forClass(SsoToken.class);
+        LoginType loginType = LoginType.BUILDER_ID;
+        LoginParams loginParams = createValidLoginParams();
+        boolean loginOnInvalidToken = true;
+        SsoToken expectedSsoToken = createSsoToken();
+        
+        when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
+        when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
+        when(mockAmazonQServer.updateTokenCredentials(any())).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        
+        invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
+        
+        verify(loginService).validateLoginParameters(loginType, loginParams);
+        verify(loginService).getToken(loginType, loginParams, loginOnInvalidToken);
+        verify(loginService).updateCredentials(ssoTokenCaptor.capture());
+        String ssoTokenId = ssoTokenCaptor.getValue().id();
+        assertEquals(expectedSsoToken.id(), ssoTokenId);
+        verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, ssoTokenId);
+        verify(mockLoggingService).info("Successfully logged in");
+    }
+    
+    @Test
+    void processLogin_IDC_NoLoginOnInvalidToken_Success() throws Exception {
+        ArgumentCaptor<SsoToken> ssoTokenCaptor = ArgumentCaptor.forClass(SsoToken.class);
+        LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
+        LoginParams loginParams = createValidLoginParams();
+        boolean loginOnInvalidToken = false;
+        SsoToken expectedSsoToken = createSsoToken();
+        
+        when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
+        when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
+        when(mockAmazonQServer.updateTokenCredentials(any())).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        
+        invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
+        
+        verify(loginService).validateLoginParameters(loginType, loginParams);
+        verify(loginService).getToken(loginType, loginParams, loginOnInvalidToken);
+        verify(loginService).updateCredentials(ssoTokenCaptor.capture());
+        String ssoTokenId = ssoTokenCaptor.getValue().id();
+        assertEquals(expectedSsoToken.id(), ssoTokenId);
+        verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, ssoTokenId);
+        verify(mockLoggingService).info("Successfully logged in");
+    }
+    
+    @Test
+    void processLogin_IDC_WithLoginOnInvalidToken_Success() throws Exception {
+        ArgumentCaptor<UpdateProfileParams> updateProfileParamsCaptor = ArgumentCaptor.forClass(UpdateProfileParams.class);
+        ArgumentCaptor<SsoToken> ssoTokenCaptor = ArgumentCaptor.forClass(SsoToken.class);
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = true;
+        SsoToken expectedSsoToken = createSsoToken();
+        
+        when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
+        when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
+        when(mockAmazonQServer.updateTokenCredentials(any())).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        when(mockAmazonQServer.updateProfile(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
         
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
+        
+        verify(loginService).validateLoginParameters(loginType, loginParams);
+        verify(loginService).getToken(loginType, loginParams, loginOnInvalidToken);
+        verify(loginService).updateCredentials(ssoTokenCaptor.capture());
+        String ssoTokenId = ssoTokenCaptor.getValue().id();
+        assertEquals(expectedSsoToken.id(), ssoTokenId);
+        verify(mockAmazonQServer).updateProfile(updateProfileParamsCaptor.capture());
+        UpdateProfileParams actualParams = updateProfileParamsCaptor.getValue();
+        verifyUpdateProfileParams(actualParams);
+        verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, ssoTokenId);
+        verify(mockLoggingService).info("Successfully logged in");
     }
-    
-//    @Test
-//    void processLogin_GetTokenFails_ThrowsException() throws Exception {
-//        // Arrange
-//        LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
-//        LoginParams loginParams = createValidLoginParams();
-//        boolean loginOnInvalidToken = false;
-//        
-//        CompletableFuture<AmazonQServer> failedFuture = CompletableFuture.failedFuture(
-//            new IllegalArgumentException("Token fetch failed")
-//        );
-//        when(mockLspProvider.getAmazonQServer()).thenReturn(failedFuture);
-//        
-//        // Act
-//        CompletableFuture<Void> result = loginService.processLogin(loginType, loginParams, loginOnInvalidToken);
-//        
-//        // Assert
-//        ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
-//        assertAll(
-//            () -> assertTrue(exception.getCause() instanceof AmazonQPluginException),
-//            () -> assertEquals("Failed to process log in", exception.getCause().getMessage()),
-//            () -> assertTrue(exception.getCause().getCause() instanceof IllegalArgumentException)
-//        );
-//        
-//        verify(authStateManager, never()).toLoggedIn(any(), any(), any());
-//        verifyNoMoreInteractions(authStateManager);
-//    }
-//    
-//    @Test
-//    void processLogin_UpdateCredentialsFails_ThrowsException() throws Exception {
-//        // Arrange
-//        LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
-//        LoginParams loginParams = createValidLoginParams();
-//        boolean loginOnInvalidToken = false;
-//        String ssoTokenId = "testTokenId";
-//        String accessToken = "testAccessToken";
-//        SsoToken mockSsoToken = new SsoToken(ssoTokenId, accessToken);
-//        
-//        when(mockSsoTokenResult.ssoToken()).thenReturn(mockSsoToken);
-//        when(loginService.updateCredentials(any()))
-//            .thenReturn(CompletableFuture.failedFuture(
-//                new IllegalStateException("Credential update failed")
-//            ));
-//        
-//        // Act
-//        CompletableFuture<Void> result = loginService.processLogin(loginType, loginParams, loginOnInvalidToken);
-//        
-//        // Assert
-//        ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
-//        assertAll(
-//            () -> assertTrue(exception.getCause() instanceof AmazonQPluginException),
-//            () -> assertEquals("Failed to process log in", exception.getCause().getMessage()),
-//            () -> assertTrue(exception.getCause().getCause() instanceof IllegalStateException)
-//        );
-//        
-//        verify(authStateManager, never()).toLoggedIn(any(), any(), any());
-//        verify(loginService).updateCredentials(mockSsoToken);
-//    }
-//    
-//    @Test
-//    void processLogin_InvalidLoginParameters_ThrowsException() {
-//        // Arrange
-//        LoginType loginType = null;
-//        LoginParams loginParams = createValidLoginParams();
-//        boolean loginOnInvalidToken = false;
-//        
-//        // Act & Assert
-//        CompletableFuture<Void> result = loginService.processLogin(loginType, loginParams, loginOnInvalidToken);
-//        
-//        ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
-//        assertAll(
-//            () -> assertTrue(exception.getCause() instanceof AmazonQPluginException),
-//            () -> assertEquals("Failed to process log in", exception.getCause().getMessage()),
-//            () -> assertTrue(exception.getCause().getCause() instanceof IllegalArgumentException),
-//            () -> assertEquals("Missing required parameter: loginType cannot be null", 
-//                exception.getCause().getCause().getMessage())
-//        );
-//        
-//        verify(authStateManager, never()).toLoggedIn(any(), any(), any());
-//        verifyNoInteractions(mockAmazonQServer);
-//    }
-//    
-//    @Test
-//    void processLogin_AuthStateManagerFails_ThrowsException() throws Exception {
-//        // Arrange
-//        LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
-//        LoginParams loginParams = createValidLoginParams();
-//        boolean loginOnInvalidToken = false;
-//        String ssoTokenId = "testTokenId";
-//        String accessToken = "testAccessToken";
-//        
-//        when(mockSsoTokenResult.ssoToken()).thenReturn(mockSsoToken);
-//        when(loginService.updateCredentials(any()))
-//            .thenReturn(CompletableFuture.completedFuture(null));
-//        doThrow(new RuntimeException("Auth state update failed"))
-//            .when(authStateManager).toLoggedIn(any(), any(), any());
-//        
-//        // Act
-//        CompletableFuture<Void> result = loginService.processLogin(loginType, loginParams, loginOnInvalidToken);
-//        
-//        // Assert
-//        ExecutionException exception = assertThrows(ExecutionException.class, () -> result.get());
-//        assertAll(
-//            () -> assertTrue(exception.getCause() instanceof AmazonQPluginException),
-//            () -> assertEquals("Failed to process log in", exception.getCause().getMessage()),
-//            () -> assertTrue(exception.getCause().getCause() instanceof RuntimeException)
-//        );
-//        
-//        verify(authStateManager).toLoggedIn(loginType, loginParams, ssoTokenId);
-//        verify(loginService).updateCredentials(mockSsoToken);
-//    }
-    
 
     @Test
     void getToken_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = new LoginParams(); // LoginParams is not required for BUILDER_ID
-        String ssoTokenId = "ssoTokenId";
-        String accessToken = "accessToken";
-        SsoToken expectedToken = new SsoToken(ssoTokenId, accessToken);
+        SsoToken expectedToken = createSsoToken();
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = false;
 
@@ -211,9 +192,7 @@ public class NewDefaultLoginServiceTest {
     void getToken_BuilderId_WithLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = new LoginParams(); // LoginParams is not required for BUILDER_ID
-        String ssoTokenId = "ssoTokenId";
-        String accessToken = "accessToken";
-        SsoToken expectedToken = new SsoToken(ssoTokenId, accessToken);
+        SsoToken expectedToken = createSsoToken();
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = true;
 
@@ -229,9 +208,7 @@ public class NewDefaultLoginServiceTest {
     void getToken_IDC_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
-        String ssoTokenId = "ssoTokenId";
-        String accessToken = "accessToken";
-        SsoToken expectedToken = new SsoToken(ssoTokenId, accessToken);
+        SsoToken expectedToken = createSsoToken();
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = false;
 
@@ -251,9 +228,7 @@ public class NewDefaultLoginServiceTest {
         
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
-        String ssoTokenId = "ssoTokenId";
-        String accessToken = "accessToken";
-        SsoToken expectedToken = new SsoToken(ssoTokenId, accessToken);
+        SsoToken expectedToken = createSsoToken();
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = true;
 
@@ -270,64 +245,56 @@ public class NewDefaultLoginServiceTest {
     
     @Test 
     void validateLoginParameters_WithNullLoginType_ThrowsException() {
-        setupAccessToValidateLoginParameters();
-        
         LoginType loginType = null;
         LoginParams loginParams = createValidLoginParams();
         
         try {
-            validateLoginParameters.invoke(loginService, loginType, loginParams);
+            loginService.validateLoginParameters(loginType, loginParams);
             fail("Expected IllegalArgumentException to be thrown");
         } catch (Exception ex) {
-            assertTrue(ex.getCause() instanceof IllegalArgumentException);
+            assertTrue(ex instanceof IllegalArgumentException);
             assertEquals("Missing required parameter: loginType cannot be null", 
-                ex.getCause().getMessage());
+                ex.getMessage());
         }
     }
     
     @Test 
     void validateLoginParameters_WithNoneLoginType_ThrowsException() {
-        setupAccessToValidateLoginParameters();
-        
         LoginType loginType = LoginType.NONE;
         LoginParams loginParams = createValidLoginParams();
         
         try {
-            validateLoginParameters.invoke(loginService, loginType, loginParams);
+            loginService.validateLoginParameters(loginType, loginParams);
             fail("Expected IllegalArgumentException to be thrown");
         } catch (Exception ex) {
-            assertTrue(ex.getCause() instanceof IllegalArgumentException);
+            assertTrue(ex instanceof IllegalArgumentException);
             assertEquals("Invalid loginType: NONE is not a valid login type", 
-                ex.getCause().getMessage());
+                ex.getMessage());
         }
     }
     
     @Test 
     void validateLoginParameters_WithNullLoginParams_ThrowsException() {
-        setupAccessToValidateLoginParameters();
-        
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = null;
         
         try {
-            validateLoginParameters.invoke(loginService, loginType, loginParams);
+            loginService.validateLoginParameters(loginType, loginParams);
             fail("Expected IllegalArgumentException to be thrown");
         } catch (Exception ex) {
-            assertTrue(ex.getCause() instanceof IllegalArgumentException);
+            assertTrue(ex instanceof IllegalArgumentException);
             assertEquals("Missing required parameter: loginParams cannot be null", 
-                ex.getCause().getMessage());
+                ex.getMessage());
         }
     }
     
     @Test 
     void validateLoginParameters_WithValidParams_Success() {
-        setupAccessToValidateLoginParameters();
-        
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         
         try {
-            validateLoginParameters.invoke(loginService, loginType, loginParams);
+            loginService.validateLoginParameters(loginType, loginParams);
         } catch (Exception ex) {
             fail("Expected no exception");
         }
@@ -338,6 +305,7 @@ public class NewDefaultLoginServiceTest {
               .withLspProvider(mockLspProvider)
               .withPluginStore(mockPluginStore)
               .withEncryptionManager(mockEncryptionManager)
+              .withAuthStateManager(mockAuthStateManager)
               .build();
       loginService = spy(loginService);
     }
@@ -349,6 +317,12 @@ public class NewDefaultLoginServiceTest {
         idcParams.setUrl("https://example.com");
         loginParams.setLoginIdcParams(idcParams);
         return loginParams;
+    }
+    
+    private SsoToken createSsoToken() {
+        String id = "ssoTokenId";
+        String accessToken = "ssoAccessToken";
+        return new SsoToken(id, accessToken);
     }
     
     private boolean verifyUpdateProfileParams(final UpdateProfileParams params) {
@@ -369,31 +343,9 @@ public class NewDefaultLoginServiceTest {
               && options.ensureSsoAccountAccessScope()
               && !options.updateSharedSsoSession();
     }
-    
-    private void setupAccessToValidateLoginParameters() {
-        try {
-            validateLoginParameters = DefaultLoginService.class.getDeclaredMethod("validateLoginParameters",
-                    LoginType.class, LoginParams.class);
-            validateLoginParameters.setAccessible(true);
-        } catch (Exception ex) {
-            throw new AmazonQPluginException("Failed to provide access to validateLoginParameters");
-        }
-    }
-    
-    private void setupAccessToGetToken() {
-        try {
-            getToken = DefaultLoginService.class.getDeclaredMethod("getToken",
-                    LoginType.class, LoginParams.class, boolean.class);
-            getToken.setAccessible(true);
-        } catch (Exception ex) {
-            throw new AmazonQPluginException("Failed to provide access to getToken");
-        }
-    }
-    
+
     private SsoToken invokeGetToken(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
-        setupAccessToGetToken();
-        
-        Object getTokenFuture = getToken.invoke(loginService, loginType, loginParams, loginOnInvalidToken);
+        Object getTokenFuture = loginService.getToken(loginType, loginParams, loginOnInvalidToken);
         assertTrue(getTokenFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
 
         CompletableFuture<?> future = (CompletableFuture<?>) getTokenFuture;
@@ -403,33 +355,13 @@ public class NewDefaultLoginServiceTest {
         return (SsoToken) result;
     }
     
-    private void setupAccessToProcessLogin() {
-        try {
-            processLogin = DefaultLoginService.class.getDeclaredMethod("processLogin",
-                    LoginType.class, LoginParams.class, boolean.class);
-            processLogin.setAccessible(true);
-        } catch (Exception ex) {
-            throw new AmazonQPluginException("Failed to provide access to processLogin");
-        }
-    }
-    
-    private void invokeProcessLogin(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
-        setupAccessToProcessLogin();
-        
-        Object getTokenFuture = processLogin.invoke(loginService, loginType, loginParams, loginOnInvalidToken);
-        assertTrue(getTokenFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
 
-        CompletableFuture<?> future = (CompletableFuture<?>) getTokenFuture;
+    private void invokeProcessLogin(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
+        Object processLoginFuture = loginService.processLogin(loginType, loginParams, loginOnInvalidToken);
+        assertTrue(processLoginFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
+
+        CompletableFuture<?> future = (CompletableFuture<?>) processLoginFuture;
         Object result = future.get();
         assertNull(result);
-    }
-    
-    private void setupAccessToUpdateCredentials() {
-        try {
-            updateCredentials = DefaultLoginService.class.getDeclaredMethod("updateCredentials", SsoToken.class);
-            updateCredentials.setAccessible(true);
-        } catch (Exception ex) {
-            throw new AmazonQPluginException("Failed to provide access to processLogin");
-        }
     }
 }

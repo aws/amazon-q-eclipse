@@ -172,7 +172,7 @@ public final class DefaultLoginService implements LoginService {
         return authStateManager.getAuthState();
     }
 
-    private void validateLoginParameters(final LoginType loginType, final LoginParams loginParams) {
+    void validateLoginParameters(final LoginType loginType, final LoginParams loginParams) {
         if (loginType == null) {
             throw new IllegalArgumentException("Missing required parameter: loginType cannot be null");
         }
@@ -186,7 +186,7 @@ public final class DefaultLoginService implements LoginService {
         }
     }
 
-    private CompletableFuture<Void> processLogin(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
+    CompletableFuture<Void> processLogin(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
         validateLoginParameters(loginType, loginParams);
 
         final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
@@ -205,7 +205,7 @@ public final class DefaultLoginService implements LoginService {
             });
     }
 
-    private CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
+    CompletableFuture<SsoToken> getToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
         GetSsoTokenParams getSsoTokenParams = createGetSsoTokenParams(loginType, loginOnInvalidToken);
         return lspProvider.getAmazonQServer()
                 .thenApply(server -> {
@@ -240,7 +240,7 @@ public final class DefaultLoginService implements LoginService {
                 });
     }
 
-    private CompletableFuture<ResponseMessage> updateCredentials(final SsoToken ssoToken) {
+    CompletableFuture<ResponseMessage> updateCredentials(final SsoToken ssoToken) {
         String decryptedToken = decryptSsoToken(ssoToken.accessToken());
         UpdateCredentialsPayload payload = createUpdateCredentialsPayload(decryptedToken);
         return lspProvider.getAmazonQServer()
@@ -291,7 +291,7 @@ public final class DefaultLoginService implements LoginService {
             this.encryptionManager = encryptionManager;
             return this;
         }
-        public final Builder withAuthStateManager(final DefaultAuthStateManager authStateManager) {
+        public final Builder withAuthStateManager(final AuthStateManager authStateManager) {
             this.authStateManager = authStateManager;
             return this;
         }

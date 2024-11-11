@@ -15,7 +15,6 @@ import org.eclipse.ui.services.ISourceProviderService;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 
 public final class AuthSourceProvider extends AbstractSourceProvider implements AuthStatusChangedListener {
     public static final String IS_AUTHENTICATED_VARIABLE_ID = "is_authenticated";

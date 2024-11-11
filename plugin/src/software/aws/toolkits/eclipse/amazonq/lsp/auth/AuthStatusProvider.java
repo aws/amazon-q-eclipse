@@ -1,12 +1,13 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.util;
+package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 
 public final class AuthStatusProvider {
     private static final List<AuthStatusChangedListener> LISTENERS = new ArrayList<>();

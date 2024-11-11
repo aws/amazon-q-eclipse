@@ -14,11 +14,11 @@ import org.mockito.Mockito;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.extensions.api.StaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
-import software.aws.toolkits.eclipse.amazonq.util.LoginService;
 
 import static org.mockito.Mockito.mockStatic;
 

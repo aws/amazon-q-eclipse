@@ -33,7 +33,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.LoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;

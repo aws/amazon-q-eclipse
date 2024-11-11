@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 
 public final class AuthStatusProvider {
     private static final List<AuthStatusChangedListener> LISTENERS = new ArrayList<>();

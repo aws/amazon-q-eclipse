@@ -5,8 +5,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
 
 import jakarta.inject.Inject;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.views.DialogContributionItem;
 import software.aws.toolkits.eclipse.amazonq.views.FeedbackDialog;
 

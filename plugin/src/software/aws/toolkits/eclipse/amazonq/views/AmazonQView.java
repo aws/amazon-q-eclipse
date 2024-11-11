@@ -15,9 +15,9 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 

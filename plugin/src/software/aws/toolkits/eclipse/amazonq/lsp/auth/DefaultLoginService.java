@@ -32,8 +32,9 @@ public final class DefaultLoginService implements LoginService {
 
         if (builder.initializeOnStartUp) {
             AuthState authState = authStateManager.getAuthState();
-            if (authState.isExpired()) {
-                silentlyReAuthenticate();
+            if (!authState.isLoggedOut()) {
+                boolean loginOnInvalidToken = false;
+                reAuthenticate(loginOnInvalidToken);
             }
         }
     }
@@ -107,7 +108,7 @@ public final class DefaultLoginService implements LoginService {
     }
 
     @Override
-    public CompletableFuture<Void> reAuthenticate() {
+    public CompletableFuture<Void> reAuthenticate(final boolean loginOnInvalidToken) {
         AuthState authState = authStateManager.getAuthState();
 
         if (authState.isLoggedOut()) {
@@ -117,31 +118,12 @@ public final class DefaultLoginService implements LoginService {
 
         Activator.getLogger().info("Attempting to re-authenticate...");
 
-        return processLogin(authState.loginType(), authState.loginParams(), true)
+        return processLogin(authState.loginType(), authState.loginParams(), loginOnInvalidToken)
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to re-authenticate", throwable);
                     return null;
                 });
     }
-
-    @Override
-    public CompletableFuture<Void> silentlyReAuthenticate() {
-        AuthState authState = authStateManager.getAuthState();
-
-        if (authState.isLoggedOut()) {
-            Activator.getLogger().warn("Attempted to silently re-authenticate while user is in a logged out state");
-            return CompletableFuture.completedFuture(null);
-        }
-
-        Activator.getLogger().info("Attempting to silently re-authenticate...");
-
-        return processLogin(authState.loginType(), authState.loginParams(), false)
-                .exceptionally(throwable -> {
-                    Activator.getLogger().error("Failed to silently re-authenticate", throwable);
-                    return null;
-                });
-    }
-
 
     @Override
     public AuthState getAuthState() {

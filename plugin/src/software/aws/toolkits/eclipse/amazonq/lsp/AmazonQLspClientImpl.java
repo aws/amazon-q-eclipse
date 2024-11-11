@@ -156,7 +156,8 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                     Activator.getLoginService().expire();
                     return;
                 case REFRESHED:
-                    Activator.getLoginService().silentlyReAuthenticate();
+                    boolean loginOnInvalidToken = false;
+                    Activator.getLoginService().reAuthenticate(loginOnInvalidToken);
                     return;
                 default:
                     Activator.getLogger().error("Error processing token changed: Unhandled kind " + kind);

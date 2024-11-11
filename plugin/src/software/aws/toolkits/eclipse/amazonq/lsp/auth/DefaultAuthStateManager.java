@@ -97,6 +97,6 @@ public final class DefaultAuthStateManager implements AuthStateManager {
             return;
         }
 
-        updateState(AuthStateType.EXPIRED, loginType, loginParams, ssoTokenId);
+        updateState(AuthStateType.LOGGED_IN, loginType, loginParams, ssoTokenId);
     }
 }

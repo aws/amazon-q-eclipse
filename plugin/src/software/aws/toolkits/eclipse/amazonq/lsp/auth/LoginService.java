@@ -13,7 +13,6 @@ public interface LoginService {
     CompletableFuture<Void> login(LoginType loginType, LoginParams loginParams);
     CompletableFuture<Void> logout();
     CompletableFuture<Void> expire();
-    CompletableFuture<Void> reAuthenticate();
-    CompletableFuture<Void> silentlyReAuthenticate();
+    CompletableFuture<Void> reAuthenticate(boolean loginOnInvalidToken);
     AuthState getAuthState();
 }

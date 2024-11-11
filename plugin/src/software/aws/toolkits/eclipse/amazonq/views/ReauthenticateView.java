@@ -66,7 +66,8 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
             public void widgetSelected(final SelectionEvent e) {
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
-                        Activator.getLoginService().reAuthenticate().get();
+                        boolean loginOnInvalidToken = true;
+                        Activator.getLoginService().reAuthenticate(loginOnInvalidToken).get();
                     } catch (Exception ex) {
                         PluginUtils.showErrorDialog("Amazon Q", Constants.RE_AUTHENTICATE_FAILURE_MESSAGE);
                         Activator.getLogger().error("Failed to re-authenticate", ex);

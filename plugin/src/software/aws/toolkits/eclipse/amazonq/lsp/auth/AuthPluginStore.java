@@ -14,8 +14,8 @@ public final class AuthPluginStore {
 
     private PluginStore pluginStore;
 
-    public AuthPluginStore() {
-        this.pluginStore = Activator.getPluginStore();
+    public AuthPluginStore(PluginStore pluginStore) {
+        this.pluginStore = pluginStore;
     }
 
     public void setLoginType(final LoginType loginType) {

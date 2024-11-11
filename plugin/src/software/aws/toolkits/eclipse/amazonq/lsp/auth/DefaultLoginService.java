@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
@@ -273,12 +274,17 @@ public final class DefaultLoginService implements LoginService {
 
     public static class Builder {
         private LspProvider lspProvider;
+        private PluginStore pluginStore;
         private LspEncryptionManager encryptionManager;
         private AuthStateManager authStateManager;
         private boolean initializeOnStartUp;
 
         public final Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
+            return this;
+        }
+        public final Builder withPluginStore(final PluginStore pluginStore) {
+            this.pluginStore = pluginStore;
             return this;
         }
         public final Builder withEncryptionManager(final LspEncryptionManager encryptionManager) {
@@ -298,11 +304,14 @@ public final class DefaultLoginService implements LoginService {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
             }
+            if (pluginStore == null) {
+                pluginStore = Activator.getPluginStore();
+            }
             if (encryptionManager == null) {
                 encryptionManager = DefaultLspEncryptionManager.getInstance();
             }
             if (authStateManager == null) {
-                authStateManager = DefaultAuthStateManager.getInstance();
+                authStateManager = DefaultAuthStateManager.getInstance(pluginStore);
             }
             DefaultLoginService instance = new DefaultLoginService(this);
             return instance;

@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.Objects;
 
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
@@ -23,15 +24,15 @@ public final class DefaultAuthStateManager implements AuthStateManager {
     private String issuerUrl;
     private String ssoTokenId;
 
-    private DefaultAuthStateManager() {
-        this.authPluginStore = new AuthPluginStore();
+    private DefaultAuthStateManager(final PluginStore pluginStore) {
+        this.authPluginStore = new AuthPluginStore(pluginStore);
         syncAuthStateWithPluginStore();
     }
 
-    public static synchronized DefaultAuthStateManager getInstance() {
+    public static synchronized DefaultAuthStateManager getInstance(final PluginStore pluginStore) {
         if (instance == null) {
             try {
-                instance = new DefaultAuthStateManager();
+                instance = new DefaultAuthStateManager(pluginStore);
             } catch (Exception e) {
                 throw new AmazonQPluginException("Failed to initialize LspEncryptionManager", e);
             }

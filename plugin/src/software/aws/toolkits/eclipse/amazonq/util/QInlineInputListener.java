@@ -366,7 +366,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
     private PreprocessingCategory getBufferPreprocessingCategory(final String input) {
         if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
-                || input.equals("\"\"") || input.equals("[]"))) {
+                || input.equals("\"\"") || input.equals("\'\'") || input.equals("[]"))) {
             return PreprocessingCategory.NORMAL_BRACKETS;
         }
         Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);

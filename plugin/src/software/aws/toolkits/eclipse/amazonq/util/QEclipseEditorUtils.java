@@ -13,6 +13,11 @@ import java.util.function.Consumer;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.IExecutionListener;
 import org.eclipse.core.commands.NotHandledException;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.content.IContentType;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextSelection;
@@ -34,6 +39,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.FileStoreEditorInput;
+import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -320,5 +326,28 @@ public final class QEclipseEditorUtils {
                 callback.accept(commandId);
             }
         };
+    }
+
+    public static Optional<AutoCloseBracketConfig> getAutoCloseSettings(final ITextEditor editor) {
+        IEditorInput input = editor.getEditorInput();
+        String contentTypeName = null;
+        if (input instanceof FileEditorInput) {
+            IFile file = ((FileEditorInput) input).getFile();
+            IContentType contentType = Platform.getContentTypeManager().findContentTypeFor(file.getName());
+            contentTypeName = contentType.getName();
+        }
+        switch (contentTypeName) {
+        // TODO: Add more supported file types here:
+        case "Java Source File":
+            IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+            boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
+            boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
+            boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+            return Optional.of(new AutoCloseBracketConfig(isBracketsSetToAutoClose, isBracketsSetToAutoClose,
+                    isStringSetToAutoClose, isBracesSetToAutoClose));
+        default:
+            break;
+        }
+        return Optional.empty();
     }
 }

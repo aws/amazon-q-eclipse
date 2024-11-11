@@ -89,7 +89,8 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     }
 
     @Override
-    public String getAutoCloseContent(final boolean isBracketSetToAutoClose, final boolean isBracesSetToAutoClose,
+    public String getAutoCloseContent(final boolean isBracketSetToAutoClose,
+            final boolean isAngleBracketsSetToAutoClose, final boolean isBracesSetToAutoClose,
             final boolean isStringSetToAutoClose) {
         // This is a noop for close brackets
         return null;
@@ -103,5 +104,9 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     @Override
     public char getSymbol() {
         return symbol;
+    }
+
+    public QInlineSuggestionOpenBracketSegment getOpenBracket() {
+        return openBracket;
     }
 }

@@ -14,6 +14,7 @@ import org.eclipse.ui.IViewSite;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
@@ -62,6 +63,7 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
             public void widgetSelected(final SelectionEvent e) {
                 String settingValue = Activator.getPluginStore().get(AUTO_TRIGGER_ENABLEMENT_KEY);
                 boolean wasEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
+                UiTelemetryProvider.emitClickEventMetric((wasEnabled) ? "amazonq_PauseAutoTrigger" : "amazonq_ResumeAutoTrigger");
                 if (wasEnabled) {
                     Activator.getPluginStore().put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
                 } else {

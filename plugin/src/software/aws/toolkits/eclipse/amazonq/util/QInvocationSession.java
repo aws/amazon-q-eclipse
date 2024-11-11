@@ -3,19 +3,13 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchListener;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
-import org.osgi.service.prefs.Preferences;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
@@ -77,35 +71,6 @@ public final class QInvocationSession extends QResource {
     public static synchronized QInvocationSession getInstance() {
         if (instance == null) {
             instance = new QInvocationSession();
-            Preferences eclipseUIPrefs = Platform.getPreferencesService().getRootNode()
-                    .node(InstanceScope.SCOPE)
-                    .node("org.eclipse.jdt.ui");
-            boolean isBracesSetToAutoClose = eclipseUIPrefs.getBoolean("closeBraces", true);
-            boolean isBracketsSetToAutoClose = eclipseUIPrefs.getBoolean("closeBrackets", true);
-            boolean isStringSetToAutoClose = eclipseUIPrefs.getBoolean("closeStrings", true);
-
-            // We'll also need tab sizes since suggestions do not take that into account
-            // and is only given in spaces
-            Preferences eclipseCorePrefs = Platform.getPreferencesService().getRootNode()
-                    .node(InstanceScope.SCOPE)
-                    .node("org.eclipse.jdt.core");
-            instance.tabSize = eclipseCorePrefs.getInt("org.eclipse.jdt.core.formatter.tabulation.size", 4);
-            instance.isTabOnly = eclipseCorePrefs.getBoolean("use_tabs_only_for_leading_indentations", true);
-
-            PlatformUI.getWorkbench().addWorkbenchListener(new IWorkbenchListener() {
-                @Override
-                public boolean preShutdown(final IWorkbench workbench, final boolean forced) {
-                    eclipseUIPrefs.putBoolean("closeBraces", isBracesSetToAutoClose);
-                    eclipseUIPrefs.putBoolean("closeBrackets", isBracketsSetToAutoClose);
-                    eclipseUIPrefs.putBoolean("closeStrings", isStringSetToAutoClose);
-                    return true;
-                }
-
-                @Override
-                public void postShutdown(final IWorkbench workbench) {
-                    return;
-                }
-            });
         }
         return instance;
     }
@@ -166,7 +131,6 @@ public final class QInvocationSession extends QResource {
         }
 
         inputListener = QEclipseEditorUtils.getInlineInputListener(widget);
-        widget.addVerifyListener(inputListener);
         widget.addVerifyKeyListener(inputListener);
         widget.addMouseListener(inputListener);
 
@@ -577,7 +541,6 @@ public final class QInvocationSession extends QResource {
         unresolvedTasks.clear();
         if (inputListener != null) {
             inputListener.beforeRemoval();
-            widget.removeVerifyListener(inputListener);
             widget.removeVerifyKeyListener(inputListener);
             widget.removeMouseListener(inputListener);
         }

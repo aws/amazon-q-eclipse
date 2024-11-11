@@ -1,4 +1,5 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
@@ -48,6 +49,10 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
         this.isResolved = isResolved;
     }
 
+    public boolean isResolved() {
+        return isResolved;
+    }
+
     public boolean hasPairedUp() {
         return closeBracket != null;
     }
@@ -70,7 +75,9 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
     }
 
     @Override
-    public String getAutoCloseContent(final boolean isBracketSetToAutoClose, final boolean isBracesSetToAutoClose,
+    public String getAutoCloseContent(final boolean isBracketSetToAutoClose,
+            final boolean isAngleBracketsSetToAutoClose,
+            final boolean isBracesSetToAutoClose,
             final boolean isStringSetToAutoClose) {
         if (isResolved) {
             return null;
@@ -78,7 +85,7 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
 
         switch (symbol) {
         case '<':
-            if (!isBracketSetToAutoClose) {
+            if (!isAngleBracketsSetToAutoClose) {
                 return null;
             }
             return ">";

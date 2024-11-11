@@ -67,7 +67,13 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
-        return processLogin(loginType, loginParams, true);
+        Activator.getLogger().info("Attempting to login...");
+
+        return processLogin(loginType, loginParams, true)
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to log in", throwable);
+                    return null;
+                });
     }
 
     @Override
@@ -85,33 +91,42 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
+        Activator.getLogger().info("Attempting to log out...");
+
         InvalidateSsoTokenParams params = new InvalidateSsoTokenParams(authState.ssoTokenId());
 
         return lspProvider.getAmazonQServer()
                 .thenAccept(server -> {
                     server.invalidateSsoToken(params);
                     server.deleteTokenCredentials();
-                }).thenRun(() -> {
+                })
+                .thenRun(() -> {
                     authStateManager.toLoggedOut();
                     Activator.getLogger().info("Successfully logged out");
-                }).exceptionally(throwable -> {
-                    Activator.getLogger().error("Failed to log out");
-                    throw new AmazonQPluginException(throwable);
+                })
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to log out", throwable);
+                    return null;
                 });
     }
 
     @Override
     public CompletableFuture<Void> expire() {
         UpdateCredentialsPayload payload = createUpdateCredentialsPayload(null);
+
+        Activator.getLogger().info("Attempting to expire credentials...");
+
         return lspProvider.getAmazonQServer()
                 .thenAccept(server -> {
                     server.updateTokenCredentials(payload);
-                }).thenRun(() -> {
+                })
+                .thenRun(() -> {
                     authStateManager.toExpired();
                     Activator.getLogger().info("Successfully expired credentials");
-                }).exceptionally(throwable -> {
-                    Activator.getLogger().error("Failed to expire credentials");
-                    throw new AmazonQPluginException(throwable);
+                })
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to expire credentials", throwable);
+                    return null;
                 });
     }
 
@@ -124,7 +139,13 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
-        return processLogin(authState.loginType(), authState.loginParams(), true);
+        Activator.getLogger().info("Attempting to re-authenticate...");
+
+        return processLogin(authState.loginType(), authState.loginParams(), true)
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to re-authenticate", throwable);
+                    return null;
+                });
     }
 
     @Override
@@ -136,7 +157,13 @@ public final class DefaultLoginService implements LoginService {
             return CompletableFuture.completedFuture(null);
         }
 
-        return processLogin(authState.loginType(), authState.loginParams(), false);
+        Activator.getLogger().info("Attempting to silently re-authenticate...");
+
+        return processLogin(authState.loginType(), authState.loginParams(), false)
+                .exceptionally(throwable -> {
+                    Activator.getLogger().error("Failed to silently re-authenticate", throwable);
+                    return null;
+                });
     }
 
 
@@ -162,8 +189,6 @@ public final class DefaultLoginService implements LoginService {
     private CompletableFuture<Void> processLogin(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) {
         validateLoginParameters(loginType, loginParams);
 
-        Activator.getLogger().info("Attempting to log in using LoginType " + loginType);
-
         final AtomicReference<String> ssoTokenId = new AtomicReference<>(); // Saved for logout
 
         return getToken(loginType, loginParams, loginOnInvalidToken)
@@ -176,8 +201,7 @@ public final class DefaultLoginService implements LoginService {
                 Activator.getLogger().info("Successfully logged in");
             })
             .exceptionally(throwable -> {
-                Activator.getLogger().error("Failed to log in");
-                throw new AmazonQPluginException(throwable);
+                throw new AmazonQPluginException("Failed to process log in", throwable);
             });
     }
 
@@ -202,7 +226,7 @@ public final class DefaultLoginService implements LoginService {
                         try {
                             server.updateProfile(updateProfileParams).get();
                         } catch (Exception e) {
-                            Activator.getLogger().error("Failed to update profile", e);
+                            throw new AmazonQPluginException("Failed to update profile", e);
                         }
                     }
                     return server;
@@ -212,8 +236,7 @@ public final class DefaultLoginService implements LoginService {
                     return response.ssoToken();
                 })
                 .exceptionally(throwable -> {
-                    Activator.getLogger().error("Failed to fetch SSO token from LSP", throwable);
-                    throw new AmazonQPluginException(throwable);
+                    throw new AmazonQPluginException("Failed to fetch SSO token from LSP", throwable);
                 });
     }
 
@@ -223,8 +246,7 @@ public final class DefaultLoginService implements LoginService {
         return lspProvider.getAmazonQServer()
                 .thenCompose(server -> server.updateTokenCredentials(payload))
                 .exceptionally(throwable -> {
-                    Activator.getLogger().error("Failed to update credentials with AmazonQ server", throwable);
-                    throw new AmazonQPluginException(throwable);
+                    throw new AmazonQPluginException("Failed to update credentials with AmazonQ server", throwable);
                 });
     }
 

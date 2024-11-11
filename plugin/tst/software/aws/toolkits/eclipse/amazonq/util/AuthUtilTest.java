@@ -1,13 +1,14 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.lsp.auth;
+package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.junit.jupiter.api.Test;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
 import static org.junit.jupiter.api.Assertions.*;

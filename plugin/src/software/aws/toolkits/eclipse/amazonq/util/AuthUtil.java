@@ -1,10 +1,9 @@
-package software.aws.toolkits.eclipse.amazonq.lsp.auth;
+package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.Objects;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
 public final class AuthUtil {
     private AuthUtil() {

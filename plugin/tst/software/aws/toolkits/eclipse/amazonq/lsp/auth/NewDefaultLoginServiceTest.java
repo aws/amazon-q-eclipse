@@ -23,6 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
 import static org.junit.jupiter.api.Assertions.*;

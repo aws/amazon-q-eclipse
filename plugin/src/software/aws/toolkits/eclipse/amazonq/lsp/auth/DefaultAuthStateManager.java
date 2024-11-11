@@ -9,6 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 
 public final class DefaultAuthStateManager implements AuthStateManager {
     private final AuthPluginStore authPluginStore;

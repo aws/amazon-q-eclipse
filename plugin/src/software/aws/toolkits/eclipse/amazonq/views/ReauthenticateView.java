@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -100,5 +102,19 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
+    }
+
+    @Override
+    protected CompletableFuture<Boolean> isViewDisplayable() {
+        return Activator.getLoginService().getLoginDetails().thenApply(loginDetails -> !loginDetails.getIsLoggedIn())
+                .exceptionally(ex -> {
+                    Activator.getLogger().error("Failed to verify logged in status", ex);
+                    return true; // Safer to display re-authenticate view by default than give access
+                });
+    }
+
+    @Override
+    protected void showAlternateView() {
+        AmazonQView.showView(AmazonQChatWebview.ID);
     }
 }

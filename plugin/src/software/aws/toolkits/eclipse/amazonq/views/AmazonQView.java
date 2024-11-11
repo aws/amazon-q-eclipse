@@ -30,10 +30,8 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             ReauthenticateView.ID,
             ChatAssetMissingView.ID
         );
-
-    private Browser browser;
-    private AmazonQCommonActions amazonQCommonActions;
     private AmazonQViewController viewController;
+    private AmazonQCommonActions amazonQCommonActions;
 
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
@@ -75,7 +73,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     }
 
     public final Browser getBrowser() {
-        return browser;
+        return viewController.getBrowser();
     }
 
     public final AmazonQCommonActions getAmazonQCommonActions() {
@@ -84,11 +82,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         // if browser setup fails, don't set up rest of the content
-        if (!setupBrowser(parent)) {
+        if (!viewController.setupBrowser(parent)) {
             return false;
         }
         setupBrowserBackground(parent);
-        setupActions(browser, loginDetails);
+        setupActions(loginDetails);
         setupAuthStatusListeners();
         return true;
     }
@@ -97,22 +95,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         Display display = Display.getCurrent();
         Color black = display.getSystemColor(SWT.COLOR_BLACK);
         parent.setBackground(black);
-        browser.setBackground(black);
-    }
-
-    /*
-     * Sets up the browser compatible with the platform
-     * returns boolean representing whether a browser type compatible with webview rendering for the current platform is found
-     * @param parent
-     */
-    protected final boolean setupBrowser(final Composite parent) {
-        var browser = new Browser(parent, viewController.getBrowserStyle());
-        viewController.checkWebViewCompatibility(browser.getBrowserType());
-        // only set the browser if compatible webview browser can be found for the platform
-        if (viewController.hasWebViewDependency()) {
-            this.browser = browser;
-        }
-        return viewController.hasWebViewDependency();
+        getBrowser().setBackground(black);
     }
 
     protected final void showDependencyMissingView() {
@@ -125,8 +108,8 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         });
     }
 
-    private void setupActions(final Browser browser, final LoginDetails loginDetails) {
-        amazonQCommonActions = new AmazonQCommonActions(browser, loginDetails, getViewSite());
+    private void setupActions(final LoginDetails loginDetails) {
+        amazonQCommonActions = new AmazonQCommonActions(loginDetails, getViewSite());
     }
 
     private void setupAuthStatusListeners() {
@@ -141,7 +124,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         if (!viewController.hasWebViewDependency()) {
             return;
         }
-        browser.setFocus();
+        getBrowser().setFocus();
     }
 
     /**
@@ -153,7 +136,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
-        browser.dispose();
+        viewController.dispose();
         super.dispose();
     }
 

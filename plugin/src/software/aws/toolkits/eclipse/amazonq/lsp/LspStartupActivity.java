@@ -66,7 +66,6 @@ public class LspStartupActivity implements IStartup {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
-                    checkProxyConfiguration();
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);

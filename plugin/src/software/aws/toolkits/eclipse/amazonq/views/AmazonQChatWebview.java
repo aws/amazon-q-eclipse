@@ -3,9 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,7 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -43,6 +40,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ViewActionHandler actionHandler;
     private ChatCommunicationManager chatCommunicationManager;
     private ChatTheme chatTheme;
+    private ChatAssetProvider chatAssetProvider;
 
     public AmazonQChatWebview() {
         super();
@@ -50,6 +48,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         this.chatTheme = new ChatTheme();
+        this.chatAssetProvider = new ChatAssetProvider();
     }
 
     @Override
@@ -126,27 +125,14 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     private Optional<String> getContent() {
-        var chatUiDirectory = LspManagerProvider.getInstance().getLspInstallation().getClientDirectory();
+        var chatAsset = chatAssetProvider.get();
 
-        if (!isValid(chatUiDirectory)) {
-            Activator.getLogger().error("Error loading Chat UI. If override used, please verify the override env variables else restart Eclipse");
+        if (!chatAsset.isPresent()) {
             return Optional.empty();
         }
 
-        String jsFile = Paths.get(chatUiDirectory).resolve("amazonq-ui.js").toString();
-        var jsParent = Path.of(jsFile).getParent();
-        var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+        String chatJsPath = chatAsset.get();
 
-        webviewAssetServer = new WebviewAssetServer();
-        var result = webviewAssetServer.resolve(jsDirectoryPath);
-        if (!result) {
-            Activator.getLogger().error(String.format(
-                    "Error loading Chat UI. Unable to find the `amazonq-ui.js` file in the directory: %s. Please verify and restart",
-                    chatUiDirectory));
-            return Optional.empty();
-        }
-
-        var chatJsPath = webviewAssetServer.getUri() + "amazonq-ui.js";
         return Optional.of(String.format("""
                 <!DOCTYPE html>
                 <html lang="en">
@@ -166,10 +152,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 </body>
                 </html>
                 """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
-    }
-
-    private boolean isValid(final String chatUiDirectory) {
-        return chatUiDirectory != null && !chatUiDirectory.isEmpty() && Files.exists(Paths.get(chatUiDirectory));
     }
 
     private String generateCss() {
@@ -246,6 +228,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             webviewAssetServer.stop();
         }
         chatCommunicationManager.removeListener();
+        chatAssetProvider.dispose();
         super.dispose();
     }
 

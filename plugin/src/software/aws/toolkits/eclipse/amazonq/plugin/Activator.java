@@ -30,6 +30,7 @@ public class Activator extends AbstractUIPlugin {
     public Activator() {
         super();
         plugin = this;
+        defaultLogger = PluginLogger.getInstance();
         telemetryService = DefaultTelemetryService.builder().build();
         lspProvider = LspProviderImpl.getInstance();
         pluginStore = DefaultPluginStore.getInstance();
@@ -38,7 +39,6 @@ public class Activator extends AbstractUIPlugin {
                 .withPluginStore(pluginStore)
                 .initializeOnStartUp()
                 .build();
-        defaultLogger = PluginLogger.getInstance();
     }
 
     @Override

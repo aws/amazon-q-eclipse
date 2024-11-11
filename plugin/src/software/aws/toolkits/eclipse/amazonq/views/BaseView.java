@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
@@ -19,6 +20,8 @@ import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
 
 public abstract class BaseView extends ViewPart {
     private String iconPath;
@@ -30,6 +33,8 @@ public abstract class BaseView extends ViewPart {
     protected abstract String getIconPath();
     protected abstract String getHeaderLabel();
     protected abstract String getDetailMessage();
+    protected abstract CompletableFuture<Boolean> isViewDisplayable();
+    protected abstract void showAlternateView();
 
     @Override
     public final void createPartControl(final Composite parent) {
@@ -38,6 +43,17 @@ public abstract class BaseView extends ViewPart {
         this.headerLabel = getHeaderLabel();
         this.detailMessage = getDetailMessage();
         setupView();
+        setupStaticMenuActions();
+
+        isViewDisplayable().thenAcceptAsync((isDisplayable) -> {
+            if (!isDisplayable) {
+                showAlternateView();
+            }
+        }, ThreadingUtils::executeAsyncTask);
+    }
+
+    public final Composite getParentComposite() {
+        return parentComposite;
     }
 
     public final Composite getContentComposite() {
@@ -47,6 +63,10 @@ public abstract class BaseView extends ViewPart {
     @Override
     public final void setFocus() {
         parentComposite.setFocus();
+    }
+
+    private void setupStaticMenuActions() {
+        new AmazonQStaticActions(getViewSite());
     }
 
     /**

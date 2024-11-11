@@ -67,7 +67,7 @@ public final class DefaultLspManager implements LspManager {
         // retrieve local lsp overrides and use that if valid
         var overrideResult = getLocalLspOverride();
 
-        if (hasValidResult(overrideResult)) {
+        if (overrideResult != null && hasValidResult(overrideResult)) {
             Activator.getLogger().info(String.format("Launching Amazon Q language server from local override location: %s, with command: %s and args: %s",
                     overrideResult.getServerDirectory(), overrideResult.getServerCommand(), overrideResult.getServerCommandArgs()));
             return overrideResult;
@@ -103,18 +103,28 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private LspInstallResult getLocalLspOverride() {
-        var result = new LspInstallResult();
-        result.setLocation(LanguageServerLocation.Override);
-        result.setServerDirectory(getEnvironmentVariable("Q_SERVER_DIRECTORY"));
-        result.setClientDirectory(getEnvironmentVariable("Q_CLIENT_DIRECTORY"));
-        result.setServerCommand(getEnvironmentVariable("Q_SERVER_COMMAND"));
-        result.setServerCommandArgs(getEnvironmentVariable("Q_SERVER_COMMAND_ARGUMENTS"));
-        return result;
+        var serverDirectory = getEnvironmentVariable("Q_SERVER_DIRECTORY");
+        var clientDirectory = getEnvironmentVariable("Q_CLIENT_DIRECTORY");
+        var serverCommand = getEnvironmentVariable("Q_SERVER_COMMAND");
+        var serverCommandArgs = getEnvironmentVariable("Q_SERVER_COMMAND_ARGUMENTS");
+
+        if (!serverDirectory.isEmpty() || !clientDirectory.isEmpty() || !serverCommand.isEmpty() || !serverCommandArgs.isEmpty()) {
+            var result = new LspInstallResult();
+            result.setLocation(LanguageServerLocation.Override);
+            result.setServerDirectory(serverDirectory);
+            result.setClientDirectory(clientDirectory);
+            result.setServerCommand(serverCommand);
+            result.setServerCommandArgs(serverCommandArgs);
+            return result;
+        }
+
+        return null; // Return null if none of the environment variables are set
     }
 
     private String getEnvironmentVariable(final String variableName) {
         return Optional.ofNullable(System.getenv(variableName)).orElse("");
     }
+
     private Manifest fetchManifest() {
         try {
             var manifestFetcher = new VersionManifestFetcher(manifestUrl);

@@ -40,8 +40,8 @@ public class NewDefaultLoginServiceTest {
     private static MockedStatic<Activator> mockedActivator;
     private static MockedStatic<AuthUtil> mockedAuthUtil;
     private static LoggingService mockLoggingService;
-    private static QTokenService mockedQTokenService;
-    private static QCredentialsService mockedQCredentialsService;
+    private static AuthTokenService mockedAuthTokenService;
+    private static AuthCredentialsService mockedAuthCredentialsService;
 
     @BeforeEach
     public final void setUp() {
@@ -52,8 +52,8 @@ public class NewDefaultLoginServiceTest {
         mockAuthStateManager = mock(DefaultAuthStateManager.class);
         mockSsoTokenResult = mock(GetSsoTokenResult.class);
         mockLoggingService = mock(LoggingService.class);
-        mockedQTokenService = mock(QTokenService.class);
-        mockedQCredentialsService = mock(QCredentialsService.class);
+        mockedAuthTokenService = mock(AuthTokenService.class);
+        mockedAuthCredentialsService = mock(AuthCredentialsService.class);
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockLoggingService);
         mockedAuthUtil = mockStatic(AuthUtil.class);
@@ -81,14 +81,14 @@ public class NewDefaultLoginServiceTest {
         
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedQTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedQCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
         
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
         
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
-        verify(mockedQTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
-        verify(mockedQCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
+        verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
+        verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
@@ -102,14 +102,14 @@ public class NewDefaultLoginServiceTest {
         
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedQTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedQCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
         
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
         
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
-        verify(mockedQTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
-        verify(mockedQCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
+        verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
+        verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
@@ -124,14 +124,14 @@ public class NewDefaultLoginServiceTest {
         
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedQTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedQCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
         
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
         
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
-        verify(mockedQTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
-        verify(mockedQCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
+        verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
+        verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
@@ -145,14 +145,14 @@ public class NewDefaultLoginServiceTest {
         
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedQTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedQCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
         
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
         
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
-        verify(mockedQTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
-        verify(mockedQCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
+        verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
+        verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
@@ -163,8 +163,8 @@ public class NewDefaultLoginServiceTest {
               .withPluginStore(mockPluginStore)
               .withEncryptionManager(mockEncryptionManager)
               .withAuthStateManager(mockAuthStateManager)
-              .withQCredentialsService(mockedQCredentialsService)
-              .withQTokenService(mockedQTokenService)
+              .withAuthCredentialsService(mockedAuthCredentialsService)
+              .withAuthTokenService(mockedAuthTokenService)
               .build();
       loginService = spy(loginService);
     }

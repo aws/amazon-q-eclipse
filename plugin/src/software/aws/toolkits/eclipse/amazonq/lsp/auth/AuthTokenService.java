@@ -9,6 +9,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 
-public interface QTokenService {
+public interface AuthTokenService {
     CompletableFuture<SsoToken> getSsoToken(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken);
 }

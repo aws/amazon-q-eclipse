@@ -27,10 +27,10 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
-public final class DefaultQTokenService implements QTokenService {
+public final class DefaultAuthTokenService implements AuthTokenService {
     private LspProvider lspProvider;
 
-    private DefaultQTokenService(final Builder builder) {
+    private DefaultAuthTokenService(final Builder builder) {
         this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
     }
 
@@ -91,11 +91,11 @@ public final class DefaultQTokenService implements QTokenService {
             return this;
         }
 
-        public final DefaultQTokenService build() {
+        public final DefaultAuthTokenService build() {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
             }
-            DefaultQTokenService instance = new DefaultQTokenService(this);
+            DefaultAuthTokenService instance = new DefaultAuthTokenService(this);
             return instance;
         }
     }

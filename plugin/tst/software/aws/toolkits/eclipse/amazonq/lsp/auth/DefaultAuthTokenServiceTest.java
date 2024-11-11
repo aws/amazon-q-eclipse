@@ -36,8 +36,8 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.QConstants;
 
-public class DefaultQTokenServiceTest {
-    private static DefaultQTokenService qTokenService;
+public class DefaultAuthTokenServiceTest {
+    private static DefaultAuthTokenService authTokenService;
     private static LspProvider mockLspProvider;
     private static AmazonQLspServer mockAmazonQServer;
     private static GetSsoTokenResult mockSsoTokenResult;
@@ -53,7 +53,7 @@ public class DefaultQTokenServiceTest {
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockLoggingService);
         
-        resetQTokenService();
+        resetAuthTokenService();
 
         when(mockLspProvider.getAmazonQServer())
         .thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
@@ -138,7 +138,7 @@ public class DefaultQTokenServiceTest {
     }
     
     private SsoToken invokeGetSsoToken(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
-        Object getSsoTokenFuture = qTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken);
+        Object getSsoTokenFuture = authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken);
         assertTrue(getSsoTokenFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
 
         CompletableFuture<?> future = (CompletableFuture<?>) getSsoTokenFuture;
@@ -182,10 +182,10 @@ public class DefaultQTokenServiceTest {
                 && !options.updateSharedSsoSession();
       }
     
-    private void resetQTokenService() {
-        qTokenService = DefaultQTokenService.builder()
+    private void resetAuthTokenService() {
+        authTokenService = DefaultAuthTokenService.builder()
                 .withLspProvider(mockLspProvider)
                 .build();
-        qTokenService = spy(qTokenService);
+        authTokenService = spy(authTokenService);
       }
 }

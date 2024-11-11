@@ -16,11 +16,11 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadD
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 
-public final class DefaultQCredentialsService implements QCredentialsService {
+public final class DefaultAuthCredentialsService implements AuthCredentialsService {
     private LspProvider lspProvider;
     private LspEncryptionManager encryptionManager;
 
-    private DefaultQCredentialsService(final Builder builder) {
+    private DefaultAuthCredentialsService(final Builder builder) {
         this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
         this.encryptionManager = Objects.requireNonNull(builder.encryptionManager, "encryption manager cannot be null");
     }
@@ -79,11 +79,11 @@ public final class DefaultQCredentialsService implements QCredentialsService {
             return this;
         }
 
-        public final DefaultQCredentialsService build() {
+        public final DefaultAuthCredentialsService build() {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
             }
-            DefaultQCredentialsService instance = new DefaultQCredentialsService(this);
+            DefaultAuthCredentialsService instance = new DefaultAuthCredentialsService(this);
             return instance;
         }
     }

@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
-public interface QCredentialsService {
+public interface AuthCredentialsService {
     CompletableFuture<ResponseMessage> updateTokenCredentials(String accessToken, boolean isEncrypted);
     CompletableFuture<Void> deleteTokenCredentials();
 }

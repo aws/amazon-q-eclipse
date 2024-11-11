@@ -3,198 +3,242 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.preference.PreferenceDialog;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.SWT;
+import java.util.List;
+import java.util.Optional;
+
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
-import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.PreferencesUtil;
-import org.eclipse.ui.part.ViewPart;
 
-import jakarta.inject.Inject;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class AmazonQChatWebview extends ViewPart implements ISelectionListener {
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
+import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
+
+public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestListener {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
-    @Inject
-    private Shell shell;
-    private Browser browser;
+    private AmazonQCommonActions amazonQCommonActions;
+    private WebviewAssetServer webviewAssetServer;
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
-
-    private boolean darkMode = Display.isSystemDarkTheme();
+    private ChatCommunicationManager chatCommunicationManager;
+    private ChatTheme chatTheme;
+    private ChatAssetProvider chatAssetProvider;
 
     public AmazonQChatWebview() {
+        super();
         this.commandParser = new LoginViewCommandParser();
-        this.actionHandler = new AmazonQChatViewActionHandler();
+        this.chatCommunicationManager = ChatCommunicationManager.getInstance();
+        this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
+        this.chatTheme = new ChatTheme();
+        this.chatAssetProvider = new ChatAssetProvider();
     }
 
     @Override
     public final void createPartControl(final Composite parent) {
-        browser = new Browser(parent, SWT.NATIVE);
-        Display display = Display.getCurrent();
-        Color black = display.getSystemColor(SWT.COLOR_BLACK);
+        LoginDetails loginInfo = new LoginDetails();
+        loginInfo.setIsLoggedIn(false);
+        loginInfo.setLoginType(LoginType.NONE);
 
-        browser.setBackground(black);
-        parent.setBackground(black);
-        browser.setText(getContent());
+        var result = setupAmazonQView(parent, loginInfo);
+        // if setup of amazon q view fails due to missing webview dependency, switch to that view
+        if (!result) {
+            showDependencyMissingView();
+            return;
+        }
+        var browser = getBrowser();
+        amazonQCommonActions = getAmazonQCommonActions();
+        chatCommunicationManager.setChatUiRequestListener(this);
 
-        BrowserFunction prefsFunction = new OpenPreferenceFunction(browser, "openEclipsePreferences", this::openPreferences);
-        browser.addDisposeListener(e -> prefsFunction.dispose());
-
-        createActions();
-        contributeToActionBars(getViewSite());
-        getSite().getPage().addSelectionListener(this);
-
-       new BrowserFunction(browser, "ideCommand") {
+        new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
-                commandParser.parseCommand(arguments)
-                        .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+                ThreadingUtils.executeAsyncTask(() -> {
+                    handleMessageFromUI(browser, arguments);
+                });
                 return null;
             }
         };
-        
-    }
 
-    private void contributeToActionBars(final IViewSite viewSite) {
-        IActionBars bars = viewSite.getActionBars();
-        fillLocalPullDown(bars.getMenuManager());
-        fillLocalToolBar(bars.getToolBarManager());
-    }
+        // Inject chat theme after mynah-ui has loaded
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(final ProgressEvent event) {
+                Display.getDefault().syncExec(() -> {
+                    try {
+                        chatTheme.injectTheme(browser);
+                    } catch (Exception e) {
+                        Activator.getLogger().info("Error occurred while injecting theme", e);
+                    }
+                });
+            }
+        });
 
-    private void fillLocalPullDown(final IMenuManager manager) {
-        manager.add(changeThemeAction);
-    }
-
-    private void fillLocalToolBar(final IToolBarManager manager) {
-        manager.add(changeThemeAction);
-    }
-
-    private void createActions() {
-        changeThemeAction = new ChangeThemeAction();
-    }
-
-    private Action changeThemeAction;
-
-    private class ChangeThemeAction extends Action {
-        ChangeThemeAction() {
-            setText("Change Color");
-            setToolTipText("Change the color");
-            setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_ELCL_SYNCED));
-        }
-
-        @Override
-        public void run() {
-            darkMode = !darkMode;
-            browser.execute("changeTheme(" + darkMode + ");");
-        }
+        // Check if user is authenticated and build view accordingly
+        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
+            onAuthStatusChanged(loginDetails);
+        }, ThreadingUtils::executeAsyncTask);
     }
 
     @Override
-    public final void setFocus() {
-        browser.setFocus();
+    public final void onAuthStatusChanged(final LoginDetails loginDetails) {
+        var browser = getBrowser();
+        Display.getDefault().asyncExec(() -> {
+            amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
+            if (!loginDetails.getIsLoggedIn()) {
+                AmazonQView.showView(ReauthenticateView.ID);
+            } else {
+                if (!browser.isDisposed()) {
+                    getContent().ifPresentOrElse(
+                            content -> browser.setText(content),
+                            this::showChatAssetMissingView
+                        );
+                }
+            }
+        });
     }
 
-    private class OpenPreferenceFunction extends BrowserFunction {
-        private Runnable function;
+    private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
+        try {
+            commandParser.parseCommand(arguments)
+                    .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+        } catch (Exception e) {
+            Activator.getLogger().error("Error processing message from Browser", e);
+        }
+    }
 
-        OpenPreferenceFunction(final Browser browser, final String name, final Runnable function) {
-            super(browser, name);
-            this.function = function;
+    private Optional<String> getContent() {
+        var chatAsset = chatAssetProvider.get();
+
+        if (!chatAsset.isPresent()) {
+            return Optional.empty();
         }
 
-        @Override
-        public Object function(final Object[] arguments) {
-            function.run();
-            return getName() + " executed!";
-        }
-    }
+        String chatJsPath = chatAsset.get();
 
-    private void openPreferences() {
-        PreferenceDialog dialog = PreferencesUtil.createPreferenceDialogOn(shell, null, null, null);
-        dialog.open();
-    }
-
-    private String getContent() {
-        String jsFile = PluginUtils.getAwsDirectory(LspConstants.LSP_SUBDIRECTORY).resolve("amazonq-ui.js").toString();
-        return String.format("<!DOCTYPE html>\n"
-                + "<html lang=\"en\">\n"
-                + "<head>\n"
-                + "    <meta charset=\"UTF-8\">\n"
-                + "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-                + "    <title>Chat UI</title>\n"
-                + "    %s\n"
-                + "</head>\n"
-                + "<body>\n"
-                + "    %s\n"
-                + "</body>\n"
-                + "</html>", generateCss(), generateJS(jsFile));
+        return Optional.of(String.format("""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta
+                        http-equiv="Content-Security-Policy"
+                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
+                        img-src 'self' data:; object-src 'none'; base-uri 'none';"
+                    >
+                    <title>Chat UI</title>
+                    %s
+                </head>
+                <body>
+                    %s
+                </body>
+                </html>
+                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
     }
 
     private String generateCss() {
-        return "<style>\n"
-                + "        body,\n"
-                + "        html {\n"
-                + "            background-color: var(--mynah-color-bg);\n"
-                + "            color: var(--mynah-color-text-default);\n"
-                + "            height: 100%%;\n"
-                + "            width: 100%%;\n"
-                + "            overflow: hidden;\n"
-                + "            margin: 0;\n"
-                + "            padding: 0;\n"
-                + "        }\n"
-                + "    </style>";
+        return """
+                <style>
+                    body,
+                    html {
+                        background-color: var(--mynah-color-bg);
+                        color: var(--mynah-color-text-default);
+                        height: 100vh;
+                        width: 100%%;
+                        overflow: hidden;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    textarea:placeholder-shown {
+                        line-height: 1.5rem;
+                    }
+                </style>
+                """;
     }
 
     private String generateJS(final String jsEntrypoint) {
-        return String.format("<script type=\"text/javascript\" src=\"%s\" defer onload=\"init()\"></script>\n"
-                + "    <script type=\"text/javascript\">\n"
-                + "        const init = () => {\n"
-                + "            amazonQChat.createChat({\n"
-                + "               postMessage: (message) => {\n"
-                + "                    ideCommand(JSON.stringify(message));\n"
-                + "               }\n"			
-                + "			});\n"
-                + "        }\n"
-                + "    </script>", jsEntrypoint);
+        var chatQuickActionConfig = generateQuickActionConfig();
+        return String.format("""
+                <script type="text/javascript" src="%s" defer onload="init()"></script>
+                <script type="text/javascript">
+                    const init = () => {
+                        amazonQChat.createChat({
+                           postMessage: (message) => {
+                                ideCommand(JSON.stringify(message));
+                           }
+                        }, %s);
+                    }
+                </script>
+                """, jsEntrypoint, chatQuickActionConfig);
+    }
+
+    /*
+     * Generates javascript for chat options to be supplied to Chat UI defined here
+     * https://github.com/aws/language-servers/blob/785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
+     */
+    private String generateQuickActionConfig() {
+        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
+                .map(ChatOptions::quickActions)
+                .map(QuickActions::quickActionsCommandGroups)
+                .map(this::serializeQuickActionCommands)
+                .orElse("");
+    }
+
+    private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(quickActionCommands);
+            return String.format("{\"quickActionCommands\": %s}", json);
+        } catch (Exception e) {
+            Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
+            return "";
+        }
     }
 
     @Override
-    public final void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
-        if (selection.isEmpty()) {
-            return;
-        }
-        if (selection instanceof IStructuredSelection) {
-            browser.execute("setSelection(\"" + part.getTitle() + "::"
-                    + ((IStructuredSelection) selection).getFirstElement().getClass().getSimpleName() + "\");");
-        } else {
-            browser.execute("setSelection(\"Something was selected in part " + part.getTitle() + "\");");
-        }
+    public final void onSendToChatUi(final String message) {
+        var browser = getBrowser();
+        String script = "window.postMessage(" + message + ");";
+        browser.getDisplay().asyncExec(() -> {
+            browser.evaluate(script);
+        });
     }
 
     @Override
     public final void dispose() {
-        getSite().getPage().removeSelectionListener(this);
+        if (webviewAssetServer != null) {
+            webviewAssetServer.stop();
+        }
+        chatCommunicationManager.removeListener();
+        chatAssetProvider.dispose();
         super.dispose();
     }
 
+    private void showChatAssetMissingView() {
+        Display.getCurrent().asyncExec(() -> {
+            try {
+                showView(ChatAssetMissingView.ID);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error occured while attempting to show chat asset missing view", e);
+            }
+        });
+    }
 }

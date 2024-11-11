@@ -3,19 +3,23 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-//import org.eclipse.swt.custom.StyledText;
+import org.eclipse.jface.dialogs.PopupDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-//import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 
-import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
-//import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.isLastLine;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;
 
-import java.util.Arrays;
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.shouldIndentVertically;
 
 public class QInlineRendererListener implements PaintListener {
-    private int currentLine = -1;
-    private int offsetAtCurrentLine = -1;
+
+    private PopupDialog popup;
 
     @Override
     public final void paintControl(final PaintEvent e) {
@@ -25,63 +29,81 @@ public class QInlineRendererListener implements PaintListener {
         }
 
         var gc = e.gc;
-        gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
-        gc.setFont(QInvocationSession.getInstance().getInlineTextFont());
-        var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
-
-        var location = widget.getLocationAtOffset(widget.getCaretOffset());
-        var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
-        int invocationOffset = QInvocationSession.getInstance().getInvocationOffset();
-        var suggestionParts = suggestion.split("\\R");
-
+        var widget = qInvocationSessionInstance.getViewer().getTextWidget();
+        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
         int currentOffset = widget.getCaretOffset();
-        int lineOffset = widget.getLineAtOffset(currentOffset);
-        int originalLine = widget.getLineAtOffset(invocationOffset);
-        int currentLineInSuggestion = lineOffset - originalLine;
-        if (currentLine < lineOffset) {
-            // this accounts for a traversal "downwards" as user types
-            currentLine = lineOffset;
-            offsetAtCurrentLine = currentOffset;
-            qInvocationSessionInstance.setHeadOffsetAtLine(lineOffset, currentOffset);
-        } else if (currentLine > lineOffset) {
-            // this accounts for a traversal "upwards" as user backspaces
-            currentLine = lineOffset;
-            offsetAtCurrentLine = qInvocationSessionInstance.getHeadOffsetAtLine(lineOffset);
+
+        if (currentOffset < invocationOffset) {
+            qInvocationSessionInstance.end();
+            return;
         }
 
-        int renderHeadIndex = currentOffset - offsetAtCurrentLine;
-        String[] remainderArray = Arrays.copyOfRange(suggestionParts, currentLineInSuggestion + 1, suggestionParts.length);
-        String remainder = String.join("\n", remainderArray);
+        var invocationLine = widget.getLineAtOffset(invocationOffset);
+        var segments = qInvocationSessionInstance.getSegments();
+        var caretLine = widget.getLineAtOffset(currentOffset);
+        int numSuggestionLines = qInvocationSessionInstance.getNumSuggestionLines();
 
-        // Draw first line inline
-        String firstLine = renderHeadIndex >= 0
-                ? suggestionParts[currentLineInSuggestion].trim() : suggestionParts[currentLineInSuggestion];
-        int xLoc = renderHeadIndex >= 0 ? location.x : widget.getLeftMargin();
-        if (renderHeadIndex < firstLine.length()) {
-            gc.drawText(renderHeadIndex >= 0 ? firstLine.substring(renderHeadIndex) : firstLine, xLoc, location.y, true);
+        if (shouldIndentVertically(widget, caretLine) && qInvocationSessionInstance.isPreviewingSuggestions()) {
+            Point textExtent = gc.stringExtent(" ");
+            int height = textExtent.y * (numSuggestionLines - (caretLine - invocationLine) - 1);
+            qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
+        } else if (caretLine + 1 == (invocationLine + numSuggestionLines)) {
+            qInvocationSessionInstance.unsetVerticalIndent(caretLine + 1);
         }
 
-        // Draw other lines inline
-        if (!remainder.isEmpty()) {
-            // For last line case doesn't need to indent next line vertically
-            var caretLine = widget.getLineAtOffset(widget.getCaretOffset());
-            // Felix: Not really sure what this does and it is throwing under certain
-            // circumstance
-            // Will confirm with Andrew before adding this back in / modifying it.
-//            if (!isLastLine(widget, caretLine + 1)) {
-//                // when showing the suggestion need to add next line indent
-//                Point textExtent = gc.stringExtent(" ");
-//                int height = textExtent.y * suggestionParts[1].split("\\R").length;
-//                widget.setLineVerticalIndent(caretLine + 1, height);
-//            }
-
-            int lineHt = widget.getLineHeight();
-            int fontHt = gc.getFontMetrics().getHeight();
-            int x = widget.getLeftMargin();
-            int y = location.y + lineHt * 2 - fontHt;
-            gc.drawText(remainder, x, y, true);
+        for (int i = 0; i < segments.size(); i++) {
+            segments.get(i).render(gc, widget.getCaretOffset());
         }
     }
 
-}
+    public final void onNewSuggestion() {
+        if (popup != null) {
+            popup.close();
+        }
+        QInvocationSession session = QInvocationSession.getInstance();
+        InlineCompletionItem currentSuggestion = session.getCurrentSuggestion();
+        InlineCompletionReference[] referencesForCurrentSuggestion = currentSuggestion.getReferences();
+        if (referencesForCurrentSuggestion == null || referencesForCurrentSuggestion.length == 0) {
+            return;
+        }
+        var widget = session.getViewer().getTextWidget();
+        popup = new PopupDialog(widget.getShell(), PopupDialog.INFOPOPUPRESIZE_SHELLSTYLE, false, false, false, false, false,
+                null, null) {
+            @Override
+            protected Point getInitialLocation(final Point initialSize) {
+                Point location = widget.getLocationAtOffset(session.getInvocationOffset());
+                location.y -= widget.getLineHeight() * 1.1;
+                return widget.toDisplay(location);
+            }
 
+            @Override
+            protected Control createDialogArea(final Composite parent) {
+                Composite composite = (Composite) super.createDialogArea(parent);
+
+                // Add a label to display the message
+                Label infoLabel = new Label(composite, SWT.NONE);
+                StringBuffer licenseNames = new StringBuffer();
+                for (int i = 0; i < referencesForCurrentSuggestion.length; i++) {
+                    licenseNames.append(referencesForCurrentSuggestion[i].getLicenseName());
+                    if (i != referencesForCurrentSuggestion.length - 1) {
+                        licenseNames.append(" + ");
+                    }
+                }
+                int currentSuggestionNumber = session.getCurrentSuggestionNumber();
+                int totalNumberOfSuggestions = session.getNumberOfSuggestions();
+                String tipToDisplay = "Suggestion (License: " + licenseNames.toString() + ") " + currentSuggestionNumber
+                        + " / " + totalNumberOfSuggestions;
+                infoLabel.setText(tipToDisplay);
+
+                return composite;
+            }
+        };
+        popup.open();
+    }
+
+    public final void beforeRemoval() {
+        if (popup != null) {
+            popup.close();
+        }
+    }
+}

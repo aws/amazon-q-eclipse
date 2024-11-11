@@ -5,19 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>software.aws.toolkits.eclipse</groupId>
-        <artifactId>aws-plugin-q-group</artifactId>
+        <artifactId>amazon-q-eclipse-group</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
-    <groupId>software.aws.toolkits.eclipse</groupId>
-    <artifactId>aws-plugin-q</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>amazon-q-eclipse</artifactId>
     <packaging>eclipse-plugin</packaging>
 
     <properties>
         <tycho.version>4.0.8</tycho.version>
-        <aws.java.sdk.version>2.25.33</aws.java.sdk.version>
+        <aws.java.sdk.version>2.28.26</aws.java.sdk.version>
+        <node.version>v20.9.0</node.version>
+        <npm.version>10.1.0</npm.version>
+        <jackson.version>2.17.2</jackson.version>
+        <maven.compiler.release>17</maven.compiler.release>
     </properties>
 
     <repositories>
@@ -42,13 +44,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>
-              <groupId>com.fasterxml.jackson</groupId>
-              <artifactId>jackson-bom</artifactId>
-              <version>2.17.1</version>
-              <scope>import</scope>
-              <type>pom</type>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -61,25 +56,58 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
+            <version>4.5.14</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
+            <version>1.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>aws-json-protocol</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cognitoidentity</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>regions</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
+            <version>${aws.java.sdk.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.14.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+           <artifactId>nimbus-jose-jwt</artifactId>
+          <version>9.41.2</version>
         </dependency>
     </dependencies>
     
@@ -103,7 +131,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.1</version>
+                <version>3.8.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -128,6 +156,11 @@
                             <outputFile>${project.build.directory}/classpath.txt</outputFile>
                         </configuration>
                     </execution>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin> 
             <plugin>
@@ -149,20 +182,46 @@
                             <goal>run</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>move-generated-files</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <move todir="${project.build.directory}/generated-sources/">
+                                    <fileset dir="${project.build.directory}/generated-sources/sdk/">
+                                        <include name="**/*.*" />
+                                    </fileset>
+                                </move>
+                                <delete dir="${project.build.directory}/generated-sources/sdk/" />
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
                     <testSourceDirectory>${project.build.testSourceDirectory}</testSourceDirectory>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <executions>
                     <execution>
                         <id>compiletests</id>
@@ -176,25 +235,24 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.5.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.17.0</version>
+                        <version>10.18.2</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <failsOnError>true</failsOnError>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
                 <executions>
                     <execution>
                         <id>checkstyle-validation</id>
                         <phase>validate</phase>
-                        <configuration>
-                            <configLocation>checkstyle.xml</configLocation>
-                            <encoding>UTF-8</encoding>
-                            <consoleOutput>true</consoleOutput>
-                            <failsOnError>true</failsOnError>
-                            <linkXRef>false</linkXRef>
-                        </configuration>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -214,9 +272,19 @@
                     </execution>
                     <execution>
                         <id>default-report</id>
+                        <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <includes>
+                                <include>software/aws/toolkits/eclipse/amazonq/**</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*$Builder.class</exclude>
+                                <exclude>**/Builder.class</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>default-check</id>
@@ -224,6 +292,13 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <includes>
+                                <include>software/aws/toolkits/eclipse/amazonq/**</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*$Builder.class</exclude>
+                                <exclude>**/Builder.class</exclude>
+                            </excludes>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
@@ -237,6 +312,68 @@
                                 </rule>
                             </rules>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.1</version>
+                <configuration>
+                    <workingDirectory>${project.basedir}/webview</workingDirectory>
+                    <installDirectory>${project.basedir}/node</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <npmVersion>${npm.version}</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>build login-ui</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build-ui</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>codegen-maven-plugin</artifactId>
+                <version>${aws.java.sdk.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-telemetry-client</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <codeGenResources>${project.basedir}/codegen-resources/</codeGenResources>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                    <writeIntermediateModel>false</writeIntermediateModel>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>software.aws.toolkits.eclipse</groupId>
+                <artifactId>telemetry-generator</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-telemetry</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

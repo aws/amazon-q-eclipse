@@ -1,16 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-
+    <extension point="org.eclipse.ui.services">
+	   <sourceProvider provider="software.aws.toolkits.eclipse.amazonq.lsp.AuthSourceProvider">
+	      <variable name="is_authenticated" priorityLevel="workbench"/>
+	   </sourceProvider>
+	</extension>
     <extension
         point="org.eclipse.ui.views">
+        <!-- If adding a new view: -->
+        <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
+        <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
         <category
             name="Amazon Q"
             id="amazonq">
         </category>
         <view
+            id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+        </view>
+        <view
+            id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+        </view>
+        <view
+            id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-            name="Amazon Q Login"
+            name="Amazon Q"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
             category="amazonq"
@@ -18,55 +43,130 @@
         </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            name="Amazon Q Chat"
+            name="Amazon Q"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            category="amazonq"
             inject="true">
         </view>
+        <view
+              class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+              icon="icons/AmazonQ.png"
+              id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+              name="Amazon Q Code Reference"
+              restorable="true">
+        </view>
     </extension>
-
+    <extension point="org.eclipse.ui.activities">  
+      <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
+      <!-- ToolkitLoginWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview" name="Amazon Q Chat">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
+	  </activity>
+      <activity id="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView" name="Amazon Q Chat Missing">
+	  </activity>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+	  </activityPatternBinding>
+        <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
+	  </activityPatternBinding>
+	 </extension>
     <extension
         point="org.eclipse.ui.perspectiveExtensions">
+        <!-- These perspectiveExtensions ensure that the view is display in the appropriate portion of the layout. In most cases, it should stack the ToolkitLoginWebview. -->
         <perspectiveExtension
-            targetID="org.eclipse.jdt.ui.JavaPerspective">
+            targetID="*">
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="org.eclipse.ui.views.ProblemView"
-                relationship="stack">
+                relative="org.eclipse.ui.editorss"
+                relationship="right"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+             <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relationship="stack"
+                visible="false">
             </view>
         </perspectiveExtension>
     </extension>
     <extension
         point="org.eclipse.lsp4e.languageServer">
         <server
-            class="software.aws.toolkits.eclipse.amazonq.lsp.LspConnectionProvider"
+            class="software.aws.toolkits.eclipse.amazonq.lsp.connection.QLspConnectionProvider"
             clientImpl="software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspClientImpl"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
             label="Amazon Q Language Server"
             launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServerBuilder"
             singleton="true">
         </server>
-        <server
-            class="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspConnectionProvider"
-            clientImpl="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspClientImpl"
-            id="software.aws.toolkits.eclipse.amazonq.authServer"
-            label="Auth LSP Server"
-            launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AuthLspServerBuilder"
-            singleton="true">
-        </server>
         <contentTypeMapping
             contentType="org.eclipse.jdt.core.javaSource"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
-            languageId="AMAZONQ_JAVA">
+            languageId="java">
         </contentTypeMapping>
         <contentTypeMapping
             contentType="org.eclipse.core.runtime.text"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver">
         </contentTypeMapping>
         <contentTypeMapping
-            contentType="org.eclipse.core.runtime.text"
-            id="software.aws.toolkits.eclipse.amazonq.authServer">
+              contentType="org.eclipse.wst.jsdt.core.jsSource"
+              id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
+              languageId="javascript">
         </contentTypeMapping>
     </extension>
     <extension
@@ -74,6 +174,10 @@
         <participant
             class="org.eclipse.lsp4e.ConnectDocumentToLanguageServerSetupParticipant"
             contentTypeId="org.eclipse.jdt.core.javaSource">
+        </participant>
+        <participant
+            class="org.eclipse.lsp4e.ConnectDocumentToLanguageServerSetupParticipant"
+            contentTypeId="org.eclipse.wst.jsdt.core.jsSource">
         </participant>
    </extension>
 
@@ -97,6 +201,46 @@
             name="Reject Suggestions"
             id="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
         </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward"
+              name="Toggle Suggestions Forward">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward"
+              name="Toggle Suggestions Backward">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.explain"
+              name="Explain">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.refactor"
+              name="Refactor">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.fix"
+              name="Fix">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.optimize"
+              name="Optimize">
+        </command>
+        <command
+              categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+              id="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
+              name="Send To Prompt">
+        </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Open Amazon Q Login View"
+            id="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView">
+        </command>
     </extension>
 
     <extension point="org.eclipse.ui.handlers">
@@ -111,6 +255,38 @@
         <handler
                 class="software.aws.toolkits.eclipse.amazonq.handlers.QRejectSuggestionsHandler"
                 commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsForwardHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsBackwardHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QExplainHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.explain">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QRefactorHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.refactor">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QFixHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.fix">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QOptimizeHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.optimize">
+        </handler>
+        <handler
+              class="software.aws.toolkits.eclipse.amazonq.handlers.QSendToPromptHandler"
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt">
+        </handler>
+        <handler
+        	class="software.aws.toolkits.eclipse.amazonq.handlers.QOpenLoginViewHandler"
+        	commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView">
         </handler>
     </extension>
 
@@ -133,6 +309,18 @@
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="ESC">
         </key>
+        <key
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsBackward"
+              contextId="org.eclipse.ui.textEditorScope"
+              schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+              sequence="M3+[">
+        </key>
+        <key
+              commandId="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward"
+              contextId="org.eclipse.ui.textEditorScope"
+              schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+              sequence="M3+]">
+        </key>
     </extension>
 
     <extension point="org.eclipse.ui.startup">
@@ -140,5 +328,100 @@
             class="software.aws.toolkits.eclipse.amazonq.lsp.LspStartupActivity">
         </startup>
     </extension>
-
+    <extension point="org.eclipse.ui.preferencePages">
+         <page
+             class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"
+             id="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"
+             name="Amazon Q">
+         </page>
+    </extension>
+    <extension point="org.eclipse.core.runtime.preferences">
+        <initializer
+            class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferenceInitializer">
+        </initializer>
+   </extension>
+    <extension point="org.eclipse.ui.menus">
+        <menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?endof">
+            <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar">
+                <command id="software.aws.toolkits.eclipse.amazonq.toolbar.command"
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
+                    icon="icons/AmazonQ.png"
+                    tooltip="Amazon Q">
+                    <visibleWhen checkEnabled="false">
+                        <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
+                            <equals value="true"/>
+                        </with>
+                    </visibleWhen>
+                </command>
+           </toolbar>
+           <toolbar id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated">
+                <command id="software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated.command"
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
+                    icon="icons/AmazonQDisconnected.png" 
+                    tooltip="Amazon Q">
+                    <visibleWhen checkEnabled="false">
+                        <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
+                            <equals value="false"/>
+                        </with>
+                    </visibleWhen>
+                </command>
+           </toolbar>
+       </menuContribution>
+       <menuContribution locationURI="menu:showView?before=viewsShortlist">
+            <command
+                commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
+                icon="icons/AmazonQ.png"
+                label="Amazon Q"
+                style="push">
+            </command>
+        </menuContribution>
+        <menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
+            <menu 
+                icon="icons/AmazonQ.png"
+                label="Amazon Q">
+                <visibleWhen checkEnabled="false">
+                    <and>
+                        <with variable="activePartId">
+                            <or>
+                                <equals value="org.eclipse.ui.DefaultTextEditor"/>
+                                <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
+                                <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
+                            </or>
+                        </with>
+                    </and>
+                </visibleWhen>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.explain"
+                    label="Explain">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.refactor"
+                    label="Refactor">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.fix"
+                    label="Fix">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.optimize"
+                    label="Optimize">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
+                    label="Send To Prompt">
+                </command>
+            </menu>
+        </menuContribution>
+        <menuContribution
+              allPopups="false"
+              locationURI="toolbar:org.eclipse.ui.trim.status">
+              <toolbar id="software.aws.toolkits.eclipse.amazonq.statusbar">
+                <control
+                class="software.aws.toolkits.eclipse.amazonq.views.actions.InlineQueryStatusBarContribution"
+                id="software.aws.toolkits.eclipse.amazonq.views.actions.InlineQueryStatusBarContribution"
+                >
+                </control>
+           </toolbar>
+        </menuContribution>
+    </extension>
 </plugin>

@@ -5,9 +5,10 @@ package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 
 import java.nio.file.Path;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspFetchResult;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
 public interface LspFetcher {
-    boolean fetch(PluginPlatform platform, PluginArchitecture architecture, Path destination);
+    LspFetchResult fetch(PluginPlatform platform, PluginArchitecture architecture, Path destination);
 }

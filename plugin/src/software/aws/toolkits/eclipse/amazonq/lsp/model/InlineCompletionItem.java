@@ -7,6 +7,7 @@ public class InlineCompletionItem {
 
     private String itemId;
     private String insertText;
+    private InlineCompletionReference[] references;
 
     public final String getItemId() {
         return itemId;
@@ -22,5 +23,13 @@ public class InlineCompletionItem {
 
     public final void setInsertText(final String insertText) {
         this.insertText = insertText;
+    }
+
+    public final InlineCompletionReference[] getReferences() {
+        return references;
+    }
+
+    public final void setReferences(final InlineCompletionReference[] references) {
+        this.references = references;
     }
 }

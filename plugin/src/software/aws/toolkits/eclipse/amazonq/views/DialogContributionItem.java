@@ -11,26 +11,37 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public class DialogContributionItem extends ContributionItem {
     private Dialog dialog;
     private String menuItemName;
     private Image icon;
 
-    public DialogContributionItem(Dialog dialog, String menuItemName, Image icon) {
+    public DialogContributionItem(final Dialog dialog, final String menuItemName) {
+        this.dialog = dialog;
+        this.menuItemName = menuItemName;
+    }
+
+    public DialogContributionItem(final Dialog dialog, final String menuItemName, final Image icon) {
         this.dialog = dialog;
         this.menuItemName = menuItemName;
         this.icon = icon;
     }
 
     @Override
-    public void fill(Menu menu, int index) {
+    public final void fill(final Menu menu, final int index) {
         MenuItem menuItem = new MenuItem(menu, SWT.NONE, index);
         menuItem.setText(this.menuItemName);
-        menuItem.setImage(this.icon);
+
+        if (this.icon != null) {
+            menuItem.setImage(this.icon);
+        }
+
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
-            public void widgetSelected(SelectionEvent e) {
+            public void widgetSelected(final SelectionEvent e) {
+                UiTelemetryProvider.emitClickEventMetric("amazonq_shareFeedback");
                 dialog.open();
             }
         });

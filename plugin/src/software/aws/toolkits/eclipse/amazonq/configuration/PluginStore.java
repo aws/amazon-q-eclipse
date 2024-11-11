@@ -3,22 +3,13 @@
 
 package software.aws.toolkits.eclipse.amazonq.configuration;
 
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 
-public final class PluginStore {
-    private static final IEclipsePreferences PREFERENCES = ConfigurationScope.INSTANCE.getNode("software.aws.toolkits.eclipse");
-
-    private PluginStore() {
-        // Prevent instantiation
-    }
-
-    public static void put(final String key, final String value) {
-        PREFERENCES.put(key, value);
-    }
-
-    public static String get(final String key) {
-        return PREFERENCES.get(key, null);
-    }
-
+public interface PluginStore {
+    void put(String key, String value);
+    String get(String key);
+    void remove(String key);
+    void addChangeListener(IPreferenceChangeListener prefChangeListener);
+    <T> void putObject(String key, T value);
+    <T> T getObject(String key, Class<T> type);
 }

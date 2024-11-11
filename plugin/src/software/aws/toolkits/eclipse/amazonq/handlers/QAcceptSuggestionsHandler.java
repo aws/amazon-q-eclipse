@@ -9,7 +9,8 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.widgets.Display;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 public class QAcceptSuggestionsHandler extends AbstractHandler {
@@ -23,25 +24,31 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
     public final Object execute(final ExecutionEvent event) throws ExecutionException {
         var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
+        var session = QInvocationSession.getInstance();
+        session.setSuggestionAccepted(true);
+        session.transitionToDecisionMade();
         Display display = widget.getDisplay();
-        display.syncExec(() -> this.insertSuggestion(suggestion));
+        display.syncExec(() -> this.insertSuggestion(suggestion.getInsertText()));
         return null;
     }
 
     private void insertSuggestion(final String suggestion) {
         try {
-            var viewer = QInvocationSession.getInstance().getViewer();
+            var qSes = QInvocationSession.getInstance();
+            var viewer = qSes.getViewer();
             IDocument doc = viewer.getDocument();
             var widget = viewer.getTextWidget();
             var insertOffset = widget.getCaretOffset();
-            doc.replace(insertOffset, 0, suggestion);
-            widget.setCaretOffset(insertOffset + suggestion.length());
-
-            QInvocationSession.getInstance().transitionToDecisionMade();
+            int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, insertOffset);
+            int startIdx = widget.getCaretOffset() - qSes.getInvocationOffset();
+            String adjustedSuggestion = suggestion.substring(startIdx);
+            doc.replace(adjustedOffset, 0, adjustedSuggestion);
+            widget.setCaretOffset(insertOffset + adjustedSuggestion.length());
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
+            QInvocationSession.getInstance().executeCallbackForCodeReference();
             QInvocationSession.getInstance().end();
         } catch (BadLocationException e) {
-            PluginLogger.error(e.toString());
+            Activator.getLogger().error(e.toString());
         }
     }
 }

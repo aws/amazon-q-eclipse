@@ -8,7 +8,7 @@ import software.aws.toolkits.eclipse.amazonq.views.model.ExternalLink;
 public final class ViewSourceAction extends OpenUrlAction {
 
     public ViewSourceAction() {
-        super("View Source on Github", ExternalLink.GitHubRepo);
+        super("View Source on Github", "amazonq_viewSourceCode", ExternalLink.GitHubRepo);
     }
 
 }

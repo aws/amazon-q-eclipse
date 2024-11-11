@@ -11,6 +11,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.AmazonQView;
 import software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public final class SignoutAction extends Action implements AuthStatusChangedListener {
     public SignoutAction() {
@@ -19,6 +20,7 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
 
     @Override
     public void run() {
+        UiTelemetryProvider.emitClickEventMetric("auth_signOut");
         ThreadingUtils.executeAsyncTask(() -> {
             try {
                 LoginDetails loginDetails = Activator.getLoginService().getLoginDetails().get();

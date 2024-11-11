@@ -4,7 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
-
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView;
 
@@ -16,6 +16,7 @@ public final class OpenCodeReferenceLogAction extends Action {
 
  @Override
  public void run() {
+     UiTelemetryProvider.emitClickEventMetric("amazonq_openReferenceLog");
      PluginUtils.showView(AmazonQCodeReferenceView.ID);
  }
 }

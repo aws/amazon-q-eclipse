@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.util;
+package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -12,8 +12,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStateManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultAuthStateManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
@@ -34,6 +32,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.LoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_SCOPES;

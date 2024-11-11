@@ -45,6 +45,7 @@ import org.mockito.stubbing.Answer;
 import org.osgi.service.prefs.Preferences;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;

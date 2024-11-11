@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;

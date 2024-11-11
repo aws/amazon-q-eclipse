@@ -84,12 +84,15 @@ export default defineComponent({
     },
     methods: {
         toggleItemSelection(itemId: string) {
+            if (this.selectedLoginOption == itemId) return;
             this.selectedLoginOption = itemId
+            window.telemetryApi.postClickEvent(itemId + "Option")
         },
         handleBackButtonClick() {
             this.$emit('backToMenu')
         },
         async handleContinueClick() {
+            window.telemetryApi.postClickEvent("continueButton")
             if (this.selectedLoginOption === LoginIdentifier.BUILDER_ID) {
                 this.$emit('login', new BuilderId())
             } else if (this.selectedLoginOption === LoginIdentifier.ENTERPRISE_SSO) {

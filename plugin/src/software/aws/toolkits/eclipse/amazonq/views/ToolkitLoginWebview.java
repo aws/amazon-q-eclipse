@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
@@ -55,6 +56,14 @@ public final class ToolkitLoginWebview extends AmazonQView {
             public Object function(final Object[] arguments) {
                 commandParser.parseCommand(arguments)
                     .ifPresent(command -> actionHandler.handleCommand(command, browser));
+                return null;
+            }
+        };
+        new BrowserFunction(browser, "telemetryEvent") {
+            @Override
+            public Object function(final Object[] arguments) {
+                String clickEvent = (String) arguments[0];
+                UiTelemetryProvider.emitClickEventMetric("auth_" + clickEvent);
                 return null;
             }
         };
@@ -106,6 +115,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                         </head>
                         <body class="jb-light">
                             <div id="app"></div>
+<<<<<<< HEAD
                             <script type="text/javascript" src="%s" defer></script>
                             <script type="text/javascript">
                                 %s

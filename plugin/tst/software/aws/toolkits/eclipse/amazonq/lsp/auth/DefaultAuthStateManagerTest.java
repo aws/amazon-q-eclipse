@@ -11,6 +11,7 @@ import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
@@ -22,6 +23,8 @@ import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
+import java.lang.reflect.Field;
 
 class DefaultAuthStateManagerTest {
 
@@ -40,7 +43,7 @@ class DefaultAuthStateManagerTest {
         assertNotNull(pluginStore, "PluginStore mock should not be null");
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mock(LoggingService.class));
-
+        
         authStateManager = new DefaultAuthStateManager(pluginStore);
         loginParams = new LoginParams();
         LoginIdcParams idcParams = new LoginIdcParams();
@@ -57,7 +60,10 @@ class DefaultAuthStateManagerTest {
 
     @Test
     void toLoggedIn_WithValidParameters_UpdatesStateCorrectly() {
-        String ssoTokenId = "testToken";
+        String ssoTokenId = "ssoTokenId";
+        setAuthStateFields(AuthStateType.LOGGED_OUT, LoginType.NONE, null, null, null);
+        
+        clearInvocations(pluginStore);
         
         authStateManager.toLoggedIn(LoginType.BUILDER_ID, loginParams, ssoTokenId);
         
@@ -110,8 +116,9 @@ class DefaultAuthStateManagerTest {
 
     @Test
     void toLoggedOut_ClearsStateCorrectly() {
-        String ssoTokenId = "testToken";
-        authStateManager.toLoggedIn(LoginType.BUILDER_ID, loginParams, ssoTokenId);
+        String ssoTokenId = "ssoTokenId";
+        String issuerUrl = "testUrl";
+        setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, ssoTokenId, issuerUrl);
         
         clearInvocations(pluginStore);
         
@@ -125,6 +132,7 @@ class DefaultAuthStateManagerTest {
         assertNull(state.ssoTokenId());
         assertNull(state.issuerUrl());
         
+        // Verify plugin store
         verify(pluginStore).remove(Constants.LOGIN_TYPE_KEY);
         verify(pluginStore).remove(Constants.LOGIN_IDC_PARAMS_KEY);
         verify(pluginStore).remove(Constants.SSO_TOKEN_ID);
@@ -132,8 +140,9 @@ class DefaultAuthStateManagerTest {
 
     @Test
     void toExpired_UpdatesStateCorrectly() {
-        String ssoTokenId = "testToken";
-        authStateManager.toLoggedIn(LoginType.BUILDER_ID, loginParams, ssoTokenId);
+        String ssoTokenId = "ssoTokenId";
+        String issuerUrl = "testUrl";
+        setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, ssoTokenId, issuerUrl);
 
         clearInvocations(pluginStore);
         
@@ -155,7 +164,11 @@ class DefaultAuthStateManagerTest {
 
     @Test
     void toExpired_WithNoLoginType_SwitchesToLoggedOut() {
-        authStateManager.toLoggedOut();
+        String ssoTokenId = "ssoTokenId";
+        String issuerUrl = "testUrl";
+        setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.NONE, loginParams, ssoTokenId, issuerUrl);
+        
+        clearInvocations(pluginStore);
         
         authStateManager.toExpired();
         
@@ -165,12 +178,16 @@ class DefaultAuthStateManagerTest {
         assertNull(state.loginParams());
         assertNull(state.ssoTokenId());
         assertNull(state.issuerUrl());
+
+        // Verify plugin store
+        verify(pluginStore).remove(Constants.LOGIN_TYPE_KEY);
+        verify(pluginStore).remove(Constants.LOGIN_IDC_PARAMS_KEY);
+        verify(pluginStore).remove(Constants.SSO_TOKEN_ID);
     }
 
     @Test
     void syncAuthStateWithPluginStore_WithStoredCredentials_RestoresState() {
-        String ssoTokenId = "testToken";
-        
+        String ssoTokenId = "ssoTokenId";
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn(LoginType.BUILDER_ID.name());
         when(pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)).thenReturn(loginParams.getLoginIdcParams());
         when(pluginStore.get(Constants.SSO_TOKEN_ID)).thenReturn(ssoTokenId);
@@ -199,5 +216,29 @@ class DefaultAuthStateManagerTest {
         assertNull(state.loginParams());
         assertNull(state.ssoTokenId());
         assertNull(state.issuerUrl());
+    }
+
+    void setAuthStateFields(AuthStateType authStateType, LoginType loginType, LoginParams loginParams, String ssoTokenId, String issuerUrl)  {
+        try {
+            Field authStateTypeField = DefaultAuthStateManager.class.getDeclaredField("authStateType");
+            Field loginTypeField = DefaultAuthStateManager.class.getDeclaredField("loginType");
+            Field loginParamsField = DefaultAuthStateManager.class.getDeclaredField("loginParams");
+            Field ssoTokenIdField = DefaultAuthStateManager.class.getDeclaredField("ssoTokenId");
+            Field issuerUrlField = DefaultAuthStateManager.class.getDeclaredField("issuerUrl");
+    
+            authStateTypeField.setAccessible(true);
+            loginTypeField.setAccessible(true);
+            loginParamsField.setAccessible(true);
+            ssoTokenIdField.setAccessible(true);
+            issuerUrlField.setAccessible(true);
+    
+            authStateTypeField.set(authStateManager, authStateType);
+            loginTypeField.set(authStateManager, loginType);
+            loginParamsField.set(authStateManager, loginParams);
+            ssoTokenIdField.set(authStateManager, ssoTokenId);
+            issuerUrlField.set(authStateManager, issuerUrl);
+        } catch (Exception ex) {
+            throw new AmazonQPluginException("Failed to set DefaultAuthStateManager fields");
+        }
     }
 }

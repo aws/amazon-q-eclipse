@@ -23,7 +23,6 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
-        System.out.println("Part activated called");
         var part = partRef.getPart(false);
         if (!(part instanceof ITextEditor)) {
             return;
@@ -39,7 +38,6 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void partDeactivated(final IWorkbenchPartReference partRef) {
-        System.out.println("Part deactivated called");
         var part = partRef.getPart(false);
         if (!(part instanceof ITextEditor)) {
             return;
@@ -56,7 +54,6 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
     private void detachDocumentListenerFromLastActiveDocument() {
         if (activeDocument != null) {
             activeDocument.removeDocumentListener(docListener);
-            System.out.println("doc listener removed from doc");
         }
     }
 
@@ -89,7 +86,6 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void onShutdown() {
-        System.out.println("Part listener on shutdown called");
         docListener.onShutdown();
         if (activeDocument != null) {
             activeDocument.removeDocumentListener(docListener);

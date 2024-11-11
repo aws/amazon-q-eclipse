@@ -137,7 +137,6 @@ public class LspStartupActivity implements IStartup {
                         autoTriggerTopLevelListener.onShutdown();
                     });
                 }
-                System.out.println(keyChanged + " changed to " + newValue);
             }
         };
         Activator.getPluginStore().addChangeListener(prefChangeListener);

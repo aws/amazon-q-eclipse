@@ -36,7 +36,6 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
 
             @Override
             public void windowActivated(final IWorkbenchWindow window) {
-                System.out.println("window listener added from activated");
                 activeWindow = window;
                 window.getPartService().addPartListener(partListener);
             }
@@ -54,7 +53,6 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
 
             @Override
             public void windowOpened(final IWorkbenchWindow window) {
-                System.out.println("window listener added from opened");
                 activeWindow = window;
                 window.getPartService().addPartListener(partListener);
             }
@@ -65,7 +63,6 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
         // Aside from adding the listeners to the window, we would also need to add the
         // listener actively for the first time
         // Because all of the subscribed events has already happened.
-        System.out.println("onStart called from top level listener");
         partListener.onStart();
     }
 
@@ -76,6 +73,5 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
             activeWindow.getPartService().removePartListener(partListener);
         }
         PlatformUI.getWorkbench().removeWindowListener(windowListener);
-        System.out.println("top level listener on shutdown called");
     }
 }

@@ -111,11 +111,9 @@ public final class QInvocationSession extends QResource {
             inlineTextFontBold = QEclipseEditorUtils.getInlineCloseBracketFontBold(widget);
             invocationOffset = widget.getCaretOffset();
             invocationTimeInMs = System.currentTimeMillis();
-            System.out.println("Session started.");
 
             return true;
         } else {
-            System.out.println("Session is already active.");
             return false;
         }
     }
@@ -148,7 +146,6 @@ public final class QInvocationSession extends QResource {
                     adjustedInvocationOffset, InlineCompletionTriggerKind.Automatic);
             queryAsync(params, invocationOffset + inputLength);
         } catch (BadLocationException e) {
-            System.out.println("BadLocationException: " + e.getMessage());
             Activator.getLogger().error("Unable to compute inline completion request from document", e);
         }
     }
@@ -163,7 +160,6 @@ public final class QInvocationSession extends QResource {
                     adjustedInvocationOffset, InlineCompletionTriggerKind.Invoke);
             queryAsync(params, session.getInvocationOffset());
         } catch (BadLocationException e) {
-            System.out.println("BadLocationException: " + e.getMessage());
             Activator.getLogger().error("Unable to compute inline completion request from document", e);
         }
     }
@@ -179,8 +175,6 @@ public final class QInvocationSession extends QResource {
                         .thenApply(result -> result.getItems().parallelStream().map(item -> {
                             if (isTabOnly) {
                                 String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
-                                System.out.println(
-                                        "Sanitized text: " + sanitizedText.replace("\n", "\\n").replace("\t", "\\t"));
                                 item.setInsertText(sanitizedText);
                             }
                             return item;
@@ -221,8 +215,6 @@ public final class QInvocationSession extends QResource {
                     }
 
                     if (invocationOffset != currentOffset && !hasAMatch) {
-                        System.out.println(
-                                "invocation offset: " + invocationOffset + "\ncurrent offset: " + currentOffset);
                         end();
                         return;
                     }
@@ -234,24 +226,14 @@ public final class QInvocationSession extends QResource {
 
                     suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
 
-                    // TODO: remove print
-                    // Update the UI with the results
-                    System.out.println("Suggestions: " + newSuggestions.stream()
-                            .map(suggestion -> suggestion.getInsertText()).collect(Collectors.toList()));
-                    System.out.println("Total suggestion number: " + newSuggestions.size());
-                    System.out.println("Invocation offset: " + invocationOffset);
-                    System.out.println("========================");
-
                     session.transitionToPreviewingState();
                     attachListeners();
                     session.primeListeners();
                     session.getViewer().getTextWidget().redraw();
                 });
             } catch (InterruptedException e) {
-                System.out.println("Query InterruptedException: " + e.getMessage());
                 Activator.getLogger().error("Inline completion interrupted", e);
             } catch (ExecutionException e) {
-                System.out.println("Query ExecutionException: " + e.getMessage());
                 Activator.getLogger().error("Error executing inline completion", e);
             }
         });
@@ -288,7 +270,6 @@ public final class QInvocationSession extends QResource {
             }
             dispose();
             state = QInvocationSessionState.INACTIVE;
-            System.out.println("Session terminated");
         }
     }
 

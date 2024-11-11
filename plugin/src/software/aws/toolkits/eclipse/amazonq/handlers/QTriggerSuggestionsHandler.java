@@ -36,13 +36,11 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
         }
 
         if (!newSession) {
-            System.out.println("session already started, not starting another one");
             return null;
         }
 
         QInvocationSession.getInstance().invoke();
 
-        System.out.println("TriggerSuggestionsHandler called");
         return null;
     }
 }

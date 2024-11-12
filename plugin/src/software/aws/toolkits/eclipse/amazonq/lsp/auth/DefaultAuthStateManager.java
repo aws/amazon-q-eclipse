@@ -11,14 +11,36 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 
+/**
+ * Manages authentication state transitions and persistence in the Amazon Q plugin.
+ *
+ * This manager handles the following authentication state changes:
+ * - Login
+ * - Logout
+ * - Session expiration
+ * - Re-authentication
+ *
+ * State changes follow this workflow:
+ * 1. Update internal authentication state variables
+ * 2. Persist state changes to the plugin store
+ * 3. Notify registered authentication state listeners
+ *
+ * The manager ensures consistency between in-memory state, persistent storage,
+ * and all components observing authentication state changes. The manager should
+ * only be accessed from the DefaultLoginService which is the central point of
+ * authentication handlers.
+ *
+ * @See DefaultLoginService
+ * @see AuthPluginStore
+ */
 public final class DefaultAuthStateManager implements AuthStateManager {
     private final AuthPluginStore authPluginStore;
 
     private AuthStateType authStateType;
-    private LoginType loginType;
-    private LoginParams loginParams;
-    private String issuerUrl;
-    private String ssoTokenId;
+    private LoginType loginType; // used in login's getSsoToken params
+    private LoginParams loginParams; // used in login's getSsoToken params
+    private String issuerUrl; // used in AmazonQLspClientImpl.getConnectionMetadata()
+    private String ssoTokenId; // used in logout's invalidateSsoToken params
 
     public DefaultAuthStateManager(final PluginStore pluginStore) {
         this.authPluginStore = new AuthPluginStore(pluginStore);
@@ -76,6 +98,14 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         this.issuerUrl = AuthUtil.getIssuerUrl(loginType, loginParams);
         this.ssoTokenId = ssoTokenId;
 
+        /**
+         * Manages authentication state persistence across Eclipse sessions using the plugin store.
+         * When Eclipse restarts, the stored authentication state is used to reinitialize
+         * the current session's state.
+         *
+         * @see #syncAuthStateWithPluginStore() Called during DefaultAuthStateManager initialization
+         *                                      to restore persisted state
+         */
         if (loginType.equals(LoginType.NONE)) {
             authPluginStore.clear();
         } else {
@@ -84,6 +114,11 @@ public final class DefaultAuthStateManager implements AuthStateManager {
             authPluginStore.setSsoTokenId(ssoTokenId);
         }
 
+        /**
+         * Notifies authentication state listeners to maintain plugin-wide state synchronization.
+         * This notification is critical for ensuring all plugin components reflect the current
+         * authentication state.
+         */
         AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
     }
 
@@ -97,6 +132,20 @@ public final class DefaultAuthStateManager implements AuthStateManager {
             return;
         }
 
-        updateState(AuthStateType.LOGGED_IN, loginType, loginParams, ssoTokenId);
+        /**
+         * Initializes to a logged-in state to optimize the user experience. Authentication failures
+         * (such as expired tokens) are handled gracefully through the chat interface:
+         *
+         * Authentication Flow:
+         * 1. Failed chat prompt requests trigger an "Authenticate" or "Re-authenticate" response
+         * 2. "Authenticate" button opens to the Amazon Q Login view
+         * 3. "Re-authenticate" button for sso token renewal in an external browser
+         *
+         * Rather than displaying a loading view or re-authenticate view that will be temporary displayed,
+         * it was decided that this experience of displaying the Chat view would be the least disruptive.
+         *
+         * @see DefaultLoginService constructor that handles the re-authentication on LoginService start up
+         */
+        toLoggedIn(loginType, loginParams, ssoTokenId);
     }
 }

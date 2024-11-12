@@ -20,6 +20,23 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
+/**
+ * Core authentication service for the Amazon Q Eclipse plugin that manages
+ * user authentication flows and token lifecycle management.
+ *
+ * Key responsibilities:
+ * - Manages authentication workflows (login/logout/expire/re-authenticate)
+ * - Coordinates browser-based authentication flows
+ * - Maintains authentication session state
+ *
+ * Important: Maintaining synchronized credentials wuth hte Amazon Q LSP server is critical for proper operation.
+ * Communication to the external Amazon Q server is handled by the Amazon Q LSP server acting as a proxy. Outdated
+ * credentials may cause inconsistent behavior and failed requests.
+ *
+ * @see AuthStateManager For authentication state management and persistent storage updates
+ * @see AuthTokenService Handles operations related to SSO token
+ * @see AuthCredentialsService Handles operations related to LSP server credentials
+ */
 public final class DefaultLoginService implements LoginService {
     private AuthStateManager authStateManager;
     private AuthTokenService authTokenService;

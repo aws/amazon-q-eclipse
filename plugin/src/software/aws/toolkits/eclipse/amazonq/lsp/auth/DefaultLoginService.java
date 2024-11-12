@@ -29,7 +29,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
  * - Coordinates browser-based authentication flows
  * - Maintains authentication session state
  *
- * Important: Maintaining synchronized credentials wuth hte Amazon Q LSP server is critical for proper operation.
+ * Important: Maintaining synchronized credentials with the Amazon Q LSP server is critical for proper operation.
  * Communication to the external Amazon Q server is handled by the Amazon Q LSP server acting as a proxy. Outdated
  * credentials may cause inconsistent behavior and failed requests.
  *

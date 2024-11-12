@@ -53,6 +53,8 @@ public final class AuthSourceProvider extends AbstractSourceProvider implements 
 
         // Notify listeners that this provider is being disposed
         fireSourceChanged(ISources.WORKBENCH, IS_LOGGED_IN_VARIABLE_ID, null);
+
+        AuthStatusProvider.removeAuthStatusChangeListener(this);
     }
 
     @Override

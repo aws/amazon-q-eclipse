@@ -48,21 +48,21 @@ public final class DefaultAuthStateManager implements AuthStateManager {
     }
 
     @Override
-    public void toLoggedIn(final LoginType loginType, final LoginParams loginParams, final String ssoTokenId) {
+    public void toLoggedIn(final LoginType loginType, final LoginParams loginParams, final String ssoTokenId) throws IllegalArgumentException {
         if (loginType == null) {
-            throw new IllegalArgumentException("Missing required parameter: loginType cannot be null");
+            throw new IllegalArgumentException("loginType is a required parameter");
         }
 
         if (loginType.equals(LoginType.NONE)) {
-            throw new IllegalArgumentException("Invalid loginType: NONE is not a valid login type");
+            throw new IllegalArgumentException("LoginType.NONE is not a valid parameter");
         }
 
         if (loginParams == null) {
-            throw new IllegalArgumentException("Missing required parameter: loginParams cannot be null");
+            throw new IllegalArgumentException("loginParams is a required parameter");
         }
 
         if (ssoTokenId == null) {
-            throw new IllegalArgumentException("Missing required parameter: ssoTokenId cannot be null");
+            throw new IllegalArgumentException("ssoTokenId is a required parameter");
         }
 
 
@@ -146,6 +146,11 @@ public final class DefaultAuthStateManager implements AuthStateManager {
          *
          * @see DefaultLoginService constructor that handles the re-authentication on LoginService start up
          */
-        toLoggedIn(loginType, loginParams, ssoTokenId);
+        try {
+            toLoggedIn(loginType, loginParams, ssoTokenId);
+        } catch (IllegalArgumentException ex) {
+            Activator.getLogger().warn("Failed to transition to logged in state when syncing with plugin store: " + ex.getMessage());
+            toLoggedOut();
+        }
     }
 }

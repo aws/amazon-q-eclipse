@@ -46,7 +46,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             SsoProfileData sso = new SsoProfileData();
             String startUrl = Constants.AWS_BUILDER_ID_URL;
             AuthState authState = Activator.getLoginService().getAuthState();
-            if (authState.issuerUrl() != null) {
+            if (authState.issuerUrl() != null && !authState.issuerUrl().isBlank()) {
                 startUrl = authState.issuerUrl();
             }
             sso.setStartUrl(startUrl);

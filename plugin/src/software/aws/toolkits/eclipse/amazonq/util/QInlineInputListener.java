@@ -178,8 +178,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         session.setCaretMovementReason(CaretMovementReason.TEXT_INPUT);
 
-        int idx = widget.getCaretOffset() - session.getInvocationOffset();
-        if (event.keyCode == SWT.BS && idx == 0) {
+        if (event.keyCode == SWT.BS && distanceTraversed == 0) {
             session.transitionToDecisionMade();
             session.end();
             return;
@@ -269,6 +268,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             if (numCharDeleted > distanceTraversed) {
                 session.transitionToDecisionMade();
                 session.end();
+                return;
             }
             for (int i = 1; i <= numCharDeleted; i++) {
                 var bracket = brackets[distanceTraversed - i];

@@ -3,9 +3,9 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 import org.eclipse.jface.action.Action;
 
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -23,8 +23,8 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
         UiTelemetryProvider.emitClickEventMetric("auth_signOut");
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                LoginDetails loginDetails = Activator.getLoginService().getLoginDetails().get();
-                if (loginDetails.getIsLoggedIn()) {
+                AuthState authState = Activator.getLoginService().getAuthState();
+                if (!authState.isLoggedOut()) {
                     Activator.getLoginService().logout().get();
                 }
             } catch (Exception e) {
@@ -40,12 +40,12 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
         });
     }
 
-    public void updateVisibility(final LoginDetails loginDetails) {
-        this.setEnabled(loginDetails.getIsLoggedIn());
+    public void updateVisibility(final AuthState authState) {
+        this.setEnabled(authState.isLoggedIn());
     }
 
     @Override
-    public void onAuthStatusChanged(final LoginDetails loginDetails) {
-        updateVisibility(loginDetails);
+    public void onAuthStatusChanged(final AuthState authState) {
+        updateVisibility(authState);
     }
 }

@@ -13,7 +13,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionPar
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenError;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
@@ -61,6 +60,9 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonRequest("aws/credentials/token/update")
     CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);
 
+    @JsonNotification("aws/credentials/token/delete")
+    void deleteTokenCredentials();
+
     @JsonRequest("aws/getConfigurationFromServer")
     CompletableFuture<LspServerConfigurations> getConfigurationFromServer(GetConfigurationFromServerParams params);
 
@@ -68,7 +70,7 @@ public interface AmazonQLspServer extends LanguageServer {
     void sendTelemetryEvent(Object params);
 
     @JsonRequest("aws/identity/listProfiles")
-    CompletableFuture<ListProfilesResult> listProfiles() throws GetSsoTokenError;
+    CompletableFuture<ListProfilesResult> listProfiles();
 
     @JsonRequest("aws/identity/getSsoToken")
     CompletableFuture<GetSsoTokenResult> getSsoToken(GetSsoTokenParams params);

@@ -52,8 +52,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         Command command = parsedCommand.getCommand();
         Object params = parsedCommand.getParams();
 
-        Activator.getLogger().info(command + " being processed by ActionHandler");
-
         switch (command) {
             case CHAT_SEND_PROMPT:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
@@ -182,7 +180,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         try {
             if (incomingType.equals(reAuth) || incomingType.equals(missingScopes)) {
-                Activator.getLoginService().reAuthenticate().get();
+                boolean loginOnInvalidToken = true;
+                Activator.getLoginService().reAuthenticate(loginOnInvalidToken).get();
                 return;
             }
         } catch (Exception ex) {

@@ -88,8 +88,7 @@ public class QInvocationSessionTest {
         activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
         activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
-        when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
-        when(loginSerivceMock.updateToken()).thenReturn(new CompletableFuture<Void>());
+        when(loginSerivceMock.getAuthState().isLoggedIn()).thenReturn(true);
 
         displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);

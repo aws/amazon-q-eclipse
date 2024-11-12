@@ -31,9 +31,9 @@ import org.eclipse.core.runtime.Platform;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -81,7 +81,7 @@ public class PluginUtilsTest {
         assertTrue(Files.exists(result));
         assertTrue(Files.isDirectory(result));
         assertEquals(dirName, result.getFileName().toString());
-        assertTrue("Ensure created directory is within temporary location", result.startsWith(tempDir));
+        assertTrue(result.startsWith(tempDir), "Ensure created directory is within temporary location");
     }
     @Test
     public void testGetPluginDirExistingDirectory() throws Exception {
@@ -90,7 +90,7 @@ public class PluginUtilsTest {
         java.nio.file.Path result = PluginUtils.getPluginDir(dirName);
 
         assertEquals(existingDir, result);
-        assertTrue("Returned path should fall within temporary directory", result.startsWith(tempDir));
+        assertTrue(result.startsWith(tempDir), "Returned path should fall within temporary directory");
     }
     @Test
     public void testGetPluginDirWithEmptyString() {

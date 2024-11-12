@@ -5,8 +5,8 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Optional;
 
-import software.aws.toolkits.eclipse.amazonq.views.model.Command;
+import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public interface ViewCommandParser {
-    Optional<Command> parseCommand(Object[] arguments);
+    Optional<ParsedCommand> parseCommand(Object[] arguments);
 }

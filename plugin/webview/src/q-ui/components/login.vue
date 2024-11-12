@@ -86,9 +86,11 @@ export default defineComponent({
             if (type instanceof IdC) {
                 window.ideApi.postMessage({
                     command: 'loginIdC',
-                    url: type.url,
-                    region: type.region,
-                    feature: this.feature
+                    params: {
+                        url: type.url,
+                        region: type.region,
+                        feature: this.feature
+                    }
                 })
             } else if (type instanceof BuilderId) {
                 window.ideApi.postMessage({command: 'loginBuilderId'})

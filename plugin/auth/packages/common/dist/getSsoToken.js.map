@@ -1,1 +1,0 @@
-{"version":3,"file":"getSsoToken.js","sourceRoot":"","sources":["../src/getSsoToken.ts"],"names":[],"mappings":";;;AAAA,mFAAoE;AAgBvD,QAAA,kBAAkB,GAAG;IAC9B,iBAAiB,EAAE,mBAAmB;IACzC,YAAY,EAAE,cAAc;CACnB,CAAA;AAsCV,MAAa,sBAAuB,SACnC,oDAAuF;IACvF;QAEC,KAAK,CAAC,2BAA2B,CAAC,CAAC;IACpC,CAAC;CACD;AAND,wDAMC"}

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="aws-plugin-q-feature"
+      id="amazon-q-eclipse-feature"
       label="AWS Q Plugin"
       version="1.0.0.qualifier">
 
@@ -13,7 +13,7 @@
    </license>
 
    <plugin
-         id="aws-plugin-q"
+         id="amazon-q-eclipse"
 
          download-size="0"
          install-size="0"

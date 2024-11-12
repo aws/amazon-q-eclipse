@@ -7,8 +7,8 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
+
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionContext;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
@@ -20,17 +20,19 @@ public final class InlineCompletionUtils {
     }
 
     public static InlineCompletionParams cwParamsFromContext(final ITextEditor editor, final ITextViewer viewer,
-            final int invocationOffset) throws BadLocationException {
+            final int invocationOffset, final InlineCompletionTriggerKind triggerKind) throws BadLocationException {
+        System.out.println("Param made with invocation offset of " + invocationOffset);
         var document = viewer.getDocument();
-        var openFilePath = ((IFileEditorInput) editor.getEditorInput()).getFile().getRawLocation();
+
+        var openFileUri = QEclipseEditorUtils.getOpenFileUri(editor.getEditorInput());
 
         var params = new InlineCompletionParams();
-        var identifier = new TextDocumentIdentifier();
-        identifier.setUri("file://" + openFilePath.toOSString());
-        params.setTextDocument(identifier);
+        openFileUri.ifPresent(filePathUri -> {
+            params.setTextDocument(new TextDocumentIdentifier(filePathUri));
+        });
 
         var inlineCompletionContext = new InlineCompletionContext();
-        inlineCompletionContext.setTriggerKind(InlineCompletionTriggerKind.Invoke);
+        inlineCompletionContext.setTriggerKind(triggerKind);
 
         params.setContext(inlineCompletionContext);
 
@@ -42,5 +44,4 @@ public final class InlineCompletionUtils {
         params.setPosition(invocationPosition);
         return params;
     }
-
 }

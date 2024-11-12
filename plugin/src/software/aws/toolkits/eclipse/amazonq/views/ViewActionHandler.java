@@ -5,8 +5,8 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import org.eclipse.swt.browser.Browser;
 
-import software.aws.toolkits.eclipse.amazonq.views.model.Command;
+import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public interface ViewActionHandler {
-    void handleCommand(Command command, Browser browser);
+    void handleCommand(ParsedCommand parsedCommand, Browser browser);
 }

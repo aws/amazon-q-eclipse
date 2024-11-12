@@ -5,13 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>software.aws.toolkits.eclipse</groupId>
-    <artifactId>aws-plugin-q-group</artifactId>
+    <artifactId>amazon-q-eclipse-group</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
         <tycho.version>4.0.8</tycho.version>
-        <aws.java.sdk.version>2.25.33</aws.java.sdk.version>
         <maven.resource.version>3.3.1</maven.resource.version>
     </properties>
 
@@ -19,6 +18,7 @@
         <module>plugin</module>
         <module>feature</module>
         <module>updatesite</module>
+        <module>telemetry</module>
     </modules>
 
     <repositories>
@@ -33,25 +33,6 @@
             <url>http://download.eclipse.org/lsp4e/releases/latest/</url>
         </repository>
     </repositories>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>5.10.3</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-              <groupId>com.fasterxml.jackson</groupId>
-              <artifactId>jackson-bom</artifactId>
-              <version>2.17.1</version>
-              <scope>import</scope>
-              <type>pom</type>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <sourceDirectory>src</sourceDirectory>

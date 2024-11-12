@@ -3,24 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-public class UpdateCredentialsPayload {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    private BearerCredentials data;
-    private boolean encrypted;
-
-    public final BearerCredentials getData() {
-        return data;
-    }
-
-    public final void setData(final BearerCredentials data) {
-        this.data = data;
-    }
-
-    public final boolean isEncrypted() {
-        return encrypted;
-    }
-
-    public final void setEncrypted(final boolean encrypted) {
-        this.encrypted = encrypted;
-    }
+public record UpdateCredentialsPayload(
+        @JsonProperty("data") String data,
+        @JsonProperty("encrypted") Boolean encrypted
+    ) {
 }

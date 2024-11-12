@@ -4,5 +4,5 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.manager;
 
 public interface LspManager {
-    LspInstallation getLspInstallation();
+    LspInstallResult getLspInstallation();
 }

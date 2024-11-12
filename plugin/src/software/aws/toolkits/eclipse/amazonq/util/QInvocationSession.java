@@ -78,15 +78,8 @@ public final class QInvocationSession extends QResource {
     // Method to start the session
     public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
-            try {
-                if (!Activator.getLoginService().getLoginDetails().get().getIsLoggedIn()) {
-                    this.end();
-                    return false;
-                } else {
-                    Activator.getLoginService().updateToken();
-                }
-            } catch (InterruptedException e) {
-                Activator.getLogger().info("Invocation start interrupted", e);
+            if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
+                this.end();
                 return false;
             }
             Activator.getLogger().info("Starting inline session");

@@ -45,6 +45,7 @@ import org.mockito.stubbing.Answer;
 import org.osgi.service.prefs.Preferences;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference;
@@ -91,6 +92,7 @@ public class QInvocationSessionTest {
         activatorMockStatic.when(Activator::getLogger).thenReturn(loggingServiceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
         when(loginSerivceMock.updateToken()).thenReturn(new CompletableFuture<Void>());
+        when(loginSerivceMock.getAuthState().isLoggedIn()).thenReturn(true);
 
         displayMockStatic = mockStatic(Display.class);
         Display displayMock = mock(Display.class);

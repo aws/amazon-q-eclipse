@@ -3,4 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-public record SsoTokenChangedParams(String kind, String ssoTokenId) { }
+public record SsoTokenChangedParams(
+        String kind, // {@Link SsoTokenChangedKind}
+        String ssoTokenId
+) { }

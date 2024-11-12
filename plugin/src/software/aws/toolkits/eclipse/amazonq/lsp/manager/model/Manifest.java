@@ -5,5 +5,14 @@ package software.aws.toolkits.eclipse.amazonq.lsp.manager.model;
 
 import java.util.List;
 
-public record Manifest(String manifestSchemaVersion, String artifactId, String artifactDescription, boolean isManifestDeprecated,
-        List<ArtifactVersion> versions) { }
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+
+public record Manifest(
+        @JsonProperty(required = true) String manifestSchemaVersion,
+        String artifactId,
+        String artifactDescription,
+        Boolean isManifestDeprecated,
+        @JsonSetter(nulls = Nulls.AS_EMPTY) List<ArtifactVersion> versions) {
+}

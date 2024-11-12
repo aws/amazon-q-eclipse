@@ -5,4 +5,13 @@ package software.aws.toolkits.eclipse.amazonq.lsp.manager.model;
 
 import java.util.List;
 
-public record Content(String filename, String url, List<String> hashes, int bytes) { }
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+
+public record Content(
+        @JsonProperty(required = true) String filename,
+        @JsonProperty(required = true) String url,
+        @JsonProperty(required = true) @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> hashes,
+        int bytes) {
+}

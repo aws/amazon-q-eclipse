@@ -5,4 +5,12 @@ package software.aws.toolkits.eclipse.amazonq.lsp.manager.model;
 
 import java.util.List;
 
-public record Target(String platform, String arch, List<Content> contents) { }
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+
+public record Target(
+        String platform,
+        String arch,
+        @JsonSetter(nulls = Nulls.AS_EMPTY)
+        List<Content> contents) {
+}

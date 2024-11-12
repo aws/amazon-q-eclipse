@@ -19,8 +19,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
@@ -52,30 +51,28 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void createPartControl(final Composite parent) {
-         browser = chatStateManager.getBrowser(parent);
-         // attempt to use existing browser with chat history if present, else create a new one
-         if (browser == null || browser.isDisposed()) {
-             canDisposeState = false;
-             var result = setupBrowser(parent);
-             // if setup of amazon q view fails due to missing webview dependency, switch to
-             // that view and don't setup rest of the content
-             if (!result) {
-                 canDisposeState = true;
-                 showDependencyMissingView();
-                 return;
-             }
-             browser = getAndUpdateStateManager();
-         } else {
-             updateBrowser(browser);
-         }
+        browser = chatStateManager.getBrowser(parent);
+        // attempt to use existing browser with chat history if present, else create a new one
+        if (browser == null || browser.isDisposed()) {
+            canDisposeState = false;
+            var result = setupBrowser(parent);
+            // if setup of amazon q view fails due to missing webview dependency, switch to
+            // that view and don't setup rest of the content
+            if (!result) {
+                canDisposeState = true;
+                showDependencyMissingView();
+                return;
+            }
+            browser = getAndUpdateStateManager();
+        } else {
+            updateBrowser(browser);
+        }
 
-         LoginDetails loginInfo = new LoginDetails();
-         loginInfo.setIsLoggedIn(false);
-         loginInfo.setLoginType(LoginType.NONE);
-         setupAmazonQView(parent, loginInfo);
+        AuthState authState = Activator.getLoginService().getAuthState();
+        setupAmazonQView(parent, authState);
 
-         parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
-         amazonQCommonActions = getAmazonQCommonActions();
+        parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
+        amazonQCommonActions = getAmazonQCommonActions();
 
         chatCommunicationManager.setChatUiRequestListener(this);
         new BrowserFunction(browser, "ideCommand") {
@@ -103,9 +100,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         });
 
         // Check if user is authenticated and build view accordingly
-        Activator.getLoginService().getLoginDetails().thenAcceptAsync(loginDetails -> {
-            onAuthStatusChanged(loginDetails);
-        }, ThreadingUtils::executeAsyncTask);
+        onAuthStatusChanged(authState);
     }
 
     private Browser getAndUpdateStateManager() {
@@ -114,21 +109,25 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         return browser;
     }
 
-    @Override
-    public final void onAuthStatusChanged(final LoginDetails loginDetails) {
+    public final void onAuthStatusChanged(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
-            amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
-            Activator.getLogger().info("auth status changed");
-            if (!loginDetails.getIsLoggedIn()) {
+            amazonQCommonActions.updateActionVisibility(authState, getViewSite());
+            if (authState.isExpired()) {
                 canDisposeState = true;
                 AmazonQView.showView(ReauthenticateView.ID);
+            } else if (authState.isLoggedOut()) {
+                canDisposeState = true;
+                AmazonQView.showView(ToolkitLoginWebview.ID);
             } else {
                 // if browser is not null and there is no chat prior state, start a new blank chat view
                 if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
-                        getContent().ifPresentOrElse(
-                                content -> browser.setText(content),
-                                this::showChatAssetMissingView
-                            );
+                    Optional<String> content = getContent();
+                    if (!content.isPresent()) {
+                        canDisposeState = true;
+                        AmazonQView.showView(ChatAssetMissingView.ID);
+                    } else {
+                        browser.setText(content.get()); // Display the chat client
+                    }
                 }
             }
         });
@@ -246,16 +245,5 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             ChatStateManager.getInstance().dispose();
         }
         super.dispose();
-    }
-
-    private void showChatAssetMissingView() {
-        Display.getCurrent().asyncExec(() -> {
-            try {
-                canDisposeState = true;
-                showView(ChatAssetMissingView.ID);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error occured while attempting to show chat asset missing view", e);
-            }
-        });
     }
 }

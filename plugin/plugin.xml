@@ -2,8 +2,8 @@
 <?eclipse version="3.4"?>
 <plugin>
     <extension point="org.eclipse.ui.services">
-	   <sourceProvider provider="software.aws.toolkits.eclipse.amazonq.lsp.AuthSourceProvider">
-	      <variable name="is_authenticated" priorityLevel="workbench"/>
+	   <sourceProvider provider="software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthSourceProvider">
+	      <variable name="is_logged_in" priorityLevel="workbench"/>
 	   </sourceProvider>
 	</extension>
     <extension
@@ -348,7 +348,7 @@
                     icon="icons/AmazonQ.png"
                     tooltip="Amazon Q">
                     <visibleWhen checkEnabled="false">
-                        <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
+                        <with variable="is_logged_in"> <!-- Provided by AuthSourceProvider  -->
                             <equals value="true"/>
                         </with>
                     </visibleWhen>
@@ -360,7 +360,7 @@
                     icon="icons/AmazonQDisconnected.png" 
                     tooltip="Amazon Q">
                     <visibleWhen checkEnabled="false">
-                        <with variable="is_authenticated"> <!-- Provided by AuthSourceProvider  -->
+                        <with variable="is_logged_in"> <!-- Provided by AuthSourceProvider  -->
                             <equals value="false"/>
                         </with>
                     </visibleWhen>

@@ -80,8 +80,6 @@ public final class QLspConnectionProviderTest {
         List<String> expectedCommands = List.of(
                 "/test/dir/server.js",
                 "--test-arg",
-                "--nolazy",
-                "--inspect=5599",
                 "--stdio",
                 "--set-credentials-encryption-key"
         );

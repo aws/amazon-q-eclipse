@@ -28,8 +28,6 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         List<String> commands = new ArrayList<>();
         commands.add(serverCommand.toString());
         commands.add(lspInstallResult.getServerCommandArgs());
-        commands.add("--nolazy");
-        commands.add("--inspect=5599");
         commands.add("--stdio");
         commands.add("--set-credentials-encryption-key");
         setCommands(commands);

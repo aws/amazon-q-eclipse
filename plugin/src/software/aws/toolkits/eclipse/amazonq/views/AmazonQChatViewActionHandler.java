@@ -180,7 +180,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         try {
             if (incomingType.equals(reAuth) || incomingType.equals(missingScopes)) {
-                Activator.getLoginService().expire();
                 boolean loginOnInvalidToken = true;
                 Activator.getLoginService().reAuthenticate(loginOnInvalidToken).get();
                 return;

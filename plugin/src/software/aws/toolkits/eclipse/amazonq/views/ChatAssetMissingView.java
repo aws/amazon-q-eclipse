@@ -51,7 +51,7 @@ public final class ChatAssetMissingView extends BaseView {
 
     @Override
     protected void showAlternateView() {
-        DisplayViewManager.showChatView();
+        ViewVisibilityManager.showChatView();
     }
 
     @Override

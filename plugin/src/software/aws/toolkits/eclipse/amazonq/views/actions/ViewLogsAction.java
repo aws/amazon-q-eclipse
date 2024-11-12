@@ -4,7 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
-import software.aws.toolkits.eclipse.amazonq.views.DisplayViewManager;
+import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public final class ViewLogsAction extends Action {
@@ -16,6 +16,6 @@ public final class ViewLogsAction extends Action {
     @Override
     public void run() {
         UiTelemetryProvider.emitClickEventMetric("amazonq_openErrorLog");
-        DisplayViewManager.showErrorLogView();
+        ViewVisibilityManager.showErrorLogView();
     }
 }

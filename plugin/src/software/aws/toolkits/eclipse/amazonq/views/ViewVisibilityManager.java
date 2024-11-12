@@ -12,8 +12,8 @@ import org.eclipse.ui.PlatformUI;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public final class DisplayViewManager {
-    private DisplayViewManager() {
+public final class ViewVisibilityManager {
+    private ViewVisibilityManager() {
         // prevent instantiation
     }
 

@@ -114,17 +114,17 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             amazonQCommonActions.updateActionVisibility(authState, getViewSite());
             if (authState.isExpired()) {
                 canDisposeState = true;
-                DisplayViewManager.showReAuthView();
+                ViewVisibilityManager.showReAuthView();
             } else if (authState.isLoggedOut()) {
                 canDisposeState = true;
-                DisplayViewManager.showLoginView();
+                ViewVisibilityManager.showLoginView();
             } else {
                 // if browser is not null and there is no chat prior state, start a new blank chat view
                 if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
                     Optional<String> content = getContent();
                     if (!content.isPresent()) {
                         canDisposeState = true;
-                        DisplayViewManager.showChatAssetMissingView();
+                        ViewVisibilityManager.showChatAssetMissingView();
                     } else {
                         browser.setText(content.get()); // Display the chat client
                     }

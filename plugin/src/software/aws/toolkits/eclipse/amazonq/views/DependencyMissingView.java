@@ -122,6 +122,6 @@ public final class DependencyMissingView extends CallToActionView {
 
     @Override
     protected void showAlternateView() {
-        DisplayViewManager.showChatView();
+        ViewVisibilityManager.showChatView();
     }
 }

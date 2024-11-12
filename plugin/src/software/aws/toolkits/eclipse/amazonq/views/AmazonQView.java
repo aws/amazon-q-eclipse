@@ -14,6 +14,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
@@ -53,6 +54,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
                     IViewReference[] viewReferences = page.getViewReferences();
                     for (IViewReference viewRef : viewReferences) {
                         if (AMAZON_Q_VIEWS.contains(viewRef.getId()) && !viewRef.getId().equalsIgnoreCase(viewId)) {
+                            // if Q chat view is being hidden to show a different Amazon Q view
+                            // clear chat preserved state
+                            if (viewRef.getId().equalsIgnoreCase(AmazonQChatWebview.ID)) {
+                                ChatStateManager.getInstance().dispose();
+                            }
                             try {
                                 page.hideView(viewRef);
                             } catch (Exception e) {

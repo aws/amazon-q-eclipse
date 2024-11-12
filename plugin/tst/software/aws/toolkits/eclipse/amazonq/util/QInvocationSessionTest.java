@@ -86,7 +86,9 @@ public class QInvocationSessionTest {
 
         activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
+        LoggingService loggingServiceMock = mock(LoggingService.class);
         activatorMockStatic.when(Activator::getLoginService).thenReturn(loginSerivceMock);
+        activatorMockStatic.when(Activator::getLogger).thenReturn(loggingServiceMock);
         when(loginSerivceMock.getLoginDetails().get().getIsLoggedIn()).thenReturn(true);
         when(loginSerivceMock.updateToken()).thenReturn(new CompletableFuture<Void>());
 
@@ -245,6 +247,8 @@ public class QInvocationSessionTest {
         impotentResponse = mock(InlineCompletionResponse.class);
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
+        LoggingService loggingServiceMock = mock(LoggingService.class);
+        localizedActivatorMock.when(Activator::getLogger).thenReturn(loggingServiceMock);
 
         when(mockLspProvider.getAmazonQServer()).thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
         when(mockAmazonQServer.inlineCompletionWithReferences(POTENT_PARAM))

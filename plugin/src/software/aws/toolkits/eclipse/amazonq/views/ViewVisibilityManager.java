@@ -5,6 +5,7 @@ import java.util.Set;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -73,6 +74,10 @@ public final class ViewVisibilityManager {
             if (window != null) {
                 IWorkbenchPage page = window.getActivePage();
                 if (page != null) {
+                    if (viewIsAlreadyOpen(page, viewId)) {
+                        Activator.getLogger().info(viewId + " is already the active view.");
+                        return;
+                    }
                     // Hide other Views
                     IViewReference[] viewReferences = page.getViewReferences();
                     for (IViewReference viewRef : viewReferences) {
@@ -106,6 +111,10 @@ public final class ViewVisibilityManager {
         if (window != null) {
             IWorkbenchPage page = window.getActivePage();
             if (page != null) {
+                if (viewIsAlreadyOpen(page, viewId)) {
+                    Activator.getLogger().info(viewId + " is already the active view.");
+                    return;
+                }
                 try {
                     page.showView(viewId);
                     Activator.getLogger().info("Showing view " + viewId);
@@ -114,5 +123,15 @@ public final class ViewVisibilityManager {
                 }
             }
         }
+    }
+    private static boolean viewIsAlreadyOpen(final IWorkbenchPage page, final String viewId) {
+        IWorkbenchPartReference activeRef = page.getActivePartReference();
+        if (activeRef instanceof IViewReference) {
+            IViewReference activeViewId = (IViewReference) activeRef;
+            if (activeViewId.getId().equals(viewId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

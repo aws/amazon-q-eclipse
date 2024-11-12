@@ -16,7 +16,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 class AuthUtilTest {
 
     @Test
-    void getIssuerUrl_WithBuilderIdLoginType_ReturnsBuilderIdUrl() {
+    void getIssuerUrlWithBuilderIdLoginTypeReturnsBuilderIdUrl() {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = null; // Not needed for BUILDER_ID
 
@@ -26,7 +26,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void getIssuerUrl_WithIdcLoginType_ReturnsLoginParamsUrl() {
+    void getIssuerUrlWithIdcLoginTypeReturnsLoginParamsUrl() {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = new LoginParams();
         LoginIdcParams idcParams = new LoginIdcParams();
@@ -39,7 +39,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void getIssuerUrl_WithNoneLoginType_ReturnsNull() {
+    void getIssuerUrlWithNoneLoginTypeReturnsNull() {
         LoginType loginType = LoginType.NONE;
         LoginParams loginParams = new LoginParams();
 
@@ -49,7 +49,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void getIssuerUrl_WithNull_ReturnsNull() {
+    void getIssuerUrlWithNullReturnsNull() {
         LoginType loginType = null;
         LoginParams loginParams = null;
 
@@ -59,7 +59,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void validateLoginParameters_WithNullLoginType_ThrowsException() {
+    void validateLoginParametersWithNullLoginTypeThrowsException() {
         LoginType loginType = null;
         LoginParams loginParams = createValidLoginParams();
 
@@ -74,7 +74,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void validateLoginParameters_WithNoneLoginType_ThrowsException() {
+    void validateLoginParametersWithNoneLoginTypeThrowsException() {
         LoginType loginType = LoginType.NONE;
         LoginParams loginParams = createValidLoginParams();
 
@@ -89,7 +89,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void validateLoginParameters_WithNullLoginParams_ThrowsException() {
+    void validateLoginParametersWithNullLoginParamsThrowsException() {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = null;
 
@@ -104,7 +104,7 @@ class AuthUtilTest {
     }
 
     @Test
-    void validateLoginParameters_WithValidParams_Success() {
+    void validateLoginParametersWithValidParamsSuccess() {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
 

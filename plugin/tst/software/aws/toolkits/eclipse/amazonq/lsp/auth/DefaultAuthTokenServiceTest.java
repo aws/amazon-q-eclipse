@@ -70,7 +70,7 @@ public final class DefaultAuthTokenServiceTest {
     }
 
     @Test
-    void getSsoToken_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
+    void getSsoTokenBuilderIdNoLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = new LoginParams(); // LoginParams is not required for BUILDER_ID
         SsoToken expectedToken = createSsoToken();
@@ -86,7 +86,7 @@ public final class DefaultAuthTokenServiceTest {
     }
 
     @Test
-    void getSsoToken_BuilderId_WithLoginOnInvalidToken_Success() throws Exception {
+    void getSsoTokenBuilderIdWithLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = new LoginParams(); // LoginParams is not required for BUILDER_ID
         SsoToken expectedToken = createSsoToken();
@@ -102,7 +102,7 @@ public final class DefaultAuthTokenServiceTest {
     }
 
     @Test
-    void getSsoToken_IDC_NoLoginOnInvalidToken_Success() throws Exception {
+    void getSsoTokenIDCNoLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         SsoToken expectedToken = createSsoToken();
@@ -118,7 +118,7 @@ public final class DefaultAuthTokenServiceTest {
     }
 
     @Test
-    void getSsoToken_IDC_WithLoginOnInvalidToken_Success() throws Exception {
+    void getSsoTokenIDCWithLoginOnInvalidTokenSuccess() throws Exception {
         ArgumentCaptor<UpdateProfileParams> updateProfileParamsCaptor = ArgumentCaptor.forClass(UpdateProfileParams.class);
         when(mockAmazonQServer.updateProfile(any()))
             .thenReturn(CompletableFuture.completedFuture(null));

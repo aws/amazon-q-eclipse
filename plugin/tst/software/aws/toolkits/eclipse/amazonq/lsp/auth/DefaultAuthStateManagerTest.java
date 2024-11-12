@@ -66,7 +66,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toLoggedIn_WithValidParameters_UpdatesStateCorrectly() {
+    void toLoggedInWithValidParametersUpdatesStateCorrectly() {
         String ssoTokenId = "ssoTokenId";
         setAuthStateFields(AuthStateType.LOGGED_OUT, LoginType.NONE, null, null, null);
 
@@ -89,7 +89,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toLoggedIn_WithNullLoginType_ThrowsException() {
+    void toLoggedInWithNullLoginTypeThrowsException() {
         String ssoTokenId = "testToken";
 
         assertThrows(IllegalArgumentException.class,
@@ -97,7 +97,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toLoggedIn_WithNoneLoginType_ThrowsException() {
+    void toLoggedInWithNoneLoginTypeThrowsException() {
         String ssoTokenId = "testToken";
 
         assertThrows(IllegalArgumentException.class,
@@ -105,7 +105,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toLoggedIn_WithNullLoginParams_ThrowsException() {
+    void toLoggedInWithNullLoginParamsThrowsException() {
         String ssoTokenId = "testToken";
         loginParams = null;
 
@@ -114,7 +114,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toLoggedIn_WithNullSsoTokenId_ThrowsException() {
+    void toLoggedInWithNullSsoTokenIdThrowsException() {
         String ssoTokenId = null;
 
         assertThrows(IllegalArgumentException.class,
@@ -122,7 +122,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toLoggedOut_ClearsStateCorrectly() {
+    void toLoggedOutClearsStateCorrectly() {
         String ssoTokenId = "ssoTokenId";
         String issuerUrl = "testUrl";
         setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, ssoTokenId, issuerUrl);
@@ -146,7 +146,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toExpired_UpdatesStateCorrectly() {
+    void toExpiredUpdatesStateCorrectly() {
         String ssoTokenId = "ssoTokenId";
         String issuerUrl = "testUrl";
         setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, ssoTokenId, issuerUrl);
@@ -170,7 +170,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void toExpired_WithNoLoginType_SwitchesToLoggedOut() {
+    void toExpiredWithNoLoginTypeSwitchesToLoggedOut() {
         String ssoTokenId = "ssoTokenId";
         String issuerUrl = "testUrl";
         setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.NONE, loginParams, ssoTokenId, issuerUrl);
@@ -193,7 +193,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void syncAuthStateWithPluginStore_WithStoredCredentials_RestoresState() {
+    void syncAuthStateWithPluginStoreWithStoredCredentialsRestoresState() {
         String ssoTokenId = "ssoTokenId";
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn(LoginType.BUILDER_ID.name());
         when(pluginStore.getObject(Constants.LOGIN_IDC_PARAMS_KEY, LoginIdcParams.class)).thenReturn(loginParams.getLoginIdcParams());
@@ -211,7 +211,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void syncAuthStateWithPluginStore_WithNoStoredCredentials_SetsLoggedOut() {
+    void syncAuthStateWithPluginStoreWithNoStoredCredentialsSetsLoggedOut() {
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn(LoginType.NONE.name());
 
         DefaultAuthStateManager newManager = new DefaultAuthStateManager(pluginStore);
@@ -226,7 +226,7 @@ class DefaultAuthStateManagerTest {
     }
 
     @Test
-    void setAuthStateFields_Success() {
+    void setAuthStateFieldsSuccess() {
         String ssoTokenId = "ssoTokenId";
         String issuerUrl = "testIssuerURl";
         setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, ssoTokenId, issuerUrl);

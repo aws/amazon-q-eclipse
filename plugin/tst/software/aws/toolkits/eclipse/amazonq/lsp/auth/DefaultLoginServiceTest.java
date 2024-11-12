@@ -85,7 +85,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void login_WhenAlreadyLoggedIn_Validation() {
+    void loginWhenAlreadyLoggedInValidation() {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         AuthState authState = createLoggedInAuthState();
@@ -100,7 +100,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void login_BuilderId_Success() {
+    void loginBuilderIdSuccess() {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         SsoToken expectedSsoToken = createSsoToken();
@@ -125,7 +125,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void login_Idc_Success() {
+    void loginIdcSuccess() {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         SsoToken expectedSsoToken = createSsoToken();
@@ -150,7 +150,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void logout_WhenAlreadyLoggedOut_Validation() {
+    void logoutWhenAlreadyLoggedOutValidation() {
         AuthState authState = createLoggedOutAuthState();
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
 
@@ -162,7 +162,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void logout_WithNullSsoTokenId_Validation() {
+    void logoutWithNullSsoTokenIdValidation() {
         AuthState authState = mock(AuthState.class);
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
         when(authState.ssoTokenId()).thenReturn(null);
@@ -176,7 +176,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void logout_WithBlankSsoTokenId_Validation() {
+    void logoutWithBlankSsoTokenIdValidation() {
         AuthState authState = mock(AuthState.class);
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
         when(authState.ssoTokenId()).thenReturn("");
@@ -190,7 +190,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void expire_Success() {
+    void expireSuccess() {
         when(mockedAuthCredentialsService.updateTokenCredentials(null, false))
             .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
 
@@ -206,7 +206,7 @@ public final class DefaultLoginServiceTest {
 
 
     @Test
-    void reAuthenticate_BuilderId_NoLoginOnInvalidToken_Success() {
+    void reAuthenticateBuilderIdNoLoginOnInvalidTokenSuccess() {
         AuthState authState = createExpiredBuilderAuthState();
         SsoToken expectedSsoToken = createSsoToken();
         boolean loginOnInvalidToken = false;
@@ -230,7 +230,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void reAuthenticate_BuilderId_WithLoginOnInvalidToken_Success() {
+    void reAuthenticateBuilderIdWithLoginOnInvalidTokenSuccess() {
         AuthState authState = createExpiredBuilderAuthState();
         SsoToken expectedSsoToken = createSsoToken();
         boolean loginOnInvalidToken = true;
@@ -254,7 +254,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void reAuthenticate_Idc_NoLoginOnInvalidToken_Success() {
+    void reAuthenticateIdcNoLoginOnInvalidTokenSuccess() {
         AuthState authState = createExpiredIdcAuthState();
         SsoToken expectedSsoToken = createSsoToken();
         boolean loginOnInvalidToken = true;
@@ -278,7 +278,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void reAuthenticate_Idc_WithLoginOnInvalidToken_Success() {
+    void reAuthenticateIdcWithLoginOnInvalidTokenSuccess() {
         AuthState authState = createExpiredIdcAuthState();
         SsoToken expectedSsoToken = createSsoToken();
         boolean loginOnInvalidToken = false;
@@ -302,7 +302,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void reAuthenticate_WhenLoggedOut_Validation() {
+    void reAuthenticateWhenLoggedOutValidation() {
         AuthState authState = createLoggedOutAuthState();
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
 
@@ -314,7 +314,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void processLogin_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
+    void processLoginBuilderIdNoLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = false;
@@ -337,7 +337,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void processLogin_BuilderId_WithLoginOnInvalidToken_Success() throws Exception {
+    void processLoginBuilderIdWithLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = true;
@@ -360,7 +360,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void processLogin_Idc_NoLoginOnInvalidToken_Success() throws Exception {
+    void processLoginIdcNoLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = false;
@@ -383,7 +383,7 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
-    void processLogin_Idc_WithLoginOnInvalidToken_Success() throws Exception {
+    void processLoginIdcWithLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = true;

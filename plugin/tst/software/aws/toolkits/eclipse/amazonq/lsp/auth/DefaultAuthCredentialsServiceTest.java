@@ -40,7 +40,7 @@ public class DefaultAuthCredentialsServiceTest {
     }
 
     @Test
-    void updateTokenCredentials_Unencrypted_Success() {
+    void updateTokenCredentialsUnencryptedSuccess() {
         String accessToken = "accessToken";
         boolean isEncrypted = false;
 
@@ -55,7 +55,7 @@ public class DefaultAuthCredentialsServiceTest {
     }
 
     @Test
-    void updateTokenCredentials_Encrypted_Success() {
+    void updateTokenCredentialsEncryptedSuccess() {
         String encryptedToken = "encryptedToken";
         String accessToken = "accessToken";
         boolean isEncrypted = true;
@@ -72,7 +72,7 @@ public class DefaultAuthCredentialsServiceTest {
     }
 
     @Test
-    void deleteTokenCredentials_Success() {
+    void deleteTokenCredentialsSuccess() {
         authCredentialsService.deleteTokenCredentials();
 
         verify(mockedAmazonQServer).deleteTokenCredentials();

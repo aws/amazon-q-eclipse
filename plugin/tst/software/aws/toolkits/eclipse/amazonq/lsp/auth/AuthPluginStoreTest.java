@@ -40,7 +40,7 @@ public final class AuthPluginStoreTest {
     }
 
     @Test
-    public void testGetLoginType_WhenNull_ReturnsNone() {
+    public void testGetLoginTypeWhenNullReturnsNone() {
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn(null);
 
         LoginType result = authPluginStore.getLoginType();
@@ -49,7 +49,7 @@ public final class AuthPluginStoreTest {
     }
 
     @Test
-    public void testGetLoginType_WhenBuilderId_ReturnsBuilderId() {
+    public void testGetLoginTypeWhenBuilderIdReturnsBuilderId() {
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn(LoginType.BUILDER_ID.name());
 
         LoginType result = authPluginStore.getLoginType();
@@ -58,7 +58,7 @@ public final class AuthPluginStoreTest {
     }
 
     @Test
-    public void testGetLoginType_WhenIamIdentityCenter_ReturnsIamIdentityCenter() {
+    public void testGetLoginTypeWhenIamIdentityCenterReturnsIamIdentityCenter() {
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn(LoginType.IAM_IDENTITY_CENTER.name());
 
         LoginType result = authPluginStore.getLoginType();
@@ -67,7 +67,7 @@ public final class AuthPluginStoreTest {
     }
 
     @Test
-    public void testGetLoginType_WhenInvalid_ReturnsNone() {
+    public void testGetLoginTypeWhenInvalidReturnsNone() {
         when(pluginStore.get(Constants.LOGIN_TYPE_KEY)).thenReturn("INVALID_TYPE");
 
         LoginType result = authPluginStore.getLoginType();

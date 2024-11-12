@@ -31,7 +31,7 @@ import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class DefaultLoginServiceTest {
+public final class DefaultLoginServiceTest {
 
     private static DefaultLoginService loginService;
     private static LspProvider mockLspProvider;
@@ -62,13 +62,13 @@ public class DefaultLoginServiceTest {
         mockedAuthUtil = mockStatic(AuthUtil.class);
 
         resetLoginService();
-        
+
         when(mockLspProvider.getAmazonQServer())
         .thenReturn(CompletableFuture.completedFuture(mockAmazonQServer));
         when(mockAmazonQServer.getSsoToken(any()))
             .thenReturn(CompletableFuture.completedFuture(mockSsoTokenResult));
     }
-    
+
     @AfterEach
     void tearDown() throws Exception {
         mockedActivator.close();
@@ -80,11 +80,11 @@ public class DefaultLoginServiceTest {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         AuthState authState = createLoggedInAuthState();
-        
+
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
-    
+
         CompletableFuture<Void> result = loginService.login(loginType, loginParams);
-    
+
         assertTrue(result.isDone());
         verify(mockLoggingService).warn("Attempted to log in while already in a logged in state");
         verifyNoMoreInteractions(mockedAuthTokenService, mockedAuthCredentialsService);
@@ -96,7 +96,7 @@ public class DefaultLoginServiceTest {
         LoginParams loginParams = createValidLoginParams();
         SsoToken expectedSsoToken = createSsoToken();
         AuthState authState = createLoggedOutAuthState();
-        
+
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
@@ -104,9 +104,9 @@ public class DefaultLoginServiceTest {
             .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
         when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true))
             .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-    
+
         CompletableFuture<Void> result = loginService.login(loginType, loginParams);
-    
+
         assertNotNull(result);
         verify(mockLoggingService).info("Attempting to login...");
         verify(mockLoggingService).info("Successfully logged in");
@@ -114,14 +114,14 @@ public class DefaultLoginServiceTest {
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verifyNoMoreInteractions(mockedAuthTokenService, mockedAuthCredentialsService);
     }
-    
+
     @Test
     void login_Idc_Success() {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         SsoToken expectedSsoToken = createSsoToken();
         AuthState authState = createLoggedOutAuthState();
-        
+
         when(mockAuthStateManager.getAuthState()).thenReturn(authState);
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
@@ -129,9 +129,9 @@ public class DefaultLoginServiceTest {
             .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
         when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true))
             .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-    
+
         CompletableFuture<Void> result = loginService.login(loginType, loginParams);
-    
+
         assertNotNull(result);
         verify(mockLoggingService).info("Attempting to login...");
         verify(mockLoggingService).info("Successfully logged in");
@@ -179,7 +179,7 @@ public class DefaultLoginServiceTest {
         verify(mockLoggingService).warn("Attempted to log out with no ssoTokenId saved in auth state");
         verifyNoInteractions(mockedAuthTokenService, mockedAuthCredentialsService);
     }
-    
+
     @Test
     void expire_Success() {
         when(mockedAuthCredentialsService.updateTokenCredentials(null, false))
@@ -194,7 +194,7 @@ public class DefaultLoginServiceTest {
         verify(mockLoggingService).info("Successfully expired credentials");
         verifyNoMoreInteractions(mockedAuthCredentialsService, mockAuthStateManager);
     }
-    
+
 
     @Test
     void reAuthenticate_BuilderId_NoLoginOnInvalidToken_Success() {
@@ -243,7 +243,7 @@ public class DefaultLoginServiceTest {
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(LoginType.BUILDER_ID, authState.loginParams(), expectedSsoToken.id());
     }
-    
+
     @Test
     void reAuthenticate_Idc_NoLoginOnInvalidToken_Success() {
         AuthState authState = createExpiredIdcAuthState();
@@ -267,7 +267,7 @@ public class DefaultLoginServiceTest {
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(LoginType.IAM_IDENTITY_CENTER, authState.loginParams(), expectedSsoToken.id());
     }
-    
+
     @Test
     void reAuthenticate_Idc_WithLoginOnInvalidToken_Success() {
         AuthState authState = createExpiredIdcAuthState();
@@ -291,7 +291,7 @@ public class DefaultLoginServiceTest {
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(LoginType.IAM_IDENTITY_CENTER, authState.loginParams(), expectedSsoToken.id());
     }
-    
+
     @Test
     void reAuthenticate_WhenLoggedOut_Validation() {
         AuthState authState = createLoggedOutAuthState();
@@ -303,84 +303,90 @@ public class DefaultLoginServiceTest {
         verify(mockLoggingService).warn("Attempted to re-authenticate while user is in a logged out state");
         verifyNoMoreInteractions(mockedAuthTokenService, mockedAuthCredentialsService);
     }
-    
+
     @Test
     void processLogin_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = false;
         SsoToken expectedSsoToken = createSsoToken();
-        
+
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
         when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
         when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-        
+
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
-        
+
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
         verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
-    
+
     @Test
     void processLogin_BuilderId_WithLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = true;
         SsoToken expectedSsoToken = createSsoToken();
-        
+
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-        
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken))
+            .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true))
+            .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
-        
+
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
         verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
-    
+
     @Test
     void processLogin_Idc_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = false;
         SsoToken expectedSsoToken = createSsoToken();
-        
+
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-        
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken))
+            .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true))
+            .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
-        
+
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
         verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
         verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.id());
         verify(mockLoggingService).info("Successfully logged in");
     }
-    
+
     @Test
     void processLogin_Idc_WithLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         boolean loginOnInvalidToken = true;
         SsoToken expectedSsoToken = createSsoToken();
-        
+
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-        
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken))
+            .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true))
+            .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
-        
+
         mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
         verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
         verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.accessToken(), true);
@@ -399,25 +405,25 @@ public class DefaultLoginServiceTest {
               .build();
       loginService = spy(loginService);
     }
-    
+
     private AuthState createLoggedInAuthState() {
         String ssoTokenId = "ssoTokenId";
         LoginParams loginParams = createValidLoginParams();
         return new AuthState(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, Constants.AWS_BUILDER_ID_URL, ssoTokenId);
     }
-    
+
     private AuthState createExpiredBuilderAuthState() {
         String ssoTokenId = "ssoTokenId";
         LoginParams loginParams = createValidLoginParams();
         return new AuthState(AuthStateType.EXPIRED, LoginType.BUILDER_ID, loginParams, Constants.AWS_BUILDER_ID_URL, ssoTokenId);
     }
-    
+
     private AuthState createExpiredIdcAuthState() {
         String ssoTokenId = "ssoTokenId";
         LoginParams loginParams = createValidLoginParams();
         return new AuthState(AuthStateType.EXPIRED, LoginType.IAM_IDENTITY_CENTER, loginParams, Constants.AWS_BUILDER_ID_URL, ssoTokenId);
     }
-    
+
     private AuthState createLoggedOutAuthState() {
         return new AuthState(AuthStateType.LOGGED_OUT, LoginType.NONE, null, null, null);
     }
@@ -430,14 +436,14 @@ public class DefaultLoginServiceTest {
         loginParams.setLoginIdcParams(idcParams);
         return loginParams;
     }
-    
+
     private SsoToken createSsoToken() {
         String id = "ssoTokenId";
         String accessToken = "ssoAccessToken";
         return new SsoToken(id, accessToken);
     }
 
-    private void invokeProcessLogin(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
+    private void invokeProcessLogin(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) throws Exception {
         Object processLoginFuture = loginService.processLogin(loginType, loginParams, loginOnInvalidToken);
         assertTrue(processLoginFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
 

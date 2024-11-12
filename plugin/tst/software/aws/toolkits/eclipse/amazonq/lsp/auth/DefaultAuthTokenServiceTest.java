@@ -39,7 +39,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.QConstants;
 
-public class DefaultAuthTokenServiceTest {
+public final class DefaultAuthTokenServiceTest {
     private static DefaultAuthTokenService authTokenService;
     private static LspProvider mockLspProvider;
     private static AmazonQLspServer mockAmazonQServer;
@@ -55,7 +55,7 @@ public class DefaultAuthTokenServiceTest {
         mockLoggingService = mock(LoggingService.class);
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockLoggingService);
-        
+
         resetAuthTokenService();
 
         when(mockLspProvider.getAmazonQServer())
@@ -63,12 +63,12 @@ public class DefaultAuthTokenServiceTest {
         when(mockAmazonQServer.getSsoToken(any()))
             .thenReturn(CompletableFuture.completedFuture(mockSsoTokenResult));
     }
-    
+
     @AfterEach
     void tearDown() throws Exception {
         mockedActivator.close();
     }
-    
+
     @Test
     void getSsoToken_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
@@ -78,13 +78,13 @@ public class DefaultAuthTokenServiceTest {
         boolean loginOnInvalidToken = false;
 
         SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
-        
+
         assertEquals(expectedToken.id(), actualToken.id());
         assertEquals(expectedToken.accessToken(), actualToken.accessToken());
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
-    
+
     @Test
     void getSsoToken_BuilderId_WithLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
@@ -94,13 +94,13 @@ public class DefaultAuthTokenServiceTest {
         boolean loginOnInvalidToken = true;
 
         SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
-        
+
         assertEquals(expectedToken.id(), actualToken.id());
         assertEquals(expectedToken.accessToken(), actualToken.accessToken());
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
-    
+
     @Test
     void getSsoToken_IDC_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
@@ -110,19 +110,19 @@ public class DefaultAuthTokenServiceTest {
         boolean loginOnInvalidToken = false;
 
         SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
-        
+
         assertEquals(expectedToken.id(), actualToken.id());
         assertEquals(expectedToken.accessToken(), actualToken.accessToken());
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
-    
+
     @Test
     void getSsoToken_IDC_WithLoginOnInvalidToken_Success() throws Exception {
         ArgumentCaptor<UpdateProfileParams> updateProfileParamsCaptor = ArgumentCaptor.forClass(UpdateProfileParams.class);
         when(mockAmazonQServer.updateProfile(any()))
             .thenReturn(CompletableFuture.completedFuture(null));
-        
+
         LoginType loginType = LoginType.IAM_IDENTITY_CENTER;
         LoginParams loginParams = createValidLoginParams();
         SsoToken expectedToken = createSsoToken();
@@ -130,7 +130,7 @@ public class DefaultAuthTokenServiceTest {
         boolean loginOnInvalidToken = true;
 
         SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
-        
+
         assertEquals(expectedToken.id(), actualToken.id());
         assertEquals(expectedToken.accessToken(), actualToken.accessToken());
         verify(mockAmazonQServer).updateProfile(updateProfileParamsCaptor.capture());
@@ -139,7 +139,7 @@ public class DefaultAuthTokenServiceTest {
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
-    
+
     private SsoToken invokeGetSsoToken(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
         Object getSsoTokenFuture = authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken);
         assertTrue(getSsoTokenFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
@@ -147,10 +147,10 @@ public class DefaultAuthTokenServiceTest {
         CompletableFuture<?> future = (CompletableFuture<?>) getSsoTokenFuture;
         Object result = future.get();
         assertTrue(result instanceof SsoToken, "getSsoTokenFuture result should be SsoToken");
-        
+
         return (SsoToken) result;
     }
-    
+
     private LoginParams createValidLoginParams() {
         LoginParams loginParams = new LoginParams();
         LoginIdcParams idcParams = new LoginIdcParams();
@@ -159,18 +159,18 @@ public class DefaultAuthTokenServiceTest {
         loginParams.setLoginIdcParams(idcParams);
         return loginParams;
     }
-    
+
     private SsoToken createSsoToken() {
         String id = "ssoTokenId";
         String accessToken = "ssoAccessToken";
         return new SsoToken(id, accessToken);
     }
-    
+
     private boolean verifyUpdateProfileParams(final UpdateProfileParams params) {
         Profile profile = params.profile();
         SsoSession ssoSession = params.ssoSession();
         UpdateProfileOptions options = params.options();
-      
+
         return profile.getName().equals(Constants.IDC_PROFILE_NAME)
                 && profile.getProfileKinds().equals(Collections.singletonList(Constants.IDC_PROFILE_KIND))
                 && profile.getProfileSettings().region().equals("testRegion")
@@ -184,7 +184,7 @@ public class DefaultAuthTokenServiceTest {
                 && options.ensureSsoAccountAccessScope()
                 && !options.updateSharedSsoSession();
       }
-    
+
     private void resetAuthTokenService() {
         authTokenService = DefaultAuthTokenService.builder()
                 .withLspProvider(mockLspProvider)

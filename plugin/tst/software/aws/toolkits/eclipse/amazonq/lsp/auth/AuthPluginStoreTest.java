@@ -17,11 +17,11 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
-public class AuthPluginStoreTest {
+public final class AuthPluginStoreTest {
 
     @Mock
     private PluginStore pluginStore;
-    
+
     private AuthPluginStore authPluginStore;
 
     @BeforeEach

@@ -32,53 +32,53 @@ public class DefaultAuthCredentialsServiceTest {
         mockLspProvider = mock(LspProvider.class);
         mockedLspEncryptionManager = mock(LspEncryptionManager.class);
         mockedAmazonQServer = mock(AmazonQLspServer.class);
-        
+
         resetAuthTokenService();
 
         when(mockLspProvider.getAmazonQServer())
             .thenReturn(CompletableFuture.completedFuture(mockedAmazonQServer));
     }
-    
+
     @Test
     void updateTokenCredentials_Unencrypted_Success() {
         String accessToken = "accessToken";
         boolean isEncrypted = false;
-        
+
         when(mockedAmazonQServer.updateTokenCredentials(any()))
             .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-        
+
         authCredentialsService.updateTokenCredentials(accessToken, isEncrypted);
-        
+
         verify(mockedLspEncryptionManager, never()).decrypt(accessToken);
         verify(mockedAmazonQServer).updateTokenCredentials(any());
         verifyNoMoreInteractions(mockedAmazonQServer);
     }
-    
+
     @Test
     void updateTokenCredentials_Encrypted_Success() {
         String encryptedToken = "encryptedToken";
         String accessToken = "accessToken";
         boolean isEncrypted = true;
-        
+
         when(mockedLspEncryptionManager.decrypt(encryptedToken)).thenReturn(accessToken);
         when(mockedAmazonQServer.updateTokenCredentials(any()))
             .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
-        
+
         authCredentialsService.updateTokenCredentials("encryptedToken", isEncrypted);
-        
+
         verify(mockedLspEncryptionManager).decrypt(encryptedToken);
         verify(mockedAmazonQServer).updateTokenCredentials(any());
         verifyNoMoreInteractions(mockedAmazonQServer);
     }
-    
+
     @Test
     void deleteTokenCredentials_Success() {
         authCredentialsService.deleteTokenCredentials();
-        
+
         verify(mockedAmazonQServer).deleteTokenCredentials();
         verifyNoMoreInteractions(mockedAmazonQServer);
     }
-    
+
     private void resetAuthTokenService() {
         authCredentialsService = DefaultAuthCredentialsService.builder()
                 .withLspProvider(mockLspProvider)

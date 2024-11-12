@@ -1,15 +1,16 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.util;
+package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.ArrayList;
 import java.util.List;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 
 public final class AuthStatusProvider {
     private static final List<AuthStatusChangedListener> LISTENERS = new ArrayList<>();
-    private static LoginDetails prevLoginDetails;
+    private static AuthState prevAuthState;
 
     private AuthStatusProvider() {
         //prevent instantiation
@@ -23,15 +24,15 @@ public final class AuthStatusProvider {
         LISTENERS.remove(listener);
     }
 
-    protected static void notifyAuthStatusChanged(final LoginDetails loginDetails) {
-        if (prevLoginDetails != null && prevLoginDetails.equals(loginDetails)) {
+    public static void notifyAuthStatusChanged(final AuthState authState) {
+        if (prevAuthState != null && prevAuthState.equals(authState)) {
             return;
         }
 
-        prevLoginDetails = loginDetails;
+        prevAuthState = authState;
 
         for (AuthStatusChangedListener listener : LISTENERS) {
-            listener.onAuthStatusChanged(loginDetails);
+            listener.onAuthStatusChanged(authState);
         }
     }
 }

@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.IViewSite;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
@@ -36,8 +36,8 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
         resume = resumeImageDescriptor.createImage(Display.getCurrent());
     }
 
-    public void updateVisibility(final LoginDetails loginDetails) {
-        this.setVisible(loginDetails.getIsLoggedIn());
+    public void updateVisibility(final AuthState authState) {
+        this.setVisible(authState.isLoggedIn());
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);

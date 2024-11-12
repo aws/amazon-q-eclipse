@@ -8,12 +8,12 @@ import org.osgi.framework.BundleContext;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
-import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
-import software.aws.toolkits.eclipse.amazonq.util.LoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 

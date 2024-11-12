@@ -15,11 +15,11 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
-import software.aws.toolkits.eclipse.amazonq.util.AuthStatusProvider;
 
 public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
 
@@ -80,13 +80,13 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         return amazonQCommonActions;
     }
 
-    protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
+    protected final boolean setupAmazonQView(final Composite parent, final AuthState authState) {
         // if browser setup fails, don't set up rest of the content
         if (!viewController.setupBrowser(parent)) {
             return false;
         }
         setupBrowserBackground(parent);
-        setupActions(loginDetails);
+        setupActions(authState);
         setupAuthStatusListeners();
         return true;
     }
@@ -108,8 +108,8 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         });
     }
 
-    private void setupActions(final LoginDetails loginDetails) {
-        amazonQCommonActions = new AmazonQCommonActions(loginDetails, getViewSite());
+    private void setupActions(final AuthState authState) {
+        amazonQCommonActions = new AmazonQCommonActions(authState, getViewSite());
     }
 
     private void setupAuthStatusListeners() {

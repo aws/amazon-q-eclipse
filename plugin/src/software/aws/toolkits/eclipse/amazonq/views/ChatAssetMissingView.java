@@ -51,7 +51,7 @@ public final class ChatAssetMissingView extends BaseView {
 
     @Override
     protected void showAlternateView() {
-        AmazonQView.showView(AmazonQChatWebview.ID);
+        DisplayViewManager.showChatView();
     }
 
     @Override

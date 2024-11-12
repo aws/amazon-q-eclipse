@@ -13,9 +13,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -110,21 +107,6 @@ public final class PluginUtils {
             }
         } catch (Exception ex) {
             Activator.getLogger().error("Failed to open url in browser", ex);
-        }
-    }
-
-    public static void showView(final String viewId) {
-        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-        if (window != null) {
-            IWorkbenchPage page = window.getActivePage();
-            if (page != null) {
-                try {
-                    page.showView(viewId);
-                    Activator.getLogger().info("Showing view " + viewId);
-                } catch (PartInitException e) {
-                    Activator.getLogger().error("Error occurred while opening view " + viewId, e);
-                }
-            }
         }
     }
 }

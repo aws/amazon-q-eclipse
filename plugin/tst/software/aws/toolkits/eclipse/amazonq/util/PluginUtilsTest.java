@@ -244,40 +244,6 @@ public class PluginUtilsTest {
         }
     }
 
-    @Test
-    public void testShowView() throws Exception {
-        String testId = "testViewId";
-        IWorkbench mockWorkbench = mock(IWorkbench.class);
-        IWorkbenchWindow mockWindow = mock(IWorkbenchWindow.class);
-        IWorkbenchPage mockPage = mock(IWorkbenchPage.class);
-        try (MockedStatic<PlatformUI> mockedPlatformUI = mockStatic(PlatformUI.class)) {
-            LoggingService mockLogger = mockLoggingService(mockedActivator);
-            mockedPlatformUI.when(PlatformUI::getWorkbench).thenReturn(mockWorkbench);
-
-            //window is null
-            when(mockWorkbench.getActiveWorkbenchWindow()).thenReturn(null);
-            PluginUtils.showView(testId);
-            verifyNoInteractions(mockLogger);
-
-            //page is null
-            when(mockWorkbench.getActiveWorkbenchWindow()).thenReturn(mockWindow);
-            when(mockWindow.getActivePage()).thenReturn(null);
-            PluginUtils.showView(testId);
-            verifyNoInteractions(mockLogger);
-
-            //success case
-            when(mockWindow.getActivePage()).thenReturn(mockPage);
-            PluginUtils.showView(testId);
-            verify(mockPage).showView(testId);
-            verify(mockLogger).info("Showing view " + testId);
-
-            //test failure case
-            doThrow(new PartInitException("Test exception")).when(mockPage).showView(anyString());
-            PluginUtils.showView(testId);
-            verify(mockLogger).error(eq("Error occurred while opening view " + testId), any(Throwable.class));
-        }
-    }
-
     private LoggingService mockLoggingService(final MockedStatic<Activator> mockedActivator) {
         LoggingService mockLogger = mock(LoggingService.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockLogger);

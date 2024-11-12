@@ -6,13 +6,12 @@ package software.aws.toolkits.eclipse.amazonq.handlers;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview;
+import software.aws.toolkits.eclipse.amazonq.views.DisplayViewManager;
 
 public class QOpenLoginViewHandler extends AbstractHandler {
     @Override
     public final Object execute(final ExecutionEvent event) {
-        PluginUtils.showView(ToolkitLoginWebview.ID);
+        DisplayViewManager.showLoginView();
         return null;
     }
 }

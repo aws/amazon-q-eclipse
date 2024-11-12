@@ -15,8 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
-import software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview;
-import software.aws.toolkits.eclipse.amazonq.views.AmazonQView;
+import software.aws.toolkits.eclipse.amazonq.views.DisplayViewManager;
 
 public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler {
 
@@ -70,7 +69,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
 
     private void openQChat() {
         Display.getDefault().syncExec(() -> {
-            AmazonQView.showView(AmazonQChatWebview.ID);
+            DisplayViewManager.showChatView();
         });
     }
 

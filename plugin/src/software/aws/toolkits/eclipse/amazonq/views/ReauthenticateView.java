@@ -95,7 +95,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     public void onAuthStatusChanged(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
             if (authState.isLoggedIn()) {
-                AmazonQView.showView(AmazonQChatWebview.ID);
+                DisplayViewManager.showChatView();
             }
         });
     }
@@ -112,6 +112,6 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
 
     @Override
     protected void showAlternateView() {
-        AmazonQView.showView(AmazonQChatWebview.ID);
+        DisplayViewManager.showChatView();
     }
 }

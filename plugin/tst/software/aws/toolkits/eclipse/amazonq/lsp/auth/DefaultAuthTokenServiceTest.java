@@ -48,7 +48,7 @@ public final class DefaultAuthTokenServiceTest {
     private static LoggingService mockLoggingService;
 
     @BeforeEach
-    public final void setUp() {
+    public void setUp() {
         mockLspProvider = mock(LspProvider.class);
         mockAmazonQServer = mock(AmazonQLspServer.class);
         mockSsoTokenResult = mock(GetSsoTokenResult.class);
@@ -140,7 +140,7 @@ public final class DefaultAuthTokenServiceTest {
         verifyNoMoreInteractions(mockAmazonQServer);
     }
 
-    private SsoToken invokeGetSsoToken(LoginType loginType, LoginParams loginParams, boolean loginOnInvalidToken) throws Exception {
+    private SsoToken invokeGetSsoToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) throws Exception {
         Object getSsoTokenFuture = authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken);
         assertTrue(getSsoTokenFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
 

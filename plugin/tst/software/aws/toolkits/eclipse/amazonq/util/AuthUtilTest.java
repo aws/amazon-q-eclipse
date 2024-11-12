@@ -3,13 +3,15 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.junit.jupiter.api.Test;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class AuthUtilTest {
 

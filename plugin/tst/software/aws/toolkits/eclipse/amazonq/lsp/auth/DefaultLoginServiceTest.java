@@ -3,6 +3,18 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
@@ -28,9 +40,6 @@ import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 public final class DefaultLoginServiceTest {
 
     private static DefaultLoginService loginService;
@@ -47,7 +56,7 @@ public final class DefaultLoginServiceTest {
     private static AuthCredentialsService mockedAuthCredentialsService;
 
     @BeforeEach
-    public final void setUp() {
+    public void setUp() {
         mockLspProvider = mock(LspProvider.class);
         mockAmazonQServer = mock(AmazonQLspServer.class);
         mockEncryptionManager = mock(LspEncryptionManager.class);
@@ -313,8 +322,10 @@ public final class DefaultLoginServiceTest {
 
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedSsoToken);
         when(mockEncryptionManager.decrypt(expectedSsoToken.accessToken())).thenReturn("-decryptedAccessToken-");
-        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)).thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
-        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true)).thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken))
+            .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.accessToken(), true))
+            .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
 
         invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
 

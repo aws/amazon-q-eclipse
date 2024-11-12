@@ -21,8 +21,15 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 
@@ -232,7 +239,8 @@ class DefaultAuthStateManagerTest {
         assertEquals(issuerUrl, state.issuerUrl());
     }
 
-    void setAuthStateFields(final AuthStateType authStateType, final LoginType loginType, final LoginParams loginParams, final String ssoTokenId, final String issuerUrl)  {
+    void setAuthStateFields(final AuthStateType authStateType, final LoginType loginType,
+        final LoginParams loginParams, final String ssoTokenId, final String issuerUrl)  {
         try {
             Field authStateTypeField = DefaultAuthStateManager.class.getDeclaredField("authStateType");
             Field loginTypeField = DefaultAuthStateManager.class.getDeclaredField("loginType");

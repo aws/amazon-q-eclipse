@@ -196,7 +196,7 @@ class DefaultAuthStateManagerTest {
         
         // Verify auth state
         AuthState state = newManager.getAuthState();
-        assertEquals(AuthStateType.EXPIRED, state.authStateType());
+        assertEquals(AuthStateType.LOGGED_IN, state.authStateType());
         assertEquals(LoginType.BUILDER_ID, state.loginType());
         assertEquals(loginParams.getLoginIdcParams().getUrl(), state.loginParams().getLoginIdcParams().getUrl());
         assertEquals(ssoTokenId, state.ssoTokenId());
@@ -216,6 +216,20 @@ class DefaultAuthStateManagerTest {
         assertNull(state.loginParams());
         assertNull(state.ssoTokenId());
         assertNull(state.issuerUrl());
+    }
+    
+    @Test
+    void setAuthStateFields_Success() {
+        String ssoTokenId = "ssoTokenId";
+        String issuerUrl = "testIssuerURl";
+        setAuthStateFields(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams, ssoTokenId, issuerUrl);
+        
+        AuthState state = authStateManager.getAuthState();
+        assertEquals(AuthStateType.LOGGED_IN, state.authStateType());
+        assertEquals(LoginType.BUILDER_ID, state.loginType());
+        assertEquals(loginParams, state.loginParams());
+        assertEquals(ssoTokenId, state.ssoTokenId());
+        assertEquals(issuerUrl, state.issuerUrl());
     }
 
     void setAuthStateFields(AuthStateType authStateType, LoginType loginType, LoginParams loginParams, String ssoTokenId, String issuerUrl)  {

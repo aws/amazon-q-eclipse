@@ -72,7 +72,7 @@ public class DefaultLoginServiceTest {
         mockedActivator.close();
         mockedAuthUtil.close();
     }
-
+    
     @Test
     void processLogin_BuilderId_NoLoginOnInvalidToken_Success() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;

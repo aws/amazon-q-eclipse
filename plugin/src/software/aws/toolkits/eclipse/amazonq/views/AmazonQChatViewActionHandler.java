@@ -180,6 +180,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         try {
             if (incomingType.equals(reAuth) || incomingType.equals(missingScopes)) {
+                Activator.getLoginService().expire();
                 boolean loginOnInvalidToken = true;
                 Activator.getLoginService().reAuthenticate(loginOnInvalidToken).get();
                 return;
@@ -191,6 +192,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         try {
             if (incomingType.equals(fullAuth) || incomingType.equals(useSupportedAuth)) {
+                Activator.getLoginService().logout();
                 Display.getDefault().asyncExec(() -> {
                     AmazonQView.showView(ToolkitLoginWebview.ID);
                 });

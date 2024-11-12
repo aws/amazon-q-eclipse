@@ -61,15 +61,9 @@ public class PluginClientMetadataTest {
         if (mockedFrameworkUtil != null) {
             mockedFrameworkUtil.close();
         }
-        if (originalOsName != null) {
-            System.setProperty("os.name", originalOsName);
-        }
-        if (originalVersion != null) {
-            System.setProperty("os.version", originalVersion);
-        }
-        if (originalEclipseBuildId != null) {
-            System.setProperty("eclipse.buildId", originalEclipseBuildId);
-        }
+        resetSystemProperties("os.name", originalOsName);
+        resetSystemProperties("os.version", originalVersion);
+        resetSystemProperties("eclipse.buildId", originalEclipseBuildId);
     }
 
     @Test
@@ -133,5 +127,8 @@ public class PluginClientMetadataTest {
             verify(pluginStoreMock, times(2)).get(clientIdKey);
             verify(pluginStoreMock).put(clientIdKey, expectedClientId);
         }
+    }
+    private static String resetSystemProperties(final String propertyName, final String originalName) {
+        return originalName != null ? System.setProperty(propertyName, originalName) : System.clearProperty(propertyName);
     }
 }

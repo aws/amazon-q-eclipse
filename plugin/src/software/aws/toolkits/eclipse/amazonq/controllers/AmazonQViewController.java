@@ -77,9 +77,7 @@ public class AmazonQViewController {
         return this.hasWebViewDependency;
     }
 
-    public final void dispose() {
-        if (browser != null) {
-            browser.dispose();
-        }
+    public final void updateBrowser(final Browser browser) {
+        this.browser = browser;
     }
 }

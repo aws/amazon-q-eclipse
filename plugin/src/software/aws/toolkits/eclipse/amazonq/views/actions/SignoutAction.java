@@ -9,8 +9,6 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.views.AmazonQView;
-import software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public final class SignoutAction extends Action implements AuthStatusChangedListener {
@@ -36,7 +34,6 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
             Activator.getLogger().info("Signed out of Amazon q");
             Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
             ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
-            AmazonQView.showView(ToolkitLoginWebview.ID);
         });
     }
 

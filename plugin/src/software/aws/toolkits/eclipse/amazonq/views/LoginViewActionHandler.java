@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.widgets.Display;
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
@@ -52,9 +51,6 @@ public class LoginViewActionHandler implements ViewActionHandler {
                                     new LoginParams().setLoginIdcParams(loginIdcParams)).get();
                         }
                         isLoginTaskRunning = false;
-                        Display.getDefault().asyncExec(() -> {
-                            AmazonQView.showView(AmazonQChatWebview.ID);
-                        });
                     } catch (Exception e) {
                         isLoginTaskRunning = false;
                         Activator.getLogger().error("Failed to update token", e);

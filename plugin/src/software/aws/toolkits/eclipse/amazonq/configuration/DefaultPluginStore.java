@@ -51,6 +51,11 @@ public final class DefaultPluginStore implements PluginStore {
     @Override
     public void remove(final String key) {
         preferences.remove(key);
+        try {
+            preferences.flush();
+        } catch (BackingStoreException e) {
+            Activator.getLogger().warn(String.format("Error while removing entry from preference store - key: %s", key), e);
+        }
     }
 
     @Override

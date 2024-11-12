@@ -102,7 +102,7 @@ public final class DefaultLspManager implements LspManager {
         }
     }
 
-    private LspInstallResult getLocalLspOverride() {
+    LspInstallResult getLocalLspOverride() {
         var serverDirectory = getEnvironmentVariable("Q_SERVER_DIRECTORY");
         var clientDirectory = getEnvironmentVariable("Q_CLIENT_DIRECTORY");
         var serverCommand = getEnvironmentVariable("Q_SERVER_COMMAND");
@@ -125,7 +125,7 @@ public final class DefaultLspManager implements LspManager {
         return Optional.ofNullable(System.getenv(variableName)).orElse("");
     }
 
-    private Manifest fetchManifest() {
+    Manifest fetchManifest() {
         try {
             var manifestFetcher = new VersionManifestFetcher(manifestUrl);
             return manifestFetcher.fetch()
@@ -167,7 +167,7 @@ public final class DefaultLspManager implements LspManager {
         return platform == PluginPlatform.WINDOWS ? LspConstants.NODE_EXECUTABLE_WINDOWS : LspConstants.NODE_EXECUTABLE_OSX;
     }
 
-    private LspFetcher createLspFetcher(final Manifest manifest) {
+    LspFetcher createLspFetcher(final Manifest manifest) {
         return RemoteLspFetcher.builder()
                 .withManifest(manifest)
                 .build();

@@ -21,6 +21,7 @@ public final class Constants {
     public static final String DEFAULT_Q_FOUNDATION_DISPLAY_NAME = "Amazon Q foundation (Default)";
     public static final String LOGIN_TYPE_KEY = "LOGIN_TYPE";
     public static final String LOGIN_IDC_PARAMS_KEY = "IDC_PARAMS";
+    public static final String SSO_TOKEN_ID = "SSO_TOKEN_IN";
     public static final String PROXY_UPDATE_NOTIFICATION_TITLE = "Proxy settings changed";
     public static final String PROXY_UPDATE_NOTIFICATION_DESCRIPTION = "Proxy changes detected. Please restart the extension for it to take effect";
     public static final String AWS_BUILDER_ID_URL = "https://view.awsapps.com/start";

@@ -30,7 +30,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
@@ -68,7 +67,6 @@ public final class ChatCommunicationManager {
     }
 
     public void sendMessageToChatServer(final Command command, final Object params) {
-        Activator.getLoginService().updateToken();
         chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
                 switch (command) {

@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Display;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginDetails;
@@ -24,9 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestListener {
@@ -34,39 +33,51 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
     private AmazonQCommonActions amazonQCommonActions;
-    private WebviewAssetServer webviewAssetServer;
-
+    private final ChatStateManager chatStateManager;
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
     private ChatCommunicationManager chatCommunicationManager;
     private ChatTheme chatTheme;
-    private ChatAssetProvider chatAssetProvider;
+    private Browser browser;
+    private volatile boolean canDisposeState = false;
 
     public AmazonQChatWebview() {
         super();
+        this.chatStateManager = ChatStateManager.getInstance();
         this.commandParser = new LoginViewCommandParser();
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         this.chatTheme = new ChatTheme();
-        this.chatAssetProvider = new ChatAssetProvider();
     }
 
     @Override
     public final void createPartControl(final Composite parent) {
-        LoginDetails loginInfo = new LoginDetails();
-        loginInfo.setIsLoggedIn(false);
-        loginInfo.setLoginType(LoginType.NONE);
+         browser = chatStateManager.getBrowser(parent);
+         // attempt to use existing browser with chat history if present, else create a new one
+         if (browser == null || browser.isDisposed()) {
+             canDisposeState = false;
+             var result = setupBrowser(parent);
+             // if setup of amazon q view fails due to missing webview dependency, switch to
+             // that view and don't setup rest of the content
+             if (!result) {
+                 canDisposeState = true;
+                 showDependencyMissingView();
+                 return;
+             }
+             browser = getAndUpdateStateManager();
+         } else {
+             updateBrowser(browser);
+         }
 
-        var result = setupAmazonQView(parent, loginInfo);
-        // if setup of amazon q view fails due to missing webview dependency, switch to that view
-        if (!result) {
-            showDependencyMissingView();
-            return;
-        }
-        var browser = getBrowser();
-        amazonQCommonActions = getAmazonQCommonActions();
+         LoginDetails loginInfo = new LoginDetails();
+         loginInfo.setIsLoggedIn(false);
+         loginInfo.setLoginType(LoginType.NONE);
+         setupAmazonQView(parent, loginInfo);
+
+         parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
+         amazonQCommonActions = getAmazonQCommonActions();
+
         chatCommunicationManager.setChatUiRequestListener(this);
-
         new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
@@ -97,19 +108,27 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         }, ThreadingUtils::executeAsyncTask);
     }
 
+    private Browser getAndUpdateStateManager() {
+        var browser = getBrowser();
+        chatStateManager.updateBrowser(browser);
+        return browser;
+    }
+
     @Override
     public final void onAuthStatusChanged(final LoginDetails loginDetails) {
-        var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(loginDetails, getViewSite());
+            Activator.getLogger().info("auth status changed");
             if (!loginDetails.getIsLoggedIn()) {
+                canDisposeState = true;
                 AmazonQView.showView(ReauthenticateView.ID);
             } else {
-                if (!browser.isDisposed()) {
-                    getContent().ifPresentOrElse(
-                            content -> browser.setText(content),
-                            this::showChatAssetMissingView
-                        );
+                // if browser is not null and there is no chat prior state, start a new blank chat view
+                if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
+                        getContent().ifPresentOrElse(
+                                content -> browser.setText(content),
+                                this::showChatAssetMissingView
+                            );
                 }
             }
         });
@@ -125,8 +144,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     private Optional<String> getContent() {
-        var chatAsset = chatAssetProvider.get();
-
+        var chatAsset = chatStateManager.getContent();
         if (!chatAsset.isPresent()) {
             return Optional.empty();
         }
@@ -215,7 +233,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void onSendToChatUi(final String message) {
-        var browser = getBrowser();
         String script = "window.postMessage(" + message + ");";
         browser.getDisplay().asyncExec(() -> {
             browser.evaluate(script);
@@ -224,17 +241,17 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void dispose() {
-        if (webviewAssetServer != null) {
-            webviewAssetServer.stop();
-        }
         chatCommunicationManager.removeListener();
-        chatAssetProvider.dispose();
+        if (canDisposeState) {
+            ChatStateManager.getInstance().dispose();
+        }
         super.dispose();
     }
 
     private void showChatAssetMissingView() {
         Display.getCurrent().asyncExec(() -> {
             try {
+                canDisposeState = true;
                 showView(ChatAssetMissingView.ID);
             } catch (Exception e) {
                 Activator.getLogger().error("Error occured while attempting to show chat asset missing view", e);

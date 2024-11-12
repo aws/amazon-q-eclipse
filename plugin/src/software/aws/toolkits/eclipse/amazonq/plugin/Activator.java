@@ -15,6 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.util.LoginService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
 public class Activator extends AbstractUIPlugin {
@@ -43,6 +44,7 @@ public class Activator extends AbstractUIPlugin {
 
     @Override
     public final void stop(final BundleContext context) throws Exception {
+        ChatStateManager.getInstance().dispose();
         super.stop(context);
         plugin = null;
     }

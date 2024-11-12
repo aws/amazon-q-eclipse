@@ -80,15 +80,18 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         return amazonQCommonActions;
     }
 
-    protected final boolean setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
-        // if browser setup fails, don't set up rest of the content
-        if (!viewController.setupBrowser(parent)) {
-            return false;
-        }
+    protected final boolean setupBrowser(final Composite parent) {
+        return viewController.setupBrowser(parent);
+    }
+
+    protected final void updateBrowser(final Browser browser) {
+        viewController.updateBrowser(browser);
+    }
+
+    protected final void setupAmazonQView(final Composite parent, final LoginDetails loginDetails) {
         setupBrowserBackground(parent);
         setupActions(loginDetails);
         setupAuthStatusListeners();
-        return true;
     }
 
     private void setupBrowserBackground(final Composite parent) {
@@ -136,7 +139,6 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
-        viewController.dispose();
         super.dispose();
     }
 

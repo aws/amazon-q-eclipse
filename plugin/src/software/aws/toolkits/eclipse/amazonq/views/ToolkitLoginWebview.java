@@ -37,18 +37,20 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void createPartControl(final Composite parent) {
-        LoginDetails initialLoginDetails = new LoginDetails();
-        initialLoginDetails.setIsLoggedIn(false);
-        initialLoginDetails.setLoginType(LoginType.NONE);
-
-        var result = setupAmazonQView(parent, initialLoginDetails);
+        var result = setupBrowser(parent);
         // if setup of amazon q view fails due to missing webview dependency, switch to that view
+        // and don't setup rest of the content
         if (!result) {
             showDependencyMissingView();
             return;
         }
-
         var browser = getBrowser();
+
+        LoginDetails initialLoginDetails = new LoginDetails();
+        initialLoginDetails.setIsLoggedIn(false);
+        initialLoginDetails.setLoginType(LoginType.NONE);
+        setupAmazonQView(parent, initialLoginDetails);
+
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
             @Override
             public Object function(final Object[] arguments) {
@@ -133,6 +135,10 @@ public final class ToolkitLoginWebview extends AmazonQView {
     public void dispose() {
         if (webviewAssetServer != null) {
             webviewAssetServer.stop();
+        }
+        var browser = getBrowser();
+        if (browser != null && !browser.isDisposed()) {
+            browser.dispose();
         }
         super.dispose();
     }

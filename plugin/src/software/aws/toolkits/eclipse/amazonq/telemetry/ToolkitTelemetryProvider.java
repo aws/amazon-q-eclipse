@@ -17,7 +17,7 @@ public final class ToolkitTelemetryProvider {
 
     public static void emitOpenModuleEventMetric(final String module, final String source, final String failureReason) {
         Result result = Result.SUCCEEDED;
-        boolean isPassive = (!source.equals("ellipsesMenu") && !source.equals("statusBar"));
+        boolean isPassive = (!source.equals("ellipsesMenu") && !source.equals("statusBar") && !source.equals("shortcut"));
 
         if (!failureReason.equals("none")) {
             result = Result.FAILED;
@@ -48,7 +48,11 @@ public final class ToolkitTelemetryProvider {
         String page = viewId.substring(viewId.lastIndexOf(".") + 1);
         switch (page) {
         case "ToolkitLoginWebview":
-            return "AmazonqAuthPage";
+            return "AuthView";
+        case "AmazonQChatWebview":
+            return "ChatView";
+        case "AmazonQCodeReferenceView":
+            return "CodeReferenceView";
         default:
             return page;
         }

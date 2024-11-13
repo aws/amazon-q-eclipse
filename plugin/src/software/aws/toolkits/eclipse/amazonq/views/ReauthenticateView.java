@@ -148,7 +148,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
 
     @Override
     protected void showAlternateView() {
-        ViewVisibilityManager.showChatView("");
+        ViewVisibilityManager.showChatView("Failed to set up webview");
     }
 
     private void resizeButtonFont(final Button button, final int newFontSize) {

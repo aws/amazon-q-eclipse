@@ -63,7 +63,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             // that view and don't setup rest of the content
             if (!result) {
                 canDisposeState = true;
-                showDependencyMissingView();
+                showDependencyMissingView("Failed to set up webview from Chat");
                 return;
             }
             browser = getAndUpdateStateManager();
@@ -142,7 +142,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     Optional<String> content = getContent();
                     if (!content.isPresent()) {
                         canDisposeState = true;
-                        ViewVisibilityManager.showChatAssetMissingView("");
+                        ViewVisibilityManager.showChatAssetMissingView("Failed to set up webview from Chat");
                     } else {
                         browser.setText(content.get()); // Display the chat client
                     }

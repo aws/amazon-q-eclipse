@@ -122,6 +122,6 @@ public final class DependencyMissingView extends CallToActionView {
 
     @Override
     protected void showAlternateView() {
-        ViewVisibilityManager.showChatView("");
+        ViewVisibilityManager.showChatView("Failed to set up webview");
     }
 }

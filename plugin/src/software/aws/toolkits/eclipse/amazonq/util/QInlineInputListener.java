@@ -399,7 +399,25 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         if (bracket != null) {
             if ((bracket instanceof QInlineSuggestionCloseBracketSegment) && input.charAt(0) == bracket.getSymbol()
                     && !((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().isResolved()) {
-                return PreprocessingCategory.NORMAL_BRACKETS_CLOSE;
+                boolean autoCloseEnabled = false;
+                switch (bracket.getSymbol()) {
+                case '>':
+                    autoCloseEnabled = isAngleBracketsSetToAutoClose;
+                    break;
+                case '\"':
+                case '\'':
+                    autoCloseEnabled = isStringSetToAutoClose;
+                    break;
+                case ')':
+                case ']':
+                    autoCloseEnabled = isBracketsSetToAutoClose;
+                    break;
+                default:
+                    break;
+                }
+                if (autoCloseEnabled) {
+                    return PreprocessingCategory.NORMAL_BRACKETS_CLOSE;
+                }
             }
         }
         return PreprocessingCategory.NONE;

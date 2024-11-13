@@ -9,7 +9,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
@@ -101,6 +105,36 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     }
 
     @Override
+    protected void updateButtonStyle(final Button button) {
+        resizeButtonFont(button, 16);
+
+        Color backgroundColor = new Color(51, 118, 205);
+        Color foregroundColor = new Color(255, 255, 255);
+
+        button.addListener(SWT.Paint, e -> {
+            button.setBackground(backgroundColor);
+            button.setForeground(foregroundColor);
+
+            button.setAlignment(SWT.CENTER);
+
+            GridData gridData = (GridData) button.getLayoutData();
+            if (gridData != null) {
+                gridData.widthHint = 400;
+                gridData.heightHint = 50;
+                gridData.verticalIndent = 10;
+                gridData.horizontalAlignment = SWT.CENTER;
+
+                // Ensure proper layout update
+                Composite current = button.getParent();
+                while (current != null) {
+                    current.layout(true, true);
+                    current = current.getParent();
+                }
+            }
+        });
+    }
+
+    @Override
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
     }
@@ -114,4 +148,16 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     protected void showAlternateView() {
         ViewVisibilityManager.showChatView();
     }
+
+    private void resizeButtonFont(final Button button, final int newFontSize) {
+        Font currentFont = button.getFont();
+        FontData[] fontData = currentFont.getFontData();
+        for (FontData fd : fontData) {
+            fd.setHeight(newFontSize);
+        }
+        Font newFont = new Font(button.getDisplay(), fontData);
+        button.setFont(newFont);
+        button.addDisposeListener(e -> newFont.dispose());
+    }
+
 }

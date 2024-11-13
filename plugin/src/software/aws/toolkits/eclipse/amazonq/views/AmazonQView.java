@@ -54,6 +54,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         setupBrowserBackground(parent);
         setupActions(authState);
         setupAuthStatusListeners();
+        disableBrowserContextMenu();
+    }
+
+    protected final void disableBrowserContextMenu() {
+        getBrowser().execute("document.oncontextmenu = e => e.preventDefault();");
     }
 
     private void setupBrowserBackground(final Composite parent) {

@@ -189,6 +189,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         -webkit-mask-size: 155% !important;
                         mask-size: 155% !important;
                         mask-position: center;
+                        scale: 60%;
                     }
                     .mynah-ui-icon-tabs {
                         -webkit-mask-size: 102% !important;

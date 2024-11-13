@@ -11,7 +11,9 @@ import java.nio.charset.StandardCharsets;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -51,10 +53,9 @@ public class FeedbackDialog extends Dialog {
 
     public class CustomRadioButton extends Composite {
         private Label iconLabel;
-        private Label textLabel;
         private Button radioButton;
 
-        public CustomRadioButton(final Composite parent, final Image image, final String text, final int style) {
+        public CustomRadioButton(final Composite parent, final Image image, final int style) {
             super(parent, style);
 
             Composite contentComposite = new Composite(parent, SWT.NONE);
@@ -68,10 +69,6 @@ public class FeedbackDialog extends Dialog {
                     image.dispose();
                 }
             });
-
-            textLabel = new Label(contentComposite, SWT.NONE);
-            textLabel.setText(text);
-            textLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 
             radioButton = new Button(contentComposite, SWT.RADIO);
             radioButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
@@ -161,7 +158,7 @@ public class FeedbackDialog extends Dialog {
 
         createLabelWithFontSize(headlineContainer, "Looking for help? View the", 14);
         createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/");
-        createLabelWithFontSize(headlineContainer, " or search our", 14);
+        createLabelWithFontSize(headlineContainer, "or search our", 14);
         createLinkLabel(headlineContainer, "Documentation", 14, "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html");
     }
 
@@ -214,14 +211,14 @@ public class FeedbackDialog extends Dialog {
         GridData questionsContainerLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
         questionsContainer.setLayoutData(questionsContainerLayoutData);
 
-        createLabel(questionsContainer, "How satisified are you with the AWS Toolkit?");
+        createLabel(questionsContainer, "How satisified are you with Amazon Q for Eclipse?");
 
         Composite sentimentContainer = new Composite(questionsContainer, SWT.NONE);
         RowLayout sentimentContainerLayout = new RowLayout(SWT.HORIZONTAL);
         sentimentContainerLayout.spacing = 0;
         sentimentContainer.setLayout(sentimentContainerLayout);
-        CustomRadioButton positiveSentimentButton = createCustomRadioButton(sentimentContainer, "icons/HappyFace.png", "Satisfied", SWT.NONE, true);
-        CustomRadioButton negativeSentimentButton = createCustomRadioButton(sentimentContainer, "icons/FrownyFace.png", "Unsatisfied", SWT.NONE, false);
+        CustomRadioButton positiveSentimentButton = createCustomRadioButton(sentimentContainer, "icons/HappyFace.png", SWT.NONE, true);
+        CustomRadioButton negativeSentimentButton = createCustomRadioButton(sentimentContainer, "icons/FrownyFace.png", SWT.NONE, false);
         positiveSentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
@@ -237,18 +234,52 @@ public class FeedbackDialog extends Dialog {
             }
         });
 
-        createLabel(questionsContainer, "What do you like about the AWS Toolkit? What can we improve?");
+        createLabel(questionsContainer, "What do you like about Amazon Q for Eclipse? What can we improve?");
 
-        commentBox = new Text(questionsContainer, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
-        GridData commentBoxLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
-        commentBoxLayout.heightHint = 200;
-        commentBoxLayout.widthHint = 0;
-        commentBox.setLayoutData(commentBoxLayout);
-        commentBox.addModifyListener(this::handleTextModified);
+        Composite commentComposite = new Composite(questionsContainer, SWT.NONE);
+        StackLayout stackLayout = new StackLayout();
+        commentComposite.setLayout(stackLayout);
+
+        GridData commentCompositeLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
+        commentCompositeLayout.heightHint = 200;
+        commentCompositeLayout.widthHint = 0;
+        commentComposite.setLayoutData(commentCompositeLayout);
+
+        commentBox = new Text(commentComposite, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
+
+        Label ghostLabel = new Label(commentComposite, SWT.NONE);
+        ghostLabel.setText("Optional");
+        ghostLabel.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
+        ghostLabel.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
+
+        stackLayout.topControl = ghostLabel;
+
+        ModifyListener textModifyListener = e -> {
+            if (commentBox.getText().isEmpty()) {
+                stackLayout.topControl = ghostLabel;
+            } else {
+                stackLayout.topControl = commentBox;
+            }
+            commentComposite.layout();
+            handleTextModified((ModifyEvent) e);
+        };
+        commentBox.addModifyListener(textModifyListener);
+
+        ghostLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDown(final MouseEvent e) {
+                stackLayout.topControl = commentBox;
+                commentComposite.layout();
+                commentBox.setFocus();
+            }
+        });
 
         characterRemainingLabel = new Label(questionsContainer, SWT.NONE);
         characterRemainingLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         updateCharacterRemainingCount();
+        createLabelWithFontSize(questionsContainer, "Don't add personally identifiable information (PII), confidential or sensitive "
+                + "information in your feedback.", 10);
+        createLabelWithFontSize(questionsContainer, "Please remove any PII when sharing file paths, error messages, etc.", 10);
     }
 
     private void createLabel(final Composite parent, final String text) {
@@ -294,8 +325,8 @@ public class FeedbackDialog extends Dialog {
     }
 
     private CustomRadioButton createCustomRadioButton(final Composite parent, final String imagePath,
-            final String text, final int style, final boolean isSelected) {
-        CustomRadioButton button = new CustomRadioButton(parent, loadImage(imagePath), text, style);
+            final int style, final boolean isSelected) {
+        CustomRadioButton button = new CustomRadioButton(parent, loadImage(imagePath), style);
         button.getRadioButton().setSelection(isSelected);
         return button;
     }

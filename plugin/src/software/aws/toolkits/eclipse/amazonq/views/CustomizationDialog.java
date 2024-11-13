@@ -197,7 +197,7 @@ public final class CustomizationDialog extends Dialog {
             }
         }
         combo.select(defaultSelectedDropdownIndex);
-        if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
+        if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT) || customizations.isEmpty()) {
             combo.setEnabled(false);
         } else {
             combo.setEnabled(true);

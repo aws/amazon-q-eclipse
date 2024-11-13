@@ -98,7 +98,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                     browser.setText(getContent());
                 }
             } else {
-                ViewVisibilityManager.showChatView();
+                ViewVisibilityManager.showChatView("update");
             }
         });
     }

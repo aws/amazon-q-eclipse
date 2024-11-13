@@ -25,6 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -84,6 +85,7 @@ public class LspStartupActivity implements IStartup {
     }
 
     private void launchWebview() {
+        String viewId = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
         IWorkbench workbench = PlatformUI.getWorkbench();
         workbench.getDisplay().asyncExec(new Runnable() {
             public void run() {
@@ -92,11 +94,13 @@ public class LspStartupActivity implements IStartup {
                     IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
                     if (window != null) {
                         IWorkbenchPage page = window.getActivePage();
-                        page.showView("software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview");
+                        page.showView(viewId);
+                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", null);
                         Activator.getPluginStore().put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
                     }
                 } catch (PartInitException e) {
                     Activator.getLogger().warn("Error occurred during auto loading of plugin", e);
+                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", e.getMessage());
                 }
             }
         });

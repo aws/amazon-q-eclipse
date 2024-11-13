@@ -69,7 +69,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     protected final void showDependencyMissingView() {
         Display.getCurrent().asyncExec(() -> {
             try {
-                ViewVisibilityManager.showDependencyMissingView();
+                ViewVisibilityManager.showDependencyMissingView("");
             } catch (Exception e) {
                 Activator.getLogger().error("Error occured while attempting to show missing webview dependencies view", e);
             }

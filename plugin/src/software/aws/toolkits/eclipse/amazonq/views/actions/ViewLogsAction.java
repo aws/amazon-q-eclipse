@@ -16,6 +16,6 @@ public final class ViewLogsAction extends Action {
     @Override
     public void run() {
         UiTelemetryProvider.emitClickEventMetric("ellipses_openErrorLog");
-        ViewVisibilityManager.showErrorLogView();
+        ViewVisibilityManager.showErrorLogView("ellipsesMenu");
     }
 }

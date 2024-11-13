@@ -6956,6 +6956,10 @@
                 {
                     "type": "module",
                     "required": true
+                },
+                {
+                    "type": "result",
+                    "required": true
                 }
             ],
             "passive": true
@@ -7093,6 +7097,9 @@
                 {
                     "type": "source",
                     "required": true
+                },
+                {
+                    "type": "reason"
                 }
             ],
             "passive": true

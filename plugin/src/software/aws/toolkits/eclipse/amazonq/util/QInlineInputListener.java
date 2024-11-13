@@ -38,7 +38,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
     private enum PreprocessingCategory {
         NONE,
-        NORMAL_BRACKETS,
+        NORMAL_BRACKETS_OPEN,
+        NORMAL_BRACKETS_CLOSE,
         CURLY_BRACES
     }
 
@@ -259,6 +260,10 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
 
         String input = event.getText();
+        if (input.equals("( ") || input.equals("[ ") || input.equals("< ") || input.equals("\" ")
+                || input.equals("\' ")) {
+            input = input.substring(0, 1);
+        }
         String currentSuggestion = session.getCurrentSuggestion().getInsertText();
         int currentOffset = widget.getCaretOffset();
         if (input.isEmpty()) {
@@ -270,13 +275,18 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 session.end();
                 return;
             }
+            int paddingLength = 0;
             for (int i = 1; i <= numCharDeleted; i++) {
                 var bracket = brackets[distanceTraversed - i];
                 if (bracket != null) {
+                    if ((bracket instanceof QInlineSuggestionOpenBracketSegment)
+                            && !((QInlineSuggestionOpenBracketSegment) bracket).isResolved()) {
+                        paddingLength++;
+                    }
                     bracket.onDelete();
                 }
             }
-            distanceTraversed -= numCharDeleted;
+            distanceTraversed -= (numCharDeleted - paddingLength);
             return;
         }
 
@@ -295,13 +305,23 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         IDocument doc = viewer.getDocument();
         // NOTE: here we are blessed with DocumentEvent, whose offset is the expanded offset.
         switch (category) {
-        case NORMAL_BRACKETS:
-            input = input.substring(0, 1);
+        case NORMAL_BRACKETS_OPEN:
+            input = input.substring(0, 1) + " ";
             try {
                 doc.replace(event.getOffset(), 2, input);
                 return;
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error performing open bracket sanitation during typeahead", e);
+            }
+            return;
+        case NORMAL_BRACKETS_CLOSE:
+            try {
+                brackets[distanceTraversed].onTypeOver();
+                doc.replace(event.getOffset(), 2, input);
+                widget.setCaretOffset(widget.getCaretOffset() + 1);
+                return;
+            } catch (BadLocationException e) {
+                Activator.getLogger().error("Error performing close bracket sanitation during typeahead", e);
             }
             return;
         case CURLY_BRACES:
@@ -336,8 +356,10 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 //                System.out.println("Out of bounds");
 //            }
             Display.getCurrent().asyncExec(() -> {
-                session.transitionToDecisionMade();
-                session.end();
+                if (session.isActive()) {
+                    session.transitionToDecisionMade();
+                    session.end();
+                }
             });
             return;
         }
@@ -367,11 +389,18 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     private PreprocessingCategory getBufferPreprocessingCategory(final String input) {
         if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
                 || input.equals("\"\"") || input.equals("\'\'") || input.equals("[]"))) {
-            return PreprocessingCategory.NORMAL_BRACKETS;
+            return PreprocessingCategory.NORMAL_BRACKETS_OPEN;
         }
         Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);
         if (matcher.find()) {
             return PreprocessingCategory.CURLY_BRACES;
+        }
+        var bracket = brackets[distanceTraversed];
+        if (bracket != null) {
+            if ((bracket instanceof QInlineSuggestionCloseBracketSegment) && input.charAt(0) == bracket.getSymbol()
+                    && !((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().isResolved()) {
+                return PreprocessingCategory.NORMAL_BRACKETS_CLOSE;
+            }
         }
         return PreprocessingCategory.NONE;
     }

@@ -85,9 +85,9 @@ public class LoginViewActionHandler implements ViewActionHandler {
                             existConnections: []
                         }
                             """, "START", regions).stripIndent();
+                browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
                 browser.execute(String.format("ideClient.prepareUi(%s)", js));
                 browser.execute("ideClient.updateAuthorization('')");
-                browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
                 break;
             default:
                 System.out.println("Unknown command: " + parsedCommand.getCommand());

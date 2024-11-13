@@ -14,6 +14,7 @@ import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -23,6 +24,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     private AmazonQCommonActions amazonQCommonActions;
     private WebviewAssetServer webviewAssetServer;
+    private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -35,6 +37,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void createPartControl(final Composite parent) {
+        setupParentBackground(parent);
         var result = setupBrowser(parent);
         // if setup of amazon q view fails due to missing webview dependency, switch to that view
         // and don't setup rest of the content
@@ -89,7 +92,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                 return "Failed to load JS";
             }
             var loginJsPath = webviewAssetServer.getUri() + "getStart.js";
-
+            boolean isDarkTheme = THEME_DETECTOR.isDarkTheme();
             return String.format("""
                     <!DOCTYPE html>
                     <html>
@@ -105,6 +108,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                             <div id="app"></div>
                             <script type="text/javascript" src="%s"></script>
                             <script>
+                                changeTheme(%b);
                                 window.addEventListener('DOMContentLoaded', function() {
                                     const ideApi = {
                                         postMessage(message) {
@@ -119,7 +123,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                             </script>
                         </body>
                     </html>
-                    """, loginJsPath, loginJsPath, loginJsPath);
+                    """, loginJsPath, loginJsPath, loginJsPath, isDarkTheme);
         } catch (IOException | URISyntaxException e) {
             return "Failed to load JS";
         }

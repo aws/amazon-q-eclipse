@@ -15,7 +15,7 @@ public final class OpenCodeReferenceLogAction extends Action {
 
  @Override
  public void run() {
-     UiTelemetryProvider.emitClickEventMetric("amazonq_openReferenceLog");
+     UiTelemetryProvider.emitClickEventMetric("ellipses_openReferenceLog");
      ViewVisibilityManager.showCodeReferenceView();
  }
 }

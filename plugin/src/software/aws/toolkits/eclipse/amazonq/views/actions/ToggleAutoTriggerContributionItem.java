@@ -63,7 +63,7 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
             public void widgetSelected(final SelectionEvent e) {
                 String settingValue = Activator.getPluginStore().get(AUTO_TRIGGER_ENABLEMENT_KEY);
                 boolean wasEnabled = settingValue != null && !settingValue.isBlank() && settingValue.equals("true");
-                UiTelemetryProvider.emitClickEventMetric((wasEnabled) ? "amazonq_PauseAutoTrigger" : "amazonq_ResumeAutoTrigger");
+                UiTelemetryProvider.emitClickEventMetric((wasEnabled) ? "ellipses_PauseAutoTrigger" : "ellipses_ResumeAutoTrigger");
                 if (wasEnabled) {
                     Activator.getPluginStore().put(AUTO_TRIGGER_ENABLEMENT_KEY, "false");
                 } else {

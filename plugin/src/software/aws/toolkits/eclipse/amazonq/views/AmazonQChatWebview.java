@@ -159,7 +159,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     <meta
                         http-equiv="Content-Security-Policy"
                         content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                        img-src 'self' data:; object-src 'none'; base-uri 'none';"
+                        img-src 'self' data:; object-src 'none'; base-uri 'self';i 'none';"
                     >
                     <title>Chat UI</title>
                     %s
@@ -183,6 +183,17 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         overflow: hidden;
                         margin: 0;
                         padding: 0;
+                    }
+                    .mynah-ui-icon-plus,
+                    .mynah-ui-icon-cancel {
+                        -webkit-mask-size: 155% !important;
+                        mask-size: 155% !important;
+                        mask-position: center;
+                    }
+                    .mynah-ui-icon-tabs {
+                        -webkit-mask-size: 102% !important;
+                        mask-size: 102% !important;
+                        mask-position: center;
                     }
                     textarea:placeholder-shown {
                         line-height: 1.5rem;

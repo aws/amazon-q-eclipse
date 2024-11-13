@@ -99,6 +99,7 @@ public final class ChatTheme {
 
         // Card
         themeMap.put(QChatCssVariable.CardBackground, cardBackgroundColor);
+        themeMap.put(QChatCssVariable.CardAlternateBackground, rgb(51, 118, 205));
 
         return getCss(themeMap);
     }
@@ -149,6 +150,7 @@ public final class ChatTheme {
 
         // Card
         themeMap.put(QChatCssVariable.CardBackground, cardBackgroundColor);
+        themeMap.put(QChatCssVariable.CardAlternateBackground, rgb(106, 145, 175));
 
         return getCss(themeMap);
     }

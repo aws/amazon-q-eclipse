@@ -44,7 +44,8 @@ public enum QChatCssVariable {
     AlternateForeground("--mynah-color-alternate-reverse"),
 
     // Card
-    CardBackground("--mynah-card-bg");
+    CardBackground("--mynah-card-bg"),
+    CardAlternateBackground("--mynah-card-bg-alternate");
 
     private String value;
 

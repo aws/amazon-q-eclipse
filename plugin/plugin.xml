@@ -126,19 +126,19 @@
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">
             </view>
              <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">
             </view>

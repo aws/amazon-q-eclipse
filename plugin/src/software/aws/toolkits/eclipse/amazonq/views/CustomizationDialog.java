@@ -224,6 +224,7 @@ public final class CustomizationDialog extends Dialog {
         contentComposite.setLayoutData(layoutData);
         combo = new Combo(contentComposite, SWT.READ_ONLY);
         combo.setLayout(new GridLayout());
+        combo.setFont(magnifyFontSize(combo.getFont(), 16));
         GridData comboGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
         comboGridData.horizontalAlignment = GridData.FILL;
         comboGridData.grabExcessHorizontalSpace = true;

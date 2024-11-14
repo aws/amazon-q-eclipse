@@ -100,7 +100,6 @@ public final class DefaultLspManager implements LspManager {
     private void initiateCleanup(final LspFetcher lspFetcher) {
         ThreadingUtils.executeAsyncTask(() -> {
             try {
-                Thread.sleep(TimeUnit.SECONDS.toMillis(10));
                 lspFetcher.cleanup(workingDirectory);
             } catch (Exception e) {
                 // Silently log any errors and continue

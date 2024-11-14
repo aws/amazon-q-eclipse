@@ -19,8 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
     public static final String AUTO_TRIGGER_ENABLEMENT_KEY = "aws.q.autotrigger.eclipse";
-    private static final String PAUSE_TEXT = "Pause auto trigger";
-    private static final String RESUME_TEXT = "Resume auto trigger";
+    private static final String PAUSE_TEXT = "Pause Auto-Suggestions";
+    private static final String RESUME_TEXT = "Resume Auto-Suggestions";
 
     private IViewSite viewSite;
     private Image pause;

@@ -16,7 +16,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKi
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import java.util.List;
-import java.util.Stack;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -49,7 +48,6 @@ public final class QInvocationSession extends QResource {
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
     private QInlineTerminationListener terminationListener = null;
-    private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
     private boolean isTabOnly = false;
@@ -351,10 +349,6 @@ public final class QInvocationSession extends QResource {
         return caretMovementReason;
     }
 
-    public Stack<String> getClosingBrackets() {
-        return closingBrackets;
-    }
-
     public int getHeadOffsetAtLine(final int lineNum) throws IllegalArgumentException {
         if (lineNum >= headOffsetAtLine.length || lineNum < 0) {
             throw new IllegalArgumentException("Problematic index given");
@@ -503,7 +497,6 @@ public final class QInvocationSession extends QResource {
         inlineTextFontBold.dispose();
         inlineTextFont = null;
         inlineTextFontBold = null;
-        closingBrackets = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
         unresolvedTasks.forEach((uuid, task) -> {

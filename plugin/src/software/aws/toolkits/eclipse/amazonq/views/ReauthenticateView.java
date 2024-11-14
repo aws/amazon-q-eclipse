@@ -26,6 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 
 public final class ReauthenticateView extends CallToActionView implements AuthStatusChangedListener {
@@ -68,6 +69,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
         return new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
+                UiTelemetryProvider.emitClickEventMetric("auth_reAuthenticateButton");
                 ThreadingUtils.executeAsyncTask(() -> {
                     try {
                         boolean loginOnInvalidToken = true;

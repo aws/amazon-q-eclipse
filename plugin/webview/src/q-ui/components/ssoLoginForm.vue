@@ -129,6 +129,7 @@ export default defineComponent({
             this.isRegionValid = this.selectedRegion != "";
         },
         async handleContinueClick() {
+            window.telemetryApi.postClickEvent("continueButton")
             if (!this.isInputValid) {
                 return
             }

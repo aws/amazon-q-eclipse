@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
@@ -58,6 +59,14 @@ public final class ToolkitLoginWebview extends AmazonQView {
                 return null;
             }
         };
+        new BrowserFunction(browser, "telemetryEvent") {
+            @Override
+            public Object function(final Object[] arguments) {
+                String clickEvent = (String) arguments[0];
+                UiTelemetryProvider.emitClickEventMetric("auth_" + clickEvent);
+                return null;
+            }
+        };
 
         amazonQCommonActions = getAmazonQCommonActions();
 
@@ -100,30 +109,45 @@ public final class ToolkitLoginWebview extends AmazonQView {
                             <meta
                                 http-equiv="Content-Security-Policy"
                                 content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                                img-src 'self' data:; object-src 'none'; base-uri 'none';"
+                                img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
                             >
                             <title>AWS Q</title>
                         </head>
                         <body class="jb-light">
                             <div id="app"></div>
-                            <script type="text/javascript" src="%s"></script>
-                            <script>
-                                changeTheme(%b);
-                                window.addEventListener('DOMContentLoaded', function() {
-                                    const ideApi = {
-                                        postMessage(message) {
-                                            ideCommand(JSON.stringify(message));
-                                        }
-                                    };
-                                    window.ideApi = ideApi;
-                                });
-                                window.onload = function() {
-                                    ideCommand(JSON.stringify({"command":"onLoad"}));
-                                }
+                            <script type="text/javascript" src="%s" defer></script>
+                            <script type="text/javascript">
+                                %s
+                                const init = () => {
+                                    changeTheme(%b);
+                                    Promise.all([
+                                        waitForFunction('ideCommand'),
+                                        waitForFunction('telemetryEvent')
+                                    ])
+                                        .then(([ideCommand, telemetryEvent]) => {
+                                            const ideApi = {
+                                                postMessage(message) {
+                                                    ideCommand(JSON.stringify(message));
+                                                }
+                                            };
+                                            window.ideApi = ideApi;
+
+                                            const telemetryApi = {
+                                                postClickEvent(event) {
+                                                    telemetryEvent(event);
+                                                }
+                                            };
+                                            window.telemetryApi = telemetryApi;
+
+                                            ideCommand(JSON.stringify({"command":"onLoad"}));
+                                        })
+                                        .catch(error => console.error('Error in initialization:', error));
+                                };
+                                window.addEventListener('load', init);
                             </script>
                         </body>
                     </html>
-                    """, loginJsPath, loginJsPath, loginJsPath, isDarkTheme);
+                    """, loginJsPath, loginJsPath, loginJsPath, getWaitFunction(), isDarkTheme);
         } catch (IOException | URISyntaxException e) {
             return "Failed to load JS";
         }

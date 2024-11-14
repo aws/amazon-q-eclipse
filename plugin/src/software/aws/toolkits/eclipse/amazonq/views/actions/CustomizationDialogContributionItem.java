@@ -56,7 +56,7 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                UiTelemetryProvider.emitClickEventMetric("amazonq_selectCustomization");
+                UiTelemetryProvider.emitClickEventMetric("ellipses_selectCustomization");
                 CustomizationDialog dialog = new CustomizationDialog(shell);
                 Customization storedCustomization = Activator.getPluginStore().getObject(
                         Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,

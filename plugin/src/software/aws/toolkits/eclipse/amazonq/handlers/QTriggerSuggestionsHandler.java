@@ -17,13 +17,19 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
     @Override
     public final boolean isEnabled() {
         // TODO: add logic to only trigger on conditions
-        return !QInvocationSession.getInstance().isActive();
+        return true;
     }
 
     @Override
-    public final Object execute(final ExecutionEvent event) throws ExecutionException {
+    public final synchronized Object execute(final ExecutionEvent event) throws ExecutionException {
         var editor = getActiveTextEditor();
         if (editor == null) {
+            Activator.getLogger().info("Suggestion triggered with no active editor. Returning.");
+            return null;
+        }
+
+        if (QInvocationSession.getInstance().isActive()) {
+            Activator.getLogger().info("Suggestion triggered with existing session active. Returning.");
             return null;
         }
 
@@ -36,6 +42,7 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
         }
 
         if (!newSession) {
+            Activator.getLogger().warn("Failed to start suggestion session.");
             return null;
         }
 

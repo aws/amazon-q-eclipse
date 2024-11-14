@@ -15,7 +15,7 @@ public final class ViewLogsAction extends Action {
 
     @Override
     public void run() {
-        UiTelemetryProvider.emitClickEventMetric("amazonq_openErrorLog");
+        UiTelemetryProvider.emitClickEventMetric("ellipses_openErrorLog");
         ViewVisibilityManager.showErrorLogView();
     }
 }

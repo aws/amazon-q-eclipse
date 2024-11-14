@@ -14,9 +14,9 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.views.model.InlineSuggestionCodeReference;
 
 import java.util.List;
-import java.util.Stack;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +33,7 @@ public final class QInvocationSession extends QResource {
     // Static variable to hold the single instance
     private static QInvocationSession instance;
 
-    private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
+    private volatile QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
 
@@ -49,11 +49,9 @@ public final class QInvocationSession extends QResource {
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
     private QInlineTerminationListener terminationListener = null;
-    private Stack<String> closingBrackets = new Stack<>();
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
     private boolean isTabOnly = false;
-    private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Consumer<Integer> unsetVerticalIndent;
     private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
     private Runnable changeStatusToQuerying;
@@ -79,6 +77,7 @@ public final class QInvocationSession extends QResource {
     public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
             if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
+                Activator.getLogger().warn("Attempted to start inline session while logged out.");
                 this.end();
                 return false;
             }
@@ -150,7 +149,7 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    private void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
+    private synchronized void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
         var uuid = UUID.randomUUID();
         long invocationTimeInMs = System.currentTimeMillis();
         Activator.getLogger().info(uuid + " queried made at " + invocationOffset);
@@ -351,10 +350,6 @@ public final class QInvocationSession extends QResource {
         return caretMovementReason;
     }
 
-    public Stack<String> getClosingBrackets() {
-        return closingBrackets;
-    }
-
     public int getHeadOffsetAtLine(final int lineNum) throws IllegalArgumentException {
         if (lineNum >= headOffsetAtLine.length || lineNum < 0) {
             throw new IllegalArgumentException("Problematic index given");
@@ -413,18 +408,17 @@ public final class QInvocationSession extends QResource {
         return hasBeenTypedahead;
     }
 
-    public void registerCallbackForCodeReference(
-            final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
-        this.codeReferenceAcceptanceCallback = codeReferenceAcceptanceCallback;
-    }
-
     public void executeCallbackForCodeReference() {
-        if (codeReferenceAcceptanceCallback != null) {
-            var selectedSuggestion = getCurrentSuggestion();
-            var widget = viewer.getTextWidget();
-            int startLine = widget.getLineAtOffset(invocationOffset);
-            codeReferenceAcceptanceCallback.onCallback(selectedSuggestion, startLine);
-        }
+        var selectedSuggestion = getCurrentSuggestion();
+        var widget = viewer.getTextWidget();
+        int startLine = widget.getLineAtOffset(invocationOffset);
+
+        var references = selectedSuggestion.getReferences();
+        var suggestionText = selectedSuggestion.getInsertText();
+        var filename = instance.getEditor().getTitle();
+        InlineSuggestionCodeReference codeReference = new InlineSuggestionCodeReference(references, suggestionText, filename, startLine);
+
+        Activator.getCodeReferenceLoggingService().log(codeReference);
     }
 
     public void setVerticalIndent(final int line, final int height) {
@@ -448,6 +442,10 @@ public final class QInvocationSession extends QResource {
 
     public int getNumSuggestionLines() {
         return inputListener.getNumSuggestionLines();
+    }
+
+    public int getOutstandingPadding() {
+        return inputListener.getOutstandingPadding();
     }
 
     public void primeListeners() {
@@ -499,7 +497,6 @@ public final class QInvocationSession extends QResource {
         inlineTextFontBold.dispose();
         inlineTextFont = null;
         inlineTextFontBold = null;
-        closingBrackets = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
         hasBeenTypedahead = false;
         unresolvedTasks.forEach((uuid, task) -> {

@@ -54,6 +54,11 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         setupBrowserBackground(parent);
         setupActions(authState);
         setupAuthStatusListeners();
+        disableBrowserContextMenu();
+    }
+
+    protected final void disableBrowserContextMenu() {
+        getBrowser().execute("document.oncontextmenu = e => e.preventDefault();");
     }
 
     private void setupBrowserBackground(final Composite parent) {
@@ -88,6 +93,26 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             return;
         }
         getBrowser().setFocus();
+    }
+
+    protected final String getWaitFunction() {
+        return """
+                function waitForFunction(functionName, timeout = 30000) {
+                    return new Promise((resolve, reject) => {
+                        const startTime = Date.now();
+                        const checkFunction = () => {
+                            if (typeof window[functionName] === 'function') {
+                                resolve(window[functionName]);
+                            } else if (Date.now() - startTime > timeout) {
+                                reject(new Error(`Timeout waiting for ${functionName}`));
+                            } else {
+                                setTimeout(checkFunction, 100);
+                            }
+                        };
+                        checkFunction();
+                    });
+                }
+                """;
     }
 
     /**

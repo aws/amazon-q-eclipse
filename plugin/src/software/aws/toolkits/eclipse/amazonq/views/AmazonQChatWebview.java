@@ -93,6 +93,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 Display.getDefault().syncExec(() -> {
                     try {
                         chatTheme.injectTheme(browser);
+                        disableBrowserContextMenu();
                     } catch (Exception e) {
                         Activator.getLogger().info("Error occurred while injecting theme", e);
                     }

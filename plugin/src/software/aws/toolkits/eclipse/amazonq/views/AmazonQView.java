@@ -90,6 +90,26 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         getBrowser().setFocus();
     }
 
+    protected final String getWaitFunction() {
+        return """
+                function waitForFunction(functionName, timeout = 30000) {
+                    return new Promise((resolve, reject) => {
+                        const startTime = Date.now();
+                        const checkFunction = () => {
+                            if (typeof window[functionName] === 'function') {
+                                resolve(window[functionName]);
+                            } else if (Date.now() - startTime > timeout) {
+                                reject(new Error(`Timeout waiting for ${functionName}`));
+                            } else {
+                                setTimeout(checkFunction, 100);
+                            }
+                        };
+                        checkFunction();
+                    });
+                }
+                """;
+    }
+
     /**
      * Disposes of the resources associated with this view.
      *

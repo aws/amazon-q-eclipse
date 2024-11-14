@@ -160,7 +160,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     <meta
                         http-equiv="Content-Security-Policy"
                         content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                        img-src 'self' data:; object-src 'none'; base-uri 'self';i 'none';"
+                        img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
                     >
                     <title>Chat UI</title>
                     %s
@@ -207,17 +207,24 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private String generateJS(final String jsEntrypoint) {
         var chatQuickActionConfig = generateQuickActionConfig();
         return String.format("""
-                <script type="text/javascript" src="%s" defer onload="init()"></script>
+                <script type="text/javascript" src="%s" defer></script>
                 <script type="text/javascript">
+                    %s
                     const init = () => {
-                        amazonQChat.createChat({
-                           postMessage: (message) => {
-                                ideCommand(JSON.stringify(message));
-                           }
-                        }, %s);
+                        waitForFunction('ideCommand')
+                            .then(() => {
+                                amazonQChat.createChat({
+                                    postMessage: (message) => {
+                                        ideCommand(JSON.stringify(message));
+                                    }
+                                }, %s);
+                            })
+                            .catch(error => console.error('Error initializing chat:', error));
                     }
+
+                    window.addEventListener('load', init);
                 </script>
-                """, jsEntrypoint, chatQuickActionConfig);
+                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig);
     }
 
     /*

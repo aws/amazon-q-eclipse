@@ -33,7 +33,7 @@ public final class QInvocationSession extends QResource {
     // Static variable to hold the single instance
     private static QInvocationSession instance;
 
-    private QInvocationSessionState state = QInvocationSessionState.INACTIVE;
+    private volatile QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
 
@@ -79,6 +79,7 @@ public final class QInvocationSession extends QResource {
     public synchronized boolean start(final ITextEditor editor) throws ExecutionException {
         if (!isActive()) {
             if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
+                Activator.getLogger().warn("Attempted to start inline session while logged out.");
                 this.end();
                 return false;
             }
@@ -150,7 +151,7 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    private void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
+    private synchronized void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
         var uuid = UUID.randomUUID();
         long invocationTimeInMs = System.currentTimeMillis();
         Activator.getLogger().info(uuid + " queried made at " + invocationOffset);

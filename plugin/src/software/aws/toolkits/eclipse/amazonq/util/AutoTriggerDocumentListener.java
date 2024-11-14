@@ -35,7 +35,7 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
     }
 
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public synchronized void documentChanged(final DocumentEvent e) {
         var qSes = QInvocationSession.getInstance();
         if (!shouldSendQuery(e, qSes)) {
             return;

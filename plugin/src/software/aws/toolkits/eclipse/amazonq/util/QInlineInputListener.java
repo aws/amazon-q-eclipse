@@ -425,13 +425,13 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     }
 
     private PreprocessingCategory getBufferPreprocessingCategory(final String input) {
-        if (input.length() > 1
+        var bracket = brackets[distanceTraversed];
+        if (input.length() > 1 && bracket != null && bracket.getSymbol() == input.charAt(0)
                 && (input.equals("()") || input.equals("{}") || input.equals("<>") || input.equals("[]"))) {
             return PreprocessingCategory.NORMAL_BRACKETS_OPEN;
         }
-        var bracket = brackets[distanceTraversed];
         if (input.equals("\"\"") || input.equals("\'\'")) {
-            if (bracket != null) {
+            if (bracket != null && bracket.getSymbol() == input.charAt(0)) {
                 if (bracket instanceof QInlineSuggestionOpenBracketSegment) {
                     return PreprocessingCategory.STR_QUOTE_OPEN;
                 } else {

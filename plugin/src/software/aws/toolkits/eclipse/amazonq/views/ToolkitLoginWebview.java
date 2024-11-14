@@ -115,21 +115,29 @@ public final class ToolkitLoginWebview extends AmazonQView {
                         </head>
                         <body class="jb-light">
                             <div id="app"></div>
-<<<<<<< HEAD
                             <script type="text/javascript" src="%s" defer></script>
                             <script type="text/javascript">
                                 %s
                                 const init = () => {
                                     changeTheme(%b);
-
-                                    waitForFunction('ideCommand')
-                                        .then(() => {
+                                    Promise.all([
+                                        waitForFunction('ideCommand'),
+                                        waitForFunction('telemetryEvent')
+                                    ])
+                                        .then(([ideCommand, telemetryEvent]) => {
                                             const ideApi = {
                                                 postMessage(message) {
                                                     ideCommand(JSON.stringify(message));
                                                 }
                                             };
                                             window.ideApi = ideApi;
+
+                                            const telemetryApi = {
+                                                postClickEvent(event) {
+                                                    telemetryEvent(event);
+                                                }
+                                            };
+                                            window.telemetryApi = telemetryApi;
 
                                             ideCommand(JSON.stringify({"command":"onLoad"}));
                                         })

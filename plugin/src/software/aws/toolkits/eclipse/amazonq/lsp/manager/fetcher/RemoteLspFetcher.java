@@ -92,6 +92,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
 
         // if unable to retrieve / validate contents from remote location, cleanup
+        // download cache
         ArtifactUtils.deleteDirectory(downloadDirectory);
         Activator.getLogger().info(String.format(
                 "Unable to download Amazon Q language server version v%s. Attempting to fetch from fallback location",

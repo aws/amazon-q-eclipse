@@ -168,7 +168,10 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                         isAngleBracketsSetToAutoClose, isBracesSetToAutoClose, isStringSetToAutoClose);
                 if (autoCloseContent != null) {
                     toAppend += autoCloseContent;
-                    outstandingPadding++;
+                    // No padding is added for curly braces
+                    if (bracket.getSymbol() != '{') {
+                        outstandingPadding++;
+                    }
                 }
             }
         }

@@ -40,6 +40,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         NONE,
         NORMAL_BRACKETS_OPEN,
         NORMAL_BRACKETS_CLOSE,
+        STR_QUOTE_OPEN,
+        STR_QUOTE_CLOSE,
         CURLY_BRACES
     }
 
@@ -61,6 +63,13 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         doc.addDocumentListener(this);
         ITextEditor editor = session.getEditor();
         Optional<AutoCloseBracketConfig> bracketConfig = QEclipseEditorUtils.getAutoCloseSettings(editor);
+        // TODO: make this config all encompassing. We would also want information such
+        // as open and close bracket buffer processing.
+        // This is necessitated by the fact eclipse processes auto closing bracket
+        // differently depending on the file type.
+        // For example, in java file type, when auto close of brackets is enabled,
+        // deleting an open bracket also deletes its close counter part.
+        // However, this is not the case for js, go, and py.
         if (bracketConfig.isPresent()) {
             AutoCloseBracketConfig config = bracketConfig.get();
             isBracketsSetToAutoClose = config.isParenAutoClosed();
@@ -305,6 +314,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         IDocument doc = viewer.getDocument();
         // NOTE: here we are blessed with DocumentEvent, whose offset is the expanded offset.
         switch (category) {
+        case STR_QUOTE_OPEN:
         case NORMAL_BRACKETS_OPEN:
             input = input.substring(0, 1) + " ";
             try {
@@ -319,6 +329,15 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 brackets[distanceTraversed].onTypeOver();
                 doc.replace(event.getOffset(), 2, input);
                 widget.setCaretOffset(widget.getCaretOffset() + 1);
+                return;
+            } catch (BadLocationException e) {
+                Activator.getLogger().error("Error performing close bracket sanitation during typeahead", e);
+            }
+            return;
+        case STR_QUOTE_CLOSE:
+            input = input.substring(0, 1);
+            try {
+                doc.replace(event.getOffset(), 2, input);
                 return;
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error performing close bracket sanitation during typeahead", e);
@@ -387,15 +406,24 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     }
 
     private PreprocessingCategory getBufferPreprocessingCategory(final String input) {
-        if (input.length() > 1 && (input.equals("()") || input.equals("{}") || input.equals("<>")
-                || input.equals("\"\"") || input.equals("\'\'") || input.equals("[]"))) {
+        if (input.length() > 1
+                && (input.equals("()") || input.equals("{}") || input.equals("<>") || input.equals("[]"))) {
             return PreprocessingCategory.NORMAL_BRACKETS_OPEN;
+        }
+        var bracket = brackets[distanceTraversed];
+        if (input.equals("\"\"") || input.equals("\'\'")) {
+            if (bracket != null) {
+                if (bracket instanceof QInlineSuggestionOpenBracketSegment) {
+                    return PreprocessingCategory.STR_QUOTE_OPEN;
+                } else {
+                    return PreprocessingCategory.STR_QUOTE_CLOSE;
+                }
+            }
         }
         Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);
         if (matcher.find()) {
             return PreprocessingCategory.CURLY_BRACES;
         }
-        var bracket = brackets[distanceTraversed];
         if (bracket != null) {
             if ((bracket instanceof QInlineSuggestionCloseBracketSegment) && input.charAt(0) == bracket.getSymbol()
                     && !((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().isResolved()) {

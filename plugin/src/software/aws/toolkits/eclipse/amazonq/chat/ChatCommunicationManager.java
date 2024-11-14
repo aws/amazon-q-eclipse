@@ -34,6 +34,7 @@ import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
+import software.aws.toolkits.eclipse.amazonq.views.model.ChatCodeReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 /**
@@ -189,6 +190,11 @@ public final class ChatCommunicationManager {
 
                 String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
                 ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
+
+                if (result.codeReference() != null && result.codeReference().length >= 1) {
+                    ChatCodeReference chatCodeRefrence = new ChatCodeReference(result.codeReference());
+                    Activator.getCodeReferenceLoggingService().log(chatCodeRefrence);
+                }
 
                 // show chat response in Chat UI
                 ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(

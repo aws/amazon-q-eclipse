@@ -26,6 +26,7 @@ public class Activator extends AbstractUIPlugin {
     private static LoggingService defaultLogger;
     private static LspProvider lspProvider;
     private static LoginService loginService;
+    private static CodeReferenceLoggingService codeReferenceLoggingService;
     private static PluginStore pluginStore;
 
     public Activator() {
@@ -40,6 +41,7 @@ public class Activator extends AbstractUIPlugin {
                 .withPluginStore(pluginStore)
                 .initializeOnStartUp()
                 .build();
+        codeReferenceLoggingService = DefaultCodeReferenceLoggingService.getInstance();
     }
 
     @Override
@@ -68,6 +70,9 @@ public class Activator extends AbstractUIPlugin {
     }
     public static PluginStore getPluginStore() {
         return pluginStore;
+    }
+    public static CodeReferenceLoggingService getCodeReferenceLoggingService() {
+        return codeReferenceLoggingService;
     }
 
 }

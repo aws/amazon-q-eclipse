@@ -14,6 +14,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.views.model.InlineSuggestionCodeReference;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,7 +52,6 @@ public final class QInvocationSession extends QResource {
     private int[] headOffsetAtLine = new int[500];
     private boolean hasBeenTypedahead = false;
     private boolean isTabOnly = false;
-    private CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback = null;
     private Consumer<Integer> unsetVerticalIndent;
     private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
     private Runnable changeStatusToQuerying;
@@ -408,18 +408,17 @@ public final class QInvocationSession extends QResource {
         return hasBeenTypedahead;
     }
 
-    public void registerCallbackForCodeReference(
-            final CodeReferenceAcceptanceCallback codeReferenceAcceptanceCallback) {
-        this.codeReferenceAcceptanceCallback = codeReferenceAcceptanceCallback;
-    }
-
     public void executeCallbackForCodeReference() {
-        if (codeReferenceAcceptanceCallback != null) {
-            var selectedSuggestion = getCurrentSuggestion();
-            var widget = viewer.getTextWidget();
-            int startLine = widget.getLineAtOffset(invocationOffset);
-            codeReferenceAcceptanceCallback.onCallback(selectedSuggestion, startLine);
-        }
+        var selectedSuggestion = getCurrentSuggestion();
+        var widget = viewer.getTextWidget();
+        int startLine = widget.getLineAtOffset(invocationOffset);
+
+        var references = selectedSuggestion.getReferences();
+        var suggestionText = selectedSuggestion.getInsertText();
+        var filename = instance.getEditor().getTitle();
+        InlineSuggestionCodeReference codeReference = new InlineSuggestionCodeReference(references, suggestionText, filename, startLine);
+
+        Activator.getCodeReferenceLoggingService().log(codeReference);
     }
 
     public void setVerticalIndent(final int line, final int height) {

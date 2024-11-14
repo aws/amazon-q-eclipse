@@ -12,7 +12,7 @@ public final class ChatAssetProvider {
     private WebviewAssetServer webviewAssetServer;
 
     public Optional<String> get() {
-        var chatUiDirectory = LspManagerProvider.getInstance().getLspInstallation().getClientDirectory();
+        var chatUiDirectory = getChatUiDirectory();
 
         if (!isValid(chatUiDirectory)) {
             Activator.getLogger().error("Error loading Chat UI. If override used, please verify the override env variables else restart Eclipse");
@@ -35,6 +35,14 @@ public final class ChatAssetProvider {
         String chatJsPath = webviewAssetServer.getUri() + "amazonq-ui.js";
 
         return Optional.ofNullable(chatJsPath);
+    }
+
+    private String getChatUiDirectory() {
+        try {
+            return LspManagerProvider.getInstance().getLspInstallation().getClientDirectory();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private boolean isValid(final String chatUiDirectory) {

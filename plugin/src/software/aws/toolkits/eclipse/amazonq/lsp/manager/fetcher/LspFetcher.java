@@ -11,4 +11,5 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
 public interface LspFetcher {
     LspFetchResult fetch(PluginPlatform platform, PluginArchitecture architecture, Path destination);
+    void cleanup(Path destination);
 }

@@ -215,6 +215,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             toAppend += rightCtxBuf;
         }
 
+        suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
+
         IDocument doc = session.getViewer().getDocument();
         doc.removeDocumentListener(this);
         int idx = widget.getCaretOffset() - session.getInvocationOffset();

@@ -43,4 +43,8 @@ public final class QInlineSuggestionRightContextSegment implements IQInlineSugge
         int textWidth = textExtent.x;
         gc.drawLine(x, lineY, x + textWidth, lineY);
     }
+
+    @Override
+    public void cleanUp() {
+    }
 }

@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_COLOR;
 
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.GlyphMetrics;
 
@@ -13,6 +14,7 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
     private int endCaretOffset;
     private int lineInSuggestion;
     private String text;
+    private StyleRange styleRange = new StyleRange();
 
     public QInlineSuggestionNormalSegment(final int startCaretPosition, final int endCaretPosition,
             final int lineInSuggestion, final String text) {
@@ -50,7 +52,6 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
             String contentInLine = widget.getLine(curLineInDoc);
             String rightCtxInLine = contentInLine.substring(lineIdx);
             if (!rightCtxInLine.isBlank()) {
-                StyleRange styleRange = new StyleRange();
                 styleRange.start = currentCaretOffset;
                 styleRange.length = 1;
                 styleRange.metrics = new GlyphMetrics(0, 0, gc.textExtent(textToRender).x + gc.textExtent(" ").x);
@@ -73,5 +74,16 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
         gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
         gc.setFont(qInvocationSessionInstance.getInlineTextFont());
         gc.drawText(textToRender, x, y, true);
+    }
+
+    @Override
+    public void cleanUp() {
+        QInvocationSession session = QInvocationSession.getInstance();
+        if (!session.isActive()) {
+            return;
+        }
+        StyledText widget = session.getViewer().getTextWidget();
+        styleRange.metrics = new GlyphMetrics(0, 0, 0);
+        widget.setStyleRange(styleRange);
     }
 }

@@ -450,6 +450,10 @@ public final class QInvocationSession extends QResource {
         return inputListener.getNumSuggestionLines();
     }
 
+    public int getOutstandingPadding() {
+        return inputListener.getOutstandingPadding();
+    }
+
     public void primeListeners() {
         inputListener.onNewSuggestion();
         paintListener.onNewSuggestion();

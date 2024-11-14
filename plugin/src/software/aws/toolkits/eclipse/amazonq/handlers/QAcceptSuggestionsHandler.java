@@ -42,7 +42,8 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
             int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, insertOffset);
             int startIdx = widget.getCaretOffset() - qSes.getInvocationOffset();
             String adjustedSuggestion = suggestion.substring(startIdx);
-            doc.replace(adjustedOffset, 0, adjustedSuggestion);
+            int outstandingPadding = qSes.getOutstandingPadding();
+            doc.replace(adjustedOffset, outstandingPadding, adjustedSuggestion);
             widget.setCaretOffset(insertOffset + adjustedSuggestion.length());
             QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
             QInvocationSession.getInstance().executeCallbackForCodeReference();

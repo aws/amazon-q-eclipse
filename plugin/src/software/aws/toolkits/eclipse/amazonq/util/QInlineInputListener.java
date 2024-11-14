@@ -126,6 +126,23 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         return suggestionSegments;
     }
 
+    public int getOutstandingPadding() {
+        int outstandingPadding = 0;
+        for (int i = brackets.length - 1; i >= 0; i--) {
+            var bracket = brackets[i];
+            if (bracket == null) {
+                continue;
+            }
+            if (!(bracket instanceof QInlineSuggestionOpenBracketSegment)) {
+                continue;
+            }
+            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved()) {
+                outstandingPadding++;
+            }
+        }
+        return outstandingPadding;
+    }
+
     /**
      * Here we need to perform the following before the listener gets removed:
      * <ul>
@@ -140,6 +157,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
 
         String toAppend = "";
+        int outstandingPadding = 0;
         for (int i = brackets.length - 1; i >= 0; i--) {
             var bracket = brackets[i];
             if (bracket == null) {
@@ -150,6 +168,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                         isAngleBracketsSetToAutoClose, isBracesSetToAutoClose, isStringSetToAutoClose);
                 if (autoCloseContent != null) {
                     toAppend += autoCloseContent;
+                    outstandingPadding++;
                 }
             }
         }
@@ -161,7 +180,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
                         session.getInvocationOffset()) + idx;
-                doc.replace(adjustedOffset, 0, toAppend);
+                doc.replace(adjustedOffset, outstandingPadding, toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }

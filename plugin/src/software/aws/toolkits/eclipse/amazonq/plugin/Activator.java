@@ -6,17 +6,20 @@ package software.aws.toolkits.eclipse.amazonq.plugin;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
+import software.aws.toolkits.eclipse.amazonq.telemetry.TelemetryEmitterManager;
+import software.aws.toolkits.eclipse.amazonq.telemetry.api.Emittable;
+import software.aws.toolkits.eclipse.amazonq.telemetry.models.TelemetryEventRecord;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
-import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
-import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
+import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -27,6 +30,7 @@ public class Activator extends AbstractUIPlugin {
     private static LspProvider lspProvider;
     private static LoginService loginService;
     private static PluginStore pluginStore;
+    private static TelemetryEmitterManager telemetryEmitterManager;
 
     public Activator() {
         super();
@@ -35,6 +39,7 @@ public class Activator extends AbstractUIPlugin {
         telemetryService = DefaultTelemetryService.builder().build();
         lspProvider = LspProviderImpl.getInstance();
         pluginStore = DefaultPluginStore.getInstance();
+        telemetryEmitterManager = new TelemetryEmitterManager();
         loginService = DefaultLoginService.builder()
                 .withLspProvider(lspProvider)
                 .withPluginStore(pluginStore)
@@ -68,6 +73,9 @@ public class Activator extends AbstractUIPlugin {
     }
     public static PluginStore getPluginStore() {
         return pluginStore;
+    }
+    public static <T extends TelemetryEventRecord> Emittable<T> getTelemetryEmitterFor(final Class<T> type) {
+        return telemetryEmitterManager.getEmitterFor(type);
     }
 
 }

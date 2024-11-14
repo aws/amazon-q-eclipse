@@ -11,7 +11,10 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
+
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.models.EmittableEventType;
+import software.aws.toolkits.eclipse.amazonq.telemetry.models.UITelemetryEventRecord;
 
 public class DialogContributionItem extends ContributionItem {
     private Dialog dialog;
@@ -41,7 +44,13 @@ public class DialogContributionItem extends ContributionItem {
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                UiTelemetryProvider.emitClickEventMetric("amazonq_shareFeedback");
+                UITelemetryEventRecord eventRecord = UITelemetryEventRecord.builder()
+                        .withElementId("amazonq_shareFeedback")
+                        .build();
+
+                Activator.getTelemetryEmitterFor(UITelemetryEventRecord.class)
+                    .emit(EmittableEventType.UI_ELEMENT_CLICK_EVENT, eventRecord);
+
                 dialog.open();
             }
         });

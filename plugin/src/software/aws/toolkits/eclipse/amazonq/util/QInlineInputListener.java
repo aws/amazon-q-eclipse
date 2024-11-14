@@ -35,6 +35,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
     private int distanceTraversed = 0;
+    private int normalSegmentCount = 0;
     private String rightCtxBuf = "";
 
     private enum PreprocessingCategory {
@@ -98,7 +99,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         ITextViewer viewer = session.getViewer();
         IDocument doc = viewer.getDocument();
         doc.removeDocumentListener(this);
-        if (!rightCtxBuf.isEmpty()) {
+        if (!rightCtxBuf.isEmpty() && normalSegmentCount > 1) {
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
                         session.getInvocationOffset());
@@ -155,7 +156,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 Activator.getLogger().error("Error striking out document right context" + e.toString());
             }
         }
+        normalSegmentCount = normalSegmentNum;
         doc.addDocumentListener(this);
+        System.out.println("Normal segment count: " + normalSegmentCount);
     }
 
     public List<IQInlineSuggestionSegment> getSegments() {

@@ -98,6 +98,15 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         ITextViewer viewer = session.getViewer();
         IDocument doc = viewer.getDocument();
         doc.removeDocumentListener(this);
+        if (!rightCtxBuf.isEmpty()) {
+            try {
+                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        session.getInvocationOffset());
+                doc.replace(adjustedOffset, 0, rightCtxBuf);
+            } catch (BadLocationException e) {
+                Activator.getLogger().error(e.toString());
+            }
+        }
         if (!suggestionSegments.isEmpty()) {
             suggestionSegments.clear();
         }

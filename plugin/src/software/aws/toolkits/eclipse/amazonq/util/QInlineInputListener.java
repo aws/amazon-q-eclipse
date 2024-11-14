@@ -35,6 +35,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
     private int distanceTraversed = 0;
+    private String rightCtxBuf = "";
 
     private enum PreprocessingCategory {
         NONE,
@@ -58,9 +59,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     public QInlineInputListener(final StyledText widget) {
         this.widget = widget;
         QInvocationSession session = QInvocationSession.getInstance();
-        ITextViewer viewer = session.getViewer();
-        IDocument doc = viewer.getDocument();
-        doc.addDocumentListener(this);
         ITextEditor editor = session.getEditor();
         Optional<AutoCloseBracketConfig> bracketConfig = QEclipseEditorUtils.getAutoCloseSettings(editor);
         // TODO: make this config all encompassing. We would also want information such
@@ -89,24 +87,38 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
      * toggled to.
      */
     public void onNewSuggestion() {
-        var qInvocationSessionInstance = QInvocationSession.getInstance();
-        if (qInvocationSessionInstance == null) {
-            return;
-        }
+        QInvocationSession session = QInvocationSession.getInstance();
+        // We want to modify the document prior to attaching document listener
+        // For that reason, we should move this document listener to onNewSuggestion.
+        // - Check to see if the right context exists.
+        // - If it does, check to see if the suggestion spans more than 1 line.
+        // - If it does, save the right context on the same line.
+        // - Add in a segment to render the strike through right context.
+        // - Delete the right context (excluding the new line).
+        ITextViewer viewer = session.getViewer();
+        IDocument doc = viewer.getDocument();
+        doc.removeDocumentListener(this);
         if (!suggestionSegments.isEmpty()) {
             suggestionSegments.clear();
         }
-        numSuggestionLines = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().split("\\R").length;
+        numSuggestionLines = session.getCurrentSuggestion().getInsertText().split("\\R").length;
         List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory
-                .getSegmentsFromSuggestion(qInvocationSessionInstance);
-        brackets = new IQInlineBracket[qInvocationSessionInstance.getCurrentSuggestion().getInsertText().length()];
-        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
+                .getSegmentsFromSuggestion(session);
+        brackets = new IQInlineBracket[session.getCurrentSuggestion().getInsertText().length()];
+        int invocationOffset = session.getInvocationOffset();
+        int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+        int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
+        String contentInLine = widget.getLine(curLineInDoc);
+        if (lineIdx < contentInLine.length()) {
+            rightCtxBuf = contentInLine.substring(lineIdx);
+        }
+        int normalSegmentNum = 0;
         for (var segment : segments) {
             if (segment instanceof IQInlineBracket) {
                 int offset = ((IQInlineBracket) segment).getRelevantOffset();
                 int idxInSuggestion = offset - invocationOffset;
                 if (((IQInlineBracket) segment).getSymbol() == '{') {
-                    int firstNewLineAfter = qInvocationSessionInstance.getCurrentSuggestion().getInsertText()
+                    int firstNewLineAfter = session.getCurrentSuggestion().getInsertText()
                             .indexOf('\n', idxInSuggestion);
                     if (firstNewLineAfter != -1) {
                         brackets[firstNewLineAfter] = (IQInlineBracket) segment;
@@ -120,8 +132,21 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 }
             } else {
                 suggestionSegments.add(segment);
+                normalSegmentNum++;
             }
         }
+        if (normalSegmentNum > 1 && !rightCtxBuf.isEmpty()) {
+            QInlineSuggestionRightContextSegment rightCtxSegment = IQInlineSuggestionSegmentFactory
+                    .getRightCtxSegment(rightCtxBuf, session.getCurrentSuggestion().getInsertText().split("\\R", 2)[0]);
+            suggestionSegments.add(rightCtxSegment);
+            try {
+                int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, invocationOffset);
+                doc.replace(expandedOffset, rightCtxBuf.length(), "");
+            } catch (BadLocationException e) {
+                Activator.getLogger().error("Error striking out document right context" + e.toString());
+            }
+        }
+        doc.addDocumentListener(this);
     }
 
     public List<IQInlineSuggestionSegment> getSegments() {

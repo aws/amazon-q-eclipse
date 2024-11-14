@@ -14,6 +14,7 @@ import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -23,6 +24,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     private AmazonQCommonActions amazonQCommonActions;
     private WebviewAssetServer webviewAssetServer;
+    private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
@@ -35,6 +37,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void createPartControl(final Composite parent) {
+        setupParentBackground(parent);
         var result = setupBrowser(parent);
         // if setup of amazon q view fails due to missing webview dependency, switch to that view
         // and don't setup rest of the content
@@ -89,7 +92,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                 return "Failed to load JS";
             }
             var loginJsPath = webviewAssetServer.getUri() + "getStart.js";
-
+            boolean isDarkTheme = THEME_DETECTOR.isDarkTheme();
             return String.format("""
                     <!DOCTYPE html>
                     <html>
@@ -97,29 +100,36 @@ public final class ToolkitLoginWebview extends AmazonQView {
                             <meta
                                 http-equiv="Content-Security-Policy"
                                 content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                                img-src 'self' data:; object-src 'none'; base-uri 'none';"
+                                img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
                             >
                             <title>AWS Q</title>
                         </head>
                         <body class="jb-light">
                             <div id="app"></div>
-                            <script type="text/javascript" src="%s"></script>
-                            <script>
-                                window.addEventListener('DOMContentLoaded', function() {
-                                    const ideApi = {
-                                        postMessage(message) {
-                                            ideCommand(JSON.stringify(message));
-                                        }
-                                    };
-                                    window.ideApi = ideApi;
-                                });
-                                window.onload = function() {
-                                    ideCommand(JSON.stringify({"command":"onLoad"}));
-                                }
+                            <script type="text/javascript" src="%s" defer></script>
+                            <script type="text/javascript">
+                                %s
+                                const init = () => {
+                                    changeTheme(%b);
+
+                                    waitForFunction('ideCommand')
+                                        .then(() => {
+                                            const ideApi = {
+                                                postMessage(message) {
+                                                    ideCommand(JSON.stringify(message));
+                                                }
+                                            };
+                                            window.ideApi = ideApi;
+
+                                            ideCommand(JSON.stringify({"command":"onLoad"}));
+                                        })
+                                        .catch(error => console.error('Error in initialization:', error));
+                                };
+                                window.addEventListener('load', init);
                             </script>
                         </body>
                     </html>
-                    """, loginJsPath, loginJsPath, loginJsPath);
+                    """, loginJsPath, loginJsPath, loginJsPath, getWaitFunction(), isDarkTheme);
         } catch (IOException | URISyntaxException e) {
             return "Failed to load JS";
         }

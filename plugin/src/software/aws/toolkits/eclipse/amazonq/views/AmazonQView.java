@@ -14,12 +14,14 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
 
     private AmazonQViewController viewController;
     private AmazonQCommonActions amazonQCommonActions;
+    private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
@@ -31,6 +33,13 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     public final AmazonQCommonActions getAmazonQCommonActions() {
         return amazonQCommonActions;
+    }
+
+    protected final void setupParentBackground(final Composite parent) {
+        Display display = Display.getCurrent();
+        Color bg = THEME_DETECTOR.isDarkTheme() ? display.getSystemColor(SWT.COLOR_BLACK)
+                : display.getSystemColor(SWT.COLOR_WHITE);
+        parent.setBackground(bg);
     }
 
     protected final boolean setupBrowser(final Composite parent) {
@@ -45,13 +54,16 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
         setupBrowserBackground(parent);
         setupActions(authState);
         setupAuthStatusListeners();
+        disableBrowserContextMenu();
+    }
+
+    protected final void disableBrowserContextMenu() {
+        getBrowser().execute("document.oncontextmenu = e => e.preventDefault();");
     }
 
     private void setupBrowserBackground(final Composite parent) {
-        Display display = Display.getCurrent();
-        Color black = display.getSystemColor(SWT.COLOR_BLACK);
-        parent.setBackground(black);
-        getBrowser().setBackground(black);
+        var bgColor = parent.getBackground();
+        getBrowser().setBackground(bgColor);
     }
 
     protected final void showDependencyMissingView() {
@@ -81,6 +93,26 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
             return;
         }
         getBrowser().setFocus();
+    }
+
+    protected final String getWaitFunction() {
+        return """
+                function waitForFunction(functionName, timeout = 30000) {
+                    return new Promise((resolve, reject) => {
+                        const startTime = Date.now();
+                        const checkFunction = () => {
+                            if (typeof window[functionName] === 'function') {
+                                resolve(window[functionName]);
+                            } else if (Date.now() - startTime > timeout) {
+                                reject(new Error(`Timeout waiting for ${functionName}`));
+                            } else {
+                                setTimeout(checkFunction, 100);
+                            }
+                        };
+                        checkFunction();
+                    });
+                }
+                """;
     }
 
     /**

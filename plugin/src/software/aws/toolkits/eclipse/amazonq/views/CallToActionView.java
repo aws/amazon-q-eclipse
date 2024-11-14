@@ -28,8 +28,21 @@ public abstract class CallToActionView extends BaseView {
 
     private void setupButton(final Composite composite) {
         var button = new Button(composite, SWT.PUSH);
+        updateButtonStyle(button);
         button.setText(buttonLabel);
         button.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
         button.addSelectionListener(buttonHandler);
     }
+
+    /**
+     * Updates the button style as required.
+     * @param button the component to apply style update
+     *
+     * Default protected method that does nothing. This method can be overridden by subclasses to customize button style
+     * during view creation.
+     */
+    protected void updateButtonStyle(final Button button) {
+        return;
+    }
+
 }

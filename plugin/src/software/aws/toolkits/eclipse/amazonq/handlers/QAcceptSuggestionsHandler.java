@@ -21,7 +21,7 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
     }
 
     @Override
-    public final Object execute(final ExecutionEvent event) throws ExecutionException {
+    public final synchronized Object execute(final ExecutionEvent event) throws ExecutionException {
         var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
         var session = QInvocationSession.getInstance();

@@ -38,6 +38,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public class FeedbackDialog extends Dialog {
@@ -188,7 +189,8 @@ public class FeedbackDialog extends Dialog {
         createLinkLabel(reportRequestContributeContainer, "Request a feature", SWT.NONE,
             String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()));
 
-        createImageLabel(reportRequestContributeContainer, "icons/ViewCode.png");
+        ThemeDetector themeDetector = new ThemeDetector();
+        createImageLabel(reportRequestContributeContainer, themeDetector.isDarkTheme() ? "icons/ViewCode-White.png" : "icons/ViewCode-Black.png");
         createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE, "https://github.com/aws/amazon-q-eclipse/");
     }
 

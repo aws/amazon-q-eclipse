@@ -38,7 +38,7 @@ public abstract class AbstractQToggleSuggestionsHandler extends AbstractHandler 
      * Implementations should call {@code super.execute(event)} at the end to delegate the actual movement.
      */
     @Override
-    public Object execute(final ExecutionEvent event) {
+    public synchronized Object execute(final ExecutionEvent event) {
         QInvocationSession qInvocationSessionInstance = QInvocationSession.getInstance();
 
         switch (direction) {

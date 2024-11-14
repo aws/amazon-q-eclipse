@@ -30,6 +30,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
@@ -192,8 +193,8 @@ public final class ChatCommunicationManager {
                 ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
 
                 if (result.codeReference() != null && result.codeReference().length >= 1) {
-                    ChatCodeReference chatCodeRefrence = new ChatCodeReference(result.codeReference());
-                    Activator.getCodeReferenceLoggingService().log(chatCodeRefrence);
+                    ChatCodeReference chatCodeReference = new ChatCodeReference(result.codeReference());
+                    Activator.getCodeReferenceLoggingService().log(chatCodeReference);
                 }
 
                 // show chat response in Chat UI

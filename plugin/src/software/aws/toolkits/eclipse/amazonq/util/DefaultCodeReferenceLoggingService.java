@@ -7,7 +7,7 @@ import software.aws.toolkits.eclipse.amazonq.views.model.CodeReferenceLogItem;
 import software.aws.toolkits.eclipse.amazonq.views.model.InlineSuggestionCodeReference;
 
 public final class DefaultCodeReferenceLoggingService implements CodeReferenceLoggingService {
-    private static final String SEPARATOR = "----------------------------------------";
+    private static final String SEPARATOR = "----------------------------------------\n";
 
     private static DefaultCodeReferenceLoggingService instance;
 
@@ -77,7 +77,8 @@ public final class DefaultCodeReferenceLoggingService implements CodeReferenceLo
         StringBuilder sb = new StringBuilder();
         sb.append(SEPARATOR);
         sb.append(String.format("Reference with license: %s\n", licenseName));
-        sb.append(String.format("From %s (%s):\n", repository, repositoryUrl));
+        sb.append(String.format("From %s (%s)\n", repository, repositoryUrl));
+        sb.append(SEPARATOR);
         return sb.toString();
     }
 }

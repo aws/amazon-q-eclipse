@@ -5,6 +5,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggedListener;
@@ -45,17 +46,19 @@ public final class AmazonQCodeReferenceView extends ViewPart implements CodeRefe
     }
 
     private void appendLog(final String message) {
-        int boldStart = textArea.getCharCount();
-        int boldLength = message.split("\n", 2)[0].length();
+        Display.getDefault().asyncExec(() -> {
+            int boldStart = textArea.getCharCount();
+            int boldLength = message.split("\n", 2)[0].length();
 
-        StyleRange boldFirstLineStyleRange = new StyleRange();
-        boldFirstLineStyleRange.start = boldStart;
-        boldFirstLineStyleRange.length = boldLength;
-        boldFirstLineStyleRange.fontStyle = SWT.BOLD;
+            StyleRange boldFirstLineStyleRange = new StyleRange();
+            boldFirstLineStyleRange.start = boldStart;
+            boldFirstLineStyleRange.length = boldLength;
+            boldFirstLineStyleRange.fontStyle = SWT.BOLD;
 
-        textArea.append(message);
-        textArea.append("\n");
-        textArea.setStyleRange(boldFirstLineStyleRange);
+            textArea.append(message);
+            textArea.append("\n");
+            textArea.setStyleRange(boldFirstLineStyleRange);
+        });
     }
 
     @Override

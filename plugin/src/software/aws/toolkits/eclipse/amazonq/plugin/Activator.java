@@ -16,6 +16,8 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryS
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
+import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
+import software.aws.toolkits.eclipse.amazonq.util.DefaultCodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
 public class Activator extends AbstractUIPlugin {

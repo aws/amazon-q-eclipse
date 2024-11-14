@@ -158,7 +158,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
         normalSegmentCount = normalSegmentNum;
         doc.addDocumentListener(this);
-        System.out.println("Normal segment count: " + normalSegmentCount);
     }
 
     public List<IQInlineSuggestionSegment> getSegments() {

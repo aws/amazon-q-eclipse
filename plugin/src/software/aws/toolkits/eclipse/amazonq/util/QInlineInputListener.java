@@ -108,7 +108,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 if (((IQInlineBracket) segment).getSymbol() == '{') {
                     int firstNewLineAfter = qInvocationSessionInstance.getCurrentSuggestion().getInsertText()
                             .indexOf('\n', idxInSuggestion);
-                    brackets[firstNewLineAfter] = (IQInlineBracket) segment;
+                    if (firstNewLineAfter != -1) {
+                        brackets[firstNewLineAfter] = (IQInlineBracket) segment;
+                    }
                 } else {
                     brackets[idxInSuggestion] = (IQInlineBracket) segment;
                 }

@@ -9,6 +9,6 @@ import software.aws.toolkits.eclipse.amazonq.views.model.ExternalLink;
 public final class ReportAnIssueAction extends OpenUrlAction {
 
     public ReportAnIssueAction() {
-        super("Report an Issue", "amazonq_reportIssue", ExternalLink.GitHubIssues);
+        super("Report an Issue", "ellipses_reportIssue", ExternalLink.GitHubIssues);
     }
 }

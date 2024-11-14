@@ -202,6 +202,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 }
             }
         }
+        if (!session.getSuggestionAccepted()) {
+            toAppend += rightCtxBuf;
+        }
 
         IDocument doc = session.getViewer().getDocument();
         doc.removeDocumentListener(this);

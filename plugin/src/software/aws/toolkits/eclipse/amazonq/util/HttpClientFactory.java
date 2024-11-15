@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.ProxySelector;
 import java.net.URL;
 import java.net.http.HttpClient;
+import java.time.Duration;
 
 import software.amazon.awssdk.utils.StringUtils;
 
@@ -33,7 +34,8 @@ public final class HttpClientFactory {
                     if (customSslContext != null) {
                         builder.sslContext(ProxyUtil.getCustomSslContext());
                     }
-                    instance = builder.build();
+                    instance = builder.connectTimeout(Duration.ofSeconds(10))
+                            .build();
                 }
             }
         }

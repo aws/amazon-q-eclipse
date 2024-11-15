@@ -25,7 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public final class VersionManifestFetcher {
 
-    private static final int TIMEOUT_SECONDS = 10;
+    private static final int TIMEOUT_SECONDS = 30;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
 
     private final String manifestUrl;

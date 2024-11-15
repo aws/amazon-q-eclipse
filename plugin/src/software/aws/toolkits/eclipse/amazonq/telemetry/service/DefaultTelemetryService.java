@@ -17,6 +17,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
@@ -83,29 +84,37 @@ public final class DefaultTelemetryService implements TelemetryService {
             return;
         }
 
-        telemetryClient.postMetrics(PostMetricsRequest.builder()
-                .awsProduct(clientMetadata.getPluginName())
-                .awsProductVersion(clientMetadata.getPluginVersion())
-                .clientID(clientMetadata.getClientId())
-                .parentProduct(clientMetadata.getIdeName())
-                .parentProductVersion(clientMetadata.getIdeVersion())
-                .os(clientMetadata.getOSName())
-                .osVersion(clientMetadata.getOSVersion())
-                .metricData(datum)
-                .build());
+        try {
+            telemetryClient.postMetrics(PostMetricsRequest.builder()
+                    .awsProduct(clientMetadata.getPluginName())
+                    .awsProductVersion(clientMetadata.getPluginVersion())
+                    .clientID(clientMetadata.getClientId())
+                    .parentProduct(clientMetadata.getIdeName())
+                    .parentProductVersion(clientMetadata.getIdeVersion())
+                    .os(clientMetadata.getOSName())
+                    .osVersion(clientMetadata.getOSVersion())
+                    .metricData(datum)
+                    .build());
+        } catch (Exception e) {
+            Activator.getLogger().warn("Unable to emit telemetry: ", e);
+        }
     }
 
     public void emitFeedback(final String comment, final Sentiment sentiment) {
-        telemetryClient.postFeedback(PostFeedbackRequest.builder()
-                .awsProduct(clientMetadata.getPluginName())
-                .awsProductVersion(clientMetadata.getPluginVersion())
-                .parentProduct(clientMetadata.getIdeName())
-                .parentProductVersion(clientMetadata.getIdeVersion())
-                .os(clientMetadata.getOSName())
-                .osVersion(clientMetadata.getOSVersion())
-                .comment(comment)
-                .sentiment(sentiment)
-                .build());
+        try {
+            telemetryClient.postFeedback(PostFeedbackRequest.builder()
+                    .awsProduct(clientMetadata.getPluginName())
+                    .awsProductVersion(clientMetadata.getPluginVersion())
+                    .parentProduct(clientMetadata.getIdeName())
+                    .parentProductVersion(clientMetadata.getIdeVersion())
+                    .os(clientMetadata.getOSName())
+                    .osVersion(clientMetadata.getOSVersion())
+                    .comment(comment)
+                    .sentiment(sentiment)
+                    .build());
+        } catch (Exception e) {
+            Activator.getLogger().warn("Unable to send feedback: ", e);
+        }
     }
 
     private static ClientOverrideConfiguration.Builder nullDefaultProfileFile(final ClientOverrideConfiguration.Builder builder) {
@@ -129,19 +138,23 @@ public final class DefaultTelemetryService implements TelemetryService {
         if (sslContext != null) {
             httpClientBuilder.socketFactory(sslSocketFactory);
         }
+
         SdkHttpClient sdkHttpClient = httpClientBuilder.build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()
                 .credentialsProvider(AnonymousCredentialsProvider.create())
                 .region(region)
                 .httpClient(sdkHttpClient)
-                .overrideConfiguration(builder -> nullDefaultProfileFile(builder))
-                .build();
+                .overrideConfiguration(builder -> {
+                    nullDefaultProfileFile(builder);
+                    builder.retryStrategy(RetryMode.STANDARD);
+                }).build();
         AwsCredentialsProvider credentialsProvider = new AwsCognitoCredentialsProvider(identityPool, cognitoClient);
         return ToolkitTelemetryClient.builder()
                 .region(region)
                 .httpClient(sdkHttpClient)
                 .credentialsProvider(credentialsProvider)
                 .endpointOverride(URI.create(endpoint))
+                .overrideConfiguration(o -> o.retryStrategy(RetryMode.STANDARD))
                 .build();
     }
 

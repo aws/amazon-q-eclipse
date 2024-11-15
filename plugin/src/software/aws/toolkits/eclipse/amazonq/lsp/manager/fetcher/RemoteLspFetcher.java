@@ -38,7 +38,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
 public final class RemoteLspFetcher implements LspFetcher {
 
-    private static final int TIMEOUT_SECONDS = 10;
+    private static final int TIMEOUT_SECONDS = 30;
 
     private final Manifest manifest;
     private final VersionRange versionRange;

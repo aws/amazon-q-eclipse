@@ -35,6 +35,7 @@ import org.eclipse.swt.widgets.Text;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -111,7 +112,14 @@ public class FeedbackDialog extends Dialog {
         String comment = commentBox.getText();
         Activator.getLogger().info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
         ThreadingUtils.executeAsyncTask(() -> Activator.getTelemetryService().emitFeedback(comment, selectedSentiment));
+        UiTelemetryProvider.emitClickEventMetric("feedback_shareFeedbackDialogCancelButton");
         super.okPressed();
+    }
+
+    @Override
+    protected final void cancelPressed() {
+        UiTelemetryProvider.emitClickEventMetric("feedback_shareFeedbackDialogCancelButton");
+        super.cancelPressed();
     }
 
     private Font magnifyFontSize(final Font originalFont, final int fontSize) {
@@ -148,6 +156,8 @@ public class FeedbackDialog extends Dialog {
         createShareFeedbackSection(container);
         createQuestionSection(container);
 
+        UiTelemetryProvider.emitClickEventMetric("feedback_openShareFeedbackDialogButton");
+
         return container;
     }
 
@@ -158,9 +168,11 @@ public class FeedbackDialog extends Dialog {
         headlineContainer.setLayout(rowLayout);
 
         createLabelWithFontSize(headlineContainer, "Looking for help? View the", 14);
-        createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/");
+        createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/",
+                "feedback_gettingStartedButton");
         createLabelWithFontSize(headlineContainer, "or search our", 14);
-        createLinkLabel(headlineContainer, "Documentation", 14, "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html");
+        createLinkLabel(headlineContainer, "Documentation", 14, "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html",
+                "feedback_documentationButton");
     }
 
     private void createJoinUsOnGithubSection(final Composite container) {
@@ -183,15 +195,18 @@ public class FeedbackDialog extends Dialog {
 
         createImageLabel(reportRequestContributeContainer, "icons/ReportAnIssue.png");
         createLinkLabel(reportRequestContributeContainer, "Report an issue", SWT.NONE,
-            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()));
+            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()),
+            "feedback_reportIssueButton");
 
         createImageLabel(reportRequestContributeContainer, "icons/RequestFeature.png");
         createLinkLabel(reportRequestContributeContainer, "Request a feature", SWT.NONE,
-            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()));
+            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()),
+            "feedback_requestFeatureButton");
 
         ThemeDetector themeDetector = new ThemeDetector();
         createImageLabel(reportRequestContributeContainer, themeDetector.isDarkTheme() ? "icons/ViewCode-White.png" : "icons/ViewCode-Black.png");
-        createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE, "https://github.com/aws/amazon-q-eclipse/");
+        createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE, "https://github.com/aws/amazon-q-eclipse/",
+                "feedback_viewSourceCodeButton");
     }
 
     private void createShareFeedbackSection(final Composite container) {
@@ -226,6 +241,7 @@ public class FeedbackDialog extends Dialog {
             public void widgetSelected(final SelectionEvent e) {
                 negativeSentimentButton.getRadioButton().setSelection(false);
                 selectedSentiment = Sentiment.POSITIVE;
+                UiTelemetryProvider.emitClickEventMetric("feedback_positiveSentimentButton");
             }
         });
         negativeSentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
@@ -233,6 +249,7 @@ public class FeedbackDialog extends Dialog {
             public void widgetSelected(final SelectionEvent e) {
                 positiveSentimentButton.getRadioButton().setSelection(false);
                 selectedSentiment = Sentiment.NEGATIVE;
+                UiTelemetryProvider.emitClickEventMetric("feedback_negativeSentimentButton");
             }
         });
 
@@ -295,7 +312,8 @@ public class FeedbackDialog extends Dialog {
         label.setFont(magnifyFontSize(label.getFont(), fontSize));
     }
 
-    private void createLinkLabel(final Composite parent, final String text, final int fontSize, final String url) {
+    private void createLinkLabel(final Composite parent, final String text, final int fontSize, final String url,
+            final String telemetryLabel) {
         Label label = new Label(parent, SWT.NONE);
         label.setText(text);
         label.setFont(magnifyFontSize(label.getFont(), fontSize));
@@ -305,6 +323,7 @@ public class FeedbackDialog extends Dialog {
             @Override
             public void mouseDown(final MouseEvent e) {
                 PluginUtils.openWebpage(url);
+                UiTelemetryProvider.emitClickEventMetric(telemetryLabel);
             }
         });
     }

@@ -21,8 +21,8 @@ public final class DefaultAuthCredentialsService implements AuthCredentialsServi
     private LspEncryptionManager encryptionManager;
 
     private DefaultAuthCredentialsService(final Builder builder) {
-        this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
-        this.encryptionManager = Objects.requireNonNull(builder.encryptionManager, "encryption manager cannot be null");
+        this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider must not be null");
+        this.encryptionManager = Objects.requireNonNull(builder.encryptionManager, "encryptionManager must not be null");
     }
 
     public static Builder builder() {

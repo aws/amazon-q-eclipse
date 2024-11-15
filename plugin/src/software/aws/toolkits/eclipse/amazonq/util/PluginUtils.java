@@ -67,7 +67,7 @@ public final class PluginUtils {
         try {
             PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(url));
         } catch (Exception ex) {
-            Activator.getLogger().warn("Error while trying to open an external web page:", ex);
+            Activator.getLogger().warn("Error while trying to open an external web page", ex);
         }
     }
 

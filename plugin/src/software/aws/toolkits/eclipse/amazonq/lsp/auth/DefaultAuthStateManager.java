@@ -77,8 +77,8 @@ public final class DefaultAuthStateManager implements AuthStateManager {
     @Override
     public void toExpired() {
         if (loginType == null || loginType.equals(LoginType.NONE) || loginParams == null) {
-            Activator.getLogger().error("Attempted to switch to expired state but missing required parameteres for"
-                    + " re-authentication. Switching to logged out state instead.");
+            Activator.getLogger().error("Attempted to transition to an expired state but the required parameters for"
+                    + " re-authentication are not available. Transitioning to a logged out state instead.");
             toLoggedOut();
             return;
         }
@@ -128,7 +128,11 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         String ssoTokenId = authPluginStore.getSsoTokenId();
 
         if (loginType.equals(LoginType.NONE)) {
-            toLoggedOut();
+            try {
+                toLoggedOut();
+            } catch (Exception ex) {
+                Activator.getLogger().error("Failed to transition to a logged out state after syncing auth state with the persistent store", ex);
+            }
             return;
         }
 
@@ -148,8 +152,8 @@ public final class DefaultAuthStateManager implements AuthStateManager {
          */
         try {
             toLoggedIn(loginType, loginParams, ssoTokenId);
-        } catch (IllegalArgumentException ex) {
-            Activator.getLogger().warn("Failed to transition to logged in state when syncing with plugin store: " + ex.getMessage());
+        } catch (Exception ex) {
+            Activator.getLogger().error("Failed to transition to a logged in state after syncing auth state with the persistent store", ex);
             toLoggedOut();
         }
     }

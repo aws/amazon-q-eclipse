@@ -6,4 +6,5 @@ import org.eclipse.swt.graphics.GC;
 
 public interface IQInlineSuggestionSegment {
     void render(GC gc, int currentCaretOffset);
+    void cleanUp();
 }

@@ -52,11 +52,11 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LanguageServerLocation;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 
 public final class RemoteLspFetcherTest {
     private static VersionRange versionRange = new VersionRange("[1.0.0, 2.0.0]");
@@ -153,7 +153,7 @@ public final class RemoteLspFetcherTest {
 
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
 
-        assertInstallResult(result, LanguageServerLocation.Cache);
+        assertInstallResult(result, LanguageServerLocation.CACHE);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
     }
 
@@ -168,7 +168,7 @@ public final class RemoteLspFetcherTest {
 
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
 
-        assertInstallResult(result, LanguageServerLocation.Cache);
+        assertInstallResult(result, LanguageServerLocation.CACHE);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
     }
 
@@ -201,7 +201,7 @@ public final class RemoteLspFetcherTest {
 
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
 
-        assertInstallResult(result, LanguageServerLocation.Remote);
+        assertInstallResult(result, LanguageServerLocation.REMOTE);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
     }
 
@@ -225,7 +225,7 @@ public final class RemoteLspFetcherTest {
 
         var expectedAssetDirectory = Paths.get(tempDir.toString(), oneAdditionalVersion);
         assertEquals(expectedAssetDirectory.toString(), result.assetDirectory());
-        assertEquals(LanguageServerLocation.Remote, result.location());
+        assertEquals(LanguageServerLocation.REMOTE, result.location());
         assertEquals(oneAdditionalVersion, result.version());
 
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));

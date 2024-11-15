@@ -6,11 +6,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ErrorParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
@@ -33,7 +30,7 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<Either<String, ErrorParams>> sendChatPrompt(final String tabId, final EncryptedChatParams encryptedChatRequestParams) {
+    public CompletableFuture<String> sendChatPrompt(final String tabId, final EncryptedChatParams encryptedChatRequestParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
 
         var response = chatMessage.sendChatPrompt(encryptedChatRequestParams);
@@ -41,10 +38,10 @@ public final class ChatMessageProvider {
         // blocked when there is an outgoing request
         inflightRequestByTabId.put(tabId, response);
 
-        return handleResponseChatResponse(tabId, response);
+        return handleChatResponse(tabId, response);
     }
 
-    public CompletableFuture<Either<String, ErrorParams>> sendQuickAction(final String tabId, final EncryptedQuickActionParams encryptedQuickActionParams) {
+    public CompletableFuture<String> sendQuickAction(final String tabId, final EncryptedQuickActionParams encryptedQuickActionParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
 
         var response = chatMessage.sendQuickAction(encryptedQuickActionParams);
@@ -52,22 +49,12 @@ public final class ChatMessageProvider {
         // blocked when there is an outgoing request
         inflightRequestByTabId.put(tabId, response);
 
-        return handleResponseChatResponse(tabId, response);
+        return handleChatResponse(tabId, response);
     }
 
-    private CompletableFuture<Either<String, ErrorParams>> handleResponseChatResponse(final String tabId, final CompletableFuture<String> response) {
-        return response.handle((result, exception) -> {
+    private CompletableFuture<String> handleChatResponse(final String tabId, final CompletableFuture<String> response) {
+        return response.whenComplete((result, exception) -> {
             inflightRequestByTabId.remove(tabId);
-
-            if (exception != null) {
-                Activator.getLogger().error("An error occurred while processing chat request.", exception);
-                String errorTitle = "An error occurred while processing your request.";
-                String errorMessage = String.format("Details: %s", exception.getMessage());
-                ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
-                return Either.forRight(errorParams);
-            } else {
-                return Either.forLeft(result);
-            }
         });
     }
 

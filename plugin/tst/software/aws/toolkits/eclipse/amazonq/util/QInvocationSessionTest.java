@@ -57,8 +57,8 @@ import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 public class QInvocationSessionTest {
 
     private static final ITextEditor MOCK_EDITOR = mock(ITextEditor.class);
-    private static final InlineCompletionParams POTENT_PARAM = mock(InlineCompletionParams.class);
-    private static final InlineCompletionParams IMPOTENT_PARAM = mock(InlineCompletionParams.class);
+    private static final InlineCompletionParams POTENT_PARAM = mock(InlineCompletionParams.class, RETURNS_DEEP_STUBS);
+    private static final InlineCompletionParams IMPOTENT_PARAM = mock(InlineCompletionParams.class, RETURNS_DEEP_STUBS);
 
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
@@ -103,6 +103,9 @@ public class QInvocationSessionTest {
                 return null;
             }
         }).when(displayMock).asyncExec(any(Runnable.class));
+
+        when(POTENT_PARAM.getContext().getTriggerKind()).thenReturn(InlineCompletionTriggerKind.Automatic);
+        when(IMPOTENT_PARAM.getContext().getTriggerKind()).thenReturn(InlineCompletionTriggerKind.Automatic);
     }
 
     @AfterAll

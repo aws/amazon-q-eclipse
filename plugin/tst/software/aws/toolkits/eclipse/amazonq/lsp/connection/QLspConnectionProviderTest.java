@@ -149,12 +149,12 @@ public final class QLspConnectionProviderTest {
         provider.start();
 
         LoggingService loggerMock = activatorStaticMockExtension.getMock(LoggingService.class);
-        verify(loggerMock).info("Initializing encrypted communication with Amazon Q Lsp Server");
+        verify(loggerMock).info("Initializing communication with Amazon Q Lsp Server");
 
         LspEncryptionManager lspEncryptionManagerMock = lspEncryptionManagerStaticMockExtension.getMock(
                 LspEncryptionManager.class
         );
-        verify(lspEncryptionManagerMock).initializeEncrypedCommunication(mockOutputStream);
+        verify(lspEncryptionManagerMock).initializeEncryptedCommunication(mockOutputStream);
     }
 
     @Test
@@ -176,12 +176,12 @@ public final class QLspConnectionProviderTest {
         );
 
         doThrow(testException).when(lspEncryptionManagerMock)
-                .initializeEncrypedCommunication(any());
+                .initializeEncryptedCommunication(any());
 
         provider.start();
 
         LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
-        verify(loggingServiceMock).error("Error occured while initializing encrypted communication with Amazon Q Lsp Server",
+        verify(loggingServiceMock).error("Error occured while initializing communication with Amazon Q Lsp Server",
                 testException);
     }
 

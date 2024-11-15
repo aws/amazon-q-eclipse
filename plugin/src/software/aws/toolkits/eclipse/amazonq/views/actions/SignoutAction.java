@@ -31,7 +31,7 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
                 return;
             }
 
-            Activator.getLogger().info("Signed out of Amazon q");
+            Activator.getLogger().info("Signed out of Amazon Q");
             Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
             ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
         });

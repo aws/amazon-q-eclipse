@@ -190,7 +190,7 @@ public class PluginUtilsTest {
 
             String testUrl = "https://amazon.com";
             PluginUtils.openWebpage(testUrl);
-            verify(mockLogger).warn(eq("Error while trying to open an external web page:"), any(Throwable.class));
+            verify(mockLogger).warn(eq("Error while trying to open an external web page"), any(Throwable.class));
         }
     }
 

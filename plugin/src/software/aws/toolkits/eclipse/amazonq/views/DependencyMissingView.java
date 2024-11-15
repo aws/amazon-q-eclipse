@@ -94,7 +94,7 @@ public final class DependencyMissingView extends CallToActionView {
                         PluginUtils.openWebpage(url);
                     }
                 } catch (Exception ex) {
-                    Activator.getLogger().error("Error occured when attempting open url", ex);
+                    Activator.getLogger().error("Error occured when attempting to open url", ex);
                 }
             }
         };
@@ -114,7 +114,7 @@ public final class DependencyMissingView extends CallToActionView {
                 });
                 return !viewController.hasWebViewDependency();
             } catch (Exception ex) {
-                Activator.getLogger().error("Failed to check web view dependency", ex);
+                Activator.getLogger().error("Failed to check webview dependency", ex);
                 return true; // Safer to display dependency missing view by default than give access
             }
         });

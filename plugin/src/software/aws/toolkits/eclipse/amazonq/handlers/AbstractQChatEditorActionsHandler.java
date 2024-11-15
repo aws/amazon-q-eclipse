@@ -21,7 +21,11 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
 
     @Override
     public final boolean isEnabled() {
-        return Activator.getLoginService().getAuthState().isLoggedIn();
+        try {
+            return Activator.getLoginService().getAuthState().isLoggedIn();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     protected final void executeGenericCommand(final String genericCommandVerb) {

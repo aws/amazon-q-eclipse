@@ -23,7 +23,6 @@ public final class UiTelemetryProvider {
             .result(Result.SUCCEEDED)
             .build();
         Activator.getTelemetryService().emitMetric(metadata);
-        Activator.getLogger().info("UI EVENT: " + elementId);
     }
 
 }

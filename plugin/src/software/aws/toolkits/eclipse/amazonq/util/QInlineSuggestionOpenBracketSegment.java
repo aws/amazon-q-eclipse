@@ -128,4 +128,8 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
     public char getSymbol() {
         return symbol;
     }
+
+    @Override
+    public void cleanUp() {
+    }
 }

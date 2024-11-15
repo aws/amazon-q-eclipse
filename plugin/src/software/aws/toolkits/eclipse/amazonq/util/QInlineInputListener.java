@@ -35,6 +35,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
     private int distanceTraversed = 0;
+    private int normalSegmentCount = 0;
+    private String rightCtxBuf = "";
 
     private enum PreprocessingCategory {
         NONE,
@@ -58,9 +60,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     public QInlineInputListener(final StyledText widget) {
         this.widget = widget;
         QInvocationSession session = QInvocationSession.getInstance();
-        ITextViewer viewer = session.getViewer();
-        IDocument doc = viewer.getDocument();
-        doc.addDocumentListener(this);
         ITextEditor editor = session.getEditor();
         Optional<AutoCloseBracketConfig> bracketConfig = QEclipseEditorUtils.getAutoCloseSettings(editor);
         // TODO: make this config all encompassing. We would also want information such
@@ -89,24 +88,47 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
      * toggled to.
      */
     public void onNewSuggestion() {
-        var qInvocationSessionInstance = QInvocationSession.getInstance();
-        if (qInvocationSessionInstance == null) {
-            return;
+        QInvocationSession session = QInvocationSession.getInstance();
+        // We want to modify the document prior to attaching document listener
+        // For that reason, we should move this document listener to onNewSuggestion.
+        // - Check to see if the right context exists.
+        // - If it does, check to see if the suggestion spans more than 1 line.
+        // - If it does, save the right context on the same line.
+        // - Add in a segment to render the strike through right context.
+        // - Delete the right context (excluding the new line).
+        ITextViewer viewer = session.getViewer();
+        IDocument doc = viewer.getDocument();
+        doc.removeDocumentListener(this);
+        if (!rightCtxBuf.isEmpty() && normalSegmentCount > 1) {
+            try {
+                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        session.getInvocationOffset());
+                doc.replace(adjustedOffset, 0, rightCtxBuf);
+            } catch (BadLocationException e) {
+                Activator.getLogger().error(e.toString());
+            }
         }
         if (!suggestionSegments.isEmpty()) {
             suggestionSegments.clear();
         }
-        numSuggestionLines = qInvocationSessionInstance.getCurrentSuggestion().getInsertText().split("\\R").length;
+        numSuggestionLines = session.getCurrentSuggestion().getInsertText().split("\\R").length;
         List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory
-                .getSegmentsFromSuggestion(qInvocationSessionInstance);
-        brackets = new IQInlineBracket[qInvocationSessionInstance.getCurrentSuggestion().getInsertText().length()];
-        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
+                .getSegmentsFromSuggestion(session);
+        brackets = new IQInlineBracket[session.getCurrentSuggestion().getInsertText().length()];
+        int invocationOffset = session.getInvocationOffset();
+        int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+        int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
+        String contentInLine = widget.getLine(curLineInDoc);
+        if (lineIdx < contentInLine.length()) {
+            rightCtxBuf = contentInLine.substring(lineIdx);
+        }
+        int normalSegmentNum = 0;
         for (var segment : segments) {
             if (segment instanceof IQInlineBracket) {
                 int offset = ((IQInlineBracket) segment).getRelevantOffset();
                 int idxInSuggestion = offset - invocationOffset;
                 if (((IQInlineBracket) segment).getSymbol() == '{') {
-                    int firstNewLineAfter = qInvocationSessionInstance.getCurrentSuggestion().getInsertText()
+                    int firstNewLineAfter = session.getCurrentSuggestion().getInsertText()
                             .indexOf('\n', idxInSuggestion);
                     if (firstNewLineAfter != -1) {
                         brackets[firstNewLineAfter] = (IQInlineBracket) segment;
@@ -120,8 +142,22 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 }
             } else {
                 suggestionSegments.add(segment);
+                normalSegmentNum++;
             }
         }
+        if (normalSegmentNum > 1 && !rightCtxBuf.isEmpty()) {
+            QInlineSuggestionRightContextSegment rightCtxSegment = IQInlineSuggestionSegmentFactory
+                    .getRightCtxSegment(rightCtxBuf, session.getCurrentSuggestion().getInsertText().split("\\R", 2)[0]);
+            suggestionSegments.add(rightCtxSegment);
+            try {
+                int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, invocationOffset);
+                doc.replace(expandedOffset, rightCtxBuf.length(), "");
+            } catch (BadLocationException e) {
+                Activator.getLogger().error("Error striking out document right context" + e.toString());
+            }
+        }
+        normalSegmentCount = normalSegmentNum;
+        doc.addDocumentListener(this);
     }
 
     public List<IQInlineSuggestionSegment> getSegments() {
@@ -138,7 +174,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             if (!(bracket instanceof QInlineSuggestionOpenBracketSegment)) {
                 continue;
             }
-            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved()) {
+            // TODO: customize this logic based on the file type:
+            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved() && bracket.getSymbol() != '{') {
                 outstandingPadding++;
             }
         }
@@ -177,15 +214,35 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 }
             }
         }
+        if (!session.getSuggestionAccepted()) {
+            toAppend += rightCtxBuf;
+        }
+
+        suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
 
         IDocument doc = session.getViewer().getDocument();
         doc.removeDocumentListener(this);
         int idx = widget.getCaretOffset() - session.getInvocationOffset();
         if (!toAppend.isEmpty()) {
             try {
-                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
-                        session.getInvocationOffset()) + idx;
-                doc.replace(adjustedOffset, outstandingPadding, toAppend);
+                int currentOffset = session.getInvocationOffset() + idx;
+                int expandedCurrentOffset =  QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(), currentOffset);
+                int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
+                int startLineOffset = doc.getLineOffset(lineNumber);
+                int lineLength = doc.getLineLength(lineNumber);
+                int adjustedOffset = startLineOffset + lineLength;
+                // We want to insert right before \n, if there is one.
+                adjustedOffset = Math.max(adjustedOffset - 1, 0);
+                int invocationOffset = session.getInvocationOffset();
+                int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+                int lineIdx = expandedCurrentOffset - startLineOffset;
+                String contentInLine = widget.getLine(curLineInDoc);
+                String currentRightCtx = "\n";
+                if (lineIdx < contentInLine.length()) {
+                    currentRightCtx = contentInLine.substring(lineIdx);
+                }
+                int distanceToNewLine = currentRightCtx.length() - 1;
+                doc.replace(adjustedOffset, Math.min(distanceToNewLine, outstandingPadding), toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }
@@ -389,15 +446,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-//            if (!isOutOfBounds) {
-//                System.out.println("input is: "
-//                        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-//                System.out.println("suggestion is: "
-//                        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-//                                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
-//            } else {
-//                System.out.println("Out of bounds");
-//            }
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
                     session.transitionToDecisionMade();

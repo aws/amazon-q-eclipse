@@ -13,7 +13,6 @@ import java.util.UUID;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
@@ -80,7 +79,7 @@ public final class ChatCommunicationManager {
 
                             EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(
                                 encryptedMessage,
-                                token   
+                                token
                             );
 
                             return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);

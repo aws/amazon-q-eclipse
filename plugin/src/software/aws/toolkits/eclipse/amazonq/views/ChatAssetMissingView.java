@@ -43,7 +43,7 @@ public final class ChatAssetMissingView extends BaseView {
                 Optional<String> chatAsset = chatAssetProvider.get();
                 return !chatAsset.isPresent();
             } catch (Exception ex) {
-                Activator.getLogger().error("Failed to verify Chat content is retrievable", ex);
+                Activator.getLogger().error("Failed to verify Amazon Q chat content is retrievable", ex);
                 return true; // Safer to display chat asset missing view by default than give access
             }
         });

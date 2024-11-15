@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -19,6 +20,8 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.AwsTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public class AmazonQPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
@@ -26,13 +29,21 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
     public static final String TELEMETRY_OPT_IN = "telemtryOptIn";
     public static final String Q_DATA_SHARING = "qDataSharing";
 
+    private boolean isTelemetryOptInChecked;
+    private boolean isQDataSharingOptInChecked;
+
+    private IPreferenceStore preferenceStore;
+
     public AmazonQPreferencePage() {
         super(GRID);
+        preferenceStore = Activator.getDefault().getPreferenceStore();
     }
 
     @Override
     public final void init(final IWorkbench workbench) {
-        setPreferenceStore(Activator.getDefault().getPreferenceStore());
+        isTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
+        isQDataSharingOptInChecked = preferenceStore.getBoolean(Q_DATA_SHARING);
+        setPreferenceStore(preferenceStore);
     }
 
     @Override
@@ -76,6 +87,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         telemetryLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
+                UiTelemetryProvider.emitClickEventMetric("preferences_telemetryLink");
                 PluginUtils.openWebpage(event.text);
             }
         });
@@ -100,6 +112,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         dataSharingLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
+                UiTelemetryProvider.emitClickEventMetric("preferences_dataSharingLink");
                 PluginUtils.openWebpage(event.text);
             }
         });
@@ -113,5 +126,39 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         link.setLayoutData(linkData);
         return link;
     }
+
+    @Override
+    protected final void performDefaults() {
+        super.performDefaults();
+        sendUpdatedPreferences();
+    }
+
+    @Override
+    protected final void performApply() {
+        super.performApply();
+        sendUpdatedPreferences();
+    }
+
+    @Override
+    public final boolean performOk() {
+        boolean result = super.performOk();
+        sendUpdatedPreferences();
+        return result;
+    }
+
+    private void sendUpdatedPreferences() {
+        Boolean newIsTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
+        if (newIsTelemetryOptInChecked != isTelemetryOptInChecked) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.telemetry", newIsTelemetryOptInChecked.toString());
+            isTelemetryOptInChecked = newIsTelemetryOptInChecked;
+        }
+
+        Boolean newIsQDataSharingOptInChanged = preferenceStore.getBoolean(Q_DATA_SHARING);
+        if (newIsQDataSharingOptInChanged != isQDataSharingOptInChecked) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.dataSharing", newIsQDataSharingOptInChanged.toString());
+            isQDataSharingOptInChecked = newIsQDataSharingOptInChanged;
+        }
+    }
+
 }
 

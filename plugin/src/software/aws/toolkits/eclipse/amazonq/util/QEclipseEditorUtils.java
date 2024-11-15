@@ -29,6 +29,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 
 import org.eclipse.jface.viewers.ISelection;
@@ -346,5 +351,29 @@ public final class QEclipseEditorUtils {
             break;
         }
         return Optional.empty();
+    }
+
+    public static void showToast(final String message, final Display display, final int ttlInMs) {
+        Shell parentShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+        Shell toast = new Shell(parentShell, SWT.ON_TOP | SWT.NO_FOCUS | SWT.TOOL);
+        toast.setBackground(display.getSystemColor(SWT.COLOR_INFO_BACKGROUND));
+        toast.setAlpha(230);
+        toast.setLayout(new FillLayout());
+
+        Label label = new Label(toast, SWT.NONE);
+        label.setText(message);
+        Point labelSize = label.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        toast.setSize(labelSize.x + 10, labelSize.y + 8);
+        Point size = toast.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        Point parentSize = parentShell.getSize();
+        Point parentLocation = parentShell.getLocation();
+        int x = parentLocation.x + parentSize.x - size.x - 20;
+        int y = parentLocation.y + parentSize.y - size.y - 40;
+        toast.setLocation(x, y);
+
+        toast.open();
+        display.timerExec(ttlInMs, () -> {
+            toast.close();
+        });
     }
 }

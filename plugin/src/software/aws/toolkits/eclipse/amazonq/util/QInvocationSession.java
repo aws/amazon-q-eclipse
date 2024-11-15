@@ -177,6 +177,11 @@ public final class QInvocationSession extends QResource {
                         }
                         Activator.getLogger()
                                 .info(uuid + " returned with no result. Time used: " + timeUsedInMs + " ms");
+                        if (params.getContext().getTriggerKind() == InlineCompletionTriggerKind.Invoke) {
+                            Display display = Display.getDefault();
+                            String message = "Q returned no suggestions";
+                            QEclipseEditorUtils.showToast(message, display, 2000);
+                        }
                         return;
                     } else {
                         Activator.getLogger().info(uuid + " returned with " + newSuggestions.size()

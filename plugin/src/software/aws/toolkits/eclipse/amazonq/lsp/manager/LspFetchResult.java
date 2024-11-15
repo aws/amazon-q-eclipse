@@ -3,6 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.manager;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LanguageServerLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 
 public record LspFetchResult(String assetDirectory, String version, LanguageServerLocation location) { }

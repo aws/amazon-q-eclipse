@@ -30,11 +30,11 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LanguageServerLocation;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 
 public final class RemoteLspFetcher implements LspFetcher {
 
@@ -76,7 +76,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         if (hasValidCache(contents, downloadDirectory)) {
             logMessageWithLicense(String.format("Launching Amazon Q language server v%s from local cache %s",
                     serverVersion.toString(), downloadDirectory), artifactVersion.get().thirdPartyLicenses());
-            return new LspFetchResult(downloadDirectory.toString(), serverVersion, LanguageServerLocation.Cache);
+            return new LspFetchResult(downloadDirectory.toString(), serverVersion, LanguageServerLocation.CACHE);
         }
 
         // delete invalid local cache
@@ -88,7 +88,7 @@ public final class RemoteLspFetcher implements LspFetcher {
             logMessageWithLicense(String.format("Installing Amazon Q language server v%s to %s",
                     serverVersion.toString(), downloadDirectory.toString()),
                     artifactVersion.get().thirdPartyLicenses());
-            return new LspFetchResult(downloadDirectory.toString(), serverVersion, LanguageServerLocation.Remote);
+            return new LspFetchResult(downloadDirectory.toString(), serverVersion, LanguageServerLocation.REMOTE);
         }
 
         // if unable to retrieve / validate contents from remote location, cleanup
@@ -109,7 +109,7 @@ public final class RemoteLspFetcher implements LspFetcher {
                     "Unable to install Amazon Q Language Server v%s. Launching a previous version from: %s",
                     serverVersion, fallbackDir.toString()), fallBackLspVersion.get().thirdPartyLicenses());
 
-            return new LspFetchResult(fallbackDir.toString(), fallbackVersion, LanguageServerLocation.Fallback);
+            return new LspFetchResult(fallbackDir.toString(), fallbackVersion, LanguageServerLocation.FALLBACK);
         }
 
         throw new AmazonQPluginException("Unable to find a compatible version of Amazon Q Language Server.");

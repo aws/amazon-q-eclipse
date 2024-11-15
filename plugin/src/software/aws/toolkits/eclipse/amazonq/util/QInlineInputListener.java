@@ -174,7 +174,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             if (!(bracket instanceof QInlineSuggestionOpenBracketSegment)) {
                 continue;
             }
-            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved()) {
+            // TODO: customize this logic based on the file type:
+            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved() && bracket.getSymbol() != '{') {
                 outstandingPadding++;
             }
         }

@@ -225,8 +225,14 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         int idx = widget.getCaretOffset() - session.getInvocationOffset();
         if (!toAppend.isEmpty()) {
             try {
-                int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
-                        session.getInvocationOffset()) + idx;
+                int currentOffset = session.getInvocationOffset() + idx;
+                int expandedCurrentOffset =  QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(), currentOffset);
+                int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
+                int startLineOffset = doc.getLineOffset(lineNumber);
+                int lineLength = doc.getLineLength(lineNumber);
+                int adjustedOffset = startLineOffset + lineLength;
+                // We want to insert right before \n, if there is one.
+                adjustedOffset = Math.max(adjustedOffset - 1, 0);
                 doc.replace(adjustedOffset, outstandingPadding, toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
@@ -431,15 +437,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-//            if (!isOutOfBounds) {
-//                System.out.println("input is: "
-//                        + input.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace(' ', 's'));
-//                System.out.println("suggestion is: "
-//                        + currentSuggestion.substring(distanceTraversed, distanceTraversed + input.length())
-//                                .replace("\n", "\\n").replace("\r", "\\r".replace("\t", "\\t").replace(' ', 's')));
-//            } else {
-//                System.out.println("Out of bounds");
-//            }
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
                     session.transitionToDecisionMade();

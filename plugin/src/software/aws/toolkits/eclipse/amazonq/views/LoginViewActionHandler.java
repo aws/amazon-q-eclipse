@@ -58,7 +58,6 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 });
                 break;
             case CANCEL_LOGIN:
-                Activator.getLogger().info("cancelLogin command received");
                 if (isLoginTaskRunning) {
                     loginTask.cancel(true);
                     isLoginTaskRunning = false;
@@ -91,7 +90,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                 browser.execute("document.oncontextmenu = e => e.preventDefault();");
                 break;
             default:
-                System.out.println("Unknown command: " + parsedCommand.getCommand());
+                System.out.println("Unexpected command received from Amazon Q Login: " + parsedCommand.getCommand());
                 break;
         }
     }

@@ -34,7 +34,7 @@ public class LoginViewCommandParser implements ViewCommandParser {
 
                 return Optional.ofNullable(parsedCommand);
             } catch (JsonProcessingException e) {
-                Activator.getLogger().error("Error parsing webview command JSON: " + e.getMessage());
+                Activator.getLogger().error("Error parsing Amazon Q Login view command JSON: " + e.getMessage());
             }
         }
         return Optional.empty();

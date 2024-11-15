@@ -75,7 +75,6 @@ public final class ViewVisibilityManager {
                 IWorkbenchPage page = window.getActivePage();
                 if (page != null) {
                     if (viewIsAlreadyOpen(page, viewId)) {
-                        Activator.getLogger().info(viewId + " is already the active view.");
                         return;
                     }
                     // Hide other Views
@@ -90,16 +89,15 @@ public final class ViewVisibilityManager {
                             try {
                                 page.hideView(viewRef);
                             } catch (Exception e) {
-                                Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
+                                Activator.getLogger().error("Error occurred while hiding view: " + viewId, e);
                             }
                         }
                     }
                     // Show requested view
                     try {
                         page.showView(viewId);
-                        Activator.getLogger().info("Showing view " + viewId);
                     } catch (Exception e) {
-                        Activator.getLogger().error("Error occurred while showing view " + viewId, e);
+                        Activator.getLogger().error("Error occurred while showing view: " + viewId, e);
                     }
                 }
             }
@@ -112,14 +110,12 @@ public final class ViewVisibilityManager {
             IWorkbenchPage page = window.getActivePage();
             if (page != null) {
                 if (viewIsAlreadyOpen(page, viewId)) {
-                    Activator.getLogger().info(viewId + " is already the active view.");
                     return;
                 }
                 try {
                     page.showView(viewId);
-                    Activator.getLogger().info("Showing view " + viewId);
                 } catch (PartInitException e) {
-                    Activator.getLogger().error("Error occurred while opening view " + viewId, e);
+                    Activator.getLogger().error("Error occurred while showing view: " + viewId, e);
                 }
             }
         }

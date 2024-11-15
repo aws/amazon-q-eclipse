@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
@@ -15,15 +17,18 @@ import java.util.Optional;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteLspFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.VersionManifestFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LanguageServerLocation;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class DefaultLspManager implements LspManager {
 
@@ -125,7 +130,7 @@ public final class DefaultLspManager implements LspManager {
 
         if (!serverDirectory.isEmpty() || !clientDirectory.isEmpty() || !serverCommand.isEmpty() || !serverCommandArgs.isEmpty()) {
             var result = new LspInstallResult();
-            result.setLocation(LanguageServerLocation.Override);
+            result.setLocation(LanguageServerLocation.OVERRIDE);
             result.setServerDirectory(serverDirectory);
             result.setClientDirectory(clientDirectory);
             result.setServerCommand(serverCommand);
@@ -141,13 +146,27 @@ public final class DefaultLspManager implements LspManager {
     }
 
     Manifest fetchManifest() {
+        var args = new RecordLspSetupArgs();
+        var start = Instant.now();
         try {
             var manifestFetcher = new VersionManifestFetcher(manifestUrl);
-            return manifestFetcher.fetch()
+            var manifest = manifestFetcher.fetch()
                     .orElseThrow(() -> new AmazonQPluginException("Failed to retrieve language server manifest"));
+
+            emitGetManifest(Result.SUCCEEDED, start, args, manifest);
+            return manifest;
         } catch (Exception e) {
+            emitGetManifest(Result.FAILED, start, args, null);
             throw new AmazonQPluginException("Failed to retrieve Amazon Q language server manifest", e);
         }
+    }
+
+    private void emitGetManifest(final Result result, final Instant start, final RecordLspSetupArgs args, final Manifest manifest) {
+        args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        if (manifest != null) {
+            args.setManifestSchemaVersion(manifest.manifestSchemaVersion());
+        }
+        LanguageServerTelemetryProvider.emitSetupGetManifest(result, args);
     }
 
     private void validateAndConfigureLsp(final LspInstallResult result) throws IOException {

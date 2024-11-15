@@ -233,7 +233,16 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 int adjustedOffset = startLineOffset + lineLength;
                 // We want to insert right before \n, if there is one.
                 adjustedOffset = Math.max(adjustedOffset - 1, 0);
-                doc.replace(adjustedOffset, outstandingPadding, toAppend);
+                int invocationOffset = session.getInvocationOffset();
+                int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+                int lineIdx = expandedCurrentOffset - startLineOffset;
+                String contentInLine = widget.getLine(curLineInDoc);
+                String currentRightCtx = "\n";
+                if (lineIdx < contentInLine.length()) {
+                    currentRightCtx = contentInLine.substring(lineIdx);
+                }
+                int distanceToNewLine = currentRightCtx.length() - 1;
+                doc.replace(adjustedOffset, Math.min(distanceToNewLine, outstandingPadding), toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }

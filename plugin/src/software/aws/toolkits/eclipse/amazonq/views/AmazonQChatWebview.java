@@ -24,6 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -95,7 +96,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         chatTheme.injectTheme(browser);
                         disableBrowserContextMenu();
                     } catch (Exception e) {
-                        Activator.getLogger().info("Error occurred while injecting theme", e);
+                        Activator.getLogger().info("Error occurred while injecting theme into Q chat", e);
                     }
                 });
             }
@@ -140,7 +141,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             commandParser.parseCommand(arguments)
                     .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
         } catch (Exception e) {
-            Activator.getLogger().error("Error processing message from Browser", e);
+            Activator.getLogger().error("Error processing message from Amazon Q chat", e);
         }
     }
 
@@ -163,7 +164,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
                         img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
                     >
-                    <title>Chat UI</title>
+                    <title>Amazon Q Chat</title>
                     %s
                 </head>
                 <body>
@@ -242,7 +243,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = ObjectMapperFactory.getInstance();
             String json = mapper.writeValueAsString(quickActionCommands);
             return String.format("{\"quickActionCommands\": %s}", json);
         } catch (Exception e) {

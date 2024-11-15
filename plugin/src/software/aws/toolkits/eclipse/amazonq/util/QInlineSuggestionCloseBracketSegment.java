@@ -109,4 +109,8 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     public QInlineSuggestionOpenBracketSegment getOpenBracket() {
         return openBracket;
     }
+
+    @Override
+    public void cleanUp() {
+    }
 }

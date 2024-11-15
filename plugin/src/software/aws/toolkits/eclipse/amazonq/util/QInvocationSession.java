@@ -493,8 +493,12 @@ public final class QInvocationSession extends QResource {
         var widget = viewer.getTextWidget();
 
         suggestionsContext = null;
-        inlineTextFont.dispose();
-        inlineTextFontBold.dispose();
+        if (inlineTextFont != null) {
+            inlineTextFont.dispose();
+        }
+        if (inlineTextFontBold != null) {
+            inlineTextFontBold.dispose();
+        }
         inlineTextFont = null;
         inlineTextFontBold = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;

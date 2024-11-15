@@ -119,10 +119,8 @@ public final class RemoteLspFetcher implements LspFetcher {
         if (manifest == null || manifest.versions().isEmpty()) {
             return;
         }
-        Activator.getLogger().info("Cleaning up cached versions of Amazon Q Language Server");
         deleteDelistedVersions(destinationFolder);
         deleteExtraVersions(destinationFolder);
-        Activator.getLogger().info("Finished cleanup for cached versions of Amazon Q Language Server");
     }
 
     private boolean hasValidCache(final List<Content> contents, final Path cacheDirectory) {
@@ -347,7 +345,9 @@ public final class RemoteLspFetcher implements LspFetcher {
 
         // delete de-listed versions in the toolkit compatible version range
         var delistedVersions = cachedVersions.stream().filter(x -> !compatibleVersions.contains(x) && versionRange.includes(x)).collect(Collectors.toList());
-        Activator.getLogger().info(String.format("Cleaning up %s cached de-listed versions for Amazon Q Language Server", delistedVersions.size()));
+        if (delistedVersions.size() > 0) {
+            Activator.getLogger().info(String.format("Cleaning up %s cached de-listed versions for Amazon Q Language Server", delistedVersions.size()));
+        }
         delistedVersions.forEach(version -> {
             deleteCachedVersion(destinationFolder, version);
         });
@@ -361,7 +361,9 @@ public final class RemoteLspFetcher implements LspFetcher {
                 .sorted(Comparator.reverseOrder())
                 .skip(2)
                 .collect(Collectors.toList());
-        Activator.getLogger().info(String.format("Cleaning up %s cached extra versions for Amazon Q Language Server", extraVersions.size()));
+        if (extraVersions.size() > 0) {
+            Activator.getLogger().info(String.format("Cleaning up %s cached extra versions for Amazon Q Language Server", extraVersions.size()));
+        }
         extraVersions.forEach(version -> {
             deleteCachedVersion(destinationFolder, version);
         });

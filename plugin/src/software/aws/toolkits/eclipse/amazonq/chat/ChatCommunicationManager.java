@@ -13,7 +13,6 @@ import java.util.UUID;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
@@ -130,10 +129,10 @@ public final class ChatCommunicationManager {
                         chatMessageProvider.sendTelemetryEvent(params);
                         break;
                     default:
-                        throw new AmazonQPluginException("Unhandled command in ChatCommunicationManager: " + command.toString());
+                        throw new AmazonQPluginException("Unexpected command received from Chat UI: " + command.toString());
                 }
             } catch (Exception e) {
-                throw new AmazonQPluginException("Error occurred in sendMessageToChatServer", e);
+                throw new AmazonQPluginException("Error occurred when sending message to server", e);
             }
         });
     }
@@ -172,7 +171,7 @@ public final class ChatCommunicationManager {
     }
 
     private CompletableFuture<ChatResult> sendEncryptedChatMessage(final String tabId,
-            final Function<String, CompletableFuture<Either<String, ErrorParams>>> action) {
+            final Function<String, CompletableFuture<String>> action) {
         // Retrieving the chat result is expected to be a long-running process with
         // intermittent progress notifications being sent
         // from the LSP server. The progress notifications provide a token and a partial
@@ -181,37 +180,47 @@ public final class ChatCommunicationManager {
         // a message for the UI.
         String partialResultToken = addPartialChatMessage(tabId);
 
-        return action.apply(partialResultToken).thenApply(resultOrException -> {
+        return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
             // The mapping entry no longer needs to be maintained once the final result is
             // retrieved.
             removePartialChatMessage(partialResultToken);
 
-            if (resultOrException.isLeft()) {
-                String encryptedChatResult = resultOrException.getLeft();
-
-                String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-                ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
-
-                if (result.codeReference() != null && result.codeReference().length >= 1) {
-                    ChatCodeReference chatCodeReference = new ChatCodeReference(result.codeReference());
-                    Activator.getCodeReferenceLoggingService().log(chatCodeReference);
-                }
-
-                // show chat response in Chat UI
-                ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                        ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
-                sendMessageToChatUI(chatUIInboundCommand);
-                return result;
-            } else {
-                ErrorParams errorParams = resultOrException.getRight();
-
-                // show error in Chat UI
-                ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                        ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false);
-                sendMessageToChatUI(chatUIInboundCommand);
+            if (exception != null) {
+                Activator.getLogger().error("An error occurred while processing chat request: " + exception.getMessage());
+                sendErrorToUi(tabId, exception);
                 return null;
+            } else {
+                try {
+                    String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+                    ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
+
+                    if (result.codeReference() != null && result.codeReference().length >= 1) {
+                        ChatCodeReference chatCodeReference = new ChatCodeReference(result.codeReference());
+                        Activator.getCodeReferenceLoggingService().log(chatCodeReference);
+                    }
+
+                    // show chat response in Chat UI
+                    ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+                            ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
+                    sendMessageToChatUI(chatUIInboundCommand);
+                    return result;
+                } catch (Exception e) {
+                    Activator.getLogger().error("An error occurred while processing chat response received: " + e.getMessage());
+                    sendErrorToUi(tabId, e);
+                    return null;
+                }
             }
         });
+    }
+
+    private void sendErrorToUi(final String tabId, final Throwable exception) {
+        String errorTitle = "An error occurred while processing your request.";
+        String errorMessage = String.format("Details: %s", exception.getMessage());
+        ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
+        // show error in Chat UI
+        ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+                ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false);
+        sendMessageToChatUI(chatUIInboundCommand);
     }
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
@@ -248,7 +257,7 @@ public final class ChatCommunicationManager {
 
         // Check to ensure Object is sent in params
         if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
-            throw new AmazonQPluginException("Error occurred while handling partial result notification: expected Object value");
+            throw new AmazonQPluginException("Error handling partial result notification: expected value of type Object");
         }
 
         String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);

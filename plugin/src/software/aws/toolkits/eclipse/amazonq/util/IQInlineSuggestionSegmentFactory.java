@@ -75,6 +75,11 @@ public final class IQInlineSuggestionSegmentFactory {
         return res;
     }
 
+    public static QInlineSuggestionRightContextSegment getRightCtxSegment(final String text,
+            final String firstLineInSuggestion) {
+        return new QInlineSuggestionRightContextSegment(text, firstLineInSuggestion);
+    }
+
     private static BracketType getBracketType(final Stack<QInlineSuggestionOpenBracketSegment> unresolvedBrackets,
             final String input, final int idx) {
         if (isCloseBracket(input, idx, unresolvedBrackets)) {

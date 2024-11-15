@@ -118,7 +118,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 handleAuthFollowUpClicked(authFollowUpClickedParams);
                 break;
             default:
-                throw new AmazonQPluginException("Unhandled command in AmazonQChatViewActionHandler: " + command.toString());
+                throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());
         }
     }
 
@@ -186,7 +186,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             }
         } catch (Exception ex) {
             PluginUtils.showErrorDialog("Amazon Q", Constants.RE_AUTHENTICATE_FAILURE_MESSAGE);
-            throw new AmazonQPluginException("Failed to re-authenticate in auth follow up clicked handler", ex);
+            throw new AmazonQPluginException("Failed to re-authenticate when auth follow up clicked", ex);
         }
 
         try {
@@ -199,10 +199,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             }
         } catch (Exception ex) {
             PluginUtils.showErrorDialog("Amazon Q", Constants.AUTHENTICATE_FAILURE_MESSAGE);
-            throw new AmazonQPluginException("Failed to authenticate in auth follow up clicked handler", ex);
+            throw new AmazonQPluginException("Failed to authenticate when auth follow up clicked", ex);
         }
 
         PluginUtils.showErrorDialog("Amazon Q", Constants.AUTHENTICATE_FAILURE_MESSAGE);
-        throw new AmazonQPluginException("Error occured while attempting to handle auth follow up clicked: Unknown AuthFollowUpType " + incomingType);
+        throw new AmazonQPluginException("Error occured while attempting to handle auth follow up: Unknown AuthFollowUpType " + incomingType);
     }
 }

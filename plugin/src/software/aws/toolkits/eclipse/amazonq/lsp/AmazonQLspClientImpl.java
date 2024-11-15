@@ -162,8 +162,8 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 default:
                     Activator.getLogger().error("Error processing token changed: Unhandled kind " + kind);
             }
-        } catch (IllegalArgumentException e) {
-            Activator.getLogger().error("Error processing token changed: Invalid kind " + params.kind());
+        } catch (IllegalArgumentException ex) {
+            Activator.getLogger().error("Error processing token changed: ", ex);
         }
     }
 }

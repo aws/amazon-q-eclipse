@@ -34,7 +34,7 @@ public final class LspEncryptionKey {
             keyGen.init(256);
             return keyGen.generateKey();
         } catch (Exception e) {
-            throw new AmazonQPluginException("Error occurred while generating lsp encryption key", e);
+            throw new AmazonQPluginException("Error occurred while generating LSP encryption key", e);
         }
     }
 }

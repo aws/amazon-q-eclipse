@@ -154,7 +154,7 @@ public final class QLspConnectionProviderTest {
         LspEncryptionManager lspEncryptionManagerMock = lspEncryptionManagerStaticMockExtension.getMock(
                 LspEncryptionManager.class
         );
-        verify(lspEncryptionManagerMock).initializeEncrypedCommunication(mockOutputStream);
+        verify(lspEncryptionManagerMock).initializeEncryptedCommunication(mockOutputStream);
     }
 
     @Test
@@ -176,7 +176,7 @@ public final class QLspConnectionProviderTest {
         );
 
         doThrow(testException).when(lspEncryptionManagerMock)
-                .initializeEncrypedCommunication(any());
+                .initializeEncryptedCommunication(any());
 
         provider.start();
 

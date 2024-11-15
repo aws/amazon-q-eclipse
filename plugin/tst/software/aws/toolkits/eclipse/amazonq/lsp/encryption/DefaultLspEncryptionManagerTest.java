@@ -119,7 +119,7 @@ public final class DefaultLspEncryptionManagerTest {
                 }\
                 """, encodedKey);
 
-        assertDoesNotThrow(() -> lspEncryptionManager.initializeEncrypedCommunication(outputStream));
+        assertDoesNotThrow(() -> lspEncryptionManager.initializeEncryptedCommunication(outputStream));
         verify(outputStream, times(1)).write((expectedResult + "\n").getBytes());
         verify(outputStream, times(1)).flush();
     }
@@ -135,7 +135,7 @@ public final class DefaultLspEncryptionManagerTest {
                 .when(outputStream).write(any());
 
         assertThrows(AmazonQPluginException.class,
-                () -> lspEncryptionManager.initializeEncrypedCommunication(outputStream));
+                () -> lspEncryptionManager.initializeEncryptedCommunication(outputStream));
     }
 
 }

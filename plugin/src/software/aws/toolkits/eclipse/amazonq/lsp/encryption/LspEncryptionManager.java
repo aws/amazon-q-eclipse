@@ -8,5 +8,5 @@ import java.io.OutputStream;
 public interface LspEncryptionManager {
     String encrypt(Object data);
     String decrypt(String jwt);
-    void initializeEncrypedCommunication(OutputStream serverStdin);
+    void initializeEncryptedCommunication(OutputStream serverStdin);
 }

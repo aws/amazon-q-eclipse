@@ -131,7 +131,7 @@ public final class DefaultAuthStateManager implements AuthStateManager {
             try {
                 toLoggedOut();
             } catch (Exception ex) {
-                Activator.getLogger().error("Failed to transition to a logged out state after syncing auth state with the plugin store", ex);
+                Activator.getLogger().error("Failed to transition to a logged out state after syncing auth state with the persistent store", ex);
             }
             return;
         }
@@ -153,7 +153,7 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         try {
             toLoggedIn(loginType, loginParams, ssoTokenId);
         } catch (Exception ex) {
-            Activator.getLogger().error("Failed to transition to a logged in state after syncing auth state with the plugin store", ex);
+            Activator.getLogger().error("Failed to transition to a logged in state after syncing auth state with the persistent store", ex);
             toLoggedOut();
         }
     }

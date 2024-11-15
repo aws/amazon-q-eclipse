@@ -32,7 +32,7 @@ public final class LspJsonWebToken {
 
             return jweObject.serialize();
         } catch (Exception e) {
-            throw new AmazonQPluginException("Error occurred while encrypting jwt", e);
+            throw new AmazonQPluginException("Error occurred while encrypting JWT", e);
         }
     }
 
@@ -43,7 +43,7 @@ public final class LspJsonWebToken {
 
             return jweObject.getPayload().toString();
         } catch (Exception e) {
-            throw new AmazonQPluginException("Error occurred while decrypting jwt", e);
+            throw new AmazonQPluginException("Error occurred while decrypting JWT", e);
         }
     }
 }

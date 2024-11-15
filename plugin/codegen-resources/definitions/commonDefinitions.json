@@ -1400,6 +1400,18 @@
             "description": "Language used for the project."
         },
         {
+            "name": "languageServerSetupStage",
+            "type": "string",
+            "allowedValues": [ "getManifest", "getServer", "validate", "initialize", "all" ],
+            "description": "Represents a phase of the language server startup sequence"
+        },
+        {
+            "name": "languageServerLocation",
+            "type": "string",
+            "allowedValues": [ "remote", "cache", "override", "fallback" ],
+            "description": "Represents the location where the language server is installed from"
+        },
+        {
             "name": "loadFileTime",
             "type": "int",
             "description": "Time from opening Composer to loading the file"
@@ -1408,6 +1420,11 @@
             "name": "locale",
             "type": "string",
             "description": "User locale. Examples: en-US, en-GB, etc."
+        },
+        {
+            "name": "manifestSchemaVersion",
+            "type": "string",
+            "description": "Represents the version of the manifest schema associated with the language server"
         },
         {
             "name": "module",
@@ -6169,6 +6186,30 @@
                 },
                 {
                     "type": "runtime",
+                    "required": false
+                }
+            ]
+        },
+        {
+            "name": "languageServer_setup",
+            "description": "Sets up a language server",
+            "passive": true,
+            "unit": "Milliseconds",
+            "metadata": [
+                { "type": "result" },
+                { "type": "id" },
+                { "type": "duration" },
+                { "type": "languageServerSetupStage" },
+                {
+                    "type": "version",
+                    "required": false
+                },
+                {
+                    "type": "languageServerLocation",
+                    "required": false
+                },
+                {
+                    "type": "manifestSchemaVersion",
                     "required": false
                 }
             ]

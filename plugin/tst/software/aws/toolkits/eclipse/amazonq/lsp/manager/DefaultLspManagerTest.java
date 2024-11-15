@@ -32,10 +32,10 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
 
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LanguageServerLocation;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -133,7 +133,7 @@ public class DefaultLspManagerTest {
             LspInstallResult result = lspManager.getLspInstallation();
 
             //verify proper parameters returned
-            assertEquals(LanguageServerLocation.Override, result.getLocation());
+            assertEquals(LanguageServerLocation.OVERRIDE, result.getLocation());
             assertEquals("node", result.getServerCommand());
             assertEquals("lspArgsFile", result.getServerCommandArgs());
             assertEquals(Paths.get(serverDir.toString(), LspConstants.LSP_SERVER_FOLDER).toString(), result.getServerDirectory());
@@ -231,7 +231,7 @@ public class DefaultLspManagerTest {
     }
     private LspInstallResult setUpInstallResult(final String serverCommand) throws IOException {
         LspInstallResult result = new LspInstallResult();
-        result.setLocation(LanguageServerLocation.Override);
+        result.setLocation(LanguageServerLocation.OVERRIDE);
         result.setServerDirectory(serverDir.toString());
         result.setServerCommand(serverCommand);
         result.setClientDirectory("clientDir");
@@ -239,7 +239,7 @@ public class DefaultLspManagerTest {
         return result;
     }
     private LspFetchResult setUpFetcherResult() {
-            return new LspFetchResult(serverDir.toString(), "version", LanguageServerLocation.Override);
+            return new LspFetchResult(serverDir.toString(), "version", LanguageServerLocation.OVERRIDE);
     }
 
     private static boolean verifyPosixPermissions(final Path filePath) throws IOException {

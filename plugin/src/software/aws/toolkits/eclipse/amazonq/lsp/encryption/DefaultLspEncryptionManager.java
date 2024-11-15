@@ -23,8 +23,7 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
     public static synchronized DefaultLspEncryptionManager getInstance() {
         if (instance == null) {
             try {
-                instance = DefaultLspEncryptionManager.builder()
-                        .build();
+                instance = DefaultLspEncryptionManager.builder().build();
             } catch (Exception e) {
                 throw new AmazonQPluginException("Failed to initialize LspEncryptionManager", e);
             }
@@ -47,7 +46,7 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
      * has been initiated, it waits for an encryption key to be sent over stdin before initiating the LSP protocol.
      * The server saves the provided encryption key and will use the key for future requests (such as Q Chat Requests)
      */
-    public void initializeEncrypedCommunication(final OutputStream serverStdin) {
+    public void initializeEncryptedCommunication(final OutputStream serverStdin) {
         // Ensure the message does not contain any newline characters. The server will
         // process characters up to the first newline.
         String message = String.format("""
@@ -62,7 +61,7 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
             serverStdin.write((message + "\n").getBytes());
             serverStdin.flush();
         } catch (Exception e) {
-            throw new AmazonQPluginException("Failed to initialize encrypted communication", e);
+            throw new AmazonQPluginException("Failed to initialize encrypted communication with LSP server", e);
         }
     }
 

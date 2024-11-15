@@ -33,7 +33,7 @@ public final class DefaultAuthTokenService implements AuthTokenService {
     private LspProvider lspProvider;
 
     private DefaultAuthTokenService(final Builder builder) {
-        this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider cannot be null");
+        this.lspProvider = Objects.requireNonNull(builder.lspProvider, "lspProvider must not be null");
     }
 
     public static Builder builder() {

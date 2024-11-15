@@ -126,7 +126,21 @@ public final class DefaultTelemetryService implements TelemetryService {
 
     private static ToolkitTelemetryClient createDefaultTelemetryClient(final Region region, final String endpoint, final String identityPool) {
         SSLContext sslContext = ProxyUtil.getCustomSslContext();
-        SSLConnectionSocketFactory sslSocketFactory = sslContext != null ? new SSLConnectionSocketFactory(ProxyUtil.getCustomSslContext()) : null;
+        if (sslContext == null) {
+            try {
+                sslContext = SSLContext.getInstance("TLSv1.2");
+                sslContext.init(null, null, null);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create SSLContext for TLS 1.2", e);
+            }
+        }
+
+        SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(
+            sslContext,
+            new String[]{"TLSv1.2"},
+            null,
+            SSLConnectionSocketFactory.getDefaultHostnameVerifier()
+        );
         var proxyUrl = ProxyUtil.getHttpsProxyUrlEnvVar();
         var httpClientBuilder = ApacheHttpClient.builder();
         if (!StringUtils.isEmpty(proxyUrl)) {
@@ -135,9 +149,7 @@ public final class DefaultTelemetryService implements TelemetryService {
                     .build());
         }
 
-        if (sslContext != null) {
-            httpClientBuilder.socketFactory(sslSocketFactory);
-        }
+        httpClientBuilder.socketFactory(sslSocketFactory);
 
         SdkHttpClient sdkHttpClient = httpClientBuilder.build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()

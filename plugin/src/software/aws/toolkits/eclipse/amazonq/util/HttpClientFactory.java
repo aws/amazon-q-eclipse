@@ -10,6 +10,9 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.time.Duration;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+
 import software.amazon.awssdk.utils.StringUtils;
 
 public final class HttpClientFactory {
@@ -30,11 +33,20 @@ public final class HttpClientFactory {
                         InetSocketAddress proxyAddress = getProxyAddress(proxyUrl);
                         builder.proxy(ProxySelector.of(proxyAddress));
                     }
-                    var customSslContext = ProxyUtil.getCustomSslContext();
-                    if (customSslContext != null) {
-                        builder.sslContext(ProxyUtil.getCustomSslContext());
+                    var sslContext = ProxyUtil.getCustomSslContext();
+                    if (sslContext == null) {
+                        try {
+                            sslContext = SSLContext.getInstance("TLSv1.2");
+                            sslContext.init(null, null, null);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to create SSLContext for TLS 1.2", e);
+                        }
                     }
+                    SSLParameters sslParams = new SSLParameters();
+                    sslParams.setProtocols(new String[]{"TLSv1.2"});
                     instance = builder.connectTimeout(Duration.ofSeconds(10))
+                            .sslContext(sslContext)
+                            .sslParameters(sslParams)
                             .build();
                 }
             }

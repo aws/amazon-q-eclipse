@@ -41,7 +41,7 @@ public class DialogContributionItem extends ContributionItem {
         menuItem.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                UiTelemetryProvider.emitClickEventMetric("amazonq_shareFeedback");
+                UiTelemetryProvider.emitClickEventMetric("ellipses_shareFeedback");
                 dialog.open();
             }
         });

@@ -330,6 +330,9 @@ public final class QEclipseEditorUtils {
             IContentType contentType = Platform.getContentTypeManager().findContentTypeFor(file.getName());
             contentTypeName = contentType.getName();
         }
+        if (contentTypeName == null) {
+            return Optional.empty();
+        }
         switch (contentTypeName) {
         // TODO: Add more supported file types here:
         case "Java Source File":

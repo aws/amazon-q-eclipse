@@ -13,9 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.osgi.framework.Version;
 import org.osgi.framework.VersionRange;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -89,10 +94,35 @@ public final class RemoteLspFetcher implements LspFetcher {
         // if unable to retrieve / validate contents from remote location, cleanup
         // download cache
         ArtifactUtils.deleteDirectory(downloadDirectory);
+        Activator.getLogger().info(String.format(
+                "Unable to download Amazon Q language server version v%s. Attempting to fetch from fallback location",
+                serverVersion));
 
-        // TODO: Add fallback cached lsp resolution logic
+        // use the most compatible fallback cached lsp version
+        var fallbackDir = getFallback(serverVersion, platform, architecture, destination);
+        if (fallbackDir != null && !fallbackDir.toString().isEmpty()) {
+            var fallbackVersion = fallbackDir.getFileName().toString();
+            var fallBackLspVersion = manifest.versions().stream().filter(x -> x.serverVersion().equals(fallbackVersion))
+                    .findFirst();
+
+            logMessageWithLicense(String.format(
+                    "Unable to install Amazon Q Language Server v%s. Launching a previous version from: %s",
+                    serverVersion, fallbackDir.toString()), fallBackLspVersion.get().thirdPartyLicenses());
+
+            return new LspFetchResult(fallbackDir.toString(), fallbackVersion, LanguageServerLocation.Fallback);
+        }
 
         throw new AmazonQPluginException("Unable to find a compatible version of Amazon Q Language Server.");
+    }
+
+    public void cleanup(final Path destinationFolder) {
+        if (manifest == null || manifest.versions().isEmpty()) {
+            return;
+        }
+        Activator.getLogger().info("Cleaning up cached versions of Amazon Q Language Server");
+        deleteDelistedVersions(destinationFolder);
+        deleteExtraVersions(destinationFolder);
+        Activator.getLogger().info("Finished cleanup for cached versions of Amazon Q Language Server");
     }
 
     private boolean hasValidCache(final List<Content> contents, final Path cacheDirectory) {
@@ -137,7 +167,9 @@ public final class RemoteLspFetcher implements LspFetcher {
                 .filter(version -> isCompatibleVersion(version))
                 .filter(version -> version.targets().stream()
                         .anyMatch(target -> hasRequiredTargetContent(target, platform, architecture)))
-                .findFirst();
+                .max(Comparator.comparing(
+                        artifactVersion -> Version.parseVersion(artifactVersion.serverVersion())
+                    ));
     }
 
     private boolean hasRequiredTargetContent(final Target target, final PluginPlatform platform, final PluginArchitecture architecture) {
@@ -233,6 +265,111 @@ public final class RemoteLspFetcher implements LspFetcher {
             return false;
         }
         return true;
+    }
+
+    /*
+     * Get fallback location representing the most compatible cached lsp version
+     * @param expectedLspVersion: the lsp version with which the fallback version must be the most compatible to
+     */
+    private Path getFallback(final String expectedLspVersion, final PluginPlatform platform,
+            final PluginArchitecture architecture, final Path destinationFolder) {
+
+        var compatibleLspVersions = getCompatibleArtifactVersions();
+        var cachedVersions = getCachedVersions(destinationFolder);
+        var expectedServerVersion = ArtifactUtils.parseVersion(expectedLspVersion);
+
+        // filter to get sorted list of compatible lsp versions that have a valid cache
+        var sortedCachedLspVersions = compatibleLspVersions.stream()
+                .filter(artifactVersion -> isValidCachedVersion(artifactVersion, expectedServerVersion, cachedVersions))
+                .sorted(Comparator.comparing(x -> Version.parseVersion(x.serverVersion()), Comparator.reverseOrder()))
+                .collect(Collectors.toList());
+
+        var fallbackDir = sortedCachedLspVersions.stream()
+                .map(x -> getValidLocalCacheDirectory(x, platform, architecture, destinationFolder))
+                .filter(Objects::nonNull).findFirst().orElse(null);
+        return fallbackDir;
+    }
+
+    /*
+     * Validate the local cache directory of the given lsp version(matches expected hash)
+     * If valid return cache directory, else return null
+     */
+    private Path getValidLocalCacheDirectory(final ArtifactVersion artifactVersion, final PluginPlatform platform,
+            final PluginArchitecture architecture, final Path destinationFolder) {
+        var target = resolveTarget(Optional.of(artifactVersion), platform, architecture);
+        if (!target.isPresent() || target.get().contents() == null || target.get().contents().isEmpty()) {
+            return null;
+        }
+        var cacheDir = Paths.get(destinationFolder.toString(), artifactVersion.serverVersion());
+
+        var hasValidCache = hasValidCache(target.get().contents(), cacheDir);
+        return hasValidCache ? cacheDir : null;
+    }
+
+    private boolean isValidCachedVersion(final ArtifactVersion lspVersion, final Version expectedServerVersion,
+            final List<Version> cachedVersions) {
+        var serverVersion = ArtifactUtils.parseVersion(lspVersion.serverVersion());
+
+        return cachedVersions.contains(serverVersion) && (serverVersion.compareTo(expectedServerVersion) <= 0);
+    }
+
+    private List<Version> getCachedVersions(final Path destinationFolder) {
+        try {
+            return Files.list(destinationFolder)
+                       .filter(Files::isDirectory)
+                       .map(path -> path.getFileName().toString())
+                       .filter(name -> name.matches("\\d+\\.\\d+\\.\\d+"))
+                       .map(name -> getVersionedName(name))
+                       .filter(Objects::nonNull)
+                       .collect(Collectors.toList());
+        } catch (IOException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private Version getVersionedName(final String filename) {
+        try {
+            return ArtifactUtils.parseVersion(filename);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private List<ArtifactVersion> getCompatibleArtifactVersions() {
+        return manifest.versions().stream()
+                .filter(version -> isCompatibleVersion(version))
+                .toList();
+    }
+
+    private void deleteDelistedVersions(final Path destinationFolder) {
+        var compatibleVersions = getCompatibleArtifactVersions().stream().map(x -> ArtifactUtils.parseVersion(x.serverVersion())).collect(Collectors.toList());
+        var cachedVersions = getCachedVersions(destinationFolder);
+
+        // delete de-listed versions in the toolkit compatible version range
+        var delistedVersions = cachedVersions.stream().filter(x -> !compatibleVersions.contains(x) && versionRange.includes(x)).collect(Collectors.toList());
+        Activator.getLogger().info(String.format("Cleaning up %s cached de-listed versions for Amazon Q Language Server", delistedVersions.size()));
+        delistedVersions.forEach(version -> {
+            deleteCachedVersion(destinationFolder, version);
+        });
+    }
+
+    private void deleteExtraVersions(final Path destinationFolder) {
+        var cachedVersions = getCachedVersions(destinationFolder);
+        // delete extra versions in the compatible toolkit version range except highest 2 versions
+        var extraVersions = cachedVersions.stream()
+                .filter(x -> versionRange.includes(x))
+                .sorted(Comparator.reverseOrder())
+                .skip(2)
+                .collect(Collectors.toList());
+        Activator.getLogger().info(String.format("Cleaning up %s cached extra versions for Amazon Q Language Server", extraVersions.size()));
+        extraVersions.forEach(version -> {
+            deleteCachedVersion(destinationFolder, version);
+        });
+    }
+
+    private void deleteCachedVersion(final Path destinationFolder, final Version version) {
+        var versionPath = destinationFolder.resolve(version.toString());
+        ArtifactUtils.deleteDirectory(versionPath);
     }
 
     public static class Builder {

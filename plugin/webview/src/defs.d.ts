@@ -11,6 +11,7 @@ declare global {
     interface Window {
         // TODO: make postMessage api type safe
         ideApi: { postMessage: (arg: { command: string } & any) => any }
+        telemetryApi: { postClickEvent: (arg: string) => any }
         ideClient: IdeClient
         changeTheme: (darkMode: boolean) => void
     }

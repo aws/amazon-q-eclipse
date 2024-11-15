@@ -6,7 +6,8 @@ package software.aws.toolkits.eclipse.amazonq.lsp.model;
 public enum LanguageServerLocation {
     Remote("remote"),
     Cache("cache"),
-    Override("override");
+    Override("override"),
+    Fallback("fallback");
 
     private final String value;
 

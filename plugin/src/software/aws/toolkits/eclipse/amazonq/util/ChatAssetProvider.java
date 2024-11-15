@@ -12,14 +12,14 @@ public final class ChatAssetProvider {
     private WebviewAssetServer webviewAssetServer;
 
     public Optional<String> get() {
-        var chatUiDirectory = LspManagerProvider.getInstance().getLspInstallation().getClientDirectory();
+        var chatUiDirectory = getChatUiDirectory();
 
         if (!isValid(chatUiDirectory)) {
             Activator.getLogger().error("Error loading Chat UI. If override used, please verify the override env variables else restart Eclipse");
             return Optional.empty();
         }
 
-        String jsFile = Paths.get(chatUiDirectory).resolve("amazonq-ui.js").toString();
+        String jsFile = Paths.get(chatUiDirectory.get()).resolve("amazonq-ui.js").toString();
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
 
@@ -28,7 +28,7 @@ public final class ChatAssetProvider {
         if (!result) {
             Activator.getLogger().error(String.format(
                     "Error loading Chat UI. Unable to find the `amazonq-ui.js` file in the directory: %s. Please verify and restart",
-                    chatUiDirectory));
+                    chatUiDirectory.get()));
             return Optional.empty();
         }
 
@@ -37,8 +37,16 @@ public final class ChatAssetProvider {
         return Optional.ofNullable(chatJsPath);
     }
 
-    private boolean isValid(final String chatUiDirectory) {
-        return chatUiDirectory != null && !chatUiDirectory.isEmpty() && Files.exists(Paths.get(chatUiDirectory));
+    private Optional<String> getChatUiDirectory() {
+        try {
+           return Optional.of(LspManagerProvider.getInstance().getLspInstallation().getClientDirectory());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    private boolean isValid(final Optional<String> chatUiDirectory) {
+        return chatUiDirectory.isPresent() && Files.exists(Paths.get(chatUiDirectory.get()));
     }
 
     public void dispose() {

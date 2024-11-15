@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
@@ -55,6 +56,14 @@ public final class ToolkitLoginWebview extends AmazonQView {
             public Object function(final Object[] arguments) {
                 commandParser.parseCommand(arguments)
                     .ifPresent(command -> actionHandler.handleCommand(command, browser));
+                return null;
+            }
+        };
+        new BrowserFunction(browser, "telemetryEvent") {
+            @Override
+            public Object function(final Object[] arguments) {
+                String clickEvent = (String) arguments[0];
+                UiTelemetryProvider.emitClickEventMetric("auth_" + clickEvent);
                 return null;
             }
         };
@@ -111,15 +120,24 @@ public final class ToolkitLoginWebview extends AmazonQView {
                                 %s
                                 const init = () => {
                                     changeTheme(%b);
-
-                                    waitForFunction('ideCommand')
-                                        .then(() => {
+                                    Promise.all([
+                                        waitForFunction('ideCommand'),
+                                        waitForFunction('telemetryEvent')
+                                    ])
+                                        .then(([ideCommand, telemetryEvent]) => {
                                             const ideApi = {
                                                 postMessage(message) {
                                                     ideCommand(JSON.stringify(message));
                                                 }
                                             };
                                             window.ideApi = ideApi;
+
+                                            const telemetryApi = {
+                                                postClickEvent(event) {
+                                                    telemetryEvent(event);
+                                                }
+                                            };
+                                            window.telemetryApi = telemetryApi;
 
                                             ideCommand(JSON.stringify({"command":"onLoad"}));
                                         })

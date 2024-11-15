@@ -23,6 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public final class DefaultLspManager implements LspManager {
 
@@ -80,6 +81,9 @@ public final class DefaultLspManager implements LspManager {
         var lspFetcher = createLspFetcher(manifest);
         var fetchResult = lspFetcher.fetch(platform, architecture, workingDirectory);
 
+        // initiate cleanup on a background thread
+        initiateCleanup(lspFetcher);
+
         // set the command and args with the necessary values to launch the Q language server when retrieved from remote/local cache
         var result = new LspInstallResult();
         result.setLocation(fetchResult.location());
@@ -90,6 +94,17 @@ public final class DefaultLspManager implements LspManager {
         result.setServerCommandArgs(lspExecutablePrefix);
 
         return result;
+    }
+
+    private void initiateCleanup(final LspFetcher lspFetcher) {
+        ThreadingUtils.executeAsyncTask(() -> {
+            try {
+                lspFetcher.cleanup(workingDirectory);
+            } catch (Exception e) {
+                // Silently log any errors and continue
+                Activator.getLogger().error("Error occured during Amazon Q Language server cache cleanup", e);
+            }
+        });
     }
 
     private boolean hasValidResult(final LspInstallResult overrideResult) {

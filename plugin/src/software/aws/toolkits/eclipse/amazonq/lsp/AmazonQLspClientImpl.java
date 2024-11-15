@@ -147,10 +147,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void ssoTokenChanged(final SsoTokenChangedParams params) {
-        try {
-            SsoTokenChangedKind kind = SsoTokenChangedKind.valueOf(params.kind());
-            Activator.getLogger().info("Token changed: " + kind);
+        SsoTokenChangedKind kind = SsoTokenChangedKind.valueOf(params.kind());
+        Activator.getLogger().info("Processing " + kind + "ssoTokenChanged notification...");
 
+        try {
             switch (kind) {
                 case EXPIRED:
                     Activator.getLoginService().expire();
@@ -160,10 +160,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                     Activator.getLoginService().reAuthenticate(loginOnInvalidToken);
                     return;
                 default:
-                    Activator.getLogger().error("Error processing token changed: Unhandled kind " + kind);
+                    Activator.getLogger().error("Error processing ssoTokenChanged notification: Unhandled kind " + kind);
             }
-        } catch (IllegalArgumentException e) {
-            Activator.getLogger().error("Error processing token changed: Invalid kind " + params.kind());
+        } catch (IllegalArgumentException ex) {
+            Activator.getLogger().error("Error processing " + kind + " ssoTokenChanged notification", ex);
         }
     }
 }

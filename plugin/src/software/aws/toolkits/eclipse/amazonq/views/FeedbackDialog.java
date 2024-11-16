@@ -16,6 +16,8 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
@@ -52,10 +54,11 @@ public class FeedbackDialog extends Dialog {
     private Image loadedImage;
     private Label characterRemainingLabel;
     private Sentiment selectedSentiment = Sentiment.POSITIVE;
+    private boolean isCommentQuestionGhostLabelVisible = true;
 
     public class CustomRadioButton extends Composite {
-        private Label iconLabel;
-        private Button radioButton;
+        private final Label iconLabel;
+        private final Button radioButton;
 
         public CustomRadioButton(final Composite parent, final Image image, final int style) {
             super(parent, style);
@@ -110,7 +113,8 @@ public class FeedbackDialog extends Dialog {
     protected final void okPressed() {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
-        Activator.getLogger().info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
+        Activator.getLogger()
+                .info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
         ThreadingUtils.executeAsyncTask(() -> Activator.getTelemetryService().emitFeedback(comment, selectedSentiment));
         UiTelemetryProvider.emitClickEventMetric("feedback_shareFeedbackDialogCancelButton");
         super.okPressed();
@@ -164,14 +168,15 @@ public class FeedbackDialog extends Dialog {
     private void createHeaderSection(final Composite container) {
         Composite headlineContainer = new Composite(container, SWT.NONE);
         RowLayout rowLayout = new RowLayout();
-        rowLayout.spacing = 0; // to reduce space between two labels
+        rowLayout.spacing = 1; // to reduce space between two labels
         headlineContainer.setLayout(rowLayout);
 
         createLabelWithFontSize(headlineContainer, "Looking for help? View the", 14);
         createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/",
                 "feedback_gettingStartedButton");
         createLabelWithFontSize(headlineContainer, "or search our", 14);
-        createLinkLabel(headlineContainer, "Documentation", 14, "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html",
+        createLinkLabel(headlineContainer, "Documentation", 14,
+                "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html",
                 "feedback_documentationButton");
     }
 
@@ -195,18 +200,21 @@ public class FeedbackDialog extends Dialog {
 
         createImageLabel(reportRequestContributeContainer, "icons/ReportAnIssue.png");
         createLinkLabel(reportRequestContributeContainer, "Report an issue", SWT.NONE,
-            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()),
-            "feedback_reportIssueButton");
+                String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s",
+                        getBodyMessageForReportIssueOrRequestFeature()),
+                "feedback_reportIssueButton");
 
         createImageLabel(reportRequestContributeContainer, "icons/RequestFeature.png");
         createLinkLabel(reportRequestContributeContainer, "Request a feature", SWT.NONE,
-            String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s", getBodyMessageForReportIssueOrRequestFeature()),
-            "feedback_requestFeatureButton");
+                String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s",
+                        getBodyMessageForReportIssueOrRequestFeature()),
+                "feedback_requestFeatureButton");
 
         ThemeDetector themeDetector = new ThemeDetector();
-        createImageLabel(reportRequestContributeContainer, themeDetector.isDarkTheme() ? "icons/ViewCode-White.png" : "icons/ViewCode-Black.png");
-        createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE, "https://github.com/aws/amazon-q-eclipse/",
-                "feedback_viewSourceCodeButton");
+        createImageLabel(reportRequestContributeContainer,
+                themeDetector.isDarkTheme() ? "icons/ViewCode-White.png" : "icons/ViewCode-Black.png");
+        createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE,
+                "https://github.com/aws/amazon-q-eclipse/", "feedback_viewSourceCodeButton");
     }
 
     private void createShareFeedbackSection(final Composite container) {
@@ -228,14 +236,21 @@ public class FeedbackDialog extends Dialog {
         GridData questionsContainerLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
         questionsContainer.setLayoutData(questionsContainerLayoutData);
 
+        createSatisfactionSentimentQuestion(questionsContainer);
+        createProductFeedbackQuestion(questionsContainer);
+    }
+
+    private void createSatisfactionSentimentQuestion(final Composite questionsContainer) {
         createLabel(questionsContainer, "How satisified are you with Amazon Q for Eclipse?");
 
         Composite sentimentContainer = new Composite(questionsContainer, SWT.NONE);
         RowLayout sentimentContainerLayout = new RowLayout(SWT.HORIZONTAL);
         sentimentContainerLayout.spacing = 0;
         sentimentContainer.setLayout(sentimentContainerLayout);
-        CustomRadioButton positiveSentimentButton = createCustomRadioButton(sentimentContainer, "icons/HappyFace.png", SWT.NONE, true);
-        CustomRadioButton negativeSentimentButton = createCustomRadioButton(sentimentContainer, "icons/FrownyFace.png", SWT.NONE, false);
+        CustomRadioButton positiveSentimentButton = createCustomRadioButton(sentimentContainer, "icons/HappyFace.png",
+                SWT.NONE, true);
+        CustomRadioButton negativeSentimentButton = createCustomRadioButton(sentimentContainer, "icons/FrownyFace.png",
+                SWT.NONE, false);
         positiveSentimentButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
@@ -252,53 +267,79 @@ public class FeedbackDialog extends Dialog {
                 UiTelemetryProvider.emitClickEventMetric("feedback_negativeSentimentButton");
             }
         });
+    }
 
+    private void createProductFeedbackQuestion(final Composite questionsContainer) {
         createLabel(questionsContainer, "What do you like about Amazon Q for Eclipse? What can we improve?");
 
-        Composite commentComposite = new Composite(questionsContainer, SWT.NONE);
+        Composite commentComposite = new Composite(questionsContainer, SWT.BORDER);
         StackLayout stackLayout = new StackLayout();
         commentComposite.setLayout(stackLayout);
 
         GridData commentCompositeLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
+        commentCompositeLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
         commentCompositeLayout.heightHint = 200;
         commentCompositeLayout.widthHint = 0;
+
         commentComposite.setLayoutData(commentCompositeLayout);
 
-        commentBox = new Text(commentComposite, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
+        commentBox = new Text(commentComposite, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL);
+        commentBox.setLayoutData(commentCompositeLayout);
 
         Label ghostLabel = new Label(commentComposite, SWT.NONE);
         ghostLabel.setText("Optional");
         ghostLabel.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
         ghostLabel.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
-
-        stackLayout.topControl = ghostLabel;
-
-        ModifyListener textModifyListener = e -> {
-            if (commentBox.getText().isEmpty()) {
-                stackLayout.topControl = ghostLabel;
-            } else {
-                stackLayout.topControl = commentBox;
-            }
-            commentComposite.layout();
-            handleTextModified((ModifyEvent) e);
-        };
-        commentBox.addModifyListener(textModifyListener);
+        ghostLabel.setLayoutData(commentCompositeLayout);
 
         ghostLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseDown(final MouseEvent e) {
+                isCommentQuestionGhostLabelVisible = false;
                 stackLayout.topControl = commentBox;
-                commentComposite.layout();
                 commentBox.setFocus();
+                commentComposite.layout();
+            }
+        });
+
+        commentBox.addModifyListener(new ModifyListener() {
+            @Override
+            public void modifyText(final ModifyEvent event) {
+                if (commentBox.getText().isEmpty()) {
+                    isCommentQuestionGhostLabelVisible = true;
+                } else {
+                    isCommentQuestionGhostLabelVisible = false;
+                }
+
+                commentComposite.redraw();
+                commentComposite.layout();
+
+                handleTextModified(event);
+            }
+        });
+
+        commentComposite.addPaintListener(new PaintListener() {
+            @Override
+            public void paintControl(final PaintEvent event) {
+                if (isCommentQuestionGhostLabelVisible) {
+                    stackLayout.topControl = ghostLabel;
+                } else {
+                    stackLayout.topControl = commentBox;
+                }
+                commentComposite.layout();
             }
         });
 
         characterRemainingLabel = new Label(questionsContainer, SWT.NONE);
         characterRemainingLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         updateCharacterRemainingCount();
-        createLabelWithFontSize(questionsContainer, "Don't add personally identifiable information (PII), confidential or sensitive "
-                + "information in your feedback.", 10);
-        createLabelWithFontSize(questionsContainer, "Please remove any PII when sharing file paths, error messages, etc.", 10);
+        createLabelWithFontSize(questionsContainer,
+                "Don't add personally identifiable information (PII), confidential or sensitive "
+                        + "information in your feedback.",
+                10);
+        createLabelWithFontSize(questionsContainer,
+                "Please remove any PII when sharing file paths, error messages, etc.", 10);
+
     }
 
     private void createLabel(final Composite parent, final String text) {
@@ -345,8 +386,8 @@ public class FeedbackDialog extends Dialog {
         separatorLabel.setLayoutData(separatorGithubLayout);
     }
 
-    private CustomRadioButton createCustomRadioButton(final Composite parent, final String imagePath,
-            final int style, final boolean isSelected) {
+    private CustomRadioButton createCustomRadioButton(final Composite parent, final String imagePath, final int style,
+            final boolean isSelected) {
         CustomRadioButton button = new CustomRadioButton(parent, loadImage(imagePath), style);
         button.getRadioButton().setSelection(isSelected);
         return button;
@@ -354,13 +395,9 @@ public class FeedbackDialog extends Dialog {
 
     private String getBodyMessageForReportIssueOrRequestFeature() {
         ClientMetadata metadata = PluginClientMetadata.getInstance();
-        return URLEncoder.encode(String.format(
-            "--- \n"
-            + "Toolkit: Amazon Q for %s\n"
-            + "OS: %s %s\n"
-            + "IDE: %s %s", metadata.getIdeName(), metadata.getOSName(),
-            metadata.getOSVersion(), metadata.getIdeName(),
-            metadata.getIdeVersion()), StandardCharsets.UTF_8);
+        return URLEncoder.encode(String.format("--- \n" + "Toolkit: Amazon Q for %s\n" + "OS: %s %s\n" + "IDE: %s %s",
+                metadata.getIdeName(), metadata.getOSName(), metadata.getOSVersion(), metadata.getIdeName(),
+                metadata.getIdeVersion()), StandardCharsets.UTF_8);
     }
 
     private void updateCharacterRemainingCount() {

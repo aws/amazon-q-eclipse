@@ -12,6 +12,7 @@ import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 
 public final class ViewVisibilityManager {
     private ViewVisibilityManager() {
@@ -34,35 +35,35 @@ public final class ViewVisibilityManager {
             CHAT_ASSET_MISSING_VIEW
     );
 
-    public static void showLoginView() {
-        showMutuallyExclusiveView(TOOLKIT_LOGIN_VIEW);
+    public static void showLoginView(final String source) {
+        showMutuallyExclusiveView(TOOLKIT_LOGIN_VIEW, source);
     }
 
-    public static void showChatView() {
-        showMutuallyExclusiveView(CHAT_VIEW);
+    public static void showChatView(final String source) {
+        showMutuallyExclusiveView(CHAT_VIEW, source);
     }
 
-    public static void showDependencyMissingView() {
-        showMutuallyExclusiveView(DEPENDENCY_MISSING_VIEW);
+    public static void showDependencyMissingView(final String source) {
+        showMutuallyExclusiveView(DEPENDENCY_MISSING_VIEW, source);
     }
 
-    public static void showReAuthView() {
-        showMutuallyExclusiveView(RE_AUTHENTICATE_VIEW);
+    public static void showReAuthView(final String source) {
+        showMutuallyExclusiveView(RE_AUTHENTICATE_VIEW, source);
     }
 
-    public static void showChatAssetMissingView() {
-        showMutuallyExclusiveView(CHAT_ASSET_MISSING_VIEW);
+    public static void showChatAssetMissingView(final String source) {
+        showMutuallyExclusiveView(CHAT_ASSET_MISSING_VIEW, source);
     }
 
-    public static void showCodeReferenceView() {
-        showView(CODE_REFERENCE_VIEW);
+    public static void showCodeReferenceView(final String source) {
+        showView(CODE_REFERENCE_VIEW, source);
     }
 
-    public static void showErrorLogView() {
-        showView(ERROR_LOG_VIEW);
+    public static void showErrorLogView(final String source) {
+        showView(ERROR_LOG_VIEW, source);
     }
 
-    private static void showMutuallyExclusiveView(final String viewId) {
+    private static void showMutuallyExclusiveView(final String viewId, final String source) {
         if (!MUTUALLY_EXCLUSIVE_VIEWS
         .contains(viewId)) {
             Activator.getLogger().error("Failed to show view. You must add the view " + viewId + " to MUTUALLY_EXCLUSIVE_VIEWS Set");
@@ -88,23 +89,27 @@ public final class ViewVisibilityManager {
                             }
                             try {
                                 page.hideView(viewRef);
+                                ToolkitTelemetryProvider.emitCloseModuleEventMetric(viewRef.getId(), "none");
                             } catch (Exception e) {
-                                Activator.getLogger().error("Error occurred while hiding view: " + viewId, e);
+                                Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
+                                ToolkitTelemetryProvider.emitCloseModuleEventMetric(viewRef.getId(), e.getMessage());
                             }
                         }
                     }
                     // Show requested view
                     try {
                         page.showView(viewId);
+                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, "none");
                     } catch (Exception e) {
-                        Activator.getLogger().error("Error occurred while showing view: " + viewId, e);
+                        Activator.getLogger().error("Error occurred while showing view " + viewId, e);
+                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, e.getMessage());
                     }
                 }
             }
         });
     }
 
-    private static void showView(final String viewId) {
+    private static void showView(final String viewId, final String source) {
         IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         if (window != null) {
             IWorkbenchPage page = window.getActivePage();
@@ -114,8 +119,10 @@ public final class ViewVisibilityManager {
                 }
                 try {
                     page.showView(viewId);
+                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, "none");
                 } catch (PartInitException e) {
-                    Activator.getLogger().error("Error occurred while showing view: " + viewId, e);
+                    Activator.getLogger().error("Error occurred while opening view " + viewId, e);
+                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, e.getMessage());
                 }
             }
         }

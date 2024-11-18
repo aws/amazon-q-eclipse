@@ -36,8 +36,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ChatStateManager chatStateManager;
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
-    private ChatCommunicationManager chatCommunicationManager;
-    private ChatTheme chatTheme;
+    private final ChatCommunicationManager chatCommunicationManager;
+    private final ChatTheme chatTheme;
     private Browser browser;
     private volatile boolean canDisposeState = false;
 
@@ -54,7 +54,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     public final void createPartControl(final Composite parent) {
         setupParentBackground(parent);
         browser = chatStateManager.getBrowser(parent);
-        // attempt to use existing browser with chat history if present, else create a new one
+        // attempt to use existing browser with chat history if present, else create a
+        // new one
         if (browser == null || browser.isDisposed()) {
             canDisposeState = false;
             var result = setupBrowser(parent);
@@ -62,13 +63,25 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             // that view and don't setup rest of the content
             if (!result) {
                 canDisposeState = true;
-                showDependencyMissingView();
+                showDependencyMissingView("Failed to set up webview from Chat");
                 return;
             }
             browser = getAndUpdateStateManager();
         } else {
             updateBrowser(browser);
         }
+
+        browser.setVisible(false);
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(final ProgressEvent event) {
+                Display.getDefault().asyncExec(() -> {
+                    if (!browser.isDisposed()) {
+                        browser.setVisible(true);
+                    }
+                });
+            }
+        });
 
         AuthState authState = Activator.getLoginService().getAuthState();
         setupAmazonQView(parent, authState);
@@ -112,22 +125,24 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         return browser;
     }
 
+    @Override
     public final void onAuthStatusChanged(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(authState, getViewSite());
             if (authState.isExpired()) {
                 canDisposeState = true;
-                ViewVisibilityManager.showReAuthView();
+                ViewVisibilityManager.showReAuthView("update");
             } else if (authState.isLoggedOut()) {
                 canDisposeState = true;
-                ViewVisibilityManager.showLoginView();
+                ViewVisibilityManager.showLoginView("update");
             } else {
-                // if browser is not null and there is no chat prior state, start a new blank chat view
+                // if browser is not null and there is no chat prior state, start a new blank
+                // chat view
                 if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
                     Optional<String> content = getContent();
                     if (!content.isPresent()) {
                         canDisposeState = true;
-                        ViewVisibilityManager.showChatAssetMissingView();
+                        ViewVisibilityManager.showChatAssetMissingView("Failed to set up webview from Chat");
                     } else {
                         browser.setText(content.get()); // Display the chat client
                     }
@@ -231,14 +246,13 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     /*
      * Generates javascript for chat options to be supplied to Chat UI defined here
-     * https://github.com/aws/language-servers/blob/785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
+     * https://github.com/aws/language-servers/blob/
+     * 785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
      */
     private String generateQuickActionConfig() {
         return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
-                .map(ChatOptions::quickActions)
-                .map(QuickActions::quickActionsCommandGroups)
-                .map(this::serializeQuickActionCommands)
-                .orElse("");
+                .map(ChatOptions::quickActions).map(QuickActions::quickActionsCommandGroups)
+                .map(this::serializeQuickActionCommands).orElse("");
     }
 
     private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {

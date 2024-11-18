@@ -101,7 +101,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     public void onAuthStatusChanged(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
             if (authState.isLoggedIn()) {
-                ViewVisibilityManager.showChatView();
+                ViewVisibilityManager.showChatView("update");
             }
         });
     }
@@ -148,7 +148,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
 
     @Override
     protected void showAlternateView() {
-        ViewVisibilityManager.showChatView();
+        ViewVisibilityManager.showChatView("restart");
     }
 
     private void resizeButtonFont(final Button button, final int newFontSize) {

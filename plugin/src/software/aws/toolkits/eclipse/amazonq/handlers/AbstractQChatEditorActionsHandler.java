@@ -94,7 +94,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
 
     private void openQChat() {
         Display.getDefault().syncExec(() -> {
-            ViewVisibilityManager.showChatView();
+            ViewVisibilityManager.showChatView("shortcut");
         });
     }
 

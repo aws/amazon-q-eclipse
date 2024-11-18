@@ -13,9 +13,9 @@ public class QOpenLoginViewHandler extends AbstractHandler {
     @Override
     public final Object execute(final ExecutionEvent event) {
         if (Activator.getLoginService().getAuthState().isLoggedIn()) {
-            ViewVisibilityManager.showChatView();
+            ViewVisibilityManager.showChatView("statusBar");
         } else {
-            ViewVisibilityManager.showLoginView();
+            ViewVisibilityManager.showLoginView("statusBar");
         }
         return null;
     }

@@ -85,6 +85,7 @@ public final class DefaultLspManager implements LspManager {
         var platform = platformOverride != null ? platformOverride : PluginUtils.getPlatform();
         var architecture = architectureOverride != null ? architectureOverride : PluginUtils.getArchitecture();
 
+        startTime = Instant.now();
         var lspFetcher = createLspFetcher(manifest);
         var fetchResult = lspFetcher.fetch(platform, architecture, workingDirectory, startTime);
 
@@ -115,13 +116,17 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private boolean hasValidResult(final LspInstallResult overrideResult) {
+        var start = Instant.now();
+        String errorMessage = null;
         try {
             validateLsp(overrideResult);
-            return true;
         } catch (Exception e) {
             Activator.getLogger().error(e.getMessage(), e);
-            return false;
+            errorMessage = e.getMessage();
+        } finally {
+            emitValidate(LanguageServerLocation.OVERRIDE, errorMessage, start);
         }
+        return (errorMessage == null);
     }
 
     LspInstallResult getLocalLspOverride() {
@@ -177,12 +182,29 @@ public final class DefaultLspManager implements LspManager {
         LanguageServerTelemetryProvider.emitSetupGetServer(Result.SUCCEEDED, args);
         return;
     }
+    private void emitValidate(final LanguageServerLocation location, final String reason, final Instant start) {
+        var args = new RecordLspSetupArgs();
+        Result result = (reason == null) ? Result.SUCCEEDED : Result.FAILED;
+        args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        args.setLocation(location);
+        args.setReason(reason);
+        LanguageServerTelemetryProvider.emitSetupValidate(result, args);
+    }
 
     private void validateAndConfigureLsp(final LspInstallResult result) throws IOException {
-        validateLsp(result);
-        var serverDirPath = Paths.get(result.getServerDirectory());
-        var nodeExecutable = serverDirPath.resolve(result.getServerCommand());
-        makeExecutable(nodeExecutable);
+        var start = Instant.now();
+        String errorMessage = null;
+        try {
+            validateLsp(result);
+            var serverDirPath = Paths.get(result.getServerDirectory());
+            var nodeExecutable = serverDirPath.resolve(result.getServerCommand());
+            makeExecutable(nodeExecutable);
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+            throw e;
+        } finally {
+            emitValidate(result.getLocation(), errorMessage, start);
+        }
     }
 
     private void validateLsp(final LspInstallResult result) {

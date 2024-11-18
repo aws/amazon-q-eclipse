@@ -21,6 +21,10 @@ public final class LanguageServerTelemetryProvider {
         emitSetupMetric(result, args, LanguageServerSetupStage.GET_SERVER);
     }
 
+    public static void emitSetupValidate(final Result result, final RecordLspSetupArgs args) {
+        emitSetupMetric(result, args, LanguageServerSetupStage.VALIDATE);
+    }
+
     private static void emitSetupMetric(final Result result, final RecordLspSetupArgs args, final LanguageServerSetupStage stage) {
         var data = LanguageserverTelemetry.SetupEvent()
                 .id("Amazon Q")

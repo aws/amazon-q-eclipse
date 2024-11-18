@@ -6,7 +6,10 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+
 import org.eclipse.swt.browser.BrowserFunction;
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
@@ -39,13 +42,25 @@ public final class ToolkitLoginWebview extends AmazonQView {
     public void createPartControl(final Composite parent) {
         setupParentBackground(parent);
         var result = setupBrowser(parent);
-        // if setup of amazon q view fails due to missing webview dependency, switch to that view
+        // if setup of amazon q view fails due to missing webview dependency, switch to
+        // that view
         // and don't setup rest of the content
         if (!result) {
             showDependencyMissingView();
             return;
         }
         var browser = getBrowser();
+        browser.setVisible(false);
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(final ProgressEvent event) {
+                Display.getDefault().asyncExec(() -> {
+                    if (!browser.isDisposed()) {
+                        browser.setVisible(true);
+                    }
+                });
+            }
+        });
 
         AuthState authState = Activator.getLoginService().getAuthState();
         setupAmazonQView(parent, authState);
@@ -54,7 +69,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
             @Override
             public Object function(final Object[] arguments) {
                 commandParser.parseCommand(arguments)
-                    .ifPresent(command -> actionHandler.handleCommand(command, browser));
+                        .ifPresent(command -> actionHandler.handleCommand(command, browser));
                 return null;
             }
         };
@@ -101,52 +116,54 @@ public final class ToolkitLoginWebview extends AmazonQView {
             }
             var loginJsPath = webviewAssetServer.getUri() + "getStart.js";
             boolean isDarkTheme = THEME_DETECTOR.isDarkTheme();
-            return String.format("""
-                    <!DOCTYPE html>
-                    <html>
-                        <head>
-                            <meta
-                                http-equiv="Content-Security-Policy"
-                                content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                                img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
-                            >
-                            <title>AWS Q</title>
-                        </head>
-                        <body class="jb-light">
-                            <div id="app"></div>
-                            <script type="text/javascript" src="%s" defer></script>
-                            <script type="text/javascript">
-                                %s
-                                const init = () => {
-                                    changeTheme(%b);
-                                    Promise.all([
-                                        waitForFunction('ideCommand'),
-                                        waitForFunction('telemetryEvent')
-                                    ])
-                                        .then(([ideCommand, telemetryEvent]) => {
-                                            const ideApi = {
-                                                postMessage(message) {
-                                                    ideCommand(JSON.stringify(message));
-                                                }
-                                            };
-                                            window.ideApi = ideApi;
+            return String.format(
+                    """
+                            <!DOCTYPE html>
+                            <html>
+                                <head>
+                                    <meta
+                                        http-equiv="Content-Security-Policy"
+                                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
+                                        img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
+                                    >
+                                    <title>AWS Q</title>
+                                </head>
+                                <body class="jb-light">
+                                    <div id="app"></div>
+                                    <script type="text/javascript" src="%s" defer></script>
+                                    <script type="text/javascript">
+                                        %s
+                                        const init = () => {
+                                            changeTheme(%b);
+                                            Promise.all([
+                                                waitForFunction('ideCommand'),
+                                                waitForFunction('telemetryEvent')
+                                            ])
+                                                .then(([ideCommand, telemetryEvent]) => {
+                                                    const ideApi = {
+                                                        postMessage(message) {
+                                                            ideCommand(JSON.stringify(message));
+                                                        }
+                                                    };
+                                                    window.ideApi = ideApi;
 
-                                            const telemetryApi = {
-                                                postClickEvent(event) {
-                                                    telemetryEvent(event);
-                                                }
-                                            };
-                                            window.telemetryApi = telemetryApi;
+                                                    const telemetryApi = {
+                                                        postClickEvent(event) {
+                                                            telemetryEvent(event);
+                                                        }
+                                                    };
+                                                    window.telemetryApi = telemetryApi;
 
-                                            ideCommand(JSON.stringify({"command":"onLoad"}));
-                                        })
-                                        .catch(error => console.error('Error in initialization:', error));
-                                };
-                                window.addEventListener('load', init);
-                            </script>
-                        </body>
-                    </html>
-                    """, loginJsPath, loginJsPath, loginJsPath, getWaitFunction(), isDarkTheme);
+                                                    ideCommand(JSON.stringify({"command":"onLoad"}));
+                                                })
+                                                .catch(error => console.error('Error in initialization:', error));
+                                        };
+                                        window.addEventListener('load', init);
+                                    </script>
+                                </body>
+                            </html>
+                            """,
+                    loginJsPath, loginJsPath, loginJsPath, getWaitFunction(), isDarkTheme);
         } catch (IOException e) {
             return "Failed to load JS";
         }

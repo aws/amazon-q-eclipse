@@ -70,12 +70,14 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private LspInstallResult fetchLspInstallation() {
+        var startTime = Instant.now();
         // retrieve local lsp overrides and use that if valid
         var overrideResult = getLocalLspOverride();
 
         if (overrideResult != null && hasValidResult(overrideResult)) {
             Activator.getLogger().info(String.format("Launching Amazon Q language server from local override location: %s, with command: %s and args: %s",
                     overrideResult.getServerDirectory(), overrideResult.getServerCommand(), overrideResult.getServerCommandArgs()));
+            emitGetServerWithOverride(startTime);
             return overrideResult;
         }
         Manifest manifest = fetchManifest();
@@ -84,7 +86,7 @@ public final class DefaultLspManager implements LspManager {
         var architecture = architectureOverride != null ? architectureOverride : PluginUtils.getArchitecture();
 
         var lspFetcher = createLspFetcher(manifest);
-        var fetchResult = lspFetcher.fetch(platform, architecture, workingDirectory);
+        var fetchResult = lspFetcher.fetch(platform, architecture, workingDirectory, startTime);
 
         // initiate cleanup on a background thread
         initiateCleanup(lspFetcher);
@@ -167,6 +169,13 @@ public final class DefaultLspManager implements LspManager {
             args.setManifestSchemaVersion(manifest.manifestSchemaVersion());
         }
         LanguageServerTelemetryProvider.emitSetupGetManifest(result, args);
+    }
+    private void emitGetServerWithOverride(final Instant start) {
+        var args = new RecordLspSetupArgs();
+        args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        args.setLocation(LanguageServerLocation.OVERRIDE);
+        LanguageServerTelemetryProvider.emitSetupGetServer(Result.SUCCEEDED, args);
+        return;
     }
 
     private void validateAndConfigureLsp(final LspInstallResult result) throws IOException {

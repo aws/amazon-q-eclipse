@@ -10,6 +10,7 @@ public final class RecordLspSetupArgs {
     private String languageServerVersion;
     private String manifestSchemaVersion;
     private double duration;
+    private String reason;
 
     public String getLanguageServerVersion() {
         return languageServerVersion;
@@ -41,5 +42,11 @@ public final class RecordLspSetupArgs {
 
     public void setLocation(final LanguageServerLocation location) {
         this.location = location;
+    }
+    public String getReason() {
+        return reason;
+    }
+    public void setReason(final String reason) {
+        this.reason = reason;
     }
 }

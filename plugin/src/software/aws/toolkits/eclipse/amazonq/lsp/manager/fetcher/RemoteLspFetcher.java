@@ -13,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -33,8 +35,10 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class RemoteLspFetcher implements LspFetcher {
 
@@ -56,16 +60,28 @@ public final class RemoteLspFetcher implements LspFetcher {
         return new Builder();
     }
 
+    private void emitGetServer(final Result result, final String serverVersion, final LanguageServerLocation location,
+            final String reason, final Instant start) {
+        var args = new RecordLspSetupArgs();
+        args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        args.setLocation(location);
+        args.setLanguageServerVersion(serverVersion);
+        args.setReason(reason);
+        LanguageServerTelemetryProvider.emitSetupGetServer(result, args);
+    }
+
     @Override
     public LspFetchResult fetch(final PluginPlatform platform, final PluginArchitecture architecture,
-            final Path destination) {
-        var artifactVersion = resolveVersion(manifest, platform, architecture);
+            final Path destination, final Instant start) {
+        var artifactVersion = resolveVersion(manifest, platform, architecture, start);
         var target = resolveTarget(artifactVersion, platform, architecture);
         if (!target.isPresent()) {
-            throw new AmazonQPluginException(String.format(
+            String failureReason = String.format(
                     "Unable to find a language server that satisfies one or more of these conditions:"
                     + " version in range [%s), matching system's architecture: %s and platform: %s",
-                    versionRange.toString(), architecture, platform));
+                    versionRange.toString(), architecture, platform);
+            emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, failureReason, start);
+            throw new AmazonQPluginException(failureReason);
         }
 
         var serverVersion = artifactVersion.get().serverVersion();
@@ -76,6 +92,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         if (hasValidCache(contents, downloadDirectory)) {
             logMessageWithLicense(String.format("Launching Amazon Q language server v%s from local cache %s",
                     serverVersion.toString(), downloadDirectory), artifactVersion.get().thirdPartyLicenses());
+            emitGetServer(Result.SUCCEEDED, serverVersion, LanguageServerLocation.CACHE, null, start);
             return new LspFetchResult(downloadDirectory.toString(), serverVersion, LanguageServerLocation.CACHE);
         }
 
@@ -88,6 +105,7 @@ public final class RemoteLspFetcher implements LspFetcher {
             logMessageWithLicense(String.format("Installing Amazon Q language server v%s to %s",
                     serverVersion.toString(), downloadDirectory.toString()),
                     artifactVersion.get().thirdPartyLicenses());
+            emitGetServer(Result.SUCCEEDED, serverVersion, LanguageServerLocation.REMOTE, null, start);
             return new LspFetchResult(downloadDirectory.toString(), serverVersion, LanguageServerLocation.REMOTE);
         }
 
@@ -108,11 +126,13 @@ public final class RemoteLspFetcher implements LspFetcher {
             logMessageWithLicense(String.format(
                     "Unable to install Amazon Q Language Server v%s. Launching a previous version from: %s",
                     serverVersion, fallbackDir.toString()), fallBackLspVersion.get().thirdPartyLicenses());
-
+            emitGetServer(Result.SUCCEEDED, fallbackVersion, LanguageServerLocation.FALLBACK, null, start);
             return new LspFetchResult(fallbackDir.toString(), fallbackVersion, LanguageServerLocation.FALLBACK);
         }
 
-        throw new AmazonQPluginException("Unable to find a compatible version of Amazon Q Language Server.");
+        String failureReason = "Unable to find a compatible version of Amazon Q Language Server.";
+        emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, failureReason, start);
+        throw new AmazonQPluginException(failureReason);
     }
 
     public void cleanup(final Path destinationFolder) {
@@ -156,9 +176,12 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
     }
 
-    private Optional<ArtifactVersion> resolveVersion(final Manifest manifestFile, final PluginPlatform platform, final PluginArchitecture architecture) {
+    private Optional<ArtifactVersion> resolveVersion(final Manifest manifestFile, final PluginPlatform platform,
+            final PluginArchitecture architecture, final Instant start) {
         if (manifestFile == null) {
-            throw new AmazonQPluginException("No valid manifest version data was received. An error could have caused this. Please check logs.");
+            String failureReason = "No valid manifest version data was received. An error could have caused this. Please check logs.";
+            emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, failureReason, start);
+            throw new AmazonQPluginException(failureReason);
         }
 
         return manifestFile.versions().stream()

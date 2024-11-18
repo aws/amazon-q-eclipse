@@ -2,6 +2,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.handlers;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,8 +16,10 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.EclipseTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler {
 
@@ -29,22 +33,39 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
     }
 
     protected final void executeGenericCommand(final String genericCommandVerb) {
+        var start = Instant.now();
         try {
             openQChat();
             getSelectedText().ifPresentOrElse(
-                selection -> sendGenericCommand(selection, genericCommandVerb),
-                () -> Activator.getLogger().info("No text was retrieved when fetching selected text")
+                selection -> {
+                    sendGenericCommand(selection, genericCommandVerb);
+                    emitExecuteCommand(genericCommandVerb, start, Result.SUCCEEDED, "");
+                },
+                () -> {
+                    Activator.getLogger().info("No text was retrieved when fetching selected text");
+                    emitExecuteCommand(genericCommandVerb, start, Result.FAILED, "No text was retrieved when fetching selected text");
+                }
             );
         } catch (Exception e) {
+            emitExecuteCommand(genericCommandVerb, start, Result.FAILED, e.getMessage());
             Activator.getLogger().error(String.format("Error executing Amazon Q %s command", genericCommandVerb), e);
         }
     }
 
     protected final void executeSendToPromptCommand() {
+        var start = Instant.now();
         try {
             openQChat();
-            getSelectedText().ifPresentOrElse(selection -> sendToPromptCommand(selection),
-                    () -> Activator.getLogger().info("No text was retrieved when fetching selected text"));
+            getSelectedText().ifPresentOrElse(
+                selection -> {
+                    sendToPromptCommand(selection);
+                    emitExecuteCommand("sendToPrompt", start, Result.SUCCEEDED, "");
+                },
+                () -> {
+                    Activator.getLogger().info("No text was retrieved when fetching selected text");
+                    emitExecuteCommand("sendToPrompt", start, Result.FAILED, "No text was retrieved when fetching selected text");
+                }
+            );
         } catch (Exception e) {
             Activator.getLogger().error("Error executing Amazon Q send to prompt command", e);
         }
@@ -88,5 +109,11 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
         });
 
         return result.get();
+    }
+    private void emitExecuteCommand(final String command, final Instant start, final Result result, final String reason) {
+        double duration = Duration.between(start, Instant.now()).toMillis();
+        var params = new EclipseTelemetryProvider.Params(command, duration, result, reason);
+        EclipseTelemetryProvider.emitExecuteCommandMetric(params);
+        return;
     }
 }

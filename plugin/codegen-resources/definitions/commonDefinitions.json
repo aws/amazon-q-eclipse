@@ -1427,6 +1427,11 @@
             "description": "Represents the version of the manifest schema associated with the language server"
         },
         {
+            "name": "command",
+            "type": "string",
+            "description": "Generic metadata field for tracking type of an executed command" 
+        },
+        {
             "name": "module",
             "type": "string",
             "description": "Free-form module name for both high-level features such as \"PublishToAWS\", and lower-level modules such as \"ToolkitContextProvider\". Use `component` for UI components, or `featureId` for specific feature names. See also `resourceType`."
@@ -6210,6 +6215,26 @@
                 },
                 {
                     "type": "manifestSchemaVersion",
+                    "required": false
+                }
+            ]
+        },
+        {
+            "name": "eclipse_executeCommand",
+            "description": "Emitted whenever a registered Eclipse command is executed",
+            "passive": true,
+            "metadata": [
+                {
+                    "type": "command"
+                },
+                {
+                    "type": "duration"
+                },
+                {
+                    "type": "result"
+                },
+                {
+                    "type": "reason",
                     "required": false
                 }
             ]

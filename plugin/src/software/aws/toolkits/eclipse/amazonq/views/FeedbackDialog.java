@@ -110,7 +110,6 @@ public class FeedbackDialog extends Dialog {
     protected final void okPressed() {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
-        Activator.getLogger().info(String.format("Selected sentiment: %s and comment: %s", selectedSentiment.toString(), comment));
         ThreadingUtils.executeAsyncTask(() -> Activator.getTelemetryService().emitFeedback(comment, selectedSentiment));
         UiTelemetryProvider.emitClickEventMetric("feedback_shareFeedbackDialogCancelButton");
         super.okPressed();
@@ -148,7 +147,11 @@ public class FeedbackDialog extends Dialog {
     @Override
     protected final Control createDialogArea(final Composite parent) {
         container = (Composite) super.createDialogArea(parent);
-        container.setLayout(new GridLayout(1, false));
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginLeft = 10;
+        layout.marginRight = 10;
+        layout.marginTop = 10;
+        container.setLayout(layout);
 
         createHeaderSection(container);
         createJoinUsOnGithubSection(container);

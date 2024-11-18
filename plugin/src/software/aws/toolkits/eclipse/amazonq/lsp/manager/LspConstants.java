@@ -12,7 +12,7 @@ public final class LspConstants {
         // Prevent instantiation
     }
 
-    public static final String CW_MANIFEST_URL = "https://aws-language-servers-gamma.us-east-1.amazonaws.com/eclipse/0/manifest.json";
+    public static final String CW_MANIFEST_URL = "https://d3akiidp1wvqyg.cloudfront.net/codewhisperer/0/manifest.json";
     public static final int MANIFEST_MAJOR_VERSION = 0;
 
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
@@ -25,5 +25,5 @@ public final class LspConstants {
     public static final String LSP_SUBDIRECTORY = "lsp";
     public static final String AMAZONQ_LSP_SUBDIRECTORY = Paths.get(LSP_SUBDIRECTORY, "AmazonQ").toString();
 
-    public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = new VersionRange("[0.0.0, 1.0.0)");
+    public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = new VersionRange("[2.2.0, 2.10.0)");
 }

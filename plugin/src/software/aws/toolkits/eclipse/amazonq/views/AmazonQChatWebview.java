@@ -67,21 +67,21 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 return;
             }
             browser = getAndUpdateStateManager();
+
+            browser.setVisible(false);
+            browser.addProgressListener(new ProgressAdapter() {
+                @Override
+                public void completed(final ProgressEvent event) {
+                    Display.getDefault().asyncExec(() -> {
+                        if (!browser.isDisposed()) {
+                            browser.setVisible(true);
+                        }
+                    });
+                }
+            });
         } else {
             updateBrowser(browser);
         }
-
-        browser.setVisible(false);
-        browser.addProgressListener(new ProgressAdapter() {
-            @Override
-            public void completed(final ProgressEvent event) {
-                Display.getDefault().asyncExec(() -> {
-                    if (!browser.isDisposed()) {
-                        browser.setVisible(true);
-                    }
-                });
-            }
-        });
 
         AuthState authState = Activator.getLoginService().getAuthState();
         setupAmazonQView(parent, authState);

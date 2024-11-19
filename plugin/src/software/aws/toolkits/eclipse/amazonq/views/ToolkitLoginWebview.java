@@ -32,6 +32,8 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
 
+    private boolean isViewVisible = false;
+
     public ToolkitLoginWebview() {
         super();
         this.commandParser = new LoginViewCommandParser();
@@ -50,13 +52,15 @@ public final class ToolkitLoginWebview extends AmazonQView {
             return;
         }
         var browser = getBrowser();
-        browser.setVisible(false);
+
+        browser.setVisible(isViewVisible);
         browser.addProgressListener(new ProgressAdapter() {
             @Override
             public void completed(final ProgressEvent event) {
                 Display.getDefault().asyncExec(() -> {
                     if (!browser.isDisposed()) {
-                        browser.setVisible(true);
+                        isViewVisible = true;
+                        browser.setVisible(isViewVisible);
                     }
                 });
             }

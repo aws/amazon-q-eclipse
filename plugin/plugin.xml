@@ -152,6 +152,7 @@
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
             label="Amazon Q Language Server"
             launcherBuilder="software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServerBuilder"
+            lastDocumentDisconnectedTimeout="31560000"
             singleton="true">
         </server>
         <contentTypeMapping

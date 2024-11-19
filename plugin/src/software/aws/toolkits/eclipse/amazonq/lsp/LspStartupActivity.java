@@ -95,7 +95,7 @@ public class LspStartupActivity implements IStartup {
                     if (window != null) {
                         IWorkbenchPage page = window.getActivePage();
                         page.showView(viewId);
-                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", null);
+                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", "none");
                         Activator.getPluginStore().put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
                     }
                 } catch (PartInitException e) {

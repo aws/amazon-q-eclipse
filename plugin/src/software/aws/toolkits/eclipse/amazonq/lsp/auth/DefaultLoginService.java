@@ -72,6 +72,7 @@ public final class DefaultLoginService implements LoginService {
         return processLogin(loginType, loginParams, true)
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to log in", throwable);
+                    logout();
                     return null;
                 });
     }
@@ -138,6 +139,7 @@ public final class DefaultLoginService implements LoginService {
         return processLogin(authState.loginType(), authState.loginParams(), loginOnInvalidToken)
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Failed to re-authenticate", throwable);
+                    logout();
                     return null;
                 });
     }

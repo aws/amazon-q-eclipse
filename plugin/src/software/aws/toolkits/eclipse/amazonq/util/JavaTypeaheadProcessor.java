@@ -6,33 +6,24 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
-    private static final Pattern CURLY_AUTO_CLOSE_MATCHER = Pattern.compile("\\n\\s*\\n\\s*\\}");
+public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
+    private static final Pattern CURLY_AUTO_CLOSE_MATCHER = Pattern.compile("\\n[ \\t]*\\n\\s*\\}");
 
     private StyledText widget;
     private ITextViewer viewer;
-    private ITextEditor editor;
-    private IDocument doc;
 
     private boolean isBracesSetToAutoClose = true;
     private boolean isBracketsSetToAutoClose = true;
     private boolean isStringSetToAutoClose = true;
 
-    private enum PreprocessingCategory {
-        NONE, NORMAL_BRACKETS_OPEN, NORMAL_BRACKETS_CLOSE, STR_QUOTE_OPEN, STR_QUOTE_CLOSE, CURLY_BRACES
-    }
-
     public JavaTypeaheadProcessor(final ITextEditor editor, final boolean isBracesSetToAutoClose,
             final boolean isBracketsSetToAutoClose, final boolean isStringSetToAutoClose) {
-        this.editor = editor;
         viewer = (ITextViewer) editor.getAdapter(ITextViewer.class);
         widget = viewer.getTextWidget();
-        doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         this.isBracesSetToAutoClose = isBracesSetToAutoClose;
         this.isBracketsSetToAutoClose = isBracketsSetToAutoClose;
         this.isStringSetToAutoClose = isStringSetToAutoClose;
@@ -40,7 +31,7 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
 
     @Override
     public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(final int inputLength,
-            final int currentDistanceTraversed, IQInlineBracket[] brackets) {
+            final int currentDistanceTraversed, final IQInlineBracket[] brackets) {
         int numCharDeleted = inputLength;
         int paddingLength = 0;
         for (int i = 1; i <= numCharDeleted; i++) {
@@ -59,18 +50,16 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
 
     @Override
     public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(final int distanceTraversed,
-            final int eventOffset, String input, IQInlineBracket[] brackets) {
+            final int eventOffset, final String input, final IQInlineBracket[] brackets) {
         TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
         PreprocessingCategory category = getBufferPreprocessingCategory(distanceTraversed, input, brackets);
         switch (category) {
         case STR_QUOTE_OPEN:
         case NORMAL_BRACKETS_OPEN:
-            input = input.substring(0, 1) + " ";
             res.setShouldModifyDocument(true);
             res.setDocInsertOffset(eventOffset);
             res.setDocInsertLength(2);
-            res.setDocInsertContent(input);
-            ;
+            res.setDocInsertContent(input.substring(0, 1) + " ");
             break;
         case NORMAL_BRACKETS_CLOSE:
             brackets[distanceTraversed].onTypeOver();
@@ -82,11 +71,10 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
             res.setCaretOffset(widget.getCaretOffset() + 1);
             break;
         case STR_QUOTE_CLOSE:
-            input = input.substring(0, 1);
             res.setShouldModifyDocument(true);
             res.setDocInsertOffset(eventOffset);
             res.setDocInsertLength(2);
-            res.setDocInsertContent(input);
+            res.setDocInsertContent(input.substring(0, 1));
             break;
         case CURLY_BRACES:
             int firstNewlineIndex = input.indexOf('\n');
@@ -106,7 +94,46 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
     }
 
     @Override
-    public TypeaheadProcessorInstruction preprocessBufferVerifyKeyBuffer(final int distanceTraversed, final char input,
+    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(final int distanceTraversed,
+            final int currentOffset, final String input, final IQInlineBracket[] brackets) {
+        IQInlineBracket bracket = brackets[distanceTraversed];
+        TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
+        if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
+            return res;
+        }
+        if (bracket.getSymbol() != input.charAt(0) || input.length() > 1) {
+            return res;
+        }
+        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket)
+                .getOpenBracket();
+        if (openBracket == null || openBracket.isResolved()) {
+            return res;
+        }
+        switch (input.charAt(0)) {
+        case ')':
+        case ']':
+        case '>':
+            if (isBracketsSetToAutoClose) {
+                res.setShouldModifyCaretOffset(true);
+                res.setCaretOffset(currentOffset + 1);
+            }
+            break;
+        case '\"':
+        case '\'':
+            if (isStringSetToAutoClose) {
+                res.setShouldModifyCaretOffset(true);
+                res.setCaretOffset(currentOffset + 1);
+            }
+            break;
+        default:
+            break;
+        }
+
+        return res;
+    }
+
+    @Override
+    public TypeaheadProcessorInstruction processVerifyKeyBuffer(final int distanceTraversed, final char input,
             final IQInlineBracket[] brackets) {
         TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
         if (shouldProcessVerifyKeyInput(input, distanceTraversed, brackets)) {
@@ -124,7 +151,7 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
         return res;
     }
 
-    private boolean shouldProcessVerifyKeyInput(final char input, final int offset, IQInlineBracket[] brackets) {
+    private boolean shouldProcessVerifyKeyInput(final char input, final int offset, final IQInlineBracket[] brackets) {
         if (brackets[offset] == null) {
             return false;
         }
@@ -164,7 +191,7 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
             final IQInlineBracket[] brackets) {
         var bracket = brackets[distanceTraversed];
         if (input.length() > 1 && bracket != null && bracket.getSymbol() == input.charAt(0)
-                && (input.equals("()") || input.equals("{}") || input.equals("<>") || input.equals("[]"))) {
+                && (input.equals("()") || input.equals("<>") || input.equals("[]"))) {
             return PreprocessingCategory.NORMAL_BRACKETS_OPEN;
         }
         if (input.equals("\"\"") || input.equals("\'\'")) {
@@ -203,5 +230,25 @@ public class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor {
             }
         }
         return PreprocessingCategory.NONE;
+    }
+
+    @Override
+    public boolean isBracketsSetToAutoClose() {
+        return isBracketsSetToAutoClose;
+    }
+
+    @Override
+    public boolean isAngleBracketsSetToAutoClose() {
+        return isBracketsSetToAutoClose;
+    }
+
+    @Override
+    public boolean isBracesSetToAutoClose() {
+        return isBracesSetToAutoClose;
+    }
+
+    @Override
+    public boolean isStringSetToAutoClose() {
+        return isStringSetToAutoClose;
     }
 }

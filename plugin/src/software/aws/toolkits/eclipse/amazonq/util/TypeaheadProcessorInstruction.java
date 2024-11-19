@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-public class TypeaheadProcessorInstruction {
+public final class TypeaheadProcessorInstruction {
     private boolean shouldModifyDocument = false;
     private boolean shouldModifyCaretOffset = false;
     private int caretOffset;

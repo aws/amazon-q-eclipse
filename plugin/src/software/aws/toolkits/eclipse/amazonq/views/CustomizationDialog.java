@@ -179,7 +179,6 @@ public final class CustomizationDialog extends Dialog {
             customizations = CustomizationUtil.listCustomizations().get();
         } catch (InterruptedException | ExecutionException e) {
             Activator.getLogger().error("Error occurred in getCustomizations", e);
-            throw new AmazonQPluginException(e);
         }
         return customizations;
     }

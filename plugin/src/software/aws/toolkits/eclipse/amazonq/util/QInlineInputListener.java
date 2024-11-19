@@ -446,9 +446,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length() || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
+            session.transitionToDecisionMade();
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
-                    session.transitionToDecisionMade();
                     session.end();
                 }
             });

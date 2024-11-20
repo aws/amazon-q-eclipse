@@ -271,7 +271,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             try {
                 ITextViewer viewer = session.getViewer();
                 IDocument doc = viewer.getDocument();
-                doc.replace(instruction.getDocInsertOffset(), instruction.getDocInsertLength(),
+                int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        instruction.getDocInsertOffset());
+                doc.replace(expandedOffset, instruction.getDocInsertLength(),
                         instruction.getDocInsertContent());
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error inserting close bracket during typeahead", e);
@@ -321,8 +323,10 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
         if (preprocessInstruction.shouldModifyDocument()) {
             try {
-                event.getDocument().replace(preprocessInstruction.getDocInsertOffset(),
-                        preprocessInstruction.getDocInsertLength(), preprocessInstruction.getDocInsertContent());
+                int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        preprocessInstruction.getDocInsertOffset());
+                event.getDocument().replace(expandedOffset, preprocessInstruction.getDocInsertLength(),
+                        preprocessInstruction.getDocInsertContent());
                 return;
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error performing open bracket sanitation during typeahead", e);
@@ -357,7 +361,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             int targetOffset = postProcessInstruction.getCaretOffset();
             widget.setCaretOffset(targetOffset);
         }
-
+        
         for (int i = distanceTraversed; i < distanceTraversed + input.length(); i++) {
             var bracket = brackets[i];
             if (bracket != null) {

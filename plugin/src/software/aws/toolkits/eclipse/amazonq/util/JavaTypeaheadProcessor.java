@@ -39,7 +39,9 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
             if (bracket != null) {
                 if ((bracket instanceof QInlineSuggestionOpenBracketSegment)
                         && !((QInlineSuggestionOpenBracketSegment) bracket).isResolved()) {
-                    paddingLength++;
+                    if (bracket.getSymbol() != '{') {
+                        paddingLength++;
+                    }
                 }
                 bracket.onDelete();
             }

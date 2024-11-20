@@ -70,12 +70,14 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private LspInstallResult fetchLspInstallation() {
+        var startTime = Instant.now();
         // retrieve local lsp overrides and use that if valid
         var overrideResult = getLocalLspOverride();
 
         if (overrideResult != null && hasValidResult(overrideResult)) {
             Activator.getLogger().info(String.format("Launching Amazon Q language server from local override location: %s, with command: %s and args: %s",
                     overrideResult.getServerDirectory(), overrideResult.getServerCommand(), overrideResult.getServerCommandArgs()));
+            emitGetServerWithOverride(startTime);
             return overrideResult;
         }
         Manifest manifest = fetchManifest();
@@ -83,8 +85,9 @@ public final class DefaultLspManager implements LspManager {
         var platform = platformOverride != null ? platformOverride : PluginUtils.getPlatform();
         var architecture = architectureOverride != null ? architectureOverride : PluginUtils.getArchitecture();
 
+        startTime = Instant.now();
         var lspFetcher = createLspFetcher(manifest);
-        var fetchResult = lspFetcher.fetch(platform, architecture, workingDirectory);
+        var fetchResult = lspFetcher.fetch(platform, architecture, workingDirectory, startTime);
 
         // initiate cleanup on a background thread
         initiateCleanup(lspFetcher);
@@ -113,13 +116,17 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private boolean hasValidResult(final LspInstallResult overrideResult) {
+        var start = Instant.now();
+        String errorMessage = null;
         try {
             validateLsp(overrideResult);
-            return true;
         } catch (Exception e) {
             Activator.getLogger().error(e.getMessage(), e);
-            return false;
+            errorMessage = e.getMessage();
+        } finally {
+            emitValidate(LanguageServerLocation.OVERRIDE, errorMessage, start);
         }
+        return (errorMessage == null);
     }
 
     LspInstallResult getLocalLspOverride() {
@@ -168,12 +175,36 @@ public final class DefaultLspManager implements LspManager {
         }
         LanguageServerTelemetryProvider.emitSetupGetManifest(result, args);
     }
+    private void emitGetServerWithOverride(final Instant start) {
+        var args = new RecordLspSetupArgs();
+        args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        args.setLocation(LanguageServerLocation.OVERRIDE);
+        LanguageServerTelemetryProvider.emitSetupGetServer(Result.SUCCEEDED, args);
+        return;
+    }
+    private void emitValidate(final LanguageServerLocation location, final String reason, final Instant start) {
+        var args = new RecordLspSetupArgs();
+        Result result = (reason == null) ? Result.SUCCEEDED : Result.FAILED;
+        args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        args.setLocation(location);
+        args.setReason(reason);
+        LanguageServerTelemetryProvider.emitSetupValidate(result, args);
+    }
 
     private void validateAndConfigureLsp(final LspInstallResult result) throws IOException {
-        validateLsp(result);
-        var serverDirPath = Paths.get(result.getServerDirectory());
-        var nodeExecutable = serverDirPath.resolve(result.getServerCommand());
-        makeExecutable(nodeExecutable);
+        var start = Instant.now();
+        String errorMessage = null;
+        try {
+            validateLsp(result);
+            var serverDirPath = Paths.get(result.getServerDirectory());
+            var nodeExecutable = serverDirPath.resolve(result.getServerCommand());
+            makeExecutable(nodeExecutable);
+        } catch (Exception e) {
+            errorMessage = e.getMessage();
+            throw e;
+        } finally {
+            emitValidate(result.getLocation(), errorMessage, start);
+        }
     }
 
     private void validateLsp(final LspInstallResult result) {

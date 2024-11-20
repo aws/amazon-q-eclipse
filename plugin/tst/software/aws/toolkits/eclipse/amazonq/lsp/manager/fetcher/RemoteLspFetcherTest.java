@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,10 +56,12 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class RemoteLspFetcherTest {
     private static VersionRange versionRange = new VersionRange("[1.0.0, 2.0.0]");
@@ -72,6 +77,7 @@ public final class RemoteLspFetcherTest {
     }
 
     private MockedStatic<Activator> mockedActivator;
+    private MockedStatic<LanguageServerTelemetryProvider> mockTelemetryProvider;
 
     @Mock
     private LoggingService mockLogger;
@@ -83,12 +89,14 @@ public final class RemoteLspFetcherTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockedActivator = mockStatic(Activator.class);
+        mockTelemetryProvider = mockStatic(LanguageServerTelemetryProvider.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockLogger);
     }
 
     @AfterEach
     void tearDown() {
         mockedActivator.close();
+        mockTelemetryProvider.close();
     }
 
     @TempDir(cleanup = CleanupMode.ALWAYS)
@@ -98,11 +106,17 @@ public final class RemoteLspFetcherTest {
     void fetchWhenManifestIsNull() {
         sampleManifest = null;
         lspFetcher = createFetcher();
-
         var exception = assertThrows(AmazonQPluginException.class, () -> {
-            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
         assertExceptionThrownWithMessage(exception, "No valid manifest");
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.FAILED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.UNKNOWN
+                && arg.getReason().contains("No valid manifest")
+                )
+            ));
     }
 
     @ParameterizedTest
@@ -113,36 +127,64 @@ public final class RemoteLspFetcherTest {
         lspFetcher = createFetcher();
 
         var exception = assertThrows(AmazonQPluginException.class, () -> {
-            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.FAILED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.UNKNOWN
+                && arg.getReason().contains("language server that satisfies one or more of these conditions")
+                )
+            ));
     }
 
     @Test
     void fetchWhenNoMatchingPlatform() {
         var exception = assertThrows(AmazonQPluginException.class, () -> {
-            lspFetcher.fetch(PluginPlatform.WINDOWS, PluginArchitecture.ARM_64, tempDir);
+            lspFetcher.fetch(PluginPlatform.WINDOWS, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.FAILED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.UNKNOWN
+                && arg.getReason().contains("language server that satisfies one or more of these conditions")
+                )
+            ));
     }
 
     @Test
     void fetchWhenNoMatchingArchitecture() {
         var exception = assertThrows(AmazonQPluginException.class, () -> {
-            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.X86_64, tempDir);
+            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.X86_64, tempDir, Instant.now());
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.FAILED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.UNKNOWN
+                && arg.getReason().contains("language server that satisfies one or more of these conditions")
+                )
+            ));
     }
 
     @Test
     void fetchWhenTargetContentEmpty() {
         var exception = assertThrows(AmazonQPluginException.class, () -> {
-            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.FAILED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.UNKNOWN
+                && arg.getReason().contains("language server that satisfies one or more of these conditions")
+                )
+            ));
     }
 
     @Test
@@ -151,10 +193,17 @@ public final class RemoteLspFetcherTest {
         var unzippedPath = Paths.get(tempDir.toString(), sampleVersion, "servers");
         setupZipTargetContent(zipPath, sampleLspVersion);
 
-        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
         assertInstallResult(result, LanguageServerLocation.CACHE);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.SUCCEEDED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.CACHE
+                && arg.getReason() == null
+                )
+            ));
     }
 
     @Test
@@ -166,10 +215,17 @@ public final class RemoteLspFetcherTest {
         var fileToBeDeleted = Files.list(unzippedPath).findFirst().get();
         ArtifactUtils.deleteFile(fileToBeDeleted);
 
-        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
         assertInstallResult(result, LanguageServerLocation.CACHE);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.SUCCEEDED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.CACHE
+                && arg.getReason() == null
+                )
+            ));
     }
 
     @ParameterizedTest
@@ -181,10 +237,17 @@ public final class RemoteLspFetcherTest {
         .thenThrow(new IOException("Simulated network error"));
 
         var exception = assertThrows(AmazonQPluginException.class, () -> {
-            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
 
         assertExceptionThrownWithMessage(exception, " find a compatible version");
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.FAILED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.UNKNOWN
+                && arg.getReason().contains("find a compatible version")
+                )
+            ));
     }
 
     @Test
@@ -199,10 +262,17 @@ public final class RemoteLspFetcherTest {
 
         lspFetcher = createFetcher();
 
-        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
         assertInstallResult(result, LanguageServerLocation.REMOTE);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.SUCCEEDED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.REMOTE
+                && arg.getReason() == null
+                )
+            ));
     }
 
     @Test
@@ -221,7 +291,7 @@ public final class RemoteLspFetcherTest {
         .thenReturn(mockResponse);
 
         lspFetcher = createFetcher();
-        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir);
+        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
         var expectedAssetDirectory = Paths.get(tempDir.toString(), oneAdditionalVersion);
         assertEquals(expectedAssetDirectory.toString(), result.assetDirectory());
@@ -229,6 +299,14 @@ public final class RemoteLspFetcherTest {
         assertEquals(oneAdditionalVersion, result.version());
 
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                eq(Result.SUCCEEDED),
+                argThat(arg ->
+                arg.getLocation() == LanguageServerLocation.REMOTE
+                && arg.getReason() == null
+                && arg.getLanguageServerVersion() == oneAdditionalVersion
+                )
+            ));
     }
 
     private HttpResponse<Path> createMockHttpResponse(final Path file) {
@@ -281,7 +359,8 @@ public final class RemoteLspFetcherTest {
         assertEquals(expectedLocation, result.location());
     }
 
-    private void setupFileTargetContent(final String filename, final ArtifactVersion lspVersion, final String hash) throws IOException, FileNotFoundException {
+    private void setupFileTargetContent(final String filename,
+    final ArtifactVersion lspVersion, final String hash) throws IOException, FileNotFoundException {
         var sampleContentPath = Paths.get(tempDir.toString(), lspVersion.serverVersion(), filename);
 
         setupFile(sampleContentPath);

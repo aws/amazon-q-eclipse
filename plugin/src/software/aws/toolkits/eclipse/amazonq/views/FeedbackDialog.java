@@ -4,9 +4,13 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -51,7 +55,7 @@ public class FeedbackDialog extends Dialog {
     private Composite container;
     private Text commentBox;
     private Font magnifiedFont;
-    private Image loadedImage;
+    private final List<Image> allLoadedImages;
     private Label characterRemainingLabel;
     private Sentiment selectedSentiment = Sentiment.POSITIVE;
     private boolean isCommentQuestionGhostLabelVisible = true;
@@ -86,6 +90,7 @@ public class FeedbackDialog extends Dialog {
 
     public FeedbackDialog(final Shell parentShell) {
         super(parentShell);
+        allLoadedImages = new ArrayList<>();
     }
 
     private Image loadImage(final String imagePath) {
@@ -93,9 +98,10 @@ public class FeedbackDialog extends Dialog {
         try {
             URL imageUrl = PluginUtils.getResource(imagePath);
             if (imageUrl != null) {
-                // TODO: Need to add disposing logic for images
-                loadedImage = new Image(Display.getCurrent(), imageUrl.openStream());
-                this.loadedImage = loadedImage;
+                try (InputStream stream = imageUrl.openStream()) {
+                    loadedImage = new Image(Display.getCurrent(), stream);
+                    allLoadedImages.add(loadedImage);
+                }
             }
         } catch (IOException e) {
             Activator.getLogger().warn(e.getMessage(), e);
@@ -159,6 +165,19 @@ public class FeedbackDialog extends Dialog {
         createReportRequestContributeSection(container);
         createShareFeedbackSection(container);
         createQuestionSection(container);
+
+        parent.addDisposeListener(event -> {
+            if (container != null && !container.isDisposed()) {
+                container.dispose();
+            }
+
+            if (magnifiedFont != null && !magnifiedFont.isDisposed()) {
+                magnifiedFont.dispose();
+            }
+
+            allLoadedImages.stream().filter(Objects::nonNull).filter(img -> !img.isDisposed()).forEach(Image::dispose);
+            allLoadedImages.clear();
+        });
 
         UiTelemetryProvider.emitClickEventMetric("feedback_openShareFeedbackDialogButton");
 
@@ -417,29 +436,4 @@ public class FeedbackDialog extends Dialog {
         return new Point(800, 600);
     }
 
-    @Override
-    public final boolean close() {
-        disposeAllComponents(container);
-        disposeIndependentElements();
-        return super.close();
-    }
-
-    private void disposeAllComponents(final Composite container) {
-        for (Control control : container.getChildren()) {
-            if (control instanceof Composite) {
-                disposeAllComponents((Composite) control);
-            } else {
-                control.dispose();
-            }
-        }
-    }
-
-    public final void disposeIndependentElements() {
-        if (this.loadedImage != null && !this.loadedImage.isDisposed()) {
-            this.loadedImage.dispose();
-        }
-        if (this.magnifiedFont != null && !this.magnifiedFont.isDisposed()) {
-            this.magnifiedFont.dispose();
-        }
-    }
 }

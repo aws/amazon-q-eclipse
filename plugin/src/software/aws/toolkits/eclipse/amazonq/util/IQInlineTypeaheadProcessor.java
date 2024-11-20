@@ -30,4 +30,6 @@ public interface IQInlineTypeaheadProcessor {
     boolean isBracesSetToAutoClose();
 
     boolean isStringSetToAutoClose();
+    
+    boolean isCurlyBracesAutoCloseDelayed();
 }

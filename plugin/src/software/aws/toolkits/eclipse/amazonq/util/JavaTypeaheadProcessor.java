@@ -168,6 +168,11 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         return isStringSetToAutoClose;
     }
 
+    @Override
+    public boolean isCurlyBracesAutoCloseDelayed() {
+        return true;
+    }
+
     private boolean shouldProcessVerifyKeyInput(final char input, final int offset, final IQInlineBracket[] brackets) {
         if (brackets[offset] == null) {
             return false;

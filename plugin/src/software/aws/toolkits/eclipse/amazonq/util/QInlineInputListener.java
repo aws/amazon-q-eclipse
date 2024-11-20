@@ -95,7 +95,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             if (segment instanceof IQInlineBracket) {
                 int offset = ((IQInlineBracket) segment).getRelevantOffset();
                 int idxInSuggestion = offset - invocationOffset;
-                if (((IQInlineBracket) segment).getSymbol() == '{') {
+                if (((IQInlineBracket) segment).getSymbol() == '{' && typeaheadProcessor.isCurlyBracesAutoCloseDelayed()) {
                     int firstNewLineAfter = session.getCurrentSuggestion().getInsertText().indexOf('\n',
                             idxInSuggestion);
                     if (firstNewLineAfter != -1) {

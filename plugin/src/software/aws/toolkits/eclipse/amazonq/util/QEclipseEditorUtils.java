@@ -336,7 +336,7 @@ public final class QEclipseEditorUtils {
             contentTypeName = contentType.getName();
         }
         if (contentTypeName == null) {
-            return new GenericTypeheadProcessor(editor);
+            return new GenericTypeheadProcessor();
         }
         switch (contentTypeName) {
         // TODO: Add more supported file types here:
@@ -347,9 +347,8 @@ public final class QEclipseEditorUtils {
             boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
             return new JavaTypeaheadProcessor(editor, isBracesSetToAutoClose, isBracketsSetToAutoClose, isStringSetToAutoClose);
         default:
-            break;
+            return new GenericTypeheadProcessor();
         }
-        return new GenericTypeheadProcessor(editor);
     }
 
     public static void showToast(final String message, final Display display, final int ttlInMs) {

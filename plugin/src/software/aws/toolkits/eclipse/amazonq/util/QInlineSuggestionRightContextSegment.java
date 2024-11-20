@@ -38,7 +38,6 @@ public final class QInlineSuggestionRightContextSegment implements IQInlineSugge
         gc.drawText(text, x, y, false);
         FontMetrics fontMetrics = gc.getFontMetrics();
         int lineY = y + fontMetrics.getAscent() / 2;
-        lineY -= scrollOffsetY;
         Point textExtent = gc.textExtent(text);
         int textWidth = textExtent.x;
         gc.drawLine(x, lineY, x + textWidth, lineY);

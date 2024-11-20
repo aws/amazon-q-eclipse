@@ -336,7 +336,7 @@ public final class QEclipseEditorUtils {
             contentTypeName = contentType.getName();
         }
         if (contentTypeName == null) {
-            return new JavaTypeaheadProcessor(editor, true, true, true);
+            return new GenericTypeheadProcessor(editor);
         }
         switch (contentTypeName) {
         // TODO: Add more supported file types here:
@@ -349,7 +349,7 @@ public final class QEclipseEditorUtils {
         default:
             break;
         }
-        return new JavaTypeaheadProcessor(editor, true, true, true);
+        return new GenericTypeheadProcessor(editor);
     }
 
     public static void showToast(final String message, final Display display, final int ttlInMs) {

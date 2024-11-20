@@ -108,7 +108,7 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         }
         QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket)
                 .getOpenBracket();
-        if (openBracket == null || openBracket.isResolved()) {
+        if (openBracket == null || openBracket.isResolved() || !openBracket.hasAutoCloseOccurred()) {
             return res;
         }
         switch (input.charAt(0)) {
@@ -146,9 +146,6 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
             res.setDocInsertOffset(expandedOffset - 1);
             res.setDocInsertLength(0);
             res.setDocInsertContent(String.valueOf(input));
-        } else {
-            res.setShouldModifyCaretOffset(false);
-            res.setShouldModifyDocument(false);
         }
         return res;
     }
@@ -183,7 +180,7 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         }
         QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket)
                 .getOpenBracket();
-        if (openBracket == null || openBracket.isResolved()) {
+        if (openBracket == null || openBracket.isResolved() || !openBracket.hasAutoCloseOccurred()) {
             return false;
         }
         return true;
@@ -194,11 +191,13 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         var bracket = brackets[distanceTraversed];
         if (input.length() > 1 && bracket != null && bracket.getSymbol() == input.charAt(0)
                 && (input.equals("()") || input.equals("<>") || input.equals("[]"))) {
+            ((QInlineSuggestionOpenBracketSegment) bracket).setAutoCloseOccurred(true);
             return PreprocessingCategory.NORMAL_BRACKETS_OPEN;
         }
         if (input.equals("\"\"") || input.equals("\'\'")) {
             if (bracket != null && bracket.getSymbol() == input.charAt(0)) {
                 if (bracket instanceof QInlineSuggestionOpenBracketSegment) {
+                    ((QInlineSuggestionOpenBracketSegment) bracket).setAutoCloseOccurred(true);
                     return PreprocessingCategory.STR_QUOTE_OPEN;
                 } else {
                     return PreprocessingCategory.STR_QUOTE_CLOSE;
@@ -207,11 +206,13 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         }
         Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);
         if (matcher.find()) {
+            ((QInlineSuggestionOpenBracketSegment) bracket).setAutoCloseOccurred(true);
             return PreprocessingCategory.CURLY_BRACES;
         }
         if (bracket != null) {
             if ((bracket instanceof QInlineSuggestionCloseBracketSegment) && input.charAt(0) == bracket.getSymbol()
-                    && !((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().isResolved()) {
+                    && !((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().isResolved()
+                    && ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().hasAutoCloseOccurred()) {
                 boolean autoCloseEnabled = false;
                 switch (bracket.getSymbol()) {
                 case '\"':

@@ -195,7 +195,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         IDocument doc = session.getViewer().getDocument();
         doc.removeDocumentListener(this);
-        int idx = widget.getCaretOffset() - session.getInvocationOffset();
+        int idx = distanceTraversed;
         if (!toAppend.isEmpty()) {
             try {
                 int currentOffset = session.getInvocationOffset() + idx;

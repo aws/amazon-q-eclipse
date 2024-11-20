@@ -229,7 +229,13 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         }
         Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);
         if (matcher.find()) {
-            ((QInlineSuggestionOpenBracketSegment) bracket).setAutoCloseOccurred(true);
+            IQInlineBracket curlyBracket = null;
+            for (int i = distanceTraversed; i < brackets.length; i++) {
+                if (brackets[distanceTraversed] == null || brackets[distanceTraversed].getSymbol() != '{') {
+                    continue;
+                }
+                ((QInlineSuggestionOpenBracketSegment) brackets[distanceTraversed]).setAutoCloseOccurred(true);
+            }
             return PreprocessingCategory.CURLY_BRACES;
         }
         if (bracket != null) {

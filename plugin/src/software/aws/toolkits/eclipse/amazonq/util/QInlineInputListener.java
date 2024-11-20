@@ -339,7 +339,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 if (session.isActive()) {
                     session.end();
                 }
-            }); 
+            });
             return;
         }
 

@@ -134,7 +134,7 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
     public void cleanUp() {
     }
 
-    public void setAutoCloseOccurred(boolean hasOccurred) {
+    public void setAutoCloseOccurred(final boolean hasOccurred) {
         hasAutoCloseOccurred = hasOccurred;
     }
 

@@ -2,18 +2,14 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.regex.Matcher;
 
-import org.eclipse.jface.text.ITextViewer;
-import org.eclipse.swt.custom.StyledText;
-import org.eclipse.ui.texteditor.ITextEditor;
-
-public class GenericTypeheadProcessor implements IQInlineTypeaheadProcessor {
+public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcessor {
 
     public GenericTypeheadProcessor() {
     }
 
     @Override
-    public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(final int inputLength, final int currentDistanceTraversed,
-            IQInlineBracket[] brackets) {
+    public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(final int inputLength,
+            final int currentDistanceTraversed, final IQInlineBracket[] brackets) {
         for (int i = 1; i <= inputLength; i++) {
             var bracket = brackets[currentDistanceTraversed - i];
             if (bracket != null) {

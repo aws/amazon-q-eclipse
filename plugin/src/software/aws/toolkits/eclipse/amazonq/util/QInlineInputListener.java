@@ -87,8 +87,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         int curLineInDoc = widget.getLineAtOffset(invocationOffset);
         int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
         String contentInLine = widget.getLine(curLineInDoc);
+        String delimiter = widget.getLineDelimiter();
         if (lineIdx < contentInLine.length()) {
-            rightCtxBuf = contentInLine.substring(lineIdx);
+            rightCtxBuf = contentInLine.substring(lineIdx) + delimiter;
         }
         int normalSegmentNum = 0;
         for (var segment : segments) {
@@ -119,7 +120,10 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             suggestionSegments.add(rightCtxSegment);
             try {
                 int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, invocationOffset);
-                doc.replace(expandedOffset, rightCtxBuf.length(), "");
+                // We want to leave the '\n' on the current line
+                int rightCtxEffectiveLength = rightCtxBuf.endsWith("\n") ? rightCtxBuf.length() - 1
+                        : rightCtxBuf.length();
+                doc.replace(expandedOffset, rightCtxEffectiveLength, "");
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error striking out document right context" + e.toString());
             }
@@ -165,7 +169,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
 
         String toAppend = "";
-        int outstandingPadding = 0;
         for (int i = brackets.length - 1; i >= 0; i--) {
             var bracket = brackets[i];
             if (bracket == null) {
@@ -180,15 +183,14 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                         isAngleBracketsSetToAutoClose, isBracesSetToAutoClose, isStringSetToAutoClose);
                 if (autoCloseContent != null) {
                     toAppend += autoCloseContent;
-                    // No padding is added for curly braces
-                    if (bracket.getSymbol() != '{') {
-                        outstandingPadding++;
-                    }
                 }
             }
         }
         if (!session.getSuggestionAccepted()) {
             toAppend += rightCtxBuf;
+            if (rightCtxBuf.isEmpty()) {
+                toAppend += widget.getLineDelimiter();
+            }
         }
 
         suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
@@ -203,20 +205,16 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                         currentOffset);
                 int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
                 int startLineOffset = doc.getLineOffset(lineNumber);
-                int lineLength = doc.getLineLength(lineNumber);
-                int adjustedOffset = startLineOffset + lineLength;
-                // We want to insert right before \n, if there is one.
-                adjustedOffset = Math.max(adjustedOffset - 1, 0);
                 int invocationOffset = session.getInvocationOffset();
                 int curLineInDoc = widget.getLineAtOffset(invocationOffset);
                 int lineIdx = expandedCurrentOffset - startLineOffset;
-                String contentInLine = widget.getLine(curLineInDoc);
+                String contentInLine = widget.getLine(curLineInDoc)+ widget.getLineDelimiter();
                 String currentRightCtx = "\n";
                 if (lineIdx < contentInLine.length()) {
                     currentRightCtx = contentInLine.substring(lineIdx);
                 }
-                int distanceToNewLine = currentRightCtx.length() - 1;
-                doc.replace(adjustedOffset, Math.min(distanceToNewLine, outstandingPadding), toAppend);
+                int distanceToNewLine = currentRightCtx.length();
+                doc.replace(expandedCurrentOffset, distanceToNewLine, toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }
@@ -338,6 +336,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length()
                 || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
+            distanceTraversed++;
             session.transitionToDecisionMade();
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {

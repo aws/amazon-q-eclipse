@@ -35,7 +35,7 @@ public final class QInlineSuggestionRightContextSegment implements IQInlineSugge
         x = widget.getLocationAtOffset(session.getInvocationOffset()).x + gc.textExtent(firstLineInSuggestion).x;
         gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
         gc.setFont(widget.getFont());
-        gc.drawText(text, x, y, false);
+        gc.drawText(text, x, y, true);
         FontMetrics fontMetrics = gc.getFontMetrics();
         int lineY = y + fontMetrics.getAscent() / 2;
         Point textExtent = gc.textExtent(text);

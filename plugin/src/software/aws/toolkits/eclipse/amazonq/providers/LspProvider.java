@@ -9,6 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 
 public interface LspProvider {
     <T extends LanguageServer> void setServer(Class<T> lspType, T server);
+    void setAmazonQServer(LanguageServer server);
     CompletableFuture<AmazonQLspServer> getAmazonQServer();
 }
 

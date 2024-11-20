@@ -11,6 +11,9 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class LspProviderImpl implements LspProvider {
     private static final LspProviderImpl INSTANCE = new LspProviderImpl();
@@ -40,6 +43,18 @@ public final class LspProviderImpl implements LspProvider {
         }
     }
 
+    @Override
+    public void setAmazonQServer(final LanguageServer server) {
+        synchronized (AmazonQLspServer.class) {
+            servers.put(AmazonQLspServer.class, server);
+            CompletableFuture<LanguageServer> future = futures.remove(AmazonQLspServer.class);
+            if (future != null) {
+                future.complete(server);
+                emitInitializeMetric();
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private <T extends LanguageServer> CompletableFuture<T> getServer(final Class<T> lspType) {
         synchronized (lspType) {
@@ -57,6 +72,10 @@ public final class LspProviderImpl implements LspProvider {
     @Override
     public CompletableFuture<AmazonQLspServer> getAmazonQServer() {
         return getServer(AmazonQLspServer.class);
+    }
+
+    private void emitInitializeMetric() {
+        LanguageServerTelemetryProvider.emitSetupInitialize(Result.SUCCEEDED, new RecordLspSetupArgs());
     }
 
 }

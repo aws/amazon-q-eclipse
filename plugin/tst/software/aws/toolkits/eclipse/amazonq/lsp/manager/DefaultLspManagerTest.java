@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.MockedStatic;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -28,6 +29,7 @@ import java.util.stream.Stream;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteLspFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
 
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
@@ -36,6 +38,7 @@ import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,6 +51,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 public class DefaultLspManagerTest {
 
@@ -65,11 +69,19 @@ public class DefaultLspManagerTest {
     private static Manifest mockManifest;
     private static LspFetcher lspFetcher;
 
+    private MockedStatic<LanguageServerTelemetryProvider> mockTelemetryProvider;
+
     @BeforeEach
     public final void setUp() {
         mockLogger = activatorStaticMockExtension.getMock(LoggingService.class);
+        mockTelemetryProvider = mockStatic(LanguageServerTelemetryProvider.class);
         mockManifest = mock(Manifest.class);
         lspFetcher = mock(LspFetcher.class);
+    }
+
+    @AfterEach
+    final void tearDown() {
+        mockTelemetryProvider.close();
     }
 
     //test case on both mac and Windows
@@ -111,6 +123,15 @@ public class DefaultLspManagerTest {
             //verify calling getLspInstallation again returns same instance
             LspInstallResult secondResult = lspManager.getLspInstallation();
             assertEquals(result, secondResult);
+
+            //test telemetry properly emitting when override is successful
+            mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
+                    eq(Result.SUCCEEDED),
+                    argThat(arg ->
+                    arg.getLocation() == LanguageServerLocation.OVERRIDE
+                    && arg.getReason() == null
+                    )
+                ));
         }
     }
 
@@ -142,7 +163,7 @@ public class DefaultLspManagerTest {
             verify(lspManager).getLocalLspOverride();
             verify(lspManager).fetchManifest();
             verify(lspManager).createLspFetcher(mockManifest);
-            verify(lspFetcher).fetch(any(), any(), eq(tempDir));
+            verify(lspFetcher).fetch(any(), any(), eq(tempDir), any());
             verify(mockLogger, never()).info(any());
             mockedArtifactUtils.verify(() -> ArtifactUtils.hasPosixFilePermissions(any(Path.class)));
             assertTrue(verifyPosixPermissions(serverCommand));
@@ -210,7 +231,7 @@ public class DefaultLspManagerTest {
         doReturn(mockManifest).when(lspManager).fetchManifest();
         doReturn(lspFetcher).when(lspManager).createLspFetcher(mockManifest);
         var fetcherResult = setUpFetcherResult();
-        when(lspFetcher.fetch(any(), any(), eq(tempDir))).thenReturn(fetcherResult);
+        when(lspFetcher.fetch(any(), any(), eq(tempDir), any())).thenReturn(fetcherResult);
         return fetcherResult;
     }
 

@@ -46,6 +46,7 @@ public class QInlineRendererListener implements PaintListener {
         if (shouldIndentVertically(widget, caretLine) && qInvocationSessionInstance.isPreviewingSuggestions()) {
             Point textExtent = gc.stringExtent(" ");
             int height = textExtent.y * (numSuggestionLines - (caretLine - invocationLine) - 1);
+            height = Math.max(height, 0);
             qInvocationSessionInstance.setVerticalIndent(caretLine + 1, height);
         } else if (caretLine + 1 == (invocationLine + numSuggestionLines)) {
             qInvocationSessionInstance.unsetVerticalIndent(caretLine + 1);

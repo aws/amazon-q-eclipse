@@ -6224,26 +6224,6 @@
             ]
         },
         {
-            "name": "eclipse_executeCommand",
-            "description": "Emitted whenever a registered Eclipse command is executed",
-            "passive": true,
-            "metadata": [
-                {
-                    "type": "command"
-                },
-                {
-                    "type": "duration"
-                },
-                {
-                    "type": "result"
-                },
-                {
-                    "type": "reason",
-                    "required": false
-                }
-            ]
-        },
-        {
             "name": "rds_createConnectionConfiguration",
             "description": "Called when creating a new database connection configuration to for a RDS database. In Datagrip we do not get this infromation if it is created directly, so this is only counts actions.",
             "metadata": [
@@ -6967,6 +6947,26 @@
                 }
             ],
             "passive": true
+        },
+        {
+            "name": "toolkit_execute",
+            "description": "Emitted whenever a registered command is executed",
+            "passive": true,
+            "metadata": [
+                {
+                    "type": "command"
+                },
+                {
+                    "type": "duration"
+                },
+                {
+                    "type": "result"
+                },
+                {
+                    "type": "reason",
+                    "required": false
+                }
+            ]
         },
         {
             "name": "toolkit_featureState",

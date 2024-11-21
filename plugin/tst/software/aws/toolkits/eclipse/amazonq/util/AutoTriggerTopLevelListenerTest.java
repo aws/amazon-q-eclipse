@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IPartService;
 import org.eclipse.ui.IWindowListener;
@@ -22,6 +23,7 @@ import org.mockito.MockedStatic;
 
 public class AutoTriggerTopLevelListenerTest {
     private static MockedStatic<PlatformUI> platformUIMockStatic;
+    private static MockedStatic<Display> displayMockStatic;
     private static IWorkbench workbenchMock;
     private static IWorkbenchWindow windowMock;
     private static IAutoTriggerPartListener partListenerMock;
@@ -37,11 +39,19 @@ public class AutoTriggerTopLevelListenerTest {
         when(windowMock.getPartService()).thenReturn(partServiceMock);
         when(workbenchMock.getActiveWorkbenchWindow()).thenReturn(windowMock);
         partListenerMock = mock(IAutoTriggerPartListener.class);
+        displayMockStatic = mockStatic(Display.class);
+        Display displayMock = mock(Display.class);
+        displayMockStatic.when(Display::getDefault).thenReturn(displayMock);
     }
 
     @AfterAll
     public static void tearDown() {
-        platformUIMockStatic.close();
+        if (platformUIMockStatic != null) {
+            platformUIMockStatic.close();
+        }
+        if (displayMockStatic != null) {
+            displayMockStatic.close();
+        }
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

@@ -2,7 +2,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IPartService;
 import org.eclipse.ui.IWindowListener;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -59,6 +61,29 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
         };
         PlatformUI.getWorkbench().addWindowListener(windowListener);
         activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+
+        // Similar to how part listener needs to tell its child listener (i.e. document
+        // listener), the part listener needs to actively be attached to the part that
+        // contains the editors.
+        // Without this, because the window listener is attached after the subscribed
+        // events has already happened, the part listener will not be attached unless
+        // you trigger one of the subscribed events
+        Display.getDefault().timerExec(1000, new Runnable() {
+            @Override
+            public void run() {
+                IWorkbenchWindow activeWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                if (activeWindow == null) {
+                    Display.getDefault().timerExec(1000, this);
+                    return;
+                }
+                IPartService partService = activeWindow.getPartService();
+                if (partService == null) {
+                    Display.getDefault().timerExec(1000, this);
+                    return;
+                }
+                partService.addPartListener(partListener);
+            }
+        });
 
         // Aside from adding the listeners to the window, we would also need to add the
         // listener actively for the first time

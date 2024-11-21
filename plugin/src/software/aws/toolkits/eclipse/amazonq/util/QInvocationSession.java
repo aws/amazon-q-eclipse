@@ -196,12 +196,15 @@ public final class QInvocationSession extends QResource {
                     // content typed since the user might still want to explore them.
                     int currentIdxInSuggestion = 0;
                     boolean hasAMatch = false;
-                    var widget = session.getViewer().getTextWidget();
-                    int currentOffset = widget.getCaretOffset();
-                    if (currentOffset < invocationOffset) {
+                    var viewer = session.getViewer();
+                    if (viewer == null || viewer.getTextWidget() == null || viewer.getTextWidget().getCaretOffset() < invocationOffset) {
                         end();
                         return;
-                    } else if (currentOffset > invocationOffset) {
+                    }
+
+                    if (viewer != null && viewer.getTextWidget() != null && viewer.getTextWidget().getCaretOffset() > invocationOffset) {
+                        var widget = viewer.getTextWidget();
+                        int currentOffset = widget.getCaretOffset();
                         for (int i = 0; i < newSuggestions.size(); i++) {
                             String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
                             if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
@@ -210,11 +213,10 @@ public final class QInvocationSession extends QResource {
                                 break;
                             }
                         }
-                    }
-
-                    if (invocationOffset != currentOffset && !hasAMatch) {
-                        end();
-                        return;
+                        if (invocationOffset != currentOffset && !hasAMatch) {
+                            end();
+                            return;
+                        }
                     }
 
                     session.invocationOffset = invocationOffset;

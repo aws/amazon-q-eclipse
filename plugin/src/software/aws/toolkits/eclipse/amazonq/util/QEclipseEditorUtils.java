@@ -327,7 +327,7 @@ public final class QEclipseEditorUtils {
         };
     }
 
-    public static Optional<AutoCloseBracketConfig> getAutoCloseSettings(final ITextEditor editor) {
+    public static IQInlineTypeaheadProcessor getAutoCloseSettings(final ITextEditor editor) {
         IEditorInput input = editor.getEditorInput();
         String contentTypeName = null;
         if (input instanceof FileEditorInput) {
@@ -336,7 +336,7 @@ public final class QEclipseEditorUtils {
             contentTypeName = contentType.getName();
         }
         if (contentTypeName == null) {
-            return Optional.empty();
+            return new GenericTypeheadProcessor();
         }
         switch (contentTypeName) {
         // TODO: Add more supported file types here:
@@ -345,12 +345,10 @@ public final class QEclipseEditorUtils {
             boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
             boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
             boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
-            return Optional.of(new AutoCloseBracketConfig(isBracketsSetToAutoClose, isBracketsSetToAutoClose,
-                    isStringSetToAutoClose, isBracesSetToAutoClose));
+            return new JavaTypeaheadProcessor(editor, isBracesSetToAutoClose, isBracketsSetToAutoClose, isStringSetToAutoClose);
         default:
-            break;
+            return new GenericTypeheadProcessor();
         }
-        return Optional.empty();
     }
 
     public static void showToast(final String message, final Display display, final int ttlInMs) {

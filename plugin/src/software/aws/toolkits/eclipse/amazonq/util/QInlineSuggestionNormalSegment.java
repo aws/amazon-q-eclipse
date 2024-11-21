@@ -9,6 +9,8 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.GlyphMetrics;
 
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+
 public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionSegment {
     private int startCaretOffset;
     private int endCaretOffset;
@@ -51,7 +53,7 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
             int lineIdx = currentCaretOffset - widget.getOffsetAtLine(invocationLine);
             String contentInLine = widget.getLine(curLineInDoc);
             String rightCtxInLine = contentInLine.substring(lineIdx);
-            if (!rightCtxInLine.isBlank()) {
+            if (!rightCtxInLine.isBlank() && !text.endsWith("\n")) {
                 styleRange.start = currentCaretOffset;
                 styleRange.length = 1;
                 styleRange.metrics = new GlyphMetrics(0, 0, gc.textExtent(textToRender).x + gc.textExtent(" ").x);
@@ -84,6 +86,10 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
         }
         StyledText widget = session.getViewer().getTextWidget();
         styleRange.metrics = new GlyphMetrics(0, 0, 0);
-        widget.setStyleRange(styleRange);
+        try {
+            widget.setStyleRange(styleRange);
+        } catch (Exception e) {
+            Activator.getLogger().warn("Error cleaning up glyph: " + e);
+        }
     }
 }

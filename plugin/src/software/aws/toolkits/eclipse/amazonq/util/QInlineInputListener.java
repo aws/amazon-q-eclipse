@@ -4,9 +4,6 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
@@ -24,28 +21,14 @@ import org.eclipse.swt.events.MouseListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class QInlineInputListener implements IDocumentListener, VerifyKeyListener, MouseListener {
-    private static final Pattern CURLY_AUTO_CLOSE_MATCHER = Pattern.compile("\\n\\s*\\n\\s*\\}");
-
     private StyledText widget = null;
     private int numSuggestionLines = 0;
-    private boolean isBracketsSetToAutoClose = true;
-    private boolean isBracesSetToAutoClose = true;
-    private boolean isStringSetToAutoClose = true;
-    private boolean isAngleBracketsSetToAutoClose = true;
     private List<IQInlineSuggestionSegment> suggestionSegments = new ArrayList<>();
     private IQInlineBracket[] brackets;
     private int distanceTraversed = 0;
     private int normalSegmentCount = 0;
     private String rightCtxBuf = "";
-
-    private enum PreprocessingCategory {
-        NONE,
-        NORMAL_BRACKETS_OPEN,
-        NORMAL_BRACKETS_CLOSE,
-        STR_QUOTE_OPEN,
-        STR_QUOTE_CLOSE,
-        CURLY_BRACES
-    }
+    private IQInlineTypeaheadProcessor typeaheadProcessor;
 
     /**
      * During instantiation we would need to perform the following to prime the
@@ -61,21 +44,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         this.widget = widget;
         QInvocationSession session = QInvocationSession.getInstance();
         ITextEditor editor = session.getEditor();
-        Optional<AutoCloseBracketConfig> bracketConfig = QEclipseEditorUtils.getAutoCloseSettings(editor);
-        // TODO: make this config all encompassing. We would also want information such
-        // as open and close bracket buffer processing.
-        // This is necessitated by the fact eclipse processes auto closing bracket
-        // differently depending on the file type.
-        // For example, in java file type, when auto close of brackets is enabled,
-        // deleting an open bracket also deletes its close counter part.
-        // However, this is not the case for js, go, and py.
-        if (bracketConfig.isPresent()) {
-            AutoCloseBracketConfig config = bracketConfig.get();
-            isBracketsSetToAutoClose = config.isParenAutoClosed();
-            isBracesSetToAutoClose = config.isBracesAutoClosed();
-            isStringSetToAutoClose = config.isStringAutoClosed();
-            isAngleBracketsSetToAutoClose = config.isAngleBracketAutoClosed();
-        }
+        typeaheadProcessor = QEclipseEditorUtils.getAutoCloseSettings(editor);
     }
 
     /**
@@ -99,11 +68,16 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         ITextViewer viewer = session.getViewer();
         IDocument doc = viewer.getDocument();
         doc.removeDocumentListener(this);
+        int invocationOffset = session.getInvocationOffset();
+        int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+        int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
+        String contentInLine = widget.getLine(curLineInDoc);
+        String delimiter = widget.getLineDelimiter();
         if (!rightCtxBuf.isEmpty() && normalSegmentCount > 1) {
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
                         session.getInvocationOffset());
-                doc.replace(adjustedOffset, 0, rightCtxBuf);
+                doc.replace(adjustedOffset, 0, rightCtxBuf.split(widget.getLineDelimiter(), 2)[0]);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }
@@ -112,24 +86,20 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             suggestionSegments.clear();
         }
         numSuggestionLines = session.getCurrentSuggestion().getInsertText().split("\\R").length;
-        List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory
-                .getSegmentsFromSuggestion(session);
+        List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(session);
         brackets = new IQInlineBracket[session.getCurrentSuggestion().getInsertText().length()];
-        int invocationOffset = session.getInvocationOffset();
-        int curLineInDoc = widget.getLineAtOffset(invocationOffset);
-        int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
-        String contentInLine = widget.getLine(curLineInDoc);
         if (lineIdx < contentInLine.length()) {
-            rightCtxBuf = contentInLine.substring(lineIdx);
+            rightCtxBuf = contentInLine.substring(lineIdx) + delimiter;
         }
         int normalSegmentNum = 0;
         for (var segment : segments) {
             if (segment instanceof IQInlineBracket) {
                 int offset = ((IQInlineBracket) segment).getRelevantOffset();
                 int idxInSuggestion = offset - invocationOffset;
-                if (((IQInlineBracket) segment).getSymbol() == '{') {
-                    int firstNewLineAfter = session.getCurrentSuggestion().getInsertText()
-                            .indexOf('\n', idxInSuggestion);
+                if (((IQInlineBracket) segment).getSymbol() == '{'
+                        && typeaheadProcessor.isCurlyBracesAutoCloseDelayed()) {
+                    int firstNewLineAfter = session.getCurrentSuggestion().getInsertText().indexOf('\n',
+                            idxInSuggestion);
                     if (firstNewLineAfter != -1) {
                         brackets[firstNewLineAfter] = (IQInlineBracket) segment;
                     }
@@ -151,7 +121,10 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             suggestionSegments.add(rightCtxSegment);
             try {
                 int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, invocationOffset);
-                doc.replace(expandedOffset, rightCtxBuf.length(), "");
+                // We want to leave the '\n' on the current line
+                int rightCtxEffectiveLength = rightCtxBuf.endsWith("\n") ? rightCtxBuf.length() - 1
+                        : rightCtxBuf.length();
+                doc.replace(expandedOffset, rightCtxEffectiveLength, "");
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error striking out document right context" + e.toString());
             }
@@ -165,84 +138,66 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     }
 
     public int getOutstandingPadding() {
-        int outstandingPadding = 0;
-        for (int i = brackets.length - 1; i >= 0; i--) {
-            var bracket = brackets[i];
-            if (bracket == null) {
-                continue;
-            }
-            if (!(bracket instanceof QInlineSuggestionOpenBracketSegment)) {
-                continue;
-            }
-            // TODO: customize this logic based on the file type:
-            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved() && bracket.getSymbol() != '{') {
-                outstandingPadding++;
-            }
-        }
-        return outstandingPadding;
+        return typeaheadProcessor.getOutstandingPadding(brackets);
     }
 
     /**
      * Here we need to perform the following before the listener gets removed:
      * <ul>
-     * <li>If the auto closing of brackets was enabled originally, we should add these closed brackets back into the buffer.</li>
+     * <li>If the auto closing of brackets was enabled originally, we should add
+     * these closed brackets back into the buffer.</li>
      * <li>Revert the settings back to their original states.</li>
      * </ul>
      */
     public void beforeRemoval() {
         var session = QInvocationSession.getInstance();
-        if (session == null || !session.isActive() || brackets == null) {
+        IDocument doc = session.getViewer().getDocument();
+        doc.removeDocumentListener(this);
+        if (session == null || !session.isActive() || brackets == null || session.getSuggestionAccepted()) {
             return;
         }
 
         String toAppend = "";
-        int outstandingPadding = 0;
         for (int i = brackets.length - 1; i >= 0; i--) {
             var bracket = brackets[i];
             if (bracket == null) {
                 continue;
             }
-            if (!session.getSuggestionAccepted()) {
-                String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose,
-                        isAngleBracketsSetToAutoClose, isBracesSetToAutoClose, isStringSetToAutoClose);
-                if (autoCloseContent != null) {
-                    toAppend += autoCloseContent;
-                    // No padding is added for curly braces
-                    if (bracket.getSymbol() != '{') {
-                        outstandingPadding++;
-                    }
-                }
+            boolean isBracketsSetToAutoClose = typeaheadProcessor.isBracesSetToAutoClose();
+            boolean isAngleBracketsSetToAutoClose = typeaheadProcessor.isAngleBracketsSetToAutoClose();
+            boolean isBracesSetToAutoClose = typeaheadProcessor.isBracesSetToAutoClose();
+            boolean isStringSetToAutoClose = typeaheadProcessor.isStringSetToAutoClose();
+            String autoCloseContent = bracket.getAutoCloseContent(isBracketsSetToAutoClose,
+                    isAngleBracketsSetToAutoClose, isBracesSetToAutoClose, isStringSetToAutoClose);
+            if (autoCloseContent != null) {
+                toAppend += autoCloseContent;
             }
         }
-        if (!session.getSuggestionAccepted()) {
-            toAppend += rightCtxBuf;
+        toAppend += rightCtxBuf;
+        if (rightCtxBuf.isEmpty()) {
+            toAppend += widget.getLineDelimiter();
         }
 
         suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
 
-        IDocument doc = session.getViewer().getDocument();
-        doc.removeDocumentListener(this);
-        int idx = widget.getCaretOffset() - session.getInvocationOffset();
+        int idx = distanceTraversed;
         if (!toAppend.isEmpty()) {
             try {
                 int currentOffset = session.getInvocationOffset() + idx;
-                int expandedCurrentOffset =  QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(), currentOffset);
+                int expandedCurrentOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        currentOffset);
                 int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
                 int startLineOffset = doc.getLineOffset(lineNumber);
-                int lineLength = doc.getLineLength(lineNumber);
-                int adjustedOffset = startLineOffset + lineLength;
-                // We want to insert right before \n, if there is one.
-                adjustedOffset = Math.max(adjustedOffset - 1, 0);
                 int invocationOffset = session.getInvocationOffset();
                 int curLineInDoc = widget.getLineAtOffset(invocationOffset);
                 int lineIdx = expandedCurrentOffset - startLineOffset;
-                String contentInLine = widget.getLine(curLineInDoc);
+                String contentInLine = widget.getLine(curLineInDoc) + widget.getLineDelimiter();
                 String currentRightCtx = "\n";
                 if (lineIdx < contentInLine.length()) {
                     currentRightCtx = contentInLine.substring(lineIdx);
                 }
-                int distanceToNewLine = currentRightCtx.length() - 1;
-                doc.replace(adjustedOffset, Math.min(distanceToNewLine, outstandingPadding), toAppend);
+                int distanceToNewLine = currentRightCtx.length();
+                doc.replace(expandedCurrentOffset, distanceToNewLine, toAppend);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }
@@ -288,57 +243,22 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - Insert the closing bracket into the buffer at the decremented position.
         // This is because eclipse will not actually insert closing bracket when auto
         // close is turned on.
-        if (shouldProcessInput(event, distanceTraversed)) {
-            ITextViewer viewer = session.getViewer();
-            IDocument doc = viewer.getDocument();
-            int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(viewer, widget.getCaretOffset());
+        TypeaheadProcessorInstruction instruction = typeaheadProcessor.processVerifyKeyBuffer(distanceTraversed,
+                event.character, brackets);
+        if (instruction.shouldModifyCaretOffset()) {
+            widget.setCaretOffset(instruction.getCaretOffset());
+        }
+        if (instruction.shouldModifyDocument()) {
             try {
-                widget.setCaretOffset(widget.getCaretOffset() - 1);
-                doc.replace(expandedOffset - 1, 0, String.valueOf(event.character));
+                ITextViewer viewer = session.getViewer();
+                IDocument doc = viewer.getDocument();
+                int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        instruction.getDocInsertOffset());
+                doc.replace(expandedOffset, instruction.getDocInsertLength(), instruction.getDocInsertContent());
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error inserting close bracket during typeahead", e);
             }
         }
-    }
-
-    private boolean shouldProcessInput(final VerifyEvent event, final int offset) {
-        if (brackets[offset] == null) {
-            return false;
-        }
-        IQInlineBracket bracket = brackets[offset];
-        if (!(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
-            return false;
-        }
-        char input = event.character;
-        if (bracket.getSymbol() != input) {
-            return false;
-        }
-        switch (input) {
-        case ')':
-        case ']':
-            if (!isBracketsSetToAutoClose) {
-                return false;
-            }
-            break;
-        case '>':
-            if (!isAngleBracketsSetToAutoClose) {
-                return false;
-            }
-            break;
-        case '\"':
-        case '\'':
-            if (!isStringSetToAutoClose) {
-                return false;
-            }
-            break;
-        default:
-            break;
-        }
-        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket();
-        if (openBracket == null || openBracket.isResolved()) {
-            return false;
-        }
-        return true;
     }
 
     @Override
@@ -357,26 +277,17 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         String currentSuggestion = session.getCurrentSuggestion().getInsertText();
         int currentOffset = widget.getCaretOffset();
         if (input.isEmpty()) {
-            // either that or user has hit backspace
-            // note that when deleting an unresolved bracket when auto close is turned on, this function does not actually get called.
-            int numCharDeleted = event.getLength();
-            if (numCharDeleted > distanceTraversed) {
+            if (distanceTraversed <= 0) {
                 session.transitionToDecisionMade();
                 session.end();
                 return;
             }
-            int paddingLength = 0;
-            for (int i = 1; i <= numCharDeleted; i++) {
-                var bracket = brackets[distanceTraversed - i];
-                if (bracket != null) {
-                    if ((bracket instanceof QInlineSuggestionOpenBracketSegment)
-                            && !((QInlineSuggestionOpenBracketSegment) bracket).isResolved()) {
-                        paddingLength++;
-                    }
-                    bracket.onDelete();
-                }
+            distanceTraversed = typeaheadProcessor.getNewDistanceTraversedOnDeleteAndUpdateBracketState(
+                    event.getLength(), distanceTraversed, brackets);
+            if (distanceTraversed < 0) {
+                session.transitionToDecisionMade();
+                session.end();
             }
-            distanceTraversed -= (numCharDeleted - paddingLength);
             return;
         }
 
@@ -390,63 +301,31 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - Lastly, we would want to return early for these two cases. This is because
         // the very act of altering the document will trigger this callback once again
         // so there is no need to validate the input this time around.
-        PreprocessingCategory category = getBufferPreprocessingCategory(input);
-        ITextViewer viewer = session.getViewer();
-        IDocument doc = viewer.getDocument();
-        // NOTE: here we are blessed with DocumentEvent, whose offset is the expanded offset.
-        switch (category) {
-        case STR_QUOTE_OPEN:
-        case NORMAL_BRACKETS_OPEN:
-            input = input.substring(0, 1) + " ";
+        TypeaheadProcessorInstruction preprocessInstruction = typeaheadProcessor
+                .preprocessDocumentChangedBuffer(distanceTraversed, currentOffset, input, brackets);
+        if (preprocessInstruction.shouldModifyCaretOffset()) {
+            widget.setCaretOffset(preprocessInstruction.getCaretOffset());
+        }
+        if (preprocessInstruction.shouldModifyDocument()) {
             try {
-                doc.replace(event.getOffset(), 2, input);
+                int expandedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                        preprocessInstruction.getDocInsertOffset());
+                event.getDocument().replace(expandedOffset, preprocessInstruction.getDocInsertLength(),
+                        preprocessInstruction.getDocInsertContent());
                 return;
             } catch (BadLocationException e) {
                 Activator.getLogger().error("Error performing open bracket sanitation during typeahead", e);
             }
-            return;
-        case NORMAL_BRACKETS_CLOSE:
-            try {
-                brackets[distanceTraversed].onTypeOver();
-                doc.replace(event.getOffset(), 2, input);
-                widget.setCaretOffset(widget.getCaretOffset() + 1);
-                return;
-            } catch (BadLocationException e) {
-                Activator.getLogger().error("Error performing close bracket sanitation during typeahead", e);
-            }
-            return;
-        case STR_QUOTE_CLOSE:
-            input = input.substring(0, 1);
-            try {
-                doc.replace(event.getOffset(), 2, input);
-                return;
-            } catch (BadLocationException e) {
-                Activator.getLogger().error("Error performing close bracket sanitation during typeahead", e);
-            }
-            return;
-        case CURLY_BRACES:
-            int firstNewlineIndex = input.indexOf('\n');
-            int secondNewlineIndex = input.indexOf('\n', firstNewlineIndex + 1);
-            if (secondNewlineIndex != -1) {
-                String sanitizedInput = input.substring(0, secondNewlineIndex);
-                try {
-                    doc.replace(event.getOffset(), input.length(), sanitizedInput);
-                } catch (BadLocationException e) {
-                    Activator.getLogger().error("Error performing open braces sanitation during typeahead", e);
-                }
-                input = sanitizedInput;
-            }
-            return;
-        default:
-            break;
         }
 
-        session
-                .setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
+        session.setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
 
-        boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length() || distanceTraversed < 0;
+        boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length()
+                || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
+            distanceTraversed++;
             session.transitionToDecisionMade();
+            event.getDocument().removeDocumentListener(this);
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
                     session.end();
@@ -463,8 +342,11 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         // - If it is, we would need to increment the current caret offset, this is
         // because the closing bracket would have been inserted by verifyKey and not
         // organically, which does not advance the caret.
-        if (shouldIncrementCaret(input, distanceTraversed)) {
-            widget.setCaretOffset(currentOffset + 1);
+        TypeaheadProcessorInstruction postProcessInstruction = typeaheadProcessor
+                .postProcessDocumentChangeBuffer(distanceTraversed, currentOffset, input, brackets);
+        if (postProcessInstruction.shouldModifyCaretOffset()) {
+            int targetOffset = postProcessInstruction.getCaretOffset();
+            widget.setCaretOffset(targetOffset);
         }
 
         for (int i = distanceTraversed; i < distanceTraversed + input.length(); i++) {
@@ -475,88 +357,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
 
         distanceTraversed += input.length();
-    }
-
-    private PreprocessingCategory getBufferPreprocessingCategory(final String input) {
-        var bracket = brackets[distanceTraversed];
-        if (input.length() > 1 && bracket != null && bracket.getSymbol() == input.charAt(0)
-                && (input.equals("()") || input.equals("{}") || input.equals("<>") || input.equals("[]"))) {
-            return PreprocessingCategory.NORMAL_BRACKETS_OPEN;
-        }
-        if (input.equals("\"\"") || input.equals("\'\'")) {
-            if (bracket != null && bracket.getSymbol() == input.charAt(0)) {
-                if (bracket instanceof QInlineSuggestionOpenBracketSegment) {
-                    return PreprocessingCategory.STR_QUOTE_OPEN;
-                } else {
-                    return PreprocessingCategory.STR_QUOTE_CLOSE;
-                }
-            }
-        }
-        Matcher matcher = CURLY_AUTO_CLOSE_MATCHER.matcher(input);
-        if (matcher.find()) {
-            return PreprocessingCategory.CURLY_BRACES;
-        }
-        if (bracket != null) {
-            if ((bracket instanceof QInlineSuggestionCloseBracketSegment) && input.charAt(0) == bracket.getSymbol()
-                    && !((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket().isResolved()) {
-                boolean autoCloseEnabled = false;
-                switch (bracket.getSymbol()) {
-                case '>':
-                    autoCloseEnabled = isAngleBracketsSetToAutoClose;
-                    break;
-                case '\"':
-                case '\'':
-                    autoCloseEnabled = isStringSetToAutoClose;
-                    break;
-                case ')':
-                case ']':
-                    autoCloseEnabled = isBracketsSetToAutoClose;
-                    break;
-                default:
-                    break;
-                }
-                if (autoCloseEnabled) {
-                    return PreprocessingCategory.NORMAL_BRACKETS_CLOSE;
-                }
-            }
-        }
-        return PreprocessingCategory.NONE;
-    }
-
-    private boolean shouldIncrementCaret(final String input, final int offset) {
-        IQInlineBracket bracket = brackets[offset];
-        if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
-            return false;
-        }
-        if (bracket.getSymbol() != input.charAt(0) || input.length() > 1) {
-            return false;
-        }
-        switch (input.charAt(0)) {
-        case ')':
-        case ']':
-            if (!isBracketsSetToAutoClose) {
-                return false;
-            }
-            break;
-        case '>':
-            if (!isAngleBracketsSetToAutoClose) {
-                return false;
-            }
-            break;
-        case '\"':
-        case '\'':
-            if (!isStringSetToAutoClose) {
-                return false;
-            }
-            break;
-        default:
-            break;
-        }
-        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket).getOpenBracket();
-        if (openBracket == null || openBracket.isResolved()) {
-            return false;
-        }
-        return true;
     }
 
     @Override

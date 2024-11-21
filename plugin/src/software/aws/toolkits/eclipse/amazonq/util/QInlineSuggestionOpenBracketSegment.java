@@ -11,6 +11,7 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
     private String indent;
     private int caretOffset;
     private boolean isResolved = true;
+    private boolean hasAutoCloseOccurred = false;
 
     public QInlineSuggestionOpenBracketSegment(final int caretOffset, final String indent, final char symbol) {
         this.caretOffset = caretOffset;
@@ -131,5 +132,13 @@ public final class QInlineSuggestionOpenBracketSegment implements IQInlineSugges
 
     @Override
     public void cleanUp() {
+    }
+
+    public void setAutoCloseOccurred(final boolean hasOccurred) {
+        hasAutoCloseOccurred = hasOccurred;
+    }
+
+    public boolean hasAutoCloseOccurred() {
+        return hasAutoCloseOccurred;
     }
 }

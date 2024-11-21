@@ -16,7 +16,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.telemetry.EclipseTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
@@ -39,7 +39,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
             getSelectedText().ifPresentOrElse(
                 selection -> {
                     sendGenericCommand(selection, genericCommandVerb);
-                    emitExecuteCommand(genericCommandVerb, start, Result.SUCCEEDED, "");
+                    emitExecuteCommand(genericCommandVerb, start, Result.SUCCEEDED, null);
                 },
                 () -> {
                     Activator.getLogger().info("No text was retrieved when fetching selected text");
@@ -59,7 +59,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
             getSelectedText().ifPresentOrElse(
                 selection -> {
                     sendToPromptCommand(selection);
-                    emitExecuteCommand("sendToPrompt", start, Result.SUCCEEDED, "");
+                    emitExecuteCommand("sendToPrompt", start, Result.SUCCEEDED, null);
                 },
                 () -> {
                     Activator.getLogger().info("No text was retrieved when fetching selected text");
@@ -112,8 +112,8 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
     }
     private void emitExecuteCommand(final String command, final Instant start, final Result result, final String reason) {
         double duration = Duration.between(start, Instant.now()).toMillis();
-        var params = new EclipseTelemetryProvider.Params(command, duration, result, reason);
-        EclipseTelemetryProvider.emitExecuteCommandMetric(params);
+        var params = new ToolkitTelemetryProvider.ExecuteParams(command, duration, result, reason);
+        ToolkitTelemetryProvider.emitExecuteCommandMetric(params);
         return;
     }
 }

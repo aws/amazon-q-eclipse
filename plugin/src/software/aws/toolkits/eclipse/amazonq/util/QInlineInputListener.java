@@ -188,8 +188,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                         currentOffset);
                 int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
                 int startLineOffset = doc.getLineOffset(lineNumber);
-                int invocationOffset = session.getInvocationOffset();
-                int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+                int curLineInDoc = widget.getLineAtOffset(currentOffset);
                 int lineIdx = expandedCurrentOffset - startLineOffset;
                 String contentInLine = widget.getLine(curLineInDoc) + widget.getLineDelimiter();
                 String currentRightCtx = "\n";
@@ -323,9 +322,13 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length()
                 || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
-            distanceTraversed++;
-            session.transitionToDecisionMade();
+            distanceTraversed += input.length();
             event.getDocument().removeDocumentListener(this);
+            StyledText widget = session.getViewer().getTextWidget();
+            int caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+            int linesOfInput = input.split(widget.getLineDelimiter()).length;
+            int lineToUnsetIndent = caretLine + linesOfInput;
+            session.transitionToDecisionMade(lineToUnsetIndent);
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
                     session.end();

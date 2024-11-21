@@ -68,11 +68,16 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         ITextViewer viewer = session.getViewer();
         IDocument doc = viewer.getDocument();
         doc.removeDocumentListener(this);
+        int invocationOffset = session.getInvocationOffset();
+        int curLineInDoc = widget.getLineAtOffset(invocationOffset);
+        int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
+        String contentInLine = widget.getLine(curLineInDoc);
+        String delimiter = widget.getLineDelimiter();
         if (!rightCtxBuf.isEmpty() && normalSegmentCount > 1) {
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
                         session.getInvocationOffset());
-                doc.replace(adjustedOffset, 0, rightCtxBuf);
+                doc.replace(adjustedOffset, 0, rightCtxBuf.split(widget.getLineDelimiter(), 2)[0]);
             } catch (BadLocationException e) {
                 Activator.getLogger().error(e.toString());
             }
@@ -83,11 +88,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         numSuggestionLines = session.getCurrentSuggestion().getInsertText().split("\\R").length;
         List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(session);
         brackets = new IQInlineBracket[session.getCurrentSuggestion().getInsertText().length()];
-        int invocationOffset = session.getInvocationOffset();
-        int curLineInDoc = widget.getLineAtOffset(invocationOffset);
-        int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
-        String contentInLine = widget.getLine(curLineInDoc);
-        String delimiter = widget.getLineDelimiter();
         if (lineIdx < contentInLine.length()) {
             rightCtxBuf = contentInLine.substring(lineIdx) + delimiter;
         }
@@ -291,6 +291,11 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         String currentSuggestion = session.getCurrentSuggestion().getInsertText();
         int currentOffset = widget.getCaretOffset();
         if (input.isEmpty()) {
+            if (distanceTraversed <= 0) {
+                session.transitionToDecisionMade();
+                session.end();
+                return;
+            }
             distanceTraversed = typeaheadProcessor.getNewDistanceTraversedOnDeleteAndUpdateBracketState(
                     event.getLength(), distanceTraversed, brackets);
             if (distanceTraversed < 0) {

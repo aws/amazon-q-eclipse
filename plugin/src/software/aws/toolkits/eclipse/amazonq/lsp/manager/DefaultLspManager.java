@@ -124,7 +124,7 @@ public final class DefaultLspManager implements LspManager {
             Activator.getLogger().error(e.getMessage(), e);
             errorMessage = e.getMessage();
         } finally {
-            emitValidate(LanguageServerLocation.OVERRIDE, errorMessage, start);
+            emitValidate(overrideResult, errorMessage, start);
         }
         return (errorMessage == null);
     }
@@ -153,23 +153,24 @@ public final class DefaultLspManager implements LspManager {
     }
 
     Manifest fetchManifest() {
-        var args = new RecordLspSetupArgs();
         var start = Instant.now();
         try {
             var manifestFetcher = new VersionManifestFetcher(manifestUrl);
             var manifest = manifestFetcher.fetch()
                     .orElseThrow(() -> new AmazonQPluginException("Failed to retrieve language server manifest"));
 
-            emitGetManifest(Result.SUCCEEDED, start, args, manifest);
+            emitGetManifest(Result.SUCCEEDED, start, null, manifest);
             return manifest;
         } catch (Exception e) {
-            emitGetManifest(Result.FAILED, start, args, null);
+            emitGetManifest(Result.FAILED, start, e.getMessage(), null);
             throw new AmazonQPluginException("Failed to retrieve Amazon Q language server manifest", e);
         }
     }
 
-    private void emitGetManifest(final Result result, final Instant start, final RecordLspSetupArgs args, final Manifest manifest) {
+    private void emitGetManifest(final Result result, final Instant start, final String reason, final Manifest manifest) {
+        var args = new RecordLspSetupArgs();
         args.setDuration(Duration.between(start, Instant.now()).toMillis());
+        args.setReason(reason);
         if (manifest != null) {
             args.setManifestSchemaVersion(manifest.manifestSchemaVersion());
         }
@@ -182,11 +183,12 @@ public final class DefaultLspManager implements LspManager {
         LanguageServerTelemetryProvider.emitSetupGetServer(Result.SUCCEEDED, args);
         return;
     }
-    private void emitValidate(final LanguageServerLocation location, final String reason, final Instant start) {
+    private void emitValidate(final LspInstallResult installResult, final String reason, final Instant start) {
         var args = new RecordLspSetupArgs();
         Result result = (reason == null) ? Result.SUCCEEDED : Result.FAILED;
         args.setDuration(Duration.between(start, Instant.now()).toMillis());
-        args.setLocation(location);
+        args.setLocation(installResult.getLocation());
+        args.setLanguageServerVersion(installResult.getVersion());
         args.setReason(reason);
         LanguageServerTelemetryProvider.emitSetupValidate(result, args);
     }
@@ -203,7 +205,7 @@ public final class DefaultLspManager implements LspManager {
             errorMessage = e.getMessage();
             throw e;
         } finally {
-            emitValidate(result.getLocation(), errorMessage, start);
+            emitValidate(result, errorMessage, start);
         }
     }
 

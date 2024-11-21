@@ -6,12 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
+import java.net.HttpURLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
@@ -33,23 +35,25 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import javax.net.ssl.SSLSession;
-
 import org.eclipse.osgi.service.resolver.VersionRange;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ArtifactUtilsStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspFetchResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
@@ -65,42 +69,48 @@ import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class RemoteLspFetcherTest {
     private static VersionRange versionRange = new VersionRange("[1.0.0, 2.0.0]");
-    private String sampleVersion = String.format("%s.0.2", versionRange.getLeft().getMajor());
+    private final String sampleVersion = String.format("%s.7.0", versionRange.getLeft().getMajor());
     private LspFetcher lspFetcher;
     private Manifest sampleManifest;
-    private ArtifactVersion sampleLspVersion;
+    private final ArtifactVersion sampleLspVersion;
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
+
+    @RegisterExtension
+    private static ArtifactUtilsStaticMockExtension artifactUtilsStaticMockExtension = new ArtifactUtilsStaticMockExtension();
 
     private RemoteLspFetcherTest() {
-       sampleLspVersion = createLspVersion(sampleVersion);
-       sampleManifest = createManifest(List.of(sampleLspVersion));
-       lspFetcher = createFetcher();
+        sampleLspVersion = createLspVersion(sampleVersion);
+        sampleManifest = createManifest(List.of(sampleLspVersion));
+        lspFetcher = createFetcher();
     }
 
-    private MockedStatic<Activator> mockedActivator;
+    private MockedStatic<Activator> staticMockedActivator;
+    private MockedStatic<ArtifactUtils> staticMockedArtifactUtils;
     private MockedStatic<LanguageServerTelemetryProvider> mockTelemetryProvider;
 
-    @Mock
     private LoggingService mockLogger;
 
     @Mock
     private HttpClient httpClient;
 
+    @TempDir(cleanup = CleanupMode.ALWAYS)
+    private Path tempDir;
+
     @BeforeEach
-    void setUp() {
+    void setupBeforeEach() {
         MockitoAnnotations.openMocks(this);
-        mockedActivator = mockStatic(Activator.class);
+        staticMockedActivator = activatorStaticMockExtension.getStaticMock();
+        mockLogger = activatorStaticMockExtension.getMock(LoggingService.class);
+        staticMockedArtifactUtils = artifactUtilsStaticMockExtension.getStaticMock();
         mockTelemetryProvider = mockStatic(LanguageServerTelemetryProvider.class);
-        mockedActivator.when(Activator::getLogger).thenReturn(mockLogger);
     }
 
     @AfterEach
     void tearDown() {
-        mockedActivator.close();
         mockTelemetryProvider.close();
     }
-
-    @TempDir(cleanup = CleanupMode.ALWAYS)
-    private Path tempDir;
 
     @Test
     void fetchWhenManifestIsNull() {
@@ -110,13 +120,9 @@ public final class RemoteLspFetcherTest {
             lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
         assertExceptionThrownWithMessage(exception, "No valid manifest");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.FAILED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.UNKNOWN
-                && arg.getReason().contains("No valid manifest")
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN
+                        && arg.getReason().contains("No valid manifest"))));
     }
 
     @ParameterizedTest
@@ -130,13 +136,9 @@ public final class RemoteLspFetcherTest {
             lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.FAILED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.UNKNOWN
-                && arg.getReason().contains("language server that satisfies one or more of these conditions")
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
+                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -146,13 +148,9 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.FAILED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.UNKNOWN
-                && arg.getReason().contains("language server that satisfies one or more of these conditions")
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
+                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -162,13 +160,9 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.FAILED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.UNKNOWN
-                && arg.getReason().contains("language server that satisfies one or more of these conditions")
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
+                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -178,13 +172,9 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.FAILED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.UNKNOWN
-                && arg.getReason().contains("language server that satisfies one or more of these conditions")
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
+                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -195,15 +185,10 @@ public final class RemoteLspFetcherTest {
 
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
-        assertInstallResult(result, LanguageServerLocation.CACHE);
+        assertInstallResult(result, LanguageServerLocation.CACHE, sampleVersion);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.SUCCEEDED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.CACHE
-                && arg.getReason() == null
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.CACHE && arg.getReason() == null)));
     }
 
     @Test
@@ -217,15 +202,10 @@ public final class RemoteLspFetcherTest {
 
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
-        assertInstallResult(result, LanguageServerLocation.CACHE);
+        assertInstallResult(result, LanguageServerLocation.CACHE, sampleVersion);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.SUCCEEDED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.CACHE
-                && arg.getReason() == null
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.CACHE && arg.getReason() == null)));
     }
 
     @ParameterizedTest
@@ -233,21 +213,17 @@ public final class RemoteLspFetcherTest {
     void fetchWhenHashesDoNotMatch(final String hash) throws IOException, InterruptedException {
         setupFileTargetContent("foo.txt", sampleLspVersion, hash);
 
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenThrow(new IOException("Simulated network error"));
+        when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
+                .thenThrow(new IOException("Simulated network error"));
 
         var exception = assertThrows(AmazonQPluginException.class, () -> {
             lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
 
         assertExceptionThrownWithMessage(exception, " find a compatible version");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.FAILED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.UNKNOWN
-                && arg.getReason().contains("find a compatible version")
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN
+                        && arg.getReason().contains("find a compatible version"))));
     }
 
     @Test
@@ -256,28 +232,71 @@ public final class RemoteLspFetcherTest {
         var unzippedPath = Paths.get(tempDir.toString(), "remote", "servers");
         setupZipTargetContent(zipPath, sampleLspVersion);
 
-        var mockResponse = createMockHttpResponse(zipPath);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenReturn(mockResponse);
+        var mockResponse = createMockHttpResponse(zipPath, HttpURLConnection.HTTP_OK);
+        when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
+                .thenReturn(mockResponse);
 
         lspFetcher = createFetcher();
 
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
-        assertInstallResult(result, LanguageServerLocation.REMOTE);
+        assertInstallResult(result, LanguageServerLocation.REMOTE, sampleVersion);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.SUCCEEDED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.REMOTE
-                && arg.getReason() == null
-                )
-            ));
+    }
+
+    @Test
+    void fetchFromFallbackWhenRemoteReturnsHttpErrorAndNoFAllBackVersionFound()
+            throws IOException, InterruptedException {
+        var zipPath = Paths.get(tempDir.toString(), "remote", "servers.zip");
+        setupZipTargetContent(zipPath, sampleLspVersion);
+
+        var mockResponse = createMockHttpResponse(zipPath, HttpURLConnection.HTTP_BAD_REQUEST);
+        when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
+                .thenReturn(mockResponse);
+
+        lspFetcher = createFetcher();
+
+        var exception = assertThrows(AmazonQPluginException.class, () -> {
+            lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
+        });
+
+        staticMockedArtifactUtils.verify(() -> ArtifactUtils.deleteDirectory(any(Path.class)), times(2));
+        staticMockedArtifactUtils.verify(() -> ArtifactUtils.parseVersion(any(String.class)), times(4));
+
+        assertExceptionThrownWithMessage(exception, "Unable to find a compatible version");
+    }
+
+    @Test
+    void fetchFromFallbackWhenRemoteReturnsHttpError() throws IOException, InterruptedException {
+        var remoteZipPath = Paths.get(tempDir.toString(), sampleVersion, "servers.zip");
+        setupZipTargetContent(remoteZipPath, sampleLspVersion);
+        ArtifactUtils.deleteFile(remoteZipPath);
+
+        String testFallbackVersion = String.format("%s.2.5", versionRange.getLeft().getMajor());
+        var zipPath = Paths.get(tempDir.toString(), testFallbackVersion, "servers.zip");
+        var unzippedPath = Paths.get(tempDir.toString(), testFallbackVersion, "servers");
+        ArtifactVersion testFallbackSampleLspVersion = createLspVersion(testFallbackVersion);
+
+        setupZipTargetContent(zipPath, testFallbackSampleLspVersion);
+
+        sampleManifest = createManifest(List.of(sampleLspVersion, testFallbackSampleLspVersion));
+
+        var mockResponse = createMockHttpResponse(remoteZipPath, HttpURLConnection.HTTP_BAD_REQUEST);
+        when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
+                .thenReturn(mockResponse);
+
+        lspFetcher = createFetcher();
+        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
+
+        assertInstallResult(result, LanguageServerLocation.FALLBACK, testFallbackVersion);
+        assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.FALLBACK && arg.getReason() == null)));
     }
 
     @Test
     void fetchWhenMultipleVersionsChooseLatest() throws IOException, InterruptedException {
-        var oneAdditionalVersion = String.format("%s.0.3", versionRange.getLeft().getMajor());
+        var oneAdditionalVersion = String.format("%s.8.3", versionRange.getLeft().getMajor());
         var oneAdditionalLspVersion = createLspVersion(oneAdditionalVersion);
         sampleManifest = createManifest(List.of(sampleLspVersion, oneAdditionalLspVersion));
 
@@ -286,9 +305,9 @@ public final class RemoteLspFetcherTest {
 
         setupZipTargetContent(zipPath, oneAdditionalLspVersion);
 
-        var mockResponse = createMockHttpResponse(zipPath);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-        .thenReturn(mockResponse);
+        var mockResponse = createMockHttpResponse(zipPath, HttpURLConnection.HTTP_OK);
+        when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
+                .thenReturn(mockResponse);
 
         lspFetcher = createFetcher();
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
@@ -299,68 +318,36 @@ public final class RemoteLspFetcherTest {
         assertEquals(oneAdditionalVersion, result.version());
 
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(
-                eq(Result.SUCCEEDED),
-                argThat(arg ->
-                arg.getLocation() == LanguageServerLocation.REMOTE
-                && arg.getReason() == null
-                && arg.getLanguageServerVersion() == oneAdditionalVersion
-                )
-            ));
+        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
+                argThat(arg -> arg.getLocation() == LanguageServerLocation.REMOTE && arg.getReason() == null
+                        && arg.getLanguageServerVersion() == oneAdditionalVersion)));
     }
 
-    private HttpResponse<Path> createMockHttpResponse(final Path file) {
-      return  new HttpResponse<Path>() {
-            @Override
-            public int statusCode() {
-                return 200;
-            }
+    private HttpResponse<Path> createMockHttpResponse(final Path file, final int statusCode) {
+        @SuppressWarnings("unchecked")
+        HttpResponse<Path> response = mock(HttpResponse.class);
 
-            @Override
-            public HttpRequest request() {
-                return null;
-            }
+        when(response.statusCode()).thenReturn(statusCode);
+        when(response.body()).thenReturn(file);
+        when(response.headers()).thenReturn(HttpHeaders.of(new HashMap<>(), (x, y) -> true));
+        when(response.previousResponse()).thenReturn(Optional.empty());
+        when(response.sslSession()).thenReturn(Optional.empty());
+        when(response.version()).thenReturn(HttpClient.Version.HTTP_1_1);
+        when(response.request()).thenReturn(null);
+        when(response.uri()).thenReturn(null);
 
-            @Override
-            public Optional<HttpResponse<Path>> previousResponse() {
-                return Optional.empty();
-            }
-
-            @Override
-            public HttpHeaders headers() {
-                return HttpHeaders.of(new HashMap<>(), (x, y) -> true);
-            }
-
-            @Override
-            public Path body() {
-                return file;
-            }
-
-            @Override
-            public Optional<SSLSession> sslSession() {
-                return Optional.empty();
-            }
-
-            @Override
-            public URI uri() {
-                return null;
-            }
-
-            @Override
-            public HttpClient.Version version() {
-                return HttpClient.Version.HTTP_1_1;
-            }
-        };
+        return response;
     }
 
-    private void assertInstallResult(final LspFetchResult result, final LanguageServerLocation expectedLocation) {
-        var expectedAssetDirectory = Paths.get(tempDir.toString(), sampleVersion);
+    private void assertInstallResult(final LspFetchResult result, final LanguageServerLocation expectedLocation,
+            final String testVersion) {
+        var expectedAssetDirectory = Paths.get(tempDir.toString(), testVersion);
         assertEquals(expectedAssetDirectory.toString(), result.assetDirectory());
         assertEquals(expectedLocation, result.location());
     }
 
-    private void setupFileTargetContent(final String filename,
-    final ArtifactVersion lspVersion, final String hash) throws IOException, FileNotFoundException {
+    private void setupFileTargetContent(final String filename, final ArtifactVersion lspVersion, final String hash)
+            throws IOException, FileNotFoundException {
         var sampleContentPath = Paths.get(tempDir.toString(), lspVersion.serverVersion(), filename);
 
         setupFile(sampleContentPath);
@@ -370,14 +357,16 @@ public final class RemoteLspFetcherTest {
         lspVersion.targets().get(0).contents().add(content);
     }
 
-    private void setupZipTargetContent(final Path zipPath, final ArtifactVersion lspVersion) throws IOException, FileNotFoundException {
+    private void setupZipTargetContent(final Path zipPath, final ArtifactVersion lspVersion)
+            throws IOException, FileNotFoundException {
         var unzippedPath = zipPath.getParent().resolve(ArtifactUtils.getFilenameWithoutExtension(zipPath));
 
         createTestFiles(unzippedPath.toString());
         createZipFile(unzippedPath, zipPath);
 
         var contentHash = ArtifactUtils.calculateHash(zipPath);
-        var content = new Content(zipPath.getFileName().toString(), "https://example.com", List.of("sha384:" + contentHash), 0);
+        var content = new Content(zipPath.getFileName().toString(), "https://example.com",
+                List.of("sha384:" + contentHash), 0);
         lspVersion.targets().get(0).contents().add(content);
     }
 
@@ -388,9 +377,7 @@ public final class RemoteLspFetcherTest {
 
         try {
             var zipFiles = getFilesInZip(zipPath);
-            var unzippedFiles = Files.list(unzippedFolder)
-                    .map(Path::getFileName)
-                    .map(Path::toString)
+            var unzippedFiles = Files.list(unzippedFolder).map(Path::getFileName).map(Path::toString)
                     .collect(Collectors.toList());
 
             return zipFiles.stream().allMatch(unzippedFiles::contains);
@@ -402,15 +389,14 @@ public final class RemoteLspFetcherTest {
 
     private List<String> getFilesInZip(final Path zipPath) throws IOException {
         try (ZipFile zip = new ZipFile(zipPath.toFile())) {
-            return zip.stream()
-                    .map(entry -> Paths.get(entry.getName()).getFileName().toString())
+            return zip.stream().map(entry -> Paths.get(entry.getName()).getFileName().toString())
                     .collect(Collectors.toList());
         }
     }
 
-    private void createTestFiles(final String directory)  throws IOException {
+    private void createTestFiles(final String directory) throws IOException {
         for (int i = 1; i <= 3; i++) {
-           setupFile(Paths.get(directory, String.valueOf(i)));
+            setupFile(Paths.get(directory, String.valueOf(i)));
         }
     }
 
@@ -460,10 +446,7 @@ public final class RemoteLspFetcherTest {
     }
 
     private LspFetcher createFetcher() {
-        return new RemoteLspFetcher.Builder()
-                .withManifest(sampleManifest)
-                .withVersionRange(versionRange)
-                .withHttpClient(httpClient)
-                .build();
+        return new RemoteLspFetcher.Builder().withManifest(sampleManifest).withVersionRange(versionRange)
+                .withHttpClient(httpClient).build();
     }
 }

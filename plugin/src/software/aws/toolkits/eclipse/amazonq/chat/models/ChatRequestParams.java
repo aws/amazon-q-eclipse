@@ -23,6 +23,8 @@ public final class ChatRequestParams {
     ) {
         this.tabId = tabId;
         this.prompt = prompt;
+        this.textDocument = textDocument;
+        this.cursorState = (cursorState != null) ? List.of(cursorState) : List.of();
     }
 
     public String getTabId() {

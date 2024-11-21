@@ -67,6 +67,9 @@ public final class RemoteLspFetcher implements LspFetcher {
         args.setLocation(location);
         args.setLanguageServerVersion(serverVersion);
         args.setReason(reason);
+        if (manifest != null) {
+            args.setManifestSchemaVersion(manifest.manifestSchemaVersion());
+        }
         LanguageServerTelemetryProvider.emitSetupGetServer(result, args);
     }
 

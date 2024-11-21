@@ -66,7 +66,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
                 var awsServerCapabiltiesProvider = AwsServerCapabiltiesProvider.getInstance();
                 awsServerCapabiltiesProvider.setAwsServerCapabilties(result.getAwsServerCapabilities());
-                Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
+                Activator.getLspProvider().setAmazonQServer(launcher.getRemoteProxy());
             }
             consumer.consume(message);
         });

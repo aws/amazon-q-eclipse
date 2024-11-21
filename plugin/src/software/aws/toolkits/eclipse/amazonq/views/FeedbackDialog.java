@@ -25,7 +25,6 @@ import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
@@ -131,20 +130,6 @@ public class FeedbackDialog extends Dialog {
         super.cancelPressed();
     }
 
-    private Font magnifyFontSize(final Font originalFont, final int fontSize) {
-        FontData[] fontData = originalFont.getFontData();
-        for (int i = 0; i < fontData.length; i++) {
-            fontData[i].setHeight(fontSize);
-        }
-        Font magnifiedFont = new Font(getShell().getDisplay(), fontData);
-        // Dispose the previous magnifiedFont, if it exists
-        if (this.magnifiedFont != null && !this.magnifiedFont.isDisposed()) {
-            this.magnifiedFont.dispose();
-        }
-        this.magnifiedFont = magnifiedFont;
-        return magnifiedFont;
-    }
-
     private void handleTextModified(final ModifyEvent event) {
         Text text = (Text) event.widget;
         if (text.getText().length() > MAX_CHAR_LIMIT) {
@@ -193,11 +178,11 @@ public class FeedbackDialog extends Dialog {
         rowLayout.spacing = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 1 : 0; // to reduce space between two labels
         headlineContainer.setLayout(rowLayout);
 
-        createLabelWithFontSize(headlineContainer, "Looking for help? View the", 14);
-        createLinkLabel(headlineContainer, "Getting Started Guide", 14, "https://aws.amazon.com/q/getting-started/",
+        createLabel(headlineContainer, "Looking for help? View the");
+        createLinkLabel(headlineContainer, "Getting Started Guide", "https://aws.amazon.com/q/getting-started/",
                 "feedback_gettingStartedButton");
-        createLabelWithFontSize(headlineContainer, "or search our", 14);
-        createLinkLabel(headlineContainer, "Documentation", 14,
+        createLabel(headlineContainer, "or search our");
+        createLinkLabel(headlineContainer, "Documentation",
                 "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html",
                 "feedback_documentationButton");
     }
@@ -209,7 +194,7 @@ public class FeedbackDialog extends Dialog {
         joinUsOnGithubContainer.setLayout(joinUsOnGithubLayout);
         joinUsOnGithubContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        createLabelWithFontSize(joinUsOnGithubContainer, "Join us on GitHub", 14);
+        createLabel(joinUsOnGithubContainer, "Join us on GitHub");
         createSeparator(joinUsOnGithubContainer);
     }
 
@@ -221,13 +206,13 @@ public class FeedbackDialog extends Dialog {
         reportRequestContributeContainer.setLayout(reportRequestContributeContainerLayout);
 
         createImageLabel(reportRequestContributeContainer, "icons/ReportAnIssue.png");
-        createLinkLabel(reportRequestContributeContainer, "Report an issue", SWT.NONE,
+        createLinkLabel(reportRequestContributeContainer, "Report an issue",
                 String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s",
                         getBodyMessageForReportIssueOrRequestFeature()),
                 "feedback_reportIssueButton");
 
         createImageLabel(reportRequestContributeContainer, "icons/RequestFeature.png");
-        createLinkLabel(reportRequestContributeContainer, "Request a feature", SWT.NONE,
+        createLinkLabel(reportRequestContributeContainer, "Request a feature",
                 String.format("https://github.com/aws/amazon-q-eclipse/issues/new?body=%s",
                         getBodyMessageForReportIssueOrRequestFeature()),
                 "feedback_requestFeatureButton");
@@ -235,7 +220,7 @@ public class FeedbackDialog extends Dialog {
         ThemeDetector themeDetector = new ThemeDetector();
         createImageLabel(reportRequestContributeContainer,
                 themeDetector.isDarkTheme() ? "icons/ViewCode-White.png" : "icons/ViewCode-Black.png");
-        createLinkLabel(reportRequestContributeContainer, "View source code and contribute", SWT.NONE,
+        createLinkLabel(reportRequestContributeContainer, "View source code and contribute",
                 "https://github.com/aws/amazon-q-eclipse/", "feedback_viewSourceCodeButton");
     }
 
@@ -246,7 +231,7 @@ public class FeedbackDialog extends Dialog {
         shareFeedbackTextContainer.setLayout(shareFeedbackTextContainerLayout);
         shareFeedbackTextContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        createLabelWithFontSize(shareFeedbackTextContainer, "Share feedback", 14);
+        createLabel(shareFeedbackTextContainer, "Share feedback");
         createSeparator(shareFeedbackTextContainer);
     }
 
@@ -355,12 +340,11 @@ public class FeedbackDialog extends Dialog {
         characterRemainingLabel = new Label(questionsContainer, SWT.NONE);
         characterRemainingLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         updateCharacterRemainingCount();
-        createLabelWithFontSize(questionsContainer,
+        createLabel(questionsContainer,
                 "Don't add personally identifiable information (PII), confidential or sensitive "
-                        + "information in your feedback.",
-                10);
-        createLabelWithFontSize(questionsContainer,
-                "Please remove any PII when sharing file paths, error messages, etc.", 10);
+                        + "information in your feedback.");
+        createLabel(questionsContainer,
+                "Please remove any PII when sharing file paths, error messages, etc.");
 
     }
 
@@ -369,17 +353,10 @@ public class FeedbackDialog extends Dialog {
         label.setText(text);
     }
 
-    private void createLabelWithFontSize(final Composite parent, final String text, final int fontSize) {
-        Label label = new Label(parent, SWT.NONE);
-        label.setText(text);
-        label.setFont(magnifyFontSize(label.getFont(), fontSize));
-    }
-
-    private void createLinkLabel(final Composite parent, final String text, final int fontSize, final String url,
+    private void createLinkLabel(final Composite parent, final String text, final String url,
             final String telemetryLabel) {
         Label label = new Label(parent, SWT.NONE);
         label.setText(text);
-        label.setFont(magnifyFontSize(label.getFont(), fontSize));
         label.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_BLUE));
         label.setCursor(parent.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
         label.addMouseListener(new MouseAdapter() {

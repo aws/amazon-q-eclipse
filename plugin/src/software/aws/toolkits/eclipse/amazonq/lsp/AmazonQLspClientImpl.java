@@ -151,7 +151,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void ssoTokenChanged(final SsoTokenChangedParams params) {
-        SsoTokenChangedKind kind = SsoTokenChangedKind.valueOf(params.kind());
+        SsoTokenChangedKind kind = SsoTokenChangedKind.fromValue(params.kind());
         Activator.getLogger().info("Processing " + kind + "ssoTokenChanged notification...");
 
         try {

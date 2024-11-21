@@ -26,8 +26,6 @@ public final class ToolkitTelemetryProvider {
               .value(1.0)
               .build();
       Activator.getTelemetryService().emitMetric(metadata);
-      String message = String.format("%s command completed %s in %f milliseconds", params.command(), params.result.toString(), params.duration());
-      Activator.getLogger().info(message);
     }
 
     public static void emitOpenModuleEventMetric(final String module, final String source, final String failureReason) {

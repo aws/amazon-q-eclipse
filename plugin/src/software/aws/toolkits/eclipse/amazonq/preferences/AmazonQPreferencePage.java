@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.AwsTelemetryProvider;
@@ -85,6 +86,10 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         BooleanFieldEditor codeReferenceOptIn = new BooleanFieldEditor(CODE_REFERENCE_OPT_IN,
                 "Show inline code suggestions with code references", codeReferenceOptInComposite);
         addField(codeReferenceOptIn);
+
+        if (Activator.getLoginService().getAuthState().loginType().equals(LoginType.IAM_IDENTITY_CENTER)) {
+            codeReferenceOptIn.setEnabled(false, codeReferenceOptInComposite);
+        }
 
         Link codeReferenceLink = createLink("""
                 Amazon Q creates a code reference when you insert a code suggestion from Amazon Q that is similar to training data.\

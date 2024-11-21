@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.extensions.implementation;
 
+import static org.mockito.Mockito.mockStatic;
+
 import java.util.Map;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -18,9 +20,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
+import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
-
-import static org.mockito.Mockito.mockStatic;
 
 public final class ActivatorStaticMockExtension extends StaticMockExtension<Activator>
         implements BeforeEachCallback, BeforeAllCallback, AfterAllCallback {
@@ -40,6 +41,7 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
         LspProvider lspProviderMock = Mockito.mock(LspProvider.class);
         LoginService loginServiceMock = Mockito.mock(LoginService.class);
         PluginStore pluginStoreMock = Mockito.mock(PluginStore.class);
+        CodeReferenceLoggingService codeReferenceLoggingServiceMock = Mockito.mock(CodeReferenceLoggingService.class);
 
         activatorStaticMock.when(Activator::getLogger).thenReturn(loggingServiceMock);
         activatorStaticMock.when(Activator::getTelemetryService).thenReturn(telemetryServiceMock);
@@ -47,6 +49,7 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
         activatorStaticMock.when(Activator::getLspProvider).thenReturn(lspProviderMock);
         activatorStaticMock.when(Activator::getLoginService).thenReturn(loginServiceMock);
         activatorStaticMock.when(Activator::getPluginStore).thenReturn(pluginStoreMock);
+        activatorStaticMock.when(Activator::getCodeReferenceLoggingService).thenReturn(codeReferenceLoggingServiceMock);
 
         Map<Class<?>, Object> newMocksMap = Map.of(
                 LoggingService.class, loggingServiceMock,
@@ -54,7 +57,8 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
                 Activator.class, activatorMock,
                 LspProvider.class, lspProviderMock,
                 LoginService.class, loginServiceMock,
-                PluginStore.class, pluginStoreMock
+                PluginStore.class, pluginStoreMock,
+                CodeReferenceLoggingService.class, codeReferenceLoggingServiceMock
         );
         setMocksMap(newMocksMap);
     }

@@ -324,8 +324,12 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
             distanceTraversed++;
-            session.transitionToDecisionMade();
             event.getDocument().removeDocumentListener(this);
+            StyledText widget = session.getViewer().getTextWidget();
+            int caretLine = widget.getLineAtOffset(widget.getCaretOffset());
+            int linesOfInput = input.split(widget.getLineDelimiter()).length;
+            int lineToUnsetIndent = caretLine + linesOfInput;
+            session.transitionToDecisionMade(lineToUnsetIndent);
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
                     session.end();

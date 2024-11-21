@@ -51,8 +51,6 @@ public class AutoTriggerDocumentListenerTest {
         ICommandService commandServiceMock = mock(ICommandService.class);
         platformUIMockStatic.when(() -> PlatformUI.getWorkbench().getService(ICommandService.class))
                 .thenReturn(commandServiceMock);
-
-        mockExecutionListener();
     }
 
     @AfterAll
@@ -72,6 +70,7 @@ public class AutoTriggerDocumentListenerTest {
         DocumentEvent eventMock = mock(DocumentEvent.class);
         when(eventMock.getText()).thenReturn("");
         when(sessionMock.isPreviewingSuggestions()).thenReturn(true);
+        when(sessionMock.isDecisionMade()).thenReturn(true);
         when(sessionMock.isActive()).thenReturn(false);
         when(sessionMock.getViewer().getTextWidget().getCaretOffset()).thenReturn(0);
 
@@ -87,10 +86,10 @@ public class AutoTriggerDocumentListenerTest {
         verify(sessionMock, times(0)).invoke(any(Integer.class), any(Integer.class));
 
         when(sessionMock.isPreviewingSuggestions()).thenReturn(false);
-        executionListenerMock.preExecute("software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions", null);
         listener.documentChanged(eventMock);
         verify(sessionMock, times(0)).invoke(any(Integer.class), any(Integer.class));
 
+        when(sessionMock.isDecisionMade()).thenReturn(false);
         listener.documentChanged(eventMock);
         verify(sessionMock, times(1)).invoke(0, TEXT_STUB.length());
 

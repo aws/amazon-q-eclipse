@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.AwsTelemetryProvider;
@@ -26,7 +27,8 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public class AmazonQPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
     public static final String PREFERENCE_STORE_ID = "software.aws.toolkits.eclipse.preferences";
-    public static final String TELEMETRY_OPT_IN = "telemtryOptIn";
+    public static final String CODE_REFERENCE_OPT_IN = "codeReferenceOptIn";
+    public static final String TELEMETRY_OPT_IN = "telemetryOptIn";
     public static final String Q_DATA_SHARING = "qDataSharing";
 
     private boolean isTelemetryOptInChecked;
@@ -49,7 +51,9 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
     @Override
     protected final void createFieldEditors() {
         createHorizontalSeparator();
-        createDataSharingLabel();
+        createHeading("Inline Suggestions");
+        createCodeReferenceOptInField();
+        createHeading("Data Sharing");
         createTelemetryOptInField();
         createHorizontalSeparator();
         createQDataSharingField();
@@ -64,12 +68,42 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         new Label(getFieldEditorParent(), SWT.HORIZONTAL);
     }
 
-    private void createDataSharingLabel() {
+    private void createHeading(final String text) {
         Label dataSharing = new Label(getFieldEditorParent(), SWT.NONE);
         dataSharing.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
-        dataSharing.setText("Data Sharing");
+        dataSharing.setText(text);
         dataSharing.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         new Label(getFieldEditorParent(), SWT.HORIZONTAL | SWT.SEPARATOR).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+    }
+
+    private void createCodeReferenceOptInField() {
+        Composite codeReferenceOptInComposite = new Composite(getFieldEditorParent(), SWT.NONE);
+        codeReferenceOptInComposite.setLayout(new GridLayout(2, false));
+        GridData telemetryOptInCompositeData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        telemetryOptInCompositeData.horizontalIndent = 20;
+        codeReferenceOptInComposite.setLayoutData(telemetryOptInCompositeData);
+
+        BooleanFieldEditor codeReferenceOptIn = new BooleanFieldEditor(CODE_REFERENCE_OPT_IN,
+                "Show inline code suggestions with code references", codeReferenceOptInComposite);
+        addField(codeReferenceOptIn);
+
+        if (Activator.getLoginService().getAuthState().loginType().equals(LoginType.IAM_IDENTITY_CENTER)) {
+            codeReferenceOptIn.setEnabled(false, codeReferenceOptInComposite);
+        }
+
+        Link codeReferenceLink = createLink("""
+                Amazon Q creates a code reference when you insert a code suggestion from Amazon Q that is similar to training data.\
+                \nWhen unchecked, Amazon Q will not show code suggestions that have code references. If you authenticate through IAM\
+                \nIdentity Center, this setting is controlled by your Amazon Q administrator. \
+                \n<a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/code-reference.html\">Learn more</a>
+                """, 20, codeReferenceOptInComposite);
+        codeReferenceLink.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(final SelectionEvent event) {
+                UiTelemetryProvider.emitClickEventMetric("preferences_codeReferences");
+                PluginUtils.openWebpage(event.text);
+            }
+        });
     }
 
     private void createTelemetryOptInField() {
@@ -104,10 +138,10 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         addField(qDataSharing);
 
         Link dataSharingLink = createLink("""
-                When checked, your content processed by Amazon Q may be used for service improvement (except for content processed by the \
-                Amazon Q Developer Pro tier).\nUnchecking this box will cause AWS to delete any of your content used for that purpose. The \
-                information used to provide the Amazon Q service to you will not be affected.\nSee the \
-                <a href="https://aws.amazon.com/service-terms/">Service Terms</a> for more detail.
+                When checked, your content processed by Amazon Q may be used for service improvement (except for content processed\
+                \nby the Amazon Q Developer Pro tier). Unchecking this box will cause AWS to delete any of your content used for that\
+                \npurpose. The information used to provide the Amazon Q service to you will not be affected.\
+                \nSee the <a href="https://aws.amazon.com/service-terms/">Service Terms</a> for more detail.
                 """, 20, qDataSharingComposite);
         dataSharingLink.addSelectionListener(new SelectionAdapter() {
             @Override

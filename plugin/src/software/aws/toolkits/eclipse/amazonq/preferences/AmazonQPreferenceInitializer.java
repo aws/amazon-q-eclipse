@@ -17,6 +17,7 @@ public class AmazonQPreferenceInitializer extends AbstractPreferenceInitializer 
     @Override
     public final void initializeDefaultPreferences() {
         IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+        store.setDefault(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN, true);
         store.setDefault(AmazonQPreferencePage.TELEMETRY_OPT_IN, true);
         store.setDefault(AmazonQPreferencePage.Q_DATA_SHARING, true);
         store.addPropertyChangeListener(event -> {

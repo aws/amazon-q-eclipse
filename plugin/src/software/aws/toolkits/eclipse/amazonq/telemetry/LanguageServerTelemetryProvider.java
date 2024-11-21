@@ -9,6 +9,7 @@ import java.time.Instant;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.telemetry.LanguageserverTelemetry;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerSetupStage;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
@@ -36,14 +37,14 @@ public final class LanguageServerTelemetryProvider {
 
     public static void emitSetupGetServer(final Result result, final RecordLspSetupArgs args) {
         emitSetupMetric(result, args, LanguageServerSetupStage.GET_SERVER);
-        if (result == Result.FAILED) {
+        if (result == Result.FAILED && args.getLocation() == LanguageServerLocation.UNKNOWN) {
             emitSetupAll(Result.FAILED, args);
         }
     }
 
     public static void emitSetupValidate(final Result result, final RecordLspSetupArgs args) {
         emitSetupMetric(result, args, LanguageServerSetupStage.VALIDATE);
-        if (result == Result.FAILED) {
+        if (result == Result.FAILED && args.getLocation() != LanguageServerLocation.OVERRIDE) {
             emitSetupAll(Result.FAILED, args);
         }
     }

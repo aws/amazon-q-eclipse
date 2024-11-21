@@ -6950,7 +6950,7 @@
         },
         {
             "name": "toolkit_execute",
-            "description": "Emitted whenever a registered Eclipse command is executed",
+            "description": "Emitted whenever a registered command is executed",
             "passive": true,
             "metadata": [
                 {

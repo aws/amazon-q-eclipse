@@ -3,7 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.customization;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -37,9 +39,11 @@ public final class CustomizationUtil {
         params.setSection("aws.q");
         return Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> server.getConfigurationFromServer(params))
-                .thenApply(configurations -> configurations.getCustomizations().stream()
-                    .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
-                    .collect(Collectors.toList()))
+                .thenApply(configurations -> Optional.ofNullable(configurations)
+                        .map(config -> config.getCustomizations().stream()
+                            .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
+                            .collect(Collectors.toList()))
+                        .orElse(Collections.emptyList()))
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Error occurred while fetching the list of customizations", throwable);
                     throw new AmazonQPluginException(throwable);

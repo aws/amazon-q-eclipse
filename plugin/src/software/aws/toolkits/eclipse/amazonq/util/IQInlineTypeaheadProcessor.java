@@ -32,4 +32,6 @@ public interface IQInlineTypeaheadProcessor {
     boolean isStringSetToAutoClose();
 
     boolean isCurlyBracesAutoCloseDelayed();
+
+    int getOutstandingPadding(IQInlineBracket[] brackets);
 }

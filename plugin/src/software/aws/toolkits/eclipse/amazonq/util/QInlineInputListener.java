@@ -138,21 +138,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
     }
 
     public int getOutstandingPadding() {
-        int outstandingPadding = 0;
-        for (int i = brackets.length - 1; i >= 0; i--) {
-            var bracket = brackets[i];
-            if (bracket == null) {
-                continue;
-            }
-            if (!(bracket instanceof QInlineSuggestionOpenBracketSegment)) {
-                continue;
-            }
-            // TODO: customize this logic based on the file type:
-            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved() && bracket.getSymbol() != '{') {
-                outstandingPadding++;
-            }
-        }
-        return outstandingPadding;
+        return typeaheadProcessor.getOutstandingPadding(brackets);
     }
 
     /**
@@ -165,6 +151,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
      */
     public void beforeRemoval() {
         var session = QInvocationSession.getInstance();
+        IDocument doc = session.getViewer().getDocument();
+        doc.removeDocumentListener(this);
         if (session == null || !session.isActive() || brackets == null || session.getSuggestionAccepted()) {
             return;
         }
@@ -192,8 +180,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
 
         suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
 
-        IDocument doc = session.getViewer().getDocument();
-        doc.removeDocumentListener(this);
         int idx = distanceTraversed;
         if (!toAppend.isEmpty()) {
             try {

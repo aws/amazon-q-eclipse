@@ -173,6 +173,25 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
         return true;
     }
 
+    @Override
+    public int getOutstandingPadding(final IQInlineBracket[] brackets) {
+        int outstandingPadding = 0;
+        for (int i = brackets.length - 1; i >= 0; i--) {
+            var bracket = brackets[i];
+            if (bracket == null) {
+                continue;
+            }
+            if (!(bracket instanceof QInlineSuggestionOpenBracketSegment)) {
+                continue;
+            }
+            // TODO: customize this logic based on the file type:
+            if (!((QInlineSuggestionOpenBracketSegment) bracket).isResolved() && bracket.getSymbol() != '{') {
+                outstandingPadding++;
+            }
+        }
+        return outstandingPadding;
+    }
+
     private boolean shouldProcessVerifyKeyInput(final char input, final int offset, final IQInlineBracket[] brackets) {
         if (brackets[offset] == null) {
             return false;

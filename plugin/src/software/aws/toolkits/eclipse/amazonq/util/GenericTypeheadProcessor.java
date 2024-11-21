@@ -21,8 +21,8 @@ public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcesso
     }
 
     @Override
-    public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(final int distanceTraversed, final int eventOffset,
-            final String input, final IQInlineBracket[] brackets) {
+    public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(final int distanceTraversed,
+            final int eventOffset, final String input, final IQInlineBracket[] brackets) {
         TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
         PreprocessingCategory category = getBufferPreprocessingCategory(distanceTraversed, input, brackets);
         switch (category) {
@@ -51,8 +51,8 @@ public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcesso
     }
 
     @Override
-    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(final int distanceTraversed, final int currentOffset,
-            final String input, final IQInlineBracket[] brackets) {
+    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(final int distanceTraversed,
+            final int currentOffset, final String input, final IQInlineBracket[] brackets) {
         IQInlineBracket bracket = brackets[distanceTraversed];
         TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
         if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
@@ -100,6 +100,13 @@ public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcesso
     @Override
     public boolean isCurlyBracesAutoCloseDelayed() {
         return false;
+    }
+
+    @Override
+    public int getOutstandingPadding(final IQInlineBracket[] brackets) {
+        // Geenric document does not need padding because deleting an unresolved open
+        // bracket does not delete its close counter part.
+        return 0;
     }
 
     private PreprocessingCategory getBufferPreprocessingCategory(final int distanceTraversed, final String input,

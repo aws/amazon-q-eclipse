@@ -52,7 +52,7 @@ public final class DefaultLspManager implements LspManager {
     }
 
     @Override
-    public LspInstallResult getLspInstallation() {
+    public synchronized LspInstallResult getLspInstallation() {
         if (installResult != null) {
             return installResult;
         }

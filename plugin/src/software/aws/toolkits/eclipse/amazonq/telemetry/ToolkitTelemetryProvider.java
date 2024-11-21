@@ -15,6 +15,19 @@ public final class ToolkitTelemetryProvider {
         //prevent instantiation
     }
 
+    public static void emitExecuteCommandMetric(final ExecuteParams params) {
+      var metadata = ToolkitTelemetry.ExecuteEvent()
+              .command(params.command())
+              .duration(params.duration())
+              .result(params.result())
+              .reason(params.reason())
+              .passive(false)
+              .createTime(Instant.now())
+              .value(1.0)
+              .build();
+      Activator.getTelemetryService().emitMetric(metadata);
+    }
+
     public static void emitOpenModuleEventMetric(final String module, final String source, final String failureReason) {
         Result result = Result.SUCCEEDED;
         boolean isPassive = (!source.equals("ellipsesMenu") && !source.equals("statusBar") && !source.equals("shortcut"));
@@ -57,5 +70,5 @@ public final class ToolkitTelemetryProvider {
             return page;
         }
     }
-
+    public record ExecuteParams(String command, double duration, Result result, String reason) { };
 }

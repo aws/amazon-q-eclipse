@@ -41,7 +41,7 @@
                 @change="handleRegionInput"
                 tabindex="0"
             >
-                <option v-for="region in regions" :key="region.id" :value="region.id">
+                <option v-for="region in sortedRegions" :key="region.id" :value="region.id">
                     {{ `${region.name} (${region.id})` }}
                 </option>
             </select>
@@ -74,6 +74,14 @@ export default defineComponent({
         }
     },
     computed: {
+        sortedRegions() {
+            const usEast1 = this.regions.find(r => r.id === 'us-east-1');
+            const otherRegions = this.regions
+                .filter(r => r.id !== 'us-east-1')
+                .sort((a, b) => a.name.localeCompare(b.name));
+                
+            return usEast1 ? [usEast1, ...otherRegions] : otherRegions;
+        },
         regions(): Region[] {
             return this.$store.state.ssoRegions
         },

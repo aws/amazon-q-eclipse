@@ -24,6 +24,7 @@ import org.eclipse.ui.PlatformUI;
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
@@ -75,7 +76,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             } else if (item.getSection().equals(Constants.LSP_CW_CONFIGURATION_KEY)) {
                 Map<String, Boolean> cwConfig = new HashMap<>();
                 boolean shareContentSetting = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.Q_DATA_SHARING);
+                boolean referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
+                        && Activator.getLoginService().getAuthState().loginType().equals(LoginType.BUILDER_ID);
                 cwConfig.put(Constants.LSP_CW_OPT_OUT_KEY, shareContentSetting);
+                cwConfig.put(Constants.LSP_CODE_REFERENCES_OPT_OUT_KEY, referencesEnabled);
                 output.add(cwConfig);
             }
         });

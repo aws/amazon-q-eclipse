@@ -2,16 +2,14 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.regex.Matcher;
 
-import software.aws.toolkits.eclipse.amazonq.util.IQInlineTypeaheadProcessor.PreprocessingCategory;
-
 public final class JavascriptTypeaheadProcessor implements IQInlineTypeaheadProcessor {
 
     public JavascriptTypeaheadProcessor() {
     }
 
     @Override
-    public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(int inputLength, int currentDistanceTraversed,
-            IQInlineBracket[] brackets) {
+    public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(final int inputLength, final int currentDistanceTraversed,
+            final IQInlineBracket[] brackets) {
         for (int i = 1; i <= inputLength; i++) {
             var bracket = brackets[currentDistanceTraversed - i];
             if (bracket != null) {
@@ -23,8 +21,8 @@ public final class JavascriptTypeaheadProcessor implements IQInlineTypeaheadProc
     }
 
     @Override
-    public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(int distanceTraversed, int eventOffset,
-            String input, IQInlineBracket[] brackets) {
+    public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(final int distanceTraversed, final int eventOffset,
+            final String input, final IQInlineBracket[] brackets) {
         TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
         PreprocessingCategory category = getBufferPreprocessingCategory(distanceTraversed, input, brackets);
         switch (category) {
@@ -53,29 +51,14 @@ public final class JavascriptTypeaheadProcessor implements IQInlineTypeaheadProc
     }
 
     @Override
-    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(int distanceTraversed, int currentOffset,
-            String input, IQInlineBracket[] brackets) {
-        IQInlineBracket bracket = brackets[distanceTraversed];
-        TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
-//        if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
-//            return res;
-//        }
-//        if (bracket.getSymbol() != input.charAt(0) || input.length() > 1) {
-//            return res;
-//        }
-//        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket)
-//                .getOpenBracket();
-//        if (openBracket == null || openBracket.isResolved() || !openBracket.hasAutoCloseOccurred()) {
-//            return res;
-//        }
-//        res.setShouldModifyCaretOffset(true);
-//        res.setCaretOffset(currentOffset + 1);
-        return res;
+    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(final int distanceTraversed, final int currentOffset,
+            final String input, final IQInlineBracket[] brackets) {
+        return new TypeaheadProcessorInstruction();
     }
 
     @Override
-    public TypeaheadProcessorInstruction processVerifyKeyBuffer(int distanceTraversed, char input,
-            IQInlineBracket[] brackets) {
+    public TypeaheadProcessorInstruction processVerifyKeyBuffer(final int distanceTraversed, final char input,
+            final IQInlineBracket[] brackets) {
         return new TypeaheadProcessorInstruction();
     }
 
@@ -105,7 +88,7 @@ public final class JavascriptTypeaheadProcessor implements IQInlineTypeaheadProc
     }
 
     @Override
-    public int getOutstandingPadding(IQInlineBracket[] brackets) {
+    public int getOutstandingPadding(final IQInlineBracket[] brackets) {
         // Geenric document does not need padding because deleting an unresolved open
         // bracket does not delete its close counter part.
         return 0;

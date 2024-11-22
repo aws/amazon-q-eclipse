@@ -504,7 +504,6 @@ public final class QInvocationSession extends QResource {
         inlineTextFont = null;
         inlineTextFontBold = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
-        hasBeenTypedahead = false;
         unresolvedTasks.forEach((uuid, task) -> {
             boolean cancelled = task.cancel(true);
             if (cancelled) {

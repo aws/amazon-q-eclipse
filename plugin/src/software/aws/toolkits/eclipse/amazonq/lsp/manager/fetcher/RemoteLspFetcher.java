@@ -101,6 +101,7 @@ public final class RemoteLspFetcher implements LspFetcher {
 
         // delete invalid local cache
         ArtifactUtils.deleteDirectory(downloadDirectory);
+        emitGetServer(Result.FAILED, serverVersion, LanguageServerLocation.CACHE, null, start);
 
         // if all lsp target contents are successfully downloaded from remote location,
         // return the download location
@@ -118,6 +119,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         Activator.getLogger().info(String.format(
                 "Unable to download Amazon Q language server version v%s. Attempting to fetch from fallback location",
                 serverVersion));
+        emitGetServer(Result.FAILED, serverVersion, LanguageServerLocation.REMOTE, null, start);
 
         // use the most compatible fallback cached lsp version
         var fallbackDir = getFallback(serverVersion, platform, architecture, destination);

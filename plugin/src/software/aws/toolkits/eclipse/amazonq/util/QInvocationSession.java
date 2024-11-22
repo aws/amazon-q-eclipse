@@ -50,7 +50,6 @@ public final class QInvocationSession extends QResource {
     private QInlineInputListener inputListener = null;
     private QInlineTerminationListener terminationListener = null;
     private int[] headOffsetAtLine = new int[500];
-    private boolean hasBeenTypedahead = false;
     private boolean isTabOnly = false;
     private Consumer<Integer> unsetVerticalIndent;
     private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();

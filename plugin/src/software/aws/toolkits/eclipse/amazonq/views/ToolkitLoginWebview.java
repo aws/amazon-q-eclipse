@@ -50,7 +50,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         // that view
         // and don't setup rest of the content
         if (!result) {
-            showDependencyMissingView("Failed to set up webview from Login");
+            showDependencyMissingView("update");
             return;
         }
         var browser = getBrowser();

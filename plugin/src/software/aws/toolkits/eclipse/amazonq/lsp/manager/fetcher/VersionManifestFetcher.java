@@ -20,6 +20,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -76,7 +77,7 @@ public final class VersionManifestFetcher {
             return latestManifest;
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching manifest from remote location", e);
-            emitGetManifest(null, ManifestLocation.REMOTE, e.getMessage());
+            emitGetManifest(null, ManifestLocation.REMOTE, ExceptionMetadata.scrubException("Error fetching manifest from remote location", e));
             return cachedManifest;
         }
     }
@@ -116,7 +117,7 @@ public final class VersionManifestFetcher {
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching resource from cache", e);
-            emitGetManifest(null, ManifestLocation.CACHE, "Error fetching resource from cache: " + e.getMessage());
+            emitGetManifest(null, ManifestLocation.CACHE, ExceptionMetadata.scrubException("Error fetching resource from cache", e));
         }
         return Optional.empty();
     }

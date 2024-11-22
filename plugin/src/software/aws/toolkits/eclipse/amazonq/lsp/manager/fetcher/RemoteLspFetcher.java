@@ -36,6 +36,7 @@ import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
@@ -262,11 +263,11 @@ public final class RemoteLspFetcher implements LspFetcher {
                     ArtifactUtils.deleteDirectory(tempFolder);
                 }
             } else {
+                setErrorReason("Failed to download remote LSP artifact. Response code: " + response.statusCode());
                 throw new AmazonQPluginException("Failed to download remote LSP artifact. Response code: " + response.statusCode());
             }
         } catch (Exception ex) {
             Activator.getLogger().error("Error downloading from remote", ex);
-            setErrorReason(ex.getMessage());
         }
         return false;
     }
@@ -283,7 +284,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         } catch (Exception e) {
             String errorMessage = String.format("Failed to extract zip files in %s", downloadDirectory);
             Activator.getLogger().error(errorMessage, e);
-            setErrorReason(errorMessage);
+            setErrorReason("Failed to extract zip files");
             return false;
         }
     }
@@ -297,9 +298,8 @@ public final class RemoteLspFetcher implements LspFetcher {
             Files.createDirectories(unzipFolder);
             ArtifactUtils.extractFile(zipFile, unzipFolder);
         } catch (IOException e) {
-            String errorMessage = String.format("Failed to extract zip contents for: %s, some features may not work", zipFile.toString());
-            Activator.getLogger().error(errorMessage, e);
-            setErrorReason(errorMessage + ". Error: " + e.getMessage());
+            Activator.getLogger().error(String.format("Failed to extract zip contents for: %s, some features may not work", zipFile.toString()), e);
+            setErrorReason(ExceptionMetadata.scrubException("Failed to extract zip contents", e));
             return false;
         }
         return true;

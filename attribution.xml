@@ -1,0 +1,599 @@
+<attributionReport>
+   <dependencies>
+      <dependency>
+         <name>Apache Commons Codec</name>
+         <groupId>commons-codec</groupId>
+         <artifactId>commons-codec</artifactId>
+         <version>1.17.1</version>
+         <projectUrl>https://commons.apache.org/proper/commons-codec/</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache-2.0</name>
+               <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/commons-codec/commons-codec/1.17.1/commons-codec-1.17.1.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+        <name>Apache HttpClient</name>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.5.14</version>
+        <projectUrl>http://hc.apache.org/httpcomponents-client-ga</projectUrl>
+        <type>jar</type>
+        <licenses>
+           <license>
+              <name>Apache License, Version 2.0</name>
+              <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+           </license>
+        </licenses>
+        <downloadUrls>
+           <string>https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.14/httpclient-4.5.14.jar</string>
+        </downloadUrls>
+     </dependency>
+     <dependency>
+        <name>Apache HttpCore</name>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>4.4.16</version>
+        <projectUrl>http://hc.apache.org/httpcomponents-core-ga</projectUrl>
+        <type>jar</type>
+        <licenses>
+           <license>
+              <name>Apache License, Version 2.0</name>
+              <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+           </license>
+        </licenses>
+        <downloadUrls>
+           <string>https://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpcore/4.4.16/httpcore-4.4.16.jar</string>
+        </downloadUrls>
+     </dependency>
+      <dependency>
+         <name>AWS Event Stream</name>
+         <groupId>software.amazon.eventstream</groupId>
+         <artifactId>eventstream</artifactId>
+         <version>1.0.1</version>
+         <projectUrl>https://github.com/awslabs/aws-eventstream-java</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/eventstream/eventstream/1.0.1/eventstream-1.0.1.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Annotations</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>annotations</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/core/annotations</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/annotations/2.28.26/annotations-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Auth</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>auth</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/auth/2.28.26/auth-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: AWS Core</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>aws-core</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/aws-core/2.28.26/aws-core-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Checksums</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>checksums</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/checksums/2.28.26/checksums-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Checksums SPI</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>checksums-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/checksums-spi/2.28.26/checksums-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Core :: Protocols :: AWS Json Protocol</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>aws-json-protocol</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/aws-json-protocol/2.28.26/aws-json-protocol-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Core :: Protocols :: Json Utils</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>json-utils</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/json-utils/2.28.26/json-utils-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Core :: Protocols :: Protocol Core</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>protocol-core</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/protocol-core/2.28.26/protocol-core-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Endpoints SPI</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>endpoints-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/core/endpoints-spi</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/endpoints-spi/2.28.26/endpoints-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Auth</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>http-auth</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/http-auth/2.28.26/http-auth-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Auth AWS</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>http-auth-aws</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/http-auth-aws/2.28.26/http-auth-aws-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Auth Event Stream</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>http-auth-aws-eventstream</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/http-auth-aws-eventstream/2.28.26/http-auth-aws-eventstream-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Auth SPI</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>http-auth-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/http-auth-spi/2.28.26/http-auth-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Client Interface</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>http-client-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/http-client-spi</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/http-client-spi/2.28.26/http-client-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Clients :: Apache</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>apache-client</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/http-clients/apache-client</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/apache-client/2.28.26/apache-client-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: HTTP Clients :: Netty Non-Blocking I/O</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>netty-nio-client</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/http-clients/netty-nio-client</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/netty-nio-client/2.28.26/netty-nio-client-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Identity SPI</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>identity-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/identity-spi/2.28.26/identity-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Metrics SPI</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>metrics-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/core/metrics-spi</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/metrics-spi/2.28.26/metrics-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Profiles</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>profiles</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/profiles/2.28.26/profiles-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Regions</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>regions</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/core/regions</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/regions/2.28.26/regions-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Retries</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>retries</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/core/retries</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/retries/2.28.26/retries-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Retries API</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>retries-spi</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/core/retries-spi</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/retries-spi/2.28.26/retries-spi-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: SDK Core</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>sdk-core</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/sdk-core/2.28.26/sdk-core-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Services :: Amazon Cognito Identity</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>cognitoidentity</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/cognitoidentity/2.28.26/cognitoidentity-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Third Party :: Jackson-core</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>third-party-jackson-core</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/third-party-jackson-core/2.28.26/third-party-jackson-core-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>AWS Java SDK :: Utilities</name>
+         <groupId>software.amazon.awssdk</groupId>
+         <artifactId>utils</artifactId>
+         <version>2.28.26</version>
+         <projectUrl>https://aws.amazon.com/sdkforjava/utils</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>Apache License, Version 2.0</name>
+               <url>https://aws.amazon.com/apache2.0</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/software/amazon/awssdk/utils/2.28.26/utils-2.28.26.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+        <name>Jackson-annotations</name>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>2.17.2</version>
+        <projectUrl>https://github.com/FasterXML/jackson</projectUrl>
+        <type>jar</type>
+        <licenses>
+           <license>
+              <name>The Apache Software License, Version 2.0</name>
+              <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+           </license>
+        </licenses>
+        <downloadUrls>
+           <string>https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar</string>
+        </downloadUrls>
+     </dependency>
+     <dependency>
+        <name>Jackson-core</name>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.17.2</version>
+        <projectUrl>https://github.com/FasterXML/jackson-core</projectUrl>
+        <type>jar</type>
+        <licenses>
+           <license>
+              <name>The Apache Software License, Version 2.0</name>
+              <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+           </license>
+        </licenses>
+        <downloadUrls>
+           <string>https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-core/2.17.2/jackson-core-2.17.2.jar</string>
+        </downloadUrls>
+     </dependency>
+     <dependency>
+        <name>jackson-databind</name>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.17.2</version>
+        <projectUrl>https://github.com/FasterXML/jackson</projectUrl>
+        <type>jar</type>
+        <licenses>
+           <license>
+              <name>The Apache Software License, Version 2.0</name>
+              <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+           </license>
+        </licenses>
+        <downloadUrls>
+           <string>https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar</string>
+        </downloadUrls>
+     </dependency>
+      <dependency>
+         <name>Jakarta Dependency Injection</name>
+         <groupId>jakarta.inject</groupId>
+         <artifactId>jakarta.inject-api</artifactId>
+         <version>2.0.1</version>
+         <projectUrl>https://github.com/eclipse-ee4j/injection-api</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>The Apache Software License, Version 2.0</name>
+               <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar</string>
+         </downloadUrls>
+      </dependency>
+      <dependency>
+         <name>Nimbus JOSE+JWT</name>
+         <groupId>com.nimbusds</groupId>
+         <artifactId>nimbus-jose-jwt</artifactId>
+         <version>9.41.2</version>
+         <projectUrl>https://bitbucket.org/connect2id/nimbus-jose-jwt</projectUrl>
+         <type>jar</type>
+         <licenses>
+            <license>
+               <name>The Apache Software License, Version 2.0</name>
+               <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            </license>
+         </licenses>
+         <downloadUrls>
+            <string>https://repo.maven.apache.org/maven2/com/nimbusds/nimbus-jose-jwt/9.41.2/nimbus-jose-jwt-9.41.2.jar</string>
+         </downloadUrls>
+      </dependency>
+   </dependencies>
+</attributionReport>

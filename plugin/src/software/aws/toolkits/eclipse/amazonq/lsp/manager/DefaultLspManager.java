@@ -24,6 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -161,7 +162,7 @@ public final class DefaultLspManager implements LspManager {
                     .orElseThrow(() -> new AmazonQPluginException("Failed to retrieve language server manifest"));
             return manifest;
         } catch (Exception e) {
-            emitGetManifestFailure(e.getMessage());
+            emitGetManifestFailure(ExceptionMetadata.scrubException(e));
             throw new AmazonQPluginException("Failed to retrieve Amazon Q language server manifest", e);
         }
     }

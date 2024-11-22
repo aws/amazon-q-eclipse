@@ -5,14 +5,14 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.regex.Matcher;
 
-public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcessor {
+public final class JavascriptTypeaheadProcessor implements IQInlineTypeaheadProcessor {
 
-    public GenericTypeheadProcessor() {
+    public JavascriptTypeaheadProcessor() {
     }
 
     @Override
-    public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(final int inputLength,
-            final int currentDistanceTraversed, final IQInlineBracket[] brackets) {
+    public int getNewDistanceTraversedOnDeleteAndUpdateBracketState(final int inputLength, final int currentDistanceTraversed,
+            final IQInlineBracket[] brackets) {
         for (int i = 1; i <= inputLength; i++) {
             var bracket = brackets[currentDistanceTraversed - i];
             if (bracket != null) {
@@ -24,8 +24,8 @@ public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcesso
     }
 
     @Override
-    public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(final int distanceTraversed,
-            final int eventOffset, final String input, final IQInlineBracket[] brackets) {
+    public TypeaheadProcessorInstruction preprocessDocumentChangedBuffer(final int distanceTraversed, final int eventOffset,
+            final String input, final IQInlineBracket[] brackets) {
         TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
         PreprocessingCategory category = getBufferPreprocessingCategory(distanceTraversed, input, brackets);
         switch (category) {
@@ -54,24 +54,9 @@ public final class GenericTypeheadProcessor implements IQInlineTypeaheadProcesso
     }
 
     @Override
-    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(final int distanceTraversed,
-            final int currentOffset, final String input, final IQInlineBracket[] brackets) {
-        IQInlineBracket bracket = brackets[distanceTraversed];
-        TypeaheadProcessorInstruction res = new TypeaheadProcessorInstruction();
-        if (bracket == null || !(bracket instanceof QInlineSuggestionCloseBracketSegment)) {
-            return res;
-        }
-        if (bracket.getSymbol() != input.charAt(0) || input.length() > 1) {
-            return res;
-        }
-        QInlineSuggestionOpenBracketSegment openBracket = ((QInlineSuggestionCloseBracketSegment) bracket)
-                .getOpenBracket();
-        if (openBracket == null || openBracket.isResolved() || !openBracket.hasAutoCloseOccurred()) {
-            return res;
-        }
-        res.setShouldModifyCaretOffset(true);
-        res.setCaretOffset(currentOffset + 1);
-        return res;
+    public TypeaheadProcessorInstruction postProcessDocumentChangeBuffer(final int distanceTraversed, final int currentOffset,
+            final String input, final IQInlineBracket[] brackets) {
+        return new TypeaheadProcessorInstruction();
     }
 
     @Override

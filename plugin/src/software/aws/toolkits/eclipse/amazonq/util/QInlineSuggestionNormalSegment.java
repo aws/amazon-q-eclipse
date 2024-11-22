@@ -66,7 +66,7 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
             textToRender = text;
             x = widget.getLeftMargin();
         } else {
-            x = gc.textExtent(text.substring(0, idxInLine)).x + gc.textExtent(" ").x / 4;
+            x = gc.textExtent(text.substring(0, idxInLine)).x;
             textToRender = text.substring(idxInLine);
         }
 

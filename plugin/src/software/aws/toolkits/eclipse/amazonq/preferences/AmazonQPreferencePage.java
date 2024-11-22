@@ -130,9 +130,8 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         };
         addField(telemetryOptIn);
 
-        Link telemetryLink = createLink(
-                "See <a href=\"https://docs.aws.amazon.com/sdkref/latest/guide/overview.html\">here</a> for more detail.",
-                20, telemetryOptInComposite);
+        Link telemetryLink = createLink("See <a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/opt-out-IDE.html#opt-out-IDE-telemetry\">"
+                + "here</a> for more detail.", 20, telemetryOptInComposite);
         telemetryLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {

@@ -3,10 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import org.eclipse.ui.services.IDisposable;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.eclipse.ui.services.IDisposable;
 
 // TODO: May use it later
 class QResource implements IDisposable {
@@ -28,7 +28,6 @@ class QResource implements IDisposable {
                 child.dispose();
             }
             // Add actual resource disposal logic here
-            System.out.println("Resource disposed");
         }
     }
 

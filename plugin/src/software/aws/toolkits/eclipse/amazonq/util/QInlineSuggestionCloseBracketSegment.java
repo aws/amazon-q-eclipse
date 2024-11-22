@@ -60,7 +60,7 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
         // educated guess:
         int endPadding = gc.getAdvanceWidth(symbol) / 4;
         y = (invocationLine + lineInSuggestion + 1) * lineHt - fontHt;
-        x = gc.textExtent(text).x + endPadding;
+        x = gc.textExtent(text).x;
         if (lineInSuggestion == 0) {
             x += widget.getLocationAtOffset(invocationOffset).x;
         }

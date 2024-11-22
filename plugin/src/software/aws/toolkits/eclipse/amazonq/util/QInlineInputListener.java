@@ -317,8 +317,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             }
         }
 
-        session.setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
-
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length()
                 || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {
@@ -397,7 +395,9 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             return;
         }
         qInvocationSessionInstance.setCaretMovementReason(CaretMovementReason.MOUSE);
-        int lastKnownLine = qInvocationSessionInstance.getLastKnownLine();
+        int invocationOffset = qInvocationSessionInstance.getInvocationOffset();
+        int currentOffset = invocationOffset + distanceTraversed;
+        int lastKnownLine = widget.getLineAtOffset(currentOffset);
         qInvocationSessionInstance.transitionToDecisionMade(lastKnownLine + 1);
         qInvocationSessionInstance.end();
         return;

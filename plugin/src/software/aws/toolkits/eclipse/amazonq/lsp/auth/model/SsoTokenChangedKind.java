@@ -13,6 +13,15 @@ public enum SsoTokenChangedKind {
         this.value = value;
     }
 
+    public static SsoTokenChangedKind fromValue(final String value) {
+        for (SsoTokenChangedKind kind : values()) {
+            if (kind.getValue().equalsIgnoreCase(value)) {
+                return kind;
+            }
+        }
+        throw new IllegalArgumentException("No enum constant " + SsoTokenChangedKind.class.getSimpleName() + " with value " + value);
+    }
+
     public String getValue() {
         return this.value;
     }

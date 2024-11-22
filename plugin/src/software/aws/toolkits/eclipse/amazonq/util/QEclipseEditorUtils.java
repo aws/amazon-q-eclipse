@@ -346,6 +346,8 @@ public final class QEclipseEditorUtils {
             boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
             boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
             return new JavaTypeaheadProcessor(editor, isBracesSetToAutoClose, isBracketsSetToAutoClose, isStringSetToAutoClose);
+        case "JavaScript Source File":
+            return new JavascriptTypeaheadProcessor();
         default:
             return new GenericTypeheadProcessor();
         }

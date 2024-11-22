@@ -13,9 +13,9 @@ import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 public final class InlineQueryStatusBarContribution extends WorkbenchWindowControlContribution {
 
-    private static final String QUERY_STATUS   = "Q is querying...    ";
-    private static final String IDLE_STATUS    = "Q is ready          ";
-    private static final String PREVIEW_STATUS = "Q is previewing     ";
+    private static final String QUERY_STATUS   = "Amazon Q is querying...    ";
+    private static final String IDLE_STATUS    = "Amazon Q is ready          ";
+    private static final String PREVIEW_STATUS = "Amazon Q is previewing     ";
 
     private Label statusLabel;
 

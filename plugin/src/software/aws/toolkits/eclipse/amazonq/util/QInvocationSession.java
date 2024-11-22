@@ -50,7 +50,6 @@ public final class QInvocationSession extends QResource {
     private QInlineInputListener inputListener = null;
     private QInlineTerminationListener terminationListener = null;
     private int[] headOffsetAtLine = new int[500];
-    private boolean hasBeenTypedahead = false;
     private boolean isTabOnly = false;
     private Consumer<Integer> unsetVerticalIndent;
     private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
@@ -407,12 +406,8 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    public void setHasBeenTypedahead(final boolean hasBeenTypedahead) {
-        this.hasBeenTypedahead = hasBeenTypedahead;
-    }
-
     public boolean hasBeenTypedahead() {
-        return hasBeenTypedahead;
+        return getInvocationOffset() != getViewer().getTextWidget().getCaretOffset();
     }
 
     public void executeCallbackForCodeReference() {
@@ -509,7 +504,6 @@ public final class QInvocationSession extends QResource {
         inlineTextFont = null;
         inlineTextFontBold = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
-        hasBeenTypedahead = false;
         unresolvedTasks.forEach((uuid, task) -> {
             boolean cancelled = task.cancel(true);
             if (cancelled) {

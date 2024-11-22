@@ -31,10 +31,13 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
     public static final String TELEMETRY_OPT_IN = "telemetryOptIn";
     public static final String Q_DATA_SHARING = "qDataSharing";
 
-    private boolean isTelemetryOptInChecked;
-    private boolean isQDataSharingOptInChecked;
+    private Boolean isTelemetryOptInChecked;
+    private Boolean isQDataSharingOptInChecked;
 
-    private IPreferenceStore preferenceStore;
+    private Boolean changedTelemetryOptInChecked;
+    private Boolean changedDataSharingOptInChecked;
+
+    private final IPreferenceStore preferenceStore;
 
     public AmazonQPreferencePage() {
         super(GRID);
@@ -44,7 +47,9 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
     @Override
     public final void init(final IWorkbench workbench) {
         isTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
+        changedTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
         isQDataSharingOptInChecked = preferenceStore.getBoolean(Q_DATA_SHARING);
+        changedDataSharingOptInChecked = preferenceStore.getBoolean(Q_DATA_SHARING);
         setPreferenceStore(preferenceStore);
     }
 
@@ -73,7 +78,8 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         dataSharing.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.HEADER_FONT));
         dataSharing.setText(text);
         dataSharing.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        new Label(getFieldEditorParent(), SWT.HORIZONTAL | SWT.SEPARATOR).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        new Label(getFieldEditorParent(), SWT.HORIZONTAL | SWT.SEPARATOR)
+                .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
     }
 
     private void createCodeReferenceOptInField() {
@@ -91,12 +97,14 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
             codeReferenceOptIn.setEnabled(false, codeReferenceOptInComposite);
         }
 
-        Link codeReferenceLink = createLink("""
-                Amazon Q creates a code reference when you insert a code suggestion from Amazon Q that is similar to training data.\
-                \nWhen unchecked, Amazon Q will not show code suggestions that have code references. If you authenticate through IAM\
-                \nIdentity Center, this setting is controlled by your Amazon Q administrator. \
-                \n<a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/code-reference.html\">Learn more</a>
-                """, 20, codeReferenceOptInComposite);
+        Link codeReferenceLink = createLink(
+                """
+                        Amazon Q creates a code reference when you insert a code suggestion from Amazon Q that is similar to training data.\
+                        \nWhen unchecked, Amazon Q will not show code suggestions that have code references. If you authenticate through IAM\
+                        \nIdentity Center, this setting is controlled by your Amazon Q administrator. \
+                        \n<a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/code-reference.html\">Learn more</a>
+                        """,
+                20, codeReferenceOptInComposite);
         codeReferenceLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
@@ -113,7 +121,13 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         telemetryOptInCompositeData.horizontalIndent = 20;
         telemetryOptInComposite.setLayoutData(telemetryOptInCompositeData);
 
-        BooleanFieldEditor telemetryOptIn = new BooleanFieldEditor(TELEMETRY_OPT_IN, "Send usage metrics to AWS", telemetryOptInComposite);
+        BooleanFieldEditor telemetryOptIn = new BooleanFieldEditor(TELEMETRY_OPT_IN, "Send usage metrics to AWS",
+                telemetryOptInComposite) {
+            @Override
+            protected void valueChanged(final boolean oldValue, final boolean newValue) {
+                changedTelemetryOptInChecked = newValue;
+            }
+        };
         addField(telemetryOptIn);
 
         Link telemetryLink = createLink("See <a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/opt-out-IDE.html#opt-out-IDE-telemetry\">"
@@ -134,15 +148,23 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         qDataSharingCompositeData.horizontalIndent = 20;
         qDataSharingComposite.setLayoutData(qDataSharingCompositeData);
 
-        BooleanFieldEditor qDataSharing = new BooleanFieldEditor(Q_DATA_SHARING, "Share Amazon Q Content with AWS", qDataSharingComposite);
+        BooleanFieldEditor qDataSharing = new BooleanFieldEditor(Q_DATA_SHARING, "Share Amazon Q Content with AWS",
+                qDataSharingComposite) {
+            @Override
+            protected void valueChanged(final boolean oldValue, final boolean newValue) {
+                changedDataSharingOptInChecked = newValue;
+            }
+        };
         addField(qDataSharing);
 
-        Link dataSharingLink = createLink("""
-                When checked, your content processed by Amazon Q may be used for service improvement (except for content processed\
-                \nby the Amazon Q Developer Pro tier). Unchecking this box will cause AWS to delete any of your content used for that\
-                \npurpose. The information used to provide the Amazon Q service to you will not be affected.\
-                \nSee the <a href="https://aws.amazon.com/service-terms/">Service Terms</a> for more detail.
-                """, 20, qDataSharingComposite);
+        Link dataSharingLink = createLink(
+                """
+                        When checked, your content processed by Amazon Q may be used for service improvement (except for content processed\
+                        \nby the Amazon Q Developer Pro tier). Unchecking this box will cause AWS to delete any of your content used for that\
+                        \npurpose. The information used to provide the Amazon Q service to you will not be affected.\
+                        \nSee the <a href="https://aws.amazon.com/service-terms/">Service Terms</a> for more detail.
+                        """,
+                20, qDataSharingComposite);
         dataSharingLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
@@ -163,36 +185,33 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
 
     @Override
     protected final void performDefaults() {
-        super.performDefaults();
         sendUpdatedPreferences();
+        super.performDefaults();
     }
 
     @Override
     protected final void performApply() {
-        super.performApply();
         sendUpdatedPreferences();
+        super.performApply();
     }
 
     @Override
     public final boolean performOk() {
-        boolean result = super.performOk();
         sendUpdatedPreferences();
-        return result;
+        return super.performOk();
     }
 
     private void sendUpdatedPreferences() {
-        Boolean newIsTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
-        if (newIsTelemetryOptInChecked != isTelemetryOptInChecked) {
-            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.telemetry", newIsTelemetryOptInChecked.toString());
-            isTelemetryOptInChecked = newIsTelemetryOptInChecked;
+        if (changedTelemetryOptInChecked != isTelemetryOptInChecked) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.telemetry", changedTelemetryOptInChecked.toString());
+            isTelemetryOptInChecked = changedTelemetryOptInChecked;
         }
 
-        Boolean newIsQDataSharingOptInChanged = preferenceStore.getBoolean(Q_DATA_SHARING);
-        if (newIsQDataSharingOptInChanged != isQDataSharingOptInChecked) {
-            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.dataSharing", newIsQDataSharingOptInChanged.toString());
-            isQDataSharingOptInChecked = newIsQDataSharingOptInChanged;
+        if (changedDataSharingOptInChecked != isQDataSharingOptInChecked) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.dataSharing",
+                    changedDataSharingOptInChecked.toString());
+            isQDataSharingOptInChecked = changedDataSharingOptInChecked;
         }
     }
 
 }
-

@@ -1412,6 +1412,12 @@
             "description": "Represents the location where the language server is installed from"
         },
         {
+            "name": "manifestLocation",
+            "type": "string",
+            "allowedValues": [ "remote", "cache", "all" ],
+            "description": "Represents the location where the manifest is fetched from"
+        },
+        {
             "name": "loadFileTime",
             "type": "int",
             "description": "Time from opening Composer to loading the file"
@@ -6211,6 +6217,10 @@
                 },
                 {
                     "type": "languageServerLocation",
+                    "required": false
+                },
+                {
+                    "type": "manifestLocation",
                     "required": false
                 },
                 {

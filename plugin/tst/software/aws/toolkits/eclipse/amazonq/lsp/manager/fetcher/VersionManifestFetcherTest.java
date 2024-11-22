@@ -27,6 +27,7 @@ import org.mockito.MockedStatic;
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
 public final class VersionManifestFetcherTest {
@@ -37,6 +38,8 @@ public final class VersionManifestFetcherTest {
     private LoggingService mockedLogger;
     private IEclipsePreferences testPreferences;
 
+    private MockedStatic<LanguageServerTelemetryProvider> mockTelemetryProvider;
+
     @BeforeEach
     @SuppressWarnings("restriction")
     void setUp() {
@@ -45,11 +48,13 @@ public final class VersionManifestFetcherTest {
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
         mockedActivator.when(Activator::getPluginStore).thenReturn(new DefaultPluginStore(testPreferences));
+        mockTelemetryProvider = mockStatic(LanguageServerTelemetryProvider.class);
     }
 
     @AfterEach
     void tearDown() throws Exception {
         mockedActivator.close();
+        mockTelemetryProvider.close();
         testPreferences.clear();
     }
 

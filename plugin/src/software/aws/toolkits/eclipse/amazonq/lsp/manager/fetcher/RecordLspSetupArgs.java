@@ -4,9 +4,11 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.ManifestLocation;
 
 public final class RecordLspSetupArgs {
     private LanguageServerLocation location;
+    private ManifestLocation manifestLocation;
     private String languageServerVersion;
     private String manifestSchemaVersion;
     private double duration;
@@ -48,5 +50,11 @@ public final class RecordLspSetupArgs {
     }
     public void setReason(final String reason) {
         this.reason = reason;
+    }
+    public ManifestLocation getManifestLocation() {
+        return manifestLocation;
+    }
+    public void setManifestLocation(final ManifestLocation location) {
+       this.manifestLocation = location;
     }
 }

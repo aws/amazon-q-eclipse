@@ -19,9 +19,12 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.ManifestLocation;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class VersionManifestFetcher {
 
@@ -50,6 +53,7 @@ public final class VersionManifestFetcher {
         var cachedManifest = getResourceFromCache();
         // if a remote location does not exist, default to content in the download cache
         if (manifestUrl == null) {
+            emitGetManifest(cachedManifest.orElse(null), ManifestLocation.CACHE, null);
             return cachedManifest;
         }
         var cachedEtag = Activator.getPluginStore().get(manifestUrl);
@@ -63,16 +67,36 @@ public final class VersionManifestFetcher {
             // If not modified is returned cached content is latest
             if (latestResponse.statusCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
                 Activator.getLogger().info("Version manifest contains latest content");
+                emitGetManifest(cachedManifest.orElse(null), ManifestLocation.CACHE, null);
                 return cachedManifest;
             }
             // validate latest manifest fetched from remote location and cache it
-            return validateAndCacheLatest(latestResponse);
+            var latestManifest = validateAndCacheLatest(latestResponse);
+            emitGetManifest(latestManifest.orElse(null), ManifestLocation.REMOTE, null);
+            return latestManifest;
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching manifest from remote location", e);
+            emitGetManifest(null, ManifestLocation.REMOTE, e.getMessage());
             return cachedManifest;
         }
     }
 
+    private void emitGetManifest(final Manifest manifest, final ManifestLocation location, final String reason) {
+        //failure has already been emitted if this condition returns true
+        if (manifest == null && reason == null) {
+            return;
+        }
+
+        //handle cases of success or failure with reason
+        Result result = (reason == null) ? Result.SUCCEEDED : Result.FAILED;
+        var args = new RecordLspSetupArgs();
+        args.setReason(reason);
+        args.setManifestLocation(location);
+        if (manifest != null) {
+            args.setManifestSchemaVersion(manifest.manifestSchemaVersion());
+        }
+        LanguageServerTelemetryProvider.emitSetupGetManifest(result, args);
+    }
     /*
      * Fetch manifest from local cache
      */
@@ -86,11 +110,13 @@ public final class VersionManifestFetcher {
                 if (manifest.isEmpty()) {
                     ArtifactUtils.deleteFile(manifestPath);
                     Activator.getLogger().info("Failed to validate cached manifest file");
+                    emitGetManifest(null, ManifestLocation.CACHE, "Failed to validate cached manifest file");
                 }
                 return manifest;
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching resource from cache", e);
+            emitGetManifest(null, ManifestLocation.CACHE, "Error fetching resource from cache: " + e.getMessage());
         }
         return Optional.empty();
     }
@@ -149,6 +175,7 @@ public final class VersionManifestFetcher {
             return manifest;
         } catch (Exception e) {
             Activator.getLogger().error("Failed to cache manifest file", e);
+            emitGetManifest(null, ManifestLocation.REMOTE, "Failed to cache latest remote manifest file: " + e.getMessage());
         }
         return Optional.empty();
     }

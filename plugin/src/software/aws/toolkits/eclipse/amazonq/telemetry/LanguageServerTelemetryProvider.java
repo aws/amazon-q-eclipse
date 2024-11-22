@@ -11,11 +11,13 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.telemetry.LanguageserverTelemetry;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerSetupStage;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.ManifestLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class LanguageServerTelemetryProvider {
     private static Instant initStartPoint;
     private static Instant allStartPoint;
+    private static Instant manifestStartPoint;
 
     private LanguageServerTelemetryProvider() {
         //prevent instantiation
@@ -27,10 +29,14 @@ public final class LanguageServerTelemetryProvider {
     public static void setAllStartPoint(final Instant start) {
         allStartPoint = start;
     }
+    public static void setManifestStartPoint(final Instant start) {
+        manifestStartPoint = start;
+    }
 
     public static void emitSetupGetManifest(final Result result, final RecordLspSetupArgs args) {
+        args.setDuration(Duration.between(manifestStartPoint, Instant.now()).toMillis());
         emitSetupMetric(result, args, LanguageServerSetupStage.GET_MANIFEST);
-        if (result == Result.FAILED) {
+        if (result == Result.FAILED && args.getManifestLocation() == ManifestLocation.ALL) {
             emitSetupAll(Result.FAILED, args);
         }
     }
@@ -69,6 +75,7 @@ public final class LanguageServerTelemetryProvider {
                 .duration(args.getDuration())
                 .version(args.getLanguageServerVersion())
                 .languageServerLocation(args.getLocation())
+                .manifestLocation(args.getManifestLocation())
                 .languageServerSetupStage(stage)
                 .manifestSchemaVersion(args.getManifestSchemaVersion())
                 .createTime(Instant.now())

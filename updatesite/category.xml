@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/software.aws.toolkits.eclipse.amazonq.amazon-q-eclipse-feature_1.0.0.qualifier.jar" id="amazon-q-eclipse-feature" version="1.0.0.qualifier">
-      <category name="software.aws.toolkits.eclipse"/>
+   <feature url="features/software.aws.toolkits.eclipse.amazonq.feature_1.0.0.qualifier.jar" id="software.aws.toolkits.eclipse.amazonq.feature" version="1.0.0.qualifier">
+      <category name="software.aws.toolkits.eclipse.amazonq"/>
    </feature>
-   <category-def name="software.aws.toolkits.eclipse" label="software.aws.toolkits.eclipse">
+   <category-def name="software.aws.toolkits.eclipse.amazonq" label="software.aws.toolkits.eclipse">
       <description>
-         The category containing the example feature.
       </description>
    </category-def>
 </site>

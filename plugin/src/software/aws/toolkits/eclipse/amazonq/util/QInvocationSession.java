@@ -392,7 +392,7 @@ public final class QInvocationSession extends QResource {
     }
 
     public void decrementCurrentSuggestionIndex() {
-        if (suggestionsContext != null) {
+        if (suggestionsContext != null && suggestionsContext.getNumberOfSuggestions() > 1) {
             suggestionsContext.decrementIndex();
             primeListeners();
             getViewer().getTextWidget().redraw();
@@ -400,7 +400,7 @@ public final class QInvocationSession extends QResource {
     }
 
     public void incrementCurentSuggestionIndex() {
-        if (suggestionsContext != null) {
+        if (suggestionsContext != null && suggestionsContext.getNumberOfSuggestions() > 1) {
             suggestionsContext.incrementIndex();
             primeListeners();
             getViewer().getTextWidget().redraw();

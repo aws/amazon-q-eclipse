@@ -317,8 +317,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             }
         }
 
-        session.setHasBeenTypedahead(currentOffset - session.getInvocationOffset() > 0);
-
         boolean isOutOfBounds = distanceTraversed + input.length() >= currentSuggestion.length()
                 || distanceTraversed < 0;
         if (isOutOfBounds || !isInputAMatch(currentSuggestion, distanceTraversed, input)) {

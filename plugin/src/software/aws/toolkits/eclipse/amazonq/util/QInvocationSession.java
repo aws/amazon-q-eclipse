@@ -407,12 +407,8 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    public void setHasBeenTypedahead(final boolean hasBeenTypedahead) {
-        this.hasBeenTypedahead = hasBeenTypedahead;
-    }
-
     public boolean hasBeenTypedahead() {
-        return hasBeenTypedahead;
+        return getInvocationOffset() != getViewer().getTextWidget().getCaretOffset();
     }
 
     public void executeCallbackForCodeReference() {

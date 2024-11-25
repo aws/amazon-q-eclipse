@@ -16,6 +16,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -58,11 +59,11 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
                 lspEncryption.initializeEncryptedCommunication(serverStdIn);
             } catch (Exception e) {
-                emitInitFailure(e.getMessage());
+                emitInitFailure(ExceptionMetadata.scrubException(e));
                 Activator.getLogger().error("Error occured while initializing communication with Amazon Q Lsp Server", e);
             }
         } catch (Exception e) {
-            emitInitFailure(e.getMessage());
+            emitInitFailure(ExceptionMetadata.scrubException(e));
             throw e;
         }
     }

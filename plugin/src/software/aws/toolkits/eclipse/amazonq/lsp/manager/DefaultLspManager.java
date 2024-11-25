@@ -24,6 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -122,7 +123,7 @@ public final class DefaultLspManager implements LspManager {
             validateLsp(overrideResult);
         } catch (Exception e) {
             Activator.getLogger().error(e.getMessage(), e);
-            errorMessage = e.getMessage();
+            errorMessage = ExceptionMetadata.scrubException(e);
         } finally {
             emitValidate(overrideResult, errorMessage, start);
         }
@@ -190,7 +191,7 @@ public final class DefaultLspManager implements LspManager {
             var nodeExecutable = serverDirPath.resolve(result.getServerCommand());
             makeExecutable(nodeExecutable);
         } catch (Exception e) {
-            errorMessage = e.getMessage();
+            errorMessage = ExceptionMetadata.scrubException(e);
             throw e;
         } finally {
             emitValidate(result, errorMessage, start);

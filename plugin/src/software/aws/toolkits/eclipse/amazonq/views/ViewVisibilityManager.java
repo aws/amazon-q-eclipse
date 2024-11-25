@@ -13,6 +13,7 @@ import org.eclipse.ui.PlatformUI;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 
 public final class ViewVisibilityManager {
     private ViewVisibilityManager() {
@@ -92,7 +93,7 @@ public final class ViewVisibilityManager {
                                 ToolkitTelemetryProvider.emitCloseModuleEventMetric(viewRef.getId(), "none");
                             } catch (Exception e) {
                                 Activator.getLogger().error("Error occurred while hiding view " + viewId, e);
-                                ToolkitTelemetryProvider.emitCloseModuleEventMetric(viewRef.getId(), e.getMessage());
+                                ToolkitTelemetryProvider.emitCloseModuleEventMetric(viewRef.getId(), ExceptionMetadata.scrubException(e));
                             }
                         }
                     }
@@ -102,7 +103,7 @@ public final class ViewVisibilityManager {
                         ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, "none");
                     } catch (Exception e) {
                         Activator.getLogger().error("Error occurred while showing view " + viewId, e);
-                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, e.getMessage());
+                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, ExceptionMetadata.scrubException(e));
                     }
                 }
             }
@@ -122,7 +123,7 @@ public final class ViewVisibilityManager {
                     ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, "none");
                 } catch (PartInitException e) {
                     Activator.getLogger().error("Error occurred while opening view " + viewId, e);
-                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, e.getMessage());
+                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, source, ExceptionMetadata.scrubException(e));
                 }
             }
         }

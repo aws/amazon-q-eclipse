@@ -17,6 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
@@ -47,7 +48,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
                 }
             );
         } catch (Exception e) {
-            emitExecuteCommand(genericCommandVerb, start, Result.FAILED, e.getMessage());
+            emitExecuteCommand(genericCommandVerb, start, Result.FAILED, ExceptionMetadata.scrubException("Error executing command", e));
             Activator.getLogger().error(String.format("Error executing Amazon Q %s command", genericCommandVerb), e);
         }
     }
@@ -68,6 +69,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
             );
         } catch (Exception e) {
             Activator.getLogger().error("Error executing Amazon Q send to prompt command", e);
+            emitExecuteCommand("sendToPrompt", start, Result.FAILED, ExceptionMetadata.scrubException("Error executing command", e));
         }
     }
 

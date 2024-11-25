@@ -26,6 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -100,7 +101,7 @@ public class LspStartupActivity implements IStartup {
                     }
                 } catch (PartInitException e) {
                     Activator.getLogger().warn("Error occurred during auto loading of plugin", e);
-                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", e.getMessage());
+                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", ExceptionMetadata.scrubException("Plugin load error", e));
                 }
             }
         });

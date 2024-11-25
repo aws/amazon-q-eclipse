@@ -141,7 +141,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
 
         String failureReason = "Unable to find a compatible version of Amazon Q Language Server.";
-        setErrorReason(LspError.NO_COMPATIBLE_LSP.toString());
+        setErrorReason(LspError.NO_VALID_SERVER_FALLBACK.toString());
         emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
         throw new AmazonQPluginException(failureReason);
     }
@@ -260,12 +260,14 @@ public final class RemoteLspFetcher implements LspFetcher {
                     return true;
                 } else {
                     ArtifactUtils.deleteDirectory(tempFolder);
+                    setErrorReason(LspError.ARTIFACT_VALIDATION_ERROR.toString());
                 }
             } else {
                 setErrorReason(LspError.SERVER_FETCH_ERROR + "-" + response.statusCode());
                 throw new AmazonQPluginException("Failed to download remote LSP artifact. Response code: " + response.statusCode());
             }
         } catch (Exception ex) {
+            //TODO: account for these failures in telemtry emissions
             Activator.getLogger().error("Error downloading from remote", ex);
         }
         return false;
@@ -283,7 +285,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         } catch (Exception e) {
             String errorMessage = String.format("Failed to extract zip files in %s", downloadDirectory);
             Activator.getLogger().error(errorMessage, e);
-            setErrorReason(LspError.EXTRACTION_ERROR.toString());
+            setErrorReason(LspError.SERVER_ZIP_EXTRACTION_ERROR.toString());
             return false;
         }
     }
@@ -298,7 +300,7 @@ public final class RemoteLspFetcher implements LspFetcher {
             ArtifactUtils.extractFile(zipFile, unzipFolder);
         } catch (IOException e) {
             Activator.getLogger().error(String.format("Failed to extract zip contents for: %s, some features may not work", zipFile.toString()), e);
-            setErrorReason(ExceptionMetadata.scrubException(LspError.EXTRACTION_ERROR.toString(), e));
+            setErrorReason(ExceptionMetadata.scrubException(LspError.SERVER_ZIP_EXTRACTION_ERROR.toString(), e));
             return false;
         }
         return true;

@@ -117,7 +117,7 @@ public final class VersionManifestFetcher {
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching resource from cache", e);
-            emitGetManifest(null, ManifestLocation.CACHE, ExceptionMetadata.scrubException(LspError.MANIFEST_FETCH_ERROR.toString(), e));
+            emitGetManifest(null, ManifestLocation.CACHE, ExceptionMetadata.scrubException(LspError.UNEXPECTED_MANIFEST_CACHE_ERROR.toString(), e));
         }
         return Optional.empty();
     }
@@ -176,7 +176,7 @@ public final class VersionManifestFetcher {
             return manifest;
         } catch (Exception e) {
             Activator.getLogger().error("Failed to cache manifest file", e);
-            emitGetManifest(null, ManifestLocation.REMOTE, ExceptionMetadata.scrubException(LspError.UNEXPECTED_CACHE_ERROR.toString(), e));
+            emitGetManifest(null, ManifestLocation.REMOTE, ExceptionMetadata.scrubException(LspError.MANIFEST_REMOTE_FETCH_ERROR.toString(), e));
         }
         return Optional.empty();
     }

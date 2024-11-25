@@ -13,12 +13,16 @@ public enum LspError {
     INVALID_REMOTE_SERVER("Invalid Remote Server"),
     INVALID_CACHE_SERVER("Invalid Cache Server"),
     MANIFEST_FETCH_ERROR("Error fetching manifest"),
+    MANIFEST_REMOTE_FETCH_ERROR("Error fetching manifest from remote location"),
     SERVER_FETCH_ERROR("Error fetching server"),
     UNEXPECTED_CACHE_ERROR("Error while caching file"),
+    UNEXPECTED_MANIFEST_CACHE_ERROR("Error while caching Manifest file"),
     NO_COMPATIBLE_LSP("No LSP version found matching requirements"),
+    NO_VALID_SERVER_FALLBACK("No valid server version to fallback to."),
+    ARTIFACT_VALIDATION_ERROR("Error validating artifact"),
     INVALID_LAUNCH_PROPERTIES("Invalid launch properties"),
     INVALID_WORKING_DIRECTORY("Invalid working directory"),
-    EXTRACTION_ERROR("Error or invalid zip files"),
+    SERVER_ZIP_EXTRACTION_ERROR("Error extracting server zip files"),
     UNKNOWN("Unknown");
 
     private final String value;

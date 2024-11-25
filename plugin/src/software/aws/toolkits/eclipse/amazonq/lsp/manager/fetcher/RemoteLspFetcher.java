@@ -26,6 +26,7 @@ import org.osgi.framework.Version;
 import org.osgi.framework.VersionRange;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.exception.LspError;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspFetchResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
@@ -87,7 +88,7 @@ public final class RemoteLspFetcher implements LspFetcher {
                     "Unable to find a language server that satisfies one or more of these conditions:"
                     + " version in range [%s), matching system's architecture: %s and platform: %s",
                     versionRange.toString(), architecture, platform);
-            setErrorReason(failureReason);
+            setErrorReason(LspError.NO_COMPATIBLE_LSP.toString());
             emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
             throw new AmazonQPluginException(failureReason);
         }
@@ -106,8 +107,6 @@ public final class RemoteLspFetcher implements LspFetcher {
 
         // delete invalid local cache
         ArtifactUtils.deleteDirectory(downloadDirectory);
-        setErrorReason("Invalid local cache. Attempting download from remote");
-        emitGetServer(Result.FAILED, serverVersion, LanguageServerLocation.CACHE, start);
 
         // if all lsp target contents are successfully downloaded from remote location,
         // return the download location
@@ -142,7 +141,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
 
         String failureReason = "Unable to find a compatible version of Amazon Q Language Server.";
-        setErrorReason(failureReason);
+        setErrorReason(LspError.NO_COMPATIBLE_LSP.toString());
         emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
         throw new AmazonQPluginException(failureReason);
     }
@@ -192,7 +191,7 @@ public final class RemoteLspFetcher implements LspFetcher {
             final PluginArchitecture architecture, final Instant start) {
         if (manifestFile == null) {
             String failureReason = "No valid manifest version data was received. An error could have caused this. Please check logs.";
-            setErrorReason(failureReason);
+            setErrorReason(LspError.INVALID_VERSION_MANIFEST.toString());
             emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
             throw new AmazonQPluginException(failureReason);
         }
@@ -263,7 +262,7 @@ public final class RemoteLspFetcher implements LspFetcher {
                     ArtifactUtils.deleteDirectory(tempFolder);
                 }
             } else {
-                setErrorReason("Failed to download remote LSP artifact. Response code: " + response.statusCode());
+                setErrorReason(LspError.SERVER_FETCH_ERROR + "-" + response.statusCode());
                 throw new AmazonQPluginException("Failed to download remote LSP artifact. Response code: " + response.statusCode());
             }
         } catch (Exception ex) {
@@ -284,7 +283,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         } catch (Exception e) {
             String errorMessage = String.format("Failed to extract zip files in %s", downloadDirectory);
             Activator.getLogger().error(errorMessage, e);
-            setErrorReason("Failed to extract zip files");
+            setErrorReason(LspError.EXTRACTION_ERROR.toString());
             return false;
         }
     }
@@ -299,7 +298,7 @@ public final class RemoteLspFetcher implements LspFetcher {
             ArtifactUtils.extractFile(zipFile, unzipFolder);
         } catch (IOException e) {
             Activator.getLogger().error(String.format("Failed to extract zip contents for: %s, some features may not work", zipFile.toString()), e);
-            setErrorReason(ExceptionMetadata.scrubException("Failed to extract zip contents", e));
+            setErrorReason(ExceptionMetadata.scrubException(LspError.EXTRACTION_ERROR.toString(), e));
             return false;
         }
         return true;

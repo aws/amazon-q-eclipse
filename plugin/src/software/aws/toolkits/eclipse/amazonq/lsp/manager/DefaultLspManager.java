@@ -24,12 +24,10 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
-import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
-import software.aws.toolkits.telemetry.TelemetryDefinitions.ManifestLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class DefaultLspManager implements LspManager {
@@ -162,17 +160,10 @@ public final class DefaultLspManager implements LspManager {
                     .orElseThrow(() -> new AmazonQPluginException("Failed to retrieve language server manifest"));
             return manifest;
         } catch (Exception e) {
-            emitGetManifestFailure(ExceptionMetadata.scrubException(e));
             throw new AmazonQPluginException("Failed to retrieve Amazon Q language server manifest", e);
         }
     }
 
-    private void emitGetManifestFailure(final String reason) {
-        var args = new RecordLspSetupArgs();
-        args.setReason(reason);
-        args.setManifestLocation(ManifestLocation.ALL);
-        LanguageServerTelemetryProvider.emitSetupGetManifest(Result.FAILED, args);
-    }
     private void emitGetServerWithOverride(final Instant start) {
         var args = new RecordLspSetupArgs();
         args.setDuration(Duration.between(start, Instant.now()).toMillis());

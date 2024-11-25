@@ -1414,7 +1414,7 @@
         {
             "name": "manifestLocation",
             "type": "string",
-            "allowedValues": [ "remote", "cache", "all" ],
+            "allowedValues": [ "remote", "cache" ],
             "description": "Represents the location where the manifest is fetched from"
         },
         {

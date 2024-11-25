@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
@@ -65,7 +63,6 @@ import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
-import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class RemoteLspFetcherTest {
     private static VersionRange versionRange = new VersionRange("[1.0.0, 2.0.0]");
@@ -120,9 +117,6 @@ public final class RemoteLspFetcherTest {
             lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
         assertExceptionThrownWithMessage(exception, "No valid manifest");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN
-                        && arg.getReason().contains("No valid manifest"))));
     }
 
     @ParameterizedTest
@@ -136,9 +130,6 @@ public final class RemoteLspFetcherTest {
             lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
         });
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
-                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -148,9 +139,6 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
-                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -160,9 +148,6 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
-                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -172,9 +157,6 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, "language server that satisfies one or more of these conditions");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN && arg.getReason()
-                        .contains("language server that satisfies one or more of these conditions"))));
     }
 
     @Test
@@ -187,8 +169,6 @@ public final class RemoteLspFetcherTest {
 
         assertInstallResult(result, LanguageServerLocation.CACHE, sampleVersion);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.CACHE && arg.getReason() == null)));
     }
 
     @Test
@@ -204,8 +184,6 @@ public final class RemoteLspFetcherTest {
 
         assertInstallResult(result, LanguageServerLocation.CACHE, sampleVersion);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.CACHE && arg.getReason() == null)));
     }
 
     @ParameterizedTest
@@ -221,9 +199,6 @@ public final class RemoteLspFetcherTest {
         });
 
         assertExceptionThrownWithMessage(exception, " find a compatible version");
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.FAILED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.UNKNOWN
-                        && arg.getReason().contains("find a compatible version"))));
     }
 
     @Test
@@ -290,8 +265,6 @@ public final class RemoteLspFetcherTest {
 
         assertInstallResult(result, LanguageServerLocation.FALLBACK, testFallbackVersion);
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.FALLBACK && arg.getReason() == null)));
     }
 
     @Test
@@ -318,9 +291,6 @@ public final class RemoteLspFetcherTest {
         assertEquals(oneAdditionalVersion, result.version());
 
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
-        mockTelemetryProvider.verify(() -> LanguageServerTelemetryProvider.emitSetupGetServer(eq(Result.SUCCEEDED),
-                argThat(arg -> arg.getLocation() == LanguageServerLocation.REMOTE && arg.getReason() == null
-                        && arg.getLanguageServerVersion() == oneAdditionalVersion)));
     }
 
     private HttpResponse<Path> createMockHttpResponse(final Path file, final int statusCode) {

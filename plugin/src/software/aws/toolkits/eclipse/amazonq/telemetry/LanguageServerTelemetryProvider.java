@@ -36,7 +36,7 @@ public final class LanguageServerTelemetryProvider {
     public static void emitSetupGetManifest(final Result result, final RecordLspSetupArgs args) {
         args.setDuration(Duration.between(manifestStartPoint, Instant.now()).toMillis());
         emitSetupMetric(result, args, LanguageServerSetupStage.GET_MANIFEST);
-        if (result == Result.FAILED && args.getManifestLocation() == ManifestLocation.ALL) {
+        if (result == Result.FAILED && args.getManifestLocation() == ManifestLocation.UNKNOWN) {
             emitSetupAll(Result.FAILED, args);
         }
     }
@@ -66,6 +66,9 @@ public final class LanguageServerTelemetryProvider {
         emitSetupMetric(result, args, LanguageServerSetupStage.ALL);
     }
 
+    /*TODO: pass errorCode() into metric as well
+     * To separate reason field from error code
+     */
     private static void emitSetupMetric(final Result result, final RecordLspSetupArgs args, final LanguageServerSetupStage stage) {
         var data = LanguageserverTelemetry.SetupEvent()
                 .id("Amazon Q")

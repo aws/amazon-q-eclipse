@@ -16,6 +16,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.exception.LspError;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -54,7 +55,6 @@ public final class VersionManifestFetcher {
         var cachedManifest = getResourceFromCache();
         // if a remote location does not exist, default to content in the download cache
         if (manifestUrl == null) {
-            emitGetManifest(cachedManifest.orElse(null), ManifestLocation.CACHE, null);
             return cachedManifest;
         }
         var cachedEtag = Activator.getPluginStore().get(manifestUrl);
@@ -77,7 +77,7 @@ public final class VersionManifestFetcher {
             return latestManifest;
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching manifest from remote location", e);
-            emitGetManifest(null, ManifestLocation.REMOTE, ExceptionMetadata.scrubException("Error fetching manifest from remote location", e));
+            emitGetManifest(null, ManifestLocation.UNKNOWN, ExceptionMetadata.scrubException(LspError.MANIFEST_FETCH_ERROR.toString(), e));
             return cachedManifest;
         }
     }
@@ -111,13 +111,13 @@ public final class VersionManifestFetcher {
                 if (manifest.isEmpty()) {
                     ArtifactUtils.deleteFile(manifestPath);
                     Activator.getLogger().info("Failed to validate cached manifest file");
-                    emitGetManifest(null, ManifestLocation.CACHE, "Failed to validate cached manifest file");
+                    emitGetManifest(null, ManifestLocation.CACHE, LspError.INVALID_VERSION_MANIFEST.toString());
                 }
                 return manifest;
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error fetching resource from cache", e);
-            emitGetManifest(null, ManifestLocation.CACHE, ExceptionMetadata.scrubException("Error fetching resource from cache", e));
+            emitGetManifest(null, ManifestLocation.CACHE, ExceptionMetadata.scrubException(LspError.MANIFEST_FETCH_ERROR.toString(), e));
         }
         return Optional.empty();
     }
@@ -176,7 +176,7 @@ public final class VersionManifestFetcher {
             return manifest;
         } catch (Exception e) {
             Activator.getLogger().error("Failed to cache manifest file", e);
-            emitGetManifest(null, ManifestLocation.REMOTE, "Failed to cache latest remote manifest file: " + e.getMessage());
+            emitGetManifest(null, ManifestLocation.REMOTE, ExceptionMetadata.scrubException(LspError.UNEXPECTED_CACHE_ERROR.toString(), e));
         }
         return Optional.empty();
     }

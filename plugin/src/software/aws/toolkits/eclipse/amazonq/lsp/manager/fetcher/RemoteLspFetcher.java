@@ -263,7 +263,7 @@ public final class RemoteLspFetcher implements LspFetcher {
                     setErrorReason(LspError.ARTIFACT_VALIDATION_ERROR.toString());
                 }
             } else {
-                setErrorReason(LspError.SERVER_FETCH_ERROR + "-" + response.statusCode());
+                setErrorReason(LspError.SERVER_REMOTE_FETCH_ERROR + "-" + response.statusCode());
                 throw new AmazonQPluginException("Failed to download remote LSP artifact. Response code: " + response.statusCode());
             }
         } catch (Exception ex) {

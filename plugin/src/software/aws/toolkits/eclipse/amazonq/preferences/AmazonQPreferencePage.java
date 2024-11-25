@@ -102,7 +102,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
                         Amazon Q creates a code reference when you insert a code suggestion from Amazon Q that is similar to training data.\
                         \nWhen unchecked, Amazon Q will not show code suggestions that have code references. If you authenticate through IAM\
                         \nIdentity Center, this setting is controlled by your Amazon Q administrator. \
-                        \n<a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/code-reference.html\">Learn more</a>
+                        \nLearn more <a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/code-reference.html\">here</a>.
                         """,
                 20, codeReferenceOptInComposite);
         codeReferenceLink.addSelectionListener(new SelectionAdapter() {
@@ -130,8 +130,8 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         };
         addField(telemetryOptIn);
 
-        Link telemetryLink = createLink("See <a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/opt-out-IDE.html#opt-out-IDE-telemetry\">"
-                + "here</a> for more detail.", 20, telemetryOptInComposite);
+        Link telemetryLink = createLink("See more details <a href=\"https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/opt-out-IDE.html"
+                + "#opt-out-IDE-telemetry\">here</a>.", 20, telemetryOptInComposite);
         telemetryLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent event) {
@@ -162,7 +162,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
                         When checked, your content processed by Amazon Q may be used for service improvement (except for content processed\
                         \nby the Amazon Q Developer Pro tier). Unchecking this box will cause AWS to delete any of your content used for that\
                         \npurpose. The information used to provide the Amazon Q service to you will not be affected.\
-                        \nSee the <a href="https://aws.amazon.com/service-terms/">Service Terms</a> for more detail.
+                        \nSee the <a href="https://aws.amazon.com/service-terms/">Service Terms</a> for more details.
                         """,
                 20, qDataSharingComposite);
         dataSharingLink.addSelectionListener(new SelectionAdapter() {

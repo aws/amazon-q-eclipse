@@ -1,6 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: amazon-q-eclipse
+Bundle-Name: Amazon Q for Eclipse
+Bundle-Provider: Amazon Web Services
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-SymbolicName: amazon-q-eclipse;singleton:=true
 Bundle-Version: 1.0.0.qualifier

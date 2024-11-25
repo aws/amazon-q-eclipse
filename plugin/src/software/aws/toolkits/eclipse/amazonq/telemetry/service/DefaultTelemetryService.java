@@ -185,8 +185,8 @@ public final class DefaultTelemetryService implements TelemetryService {
 
     public static class Builder {
         private static final Region DEFAULT_TELEMETRY_REGION = Region.US_EAST_1;
-        private static final String DEFAULT_TELEMETRY_ENDPOINT = "https://7zftft3lj2.execute-api.us-east-1.amazonaws.com/Beta";
-        private static final String DEFAULT_TELEMETRY_IDENTITY_POOL = "us-east-1:db7bfc9f-8ecd-4fbb-bea7-280c16069a99";
+        private static final String DEFAULT_TELEMETRY_ENDPOINT = "https://client-telemetry.us-east-1.amazonaws.com";
+        private static final String DEFAULT_TELEMETRY_IDENTITY_POOL = "us-east-1:820fd6d1-95c0-4ca4-bffb-3f01d32da842";
 
         private Region region;
         private String endpoint;

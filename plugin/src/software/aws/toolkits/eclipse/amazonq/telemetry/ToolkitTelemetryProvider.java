@@ -8,8 +8,10 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 import software.aws.toolkits.telemetry.ToolkitTelemetry;
 import java.time.Instant;
+import java.util.Set;
 
 public final class ToolkitTelemetryProvider {
+    private static final Set<String> NON_PASSIVE = Set.of("ellipsesMenu", "statusBar", "shortcut");
 
     private ToolkitTelemetryProvider() {
         //prevent instantiation
@@ -30,7 +32,7 @@ public final class ToolkitTelemetryProvider {
 
     public static void emitOpenModuleEventMetric(final String module, final String source, final String failureReason) {
         Result result = Result.SUCCEEDED;
-        boolean isPassive = (!source.equals("ellipsesMenu") && !source.equals("statusBar") && !source.equals("shortcut"));
+        boolean isPassive = (source != null && !NON_PASSIVE.contains(source));
 
         if (failureReason != null && !failureReason.equals("none")) {
             result = Result.FAILED;

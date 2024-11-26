@@ -32,7 +32,7 @@ public final class ToolkitTelemetryProvider {
         Result result = Result.SUCCEEDED;
         boolean isPassive = (!source.equals("ellipsesMenu") && !source.equals("statusBar") && !source.equals("shortcut"));
 
-        if (!failureReason.equals("none")) {
+        if (failureReason != null && !failureReason.equals("none")) {
             result = Result.FAILED;
             ToolkitTelemetry.OpenModuleEvent().reason(failureReason);
         }
@@ -47,7 +47,7 @@ public final class ToolkitTelemetryProvider {
         Activator.getTelemetryService().emitMetric(metadata);
     }
     public static void emitCloseModuleEventMetric(final String module, final String failureReason) {
-        Result result = (failureReason.equals("none")) ? Result.SUCCEEDED : Result.FAILED;
+        Result result = (failureReason == null || failureReason.equals("none")) ? Result.SUCCEEDED : Result.FAILED;
         MetricDatum metadata = ToolkitTelemetry.CloseModuleEvent()
                 .module(mapModuleId(module))
                 .result(result)

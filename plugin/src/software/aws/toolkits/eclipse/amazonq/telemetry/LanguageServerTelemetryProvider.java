@@ -34,7 +34,12 @@ public final class LanguageServerTelemetryProvider {
     }
 
     public static void emitSetupGetManifest(final Result result, final RecordLspSetupArgs args) {
-        args.setDuration(Duration.between(manifestStartPoint, Instant.now()).toMillis());
+        if (result == null || args == null) {
+            return;
+        }
+        if (manifestStartPoint != null) {
+            args.setDuration(Duration.between(manifestStartPoint, Instant.now()).toMillis());
+        }
         emitSetupMetric(result, args, LanguageServerSetupStage.GET_MANIFEST);
         if (result == Result.FAILED && args.getManifestLocation() == ManifestLocation.UNKNOWN) {
             emitSetupAll(Result.FAILED, args);
@@ -42,6 +47,9 @@ public final class LanguageServerTelemetryProvider {
     }
 
     public static void emitSetupGetServer(final Result result, final RecordLspSetupArgs args) {
+        if (result == null || args == null) {
+            return;
+        }
         emitSetupMetric(result, args, LanguageServerSetupStage.GET_SERVER);
         if (result == Result.FAILED && args.getLocation() == LanguageServerLocation.UNKNOWN) {
             emitSetupAll(Result.FAILED, args);
@@ -49,20 +57,33 @@ public final class LanguageServerTelemetryProvider {
     }
 
     public static void emitSetupValidate(final Result result, final RecordLspSetupArgs args) {
+        if (result == null || args == null) {
+            return;
+        }
         emitSetupMetric(result, args, LanguageServerSetupStage.VALIDATE);
         if (result == Result.FAILED && args.getLocation() != LanguageServerLocation.OVERRIDE) {
             emitSetupAll(Result.FAILED, args);
         }
     }
     public static void emitSetupInitialize(final Result result, final RecordLspSetupArgs args) {
-        args.setDuration(Duration.between(initStartPoint, Instant.now()).toMillis());
+        if (result == null || args == null) {
+            return;
+        }
+        if (initStartPoint != null) {
+            args.setDuration(Duration.between(initStartPoint, Instant.now()).toMillis());
+        }
         emitSetupMetric(result, args, LanguageServerSetupStage.INITIALIZE);
 
         //final step completing makes call to complete full process
         emitSetupAll(result, args);
     }
     public static void emitSetupAll(final Result result, final RecordLspSetupArgs args) {
-        args.setDuration(Duration.between(allStartPoint, Instant.now()).toMillis());
+        if (result == null || args == null) {
+            return;
+        }
+        if (allStartPoint != null) {
+            args.setDuration(Duration.between(allStartPoint, Instant.now()).toMillis());
+        }
         emitSetupMetric(result, args, LanguageServerSetupStage.ALL);
     }
 

@@ -29,12 +29,14 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -174,9 +176,12 @@ public class FeedbackDialog extends Dialog {
 
     private void createHeaderSection(final Composite container) {
         Composite headlineContainer = new Composite(container, SWT.NONE);
-        RowLayout rowLayout = new RowLayout();
-        rowLayout.spacing = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 1 : 0; // to reduce space between two labels
-        headlineContainer.setLayout(rowLayout);
+        RowLayout layout = new RowLayout(SWT.HORIZONTAL);
+        layout.spacing = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 3 : 0;
+        layout.wrap = true;
+        layout.center = true;
+        headlineContainer.setLayout(layout);
+        headlineContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         createLabel(headlineContainer, "Looking for help? View the");
         createLinkLabel(headlineContainer, "Getting Started Guide", "https://aws.amazon.com/q/getting-started/",
@@ -351,17 +356,40 @@ public class FeedbackDialog extends Dialog {
     private void createLabel(final Composite parent, final String text) {
         Label label = new Label(parent, SWT.NONE);
         label.setText(text);
+
+        if (parent.getLayout() instanceof GridLayout) {
+            GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+            gridData.horizontalIndent = 0;
+            gridData.verticalIndent = 0;
+            label.setLayoutData(gridData);
+        } else if (parent.getLayout() instanceof RowLayout) {
+            RowData rowData = new RowData();
+            rowData.width = SWT.DEFAULT;
+            rowData.height = SWT.DEFAULT;
+            label.setLayoutData(rowData);
+        }
     }
 
     private void createLinkLabel(final Composite parent, final String text, final String url,
             final String telemetryLabel) {
-        Label label = new Label(parent, SWT.NONE);
-        label.setText(text);
-        label.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        label.setCursor(parent.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        label.addMouseListener(new MouseAdapter() {
+        Link link = new Link(parent, SWT.NONE);
+        link.setText("<a>" + text + "</a>");
+
+        if (parent.getLayout() instanceof GridLayout) {
+            GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+            gridData.horizontalIndent = 0;
+            gridData.verticalIndent = 0;
+            link.setLayoutData(gridData);
+        } else if (parent.getLayout() instanceof RowLayout) {
+            RowData rowData = new RowData();
+            rowData.width = SWT.DEFAULT;
+            rowData.height = SWT.DEFAULT;
+            link.setLayoutData(rowData);
+        }
+
+        link.addSelectionListener(new SelectionAdapter() {
             @Override
-            public void mouseDown(final MouseEvent e) {
+            public void widgetSelected(final SelectionEvent e) {
                 PluginUtils.openWebpage(url);
                 UiTelemetryProvider.emitClickEventMetric(telemetryLabel);
             }
@@ -372,6 +400,19 @@ public class FeedbackDialog extends Dialog {
         Label label = new Label(parent, SWT.NONE);
         var image = loadImage(imagePath);
         label.setImage(image);
+
+        if (parent.getLayout() instanceof GridLayout) {
+            GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+            gridData.horizontalIndent = 0;
+            gridData.verticalIndent = 0;
+            label.setLayoutData(gridData);
+        } else if (parent.getLayout() instanceof RowLayout) {
+            RowData rowData = new RowData();
+            rowData.width = SWT.DEFAULT;
+            rowData.height = SWT.DEFAULT;
+            label.setLayoutData(rowData);
+        }
+
         label.addDisposeListener(e -> {
             if (image != null && !image.isDisposed()) {
                 image.dispose();

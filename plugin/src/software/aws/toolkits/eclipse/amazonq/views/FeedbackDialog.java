@@ -29,12 +29,14 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -174,9 +176,12 @@ public class FeedbackDialog extends Dialog {
 
     private void createHeaderSection(final Composite container) {
         Composite headlineContainer = new Composite(container, SWT.NONE);
-        RowLayout rowLayout = new RowLayout();
-        rowLayout.spacing = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 1 : 0; // to reduce space between two labels
-        headlineContainer.setLayout(rowLayout);
+        RowLayout layout = new RowLayout(SWT.HORIZONTAL);
+        layout.spacing = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 3 : 0;
+        layout.wrap = true;
+        layout.center = true;
+        headlineContainer.setLayout(layout);
+        headlineContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         createLabel(headlineContainer, "Looking for help? View the");
         createLinkLabel(headlineContainer, "Getting Started Guide", "https://aws.amazon.com/q/getting-started/",
@@ -283,27 +288,52 @@ public class FeedbackDialog extends Dialog {
         StackLayout stackLayout = new StackLayout();
         commentComposite.setLayout(stackLayout);
 
-        GridData commentCompositeLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
-        commentCompositeLayout = new GridData(SWT.FILL, SWT.FILL, true, true);
-        commentCompositeLayout.heightHint = 200;
-        commentCompositeLayout.widthHint = 0;
-
+        GridData commentCompositeLayout = new GridData();
+        commentCompositeLayout.horizontalAlignment = SWT.FILL;
+        commentCompositeLayout.verticalAlignment = SWT.FILL;
+        commentCompositeLayout.grabExcessHorizontalSpace = true;
+        commentCompositeLayout.grabExcessVerticalSpace = false;
+        commentCompositeLayout.heightHint = 150;
+        commentCompositeLayout.verticalIndent = 5;
         commentComposite.setLayoutData(commentCompositeLayout);
 
-        commentBox = new Text(commentComposite, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL);
-        commentBox.setLayoutData(commentCompositeLayout);
+        Composite commentWrapper = new Composite(commentComposite, SWT.NONE);
+        GridLayout commentWrapperLayout = new GridLayout(1, false);
+        commentWrapperLayout.marginTop = 1;
+        commentWrapperLayout.marginLeft = 1;
+        commentWrapper.setLayout(commentWrapperLayout);
+        commentWrapper.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
+        commentWrapper.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        Label ghostLabel = new Label(commentComposite, SWT.NONE);
-        ghostLabel.setText("Optional");
-        ghostLabel.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
-        ghostLabel.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
-        ghostLabel.setLayoutData(commentCompositeLayout);
+        commentBox = new Text(commentWrapper, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL);
+        commentBox.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        ghostLabel.addMouseListener(new MouseAdapter() {
+        Composite labelWrapper = new Composite(commentComposite, SWT.NONE);
+        GridLayout labelWrapperLayout = new GridLayout(1, false);
+        labelWrapperLayout.marginTop = 1;
+        labelWrapperLayout.marginLeft = 1;
+        labelWrapper.setLayout(labelWrapperLayout);
+        labelWrapper.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_WHITE));
+        labelWrapper.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        Label ghostLabel = new Label(labelWrapper, SWT.NONE);
+        ghostLabel.setText("(Optional)");
+        ghostLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        ghostLabel.addPaintListener(new PaintListener() {
+            @Override
+            public void paintControl(final PaintEvent event) {
+                ghostLabel.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
+            }
+        });
+
+        stackLayout.topControl = labelWrapper;
+
+        labelWrapper.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseDown(final MouseEvent e) {
                 isCommentQuestionGhostLabelVisible = false;
-                stackLayout.topControl = commentBox;
+                stackLayout.topControl = commentWrapper;
                 commentBox.setFocus();
                 commentComposite.layout();
             }
@@ -319,7 +349,7 @@ public class FeedbackDialog extends Dialog {
                 }
 
                 commentComposite.redraw();
-                commentComposite.layout();
+                commentComposite.layout(true, true);
 
                 handleTextModified(event);
             }
@@ -329,9 +359,9 @@ public class FeedbackDialog extends Dialog {
             @Override
             public void paintControl(final PaintEvent event) {
                 if (isCommentQuestionGhostLabelVisible) {
-                    stackLayout.topControl = ghostLabel;
+                    stackLayout.topControl = labelWrapper;
                 } else {
-                    stackLayout.topControl = commentBox;
+                    stackLayout.topControl = commentWrapper;
                 }
                 commentComposite.layout();
             }
@@ -345,23 +375,46 @@ public class FeedbackDialog extends Dialog {
                         + "information in your feedback.");
         createLabel(questionsContainer,
                 "Please remove any PII when sharing file paths, error messages, etc.");
-
     }
+
 
     private void createLabel(final Composite parent, final String text) {
         Label label = new Label(parent, SWT.NONE);
         label.setText(text);
+
+        if (parent.getLayout() instanceof GridLayout) {
+            GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+            gridData.horizontalIndent = 0;
+            gridData.verticalIndent = 0;
+            label.setLayoutData(gridData);
+        } else if (parent.getLayout() instanceof RowLayout) {
+            RowData rowData = new RowData();
+            rowData.width = SWT.DEFAULT;
+            rowData.height = SWT.DEFAULT;
+            label.setLayoutData(rowData);
+        }
     }
 
     private void createLinkLabel(final Composite parent, final String text, final String url,
             final String telemetryLabel) {
-        Label label = new Label(parent, SWT.NONE);
-        label.setText(text);
-        label.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_BLUE));
-        label.setCursor(parent.getDisplay().getSystemCursor(SWT.CURSOR_HAND));
-        label.addMouseListener(new MouseAdapter() {
+        Link link = new Link(parent, SWT.NONE);
+        link.setText("<a>" + text + "</a>");
+
+        if (parent.getLayout() instanceof GridLayout) {
+            GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+            gridData.horizontalIndent = 0;
+            gridData.verticalIndent = 0;
+            link.setLayoutData(gridData);
+        } else if (parent.getLayout() instanceof RowLayout) {
+            RowData rowData = new RowData();
+            rowData.width = SWT.DEFAULT;
+            rowData.height = SWT.DEFAULT;
+            link.setLayoutData(rowData);
+        }
+
+        link.addSelectionListener(new SelectionAdapter() {
             @Override
-            public void mouseDown(final MouseEvent e) {
+            public void widgetSelected(final SelectionEvent e) {
                 PluginUtils.openWebpage(url);
                 UiTelemetryProvider.emitClickEventMetric(telemetryLabel);
             }
@@ -372,6 +425,19 @@ public class FeedbackDialog extends Dialog {
         Label label = new Label(parent, SWT.NONE);
         var image = loadImage(imagePath);
         label.setImage(image);
+
+        if (parent.getLayout() instanceof GridLayout) {
+            GridData gridData = new GridData(SWT.FILL, SWT.CENTER, false, false);
+            gridData.horizontalIndent = 0;
+            gridData.verticalIndent = 0;
+            label.setLayoutData(gridData);
+        } else if (parent.getLayout() instanceof RowLayout) {
+            RowData rowData = new RowData();
+            rowData.width = SWT.DEFAULT;
+            rowData.height = SWT.DEFAULT;
+            label.setLayoutData(rowData);
+        }
+
         label.addDisposeListener(e -> {
             if (image != null && !image.isDisposed()) {
                 image.dispose();
@@ -413,7 +479,7 @@ public class FeedbackDialog extends Dialog {
 
     @Override
     protected final Point getInitialSize() {
-        return new Point(800, 600);
+        return PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? new Point(800, 670) : new Point(800, 620);
     }
 
 }

@@ -36,6 +36,7 @@ public final class QInvocationSession extends QResource {
     private volatile QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
+    private boolean isMacOS;
 
     private QSuggestionsContext suggestionsContext = null;
 
@@ -60,6 +61,7 @@ public final class QInvocationSession extends QResource {
     // Private constructor to prevent instantiation
     private QInvocationSession() {
         // Initialization code here
+        isMacOS = System.getProperty("os.name").toLowerCase().contains("mac");
     }
 
     // Method to get the single instance
@@ -487,6 +489,10 @@ public final class QInvocationSession extends QResource {
 
     public Font getBoldInlineFont() {
         return inlineTextFontBold;
+    }
+
+    public boolean isMacOS() {
+        return isMacOS;
     }
 
     // Additional methods for the session can be added here

@@ -18,6 +18,7 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     private String text;
     private Font adjustedTypedFont;
     private TextLayout layout;
+    private TextLayout measureLayout;
     private boolean isMacOS;
 
     public QInlineSuggestionCloseBracketSegment(final int caretOffset, final int lineInSuggestion, final String text,
@@ -31,6 +32,13 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
 
         var qInvocationSessionInstance = QInvocationSession.getInstance();
         adjustedTypedFont = qInvocationSessionInstance.getBoldInlineFont();
+        if (!isMacOS) {
+            int[] tabStops = qInvocationSessionInstance.getViewer().getTextWidget().getTabStops();
+            measureLayout = new TextLayout(Display.getCurrent());
+            measureLayout.setText(text);
+            measureLayout.setFont(qInvocationSessionInstance.getInlineTextFont());
+            measureLayout.setTabs(tabStops);
+        }
     }
 
     @Override
@@ -64,7 +72,7 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
         int lineHt = widget.getLineHeight();
         int fontHt = gc.getFontMetrics().getHeight();
         y = (invocationLine + lineInSuggestion + 1) * lineHt - fontHt;
-        x = gc.textExtent(text).x;
+        x = isMacOS ? gc.textExtent(text).x : (int) measureLayout.getBounds().width;
         if (lineInSuggestion == 0) {
             x += widget.getLocationAtOffset(invocationOffset).x;
         }
@@ -81,7 +89,8 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
                 layout.setFont(adjustedTypedFont);
                 layout.setText(textToRender);
                 layout.setTabs(widget.getTabStops());
-                layout.draw(gc, x, y, 0, textToRender.length(), typedColor, null);
+                gc.setAlpha(255);
+                layout.draw(gc, x, y);
             }
         } else {
             if (isMacOS) {
@@ -93,7 +102,7 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
                 layout.setText(textToRender);
                 layout.setTabs(widget.getTabStops());
                 gc.setAlpha(127);
-                layout.draw(gc, x, y, 0, textToRender.length(), Q_INLINE_HINT_TEXT_COLOR, null);
+                layout.draw(gc, x, y);
             }
         }
     }
@@ -134,6 +143,9 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     public void cleanUp() {
         if (layout != null) {
             layout.dispose();
+        }
+        if (measureLayout != null) {
+            measureLayout.dispose();
         }
     }
 }

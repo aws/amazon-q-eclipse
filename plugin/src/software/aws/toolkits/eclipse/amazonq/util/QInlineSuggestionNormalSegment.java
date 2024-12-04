@@ -83,6 +83,7 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
             layout.setText(textToRender);
             layout.setFont(qInvocationSessionInstance.getInlineTextFont());
             layout.setTabs(widget.getTabStops());
+            gc.setAlpha(127);
             layout.draw(gc, x, y);
         } else {
             gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);

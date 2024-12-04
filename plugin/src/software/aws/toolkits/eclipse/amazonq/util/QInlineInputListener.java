@@ -89,7 +89,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         List<IQInlineSuggestionSegment> segments = IQInlineSuggestionSegmentFactory.getSegmentsFromSuggestion(session);
         brackets = new IQInlineBracket[session.getCurrentSuggestion().getInsertText().length()];
         if (lineIdx < contentInLine.length()) {
-            rightCtxBuf = contentInLine.substring(lineIdx) + delimiter;
+            rightCtxBuf = contentInLine.substring(lineIdx);
         }
         int normalSegmentNum = 0;
         for (var segment : segments) {
@@ -174,10 +174,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             }
         }
         toAppend += rightCtxBuf;
-        if (rightCtxBuf.isEmpty()) {
-            toAppend += widget.getLineDelimiter();
-        }
-
         suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
 
         int idx = distanceTraversed;
@@ -190,11 +186,8 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
                 int startLineOffset = doc.getLineOffset(lineNumber);
                 int curLineInDoc = widget.getLineAtOffset(currentOffset);
                 int lineIdx = expandedCurrentOffset - startLineOffset;
-                String contentInLine = widget.getLine(curLineInDoc) + widget.getLineDelimiter();
-                String currentRightCtx = "\n";
-                if (lineIdx < contentInLine.length()) {
-                    currentRightCtx = contentInLine.substring(lineIdx);
-                }
+                String contentInLine = widget.getLine(curLineInDoc);
+                String currentRightCtx = contentInLine.substring(lineIdx);
                 int distanceToNewLine = currentRightCtx.length();
                 doc.replace(expandedCurrentOffset, distanceToNewLine, toAppend);
             } catch (BadLocationException e) {

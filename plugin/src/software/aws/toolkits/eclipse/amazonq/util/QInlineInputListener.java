@@ -175,24 +175,30 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
         toAppend += rightCtxBuf;
         suggestionSegments.stream().forEach((segment) -> segment.cleanUp());
-
+        final String toAppendFinal = toAppend;
         int idx = distanceTraversed;
         if (!toAppend.isEmpty()) {
-            try {
-                int currentOffset = session.getInvocationOffset() + idx;
-                int expandedCurrentOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
-                        currentOffset);
-                int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
-                int startLineOffset = doc.getLineOffset(lineNumber);
-                int curLineInDoc = widget.getLineAtOffset(currentOffset);
-                int lineIdx = expandedCurrentOffset - startLineOffset;
-                String contentInLine = widget.getLine(curLineInDoc);
-                String currentRightCtx = contentInLine.substring(lineIdx);
-                int distanceToNewLine = currentRightCtx.length();
-                doc.replace(expandedCurrentOffset, distanceToNewLine, toAppend);
-            } catch (BadLocationException e) {
-                Activator.getLogger().error(e.toString());
-            }
+                try {
+                    int currentOffset = session.getInvocationOffset() + idx;
+                    int expandedCurrentOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),
+                            currentOffset);
+                    int lineNumber = doc.getLineOfOffset(expandedCurrentOffset);
+                    int startLineOffset = doc.getLineOffset(lineNumber);
+                    int curLineInDoc = widget.getLineAtOffset(currentOffset);
+                    int lineIdx = expandedCurrentOffset - startLineOffset;
+                    String contentInLine = widget.getLine(curLineInDoc);
+                    String currentRightCtx = contentInLine.substring(lineIdx);
+                    int distanceToNewLine = currentRightCtx.length();
+                    Display.getCurrent().asyncExec(() -> {
+                        try {
+                            doc.replace(expandedCurrentOffset, distanceToNewLine, toAppendFinal);
+                        } catch (BadLocationException e) {
+                            Activator.getLogger().error("Error appending right context", e);
+                        }
+                    });
+                } catch (BadLocationException e) {
+                    Activator.getLogger().error("Error retrieving line information for appending right context", e);
+                }
         }
     }
 

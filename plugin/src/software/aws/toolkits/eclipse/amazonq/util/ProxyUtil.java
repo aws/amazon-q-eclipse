@@ -13,6 +13,7 @@ import javax.net.ssl.TrustManagerFactory;
 import org.eclipse.core.net.proxy.IProxyData;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 
 public final class ProxyUtil {
 
@@ -27,7 +28,12 @@ public final class ProxyUtil {
     }
 
     public static String getHttpsProxyUrlEnvVar() {
-        return System.getenv("HTTPS_PROXY");
+        String httpsProxy = System.getenv("HTTPS_PROXY");
+        String httpsProxyPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.HTTPS_PROXY);
+        if (!StringUtils.isEmpty(httpsProxyPreference)) {
+            httpsProxy = httpsProxyPreference;
+        }
+        return httpsProxy;
     }
 
     public static void updateHttpsProxyUrl(final String proxyHost) {
@@ -65,6 +71,11 @@ public final class ProxyUtil {
     public static SSLContext getCustomSslContext() {
         try {
             String customCertPath = System.getenv("NODE_EXTRA_CA_CERTS");
+            String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
+            if (!StringUtils.isEmpty(caCertPreference)) {
+                customCertPath = caCertPreference;
+            }
+
             if (customCertPath != null && !customCertPath.isEmpty()) {
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 X509Certificate cert;

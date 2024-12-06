@@ -527,7 +527,6 @@ public final class QInvocationSession extends QResource {
         if (terminationListener != null) {
             widget.removeFocusListener(terminationListener);
         }
-        QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         if (paintListener != null) {
             paintListener.beforeRemoval();
             widget.removePaintListener(paintListener);
@@ -535,6 +534,12 @@ public final class QInvocationSession extends QResource {
         if (caretListener != null) {
             widget.removeCaretListener(caretListener);
         }
+        Display.getDefault().asyncExec(() -> {
+            if (!widget.isDisposed()) {
+                widget.redraw();
+                widget.update();
+            }
+        });
         paintListener = null;
         caretListener = null;
         inputListener = null;

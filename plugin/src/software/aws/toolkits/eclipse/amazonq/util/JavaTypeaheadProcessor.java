@@ -32,7 +32,7 @@ public final class JavaTypeaheadProcessor implements IQInlineTypeaheadProcessor 
             final int currentDistanceTraversed, final IQInlineBracket[] brackets) {
         int numCharDeleted = inputLength;
         int paddingLength = 0;
-        for (int i = 1; i <= numCharDeleted; i++) {
+        for (int i = 1; i <= numCharDeleted && i <= currentDistanceTraversed; i++) {
             var bracket = brackets[currentDistanceTraversed - i];
             if (bracket != null) {
                 if ((bracket instanceof QInlineSuggestionOpenBracketSegment)

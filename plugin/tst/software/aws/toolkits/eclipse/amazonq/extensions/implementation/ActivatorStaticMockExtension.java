@@ -4,9 +4,11 @@
 package software.aws.toolkits.eclipse.amazonq.extensions.implementation;
 
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import java.util.Map;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -42,6 +44,9 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
         LoginService loginServiceMock = Mockito.mock(LoginService.class);
         PluginStore pluginStoreMock = Mockito.mock(PluginStore.class);
         CodeReferenceLoggingService codeReferenceLoggingServiceMock = Mockito.mock(CodeReferenceLoggingService.class);
+
+        IPreferenceStore mockPreferenceStore = Mockito.mock(IPreferenceStore.class);
+        when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore);
 
         activatorStaticMock.when(Activator::getLogger).thenReturn(loggingServiceMock);
         activatorStaticMock.when(Activator::getTelemetryService).thenReturn(telemetryServiceMock);

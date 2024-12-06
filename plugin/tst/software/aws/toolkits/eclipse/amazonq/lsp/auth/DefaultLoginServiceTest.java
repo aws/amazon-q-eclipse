@@ -69,6 +69,7 @@ public final class DefaultLoginServiceTest {
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockLoggingService);
         mockedAuthUtil = mockStatic(AuthUtil.class);
+        mockedActivator.when(Activator::getLspProvider).thenReturn(mockLspProvider);
 
         resetLoginService();
 

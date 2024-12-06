@@ -19,7 +19,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryption
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
-import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 /**
@@ -167,7 +166,7 @@ public final class DefaultLoginService implements LoginService {
                 .thenRun(() -> {
                   authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
                   Activator.getLogger().info("Successfully logged in");
-                  ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
+                  CustomizationUtil.triggerChangeConfigurationNotification();
               })
               .exceptionally(throwable -> {
                   throw new AmazonQPluginException("Failed to process log in", throwable);

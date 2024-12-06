@@ -10,9 +10,9 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import org.eclipse.core.net.proxy.IProxyData;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 
 public final class ProxyUtil {
 
@@ -20,51 +20,27 @@ public final class ProxyUtil {
         // Prevent initialization
     }
 
-    private static String proxyHttpsUrl = "";
-
     public static String getHttpsProxyUrl() {
-        return proxyHttpsUrl;
+        return getHttpsProxyUrl(System.getenv("HTTPS_PROXY"),
+                Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.HTTPS_PROXY));
     }
 
-    public static String getHttpsProxyUrlEnvVar() {
-        return System.getenv("HTTPS_PROXY");
-    }
-
-    public static void updateHttpsProxyUrl(final String proxyHost) {
-        proxyHttpsUrl = proxyHost;
-    }
-
-    public static boolean isProxyValid(final IProxyData proxyData) {
-        if (proxyData == null) {
-            return false;
+    protected static String getHttpsProxyUrl(final String envVarValue, final String prefValue) {
+        String httpsProxy = envVarValue;
+        if (!StringUtils.isEmpty(prefValue)) {
+            httpsProxy = prefValue;
         }
-        String host = proxyData.getHost();
-        int port = proxyData.getPort();
-        String user = proxyData.getUserId();
-        String password = proxyData.getPassword();
-        return (
-            (!StringUtils.isEmpty(host) && port != -1 && !StringUtils.isEmpty(user) && !StringUtils.isEmpty(password))
-            || (!StringUtils.isEmpty(host) && port != -1)
-        );
-    }
-
-    public static String createHttpsProxyHost(final IProxyData proxyData) {
-        String host = proxyData.getHost();
-        int port = proxyData.getPort();
-        String user = proxyData.getUserId();
-        String password = proxyData.getPassword();
-        String proxiedHost = "";
-        if (!StringUtils.isEmpty(host) && port != -1 && !StringUtils.isEmpty(user) && !StringUtils.isEmpty(password)) {
-            return "http://" + user + ":" + password + "@" + host + ":" + Integer.toString(port);
-        } else if (!StringUtils.isEmpty(host) && port != -1) {
-            return "https://" + host + ":" + Integer.toString(port);
-        }
-        return proxiedHost;
+        return httpsProxy;
     }
 
     public static SSLContext getCustomSslContext() {
         try {
             String customCertPath = System.getenv("NODE_EXTRA_CA_CERTS");
+            String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
+            if (!StringUtils.isEmpty(caCertPreference)) {
+                customCertPath = caCertPreference;
+            }
+
             if (customCertPath != null && !customCertPath.isEmpty()) {
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
                 X509Certificate cert;

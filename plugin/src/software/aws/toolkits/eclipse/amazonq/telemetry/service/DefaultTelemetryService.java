@@ -141,7 +141,7 @@ public final class DefaultTelemetryService implements TelemetryService {
             null,
             SSLConnectionSocketFactory.getDefaultHostnameVerifier()
         );
-        var proxyUrl = ProxyUtil.getHttpsProxyUrlEnvVar();
+        var proxyUrl = ProxyUtil.getHttpsProxyUrl();
         var httpClientBuilder = ApacheHttpClient.builder();
         if (!StringUtils.isEmpty(proxyUrl)) {
             httpClientBuilder.proxyConfiguration(ProxyConfiguration.builder()

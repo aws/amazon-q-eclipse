@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
@@ -19,6 +20,7 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryPr
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
@@ -41,6 +43,14 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
     @Override
     protected final void addEnvironmentVariables(final Map<String, String> env) {
+        String httpsProxyPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.HTTPS_PROXY);
+        String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
+        if (!StringUtils.isEmpty(caCertPreference)) {
+            env.put("HTTPS_PROXY", httpsProxyPreference);
+        }
+        if (!StringUtils.isEmpty(caCertPreference)) {
+            env.put("NODE_EXTRA_CA_CERTS", caCertPreference);
+        }
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
     }

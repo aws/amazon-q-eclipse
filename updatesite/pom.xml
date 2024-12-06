@@ -6,13 +6,12 @@
   <parent>
     <groupId>software.aws.toolkits.eclipse</groupId>
     <artifactId>amazon-q-eclipse-group</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 
   <groupId>software.aws.toolkits.eclipse</groupId>
   <artifactId>amazon-q-eclipse-update-site</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
   <packaging>eclipse-repository</packaging>
 
   <build>

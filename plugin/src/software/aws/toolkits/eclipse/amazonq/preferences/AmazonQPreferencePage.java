@@ -4,8 +4,10 @@
 package software.aws.toolkits.eclipse.amazonq.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -30,6 +32,8 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
     public static final String CODE_REFERENCE_OPT_IN = "codeReferenceOptIn";
     public static final String TELEMETRY_OPT_IN = "telemetryOptIn";
     public static final String Q_DATA_SHARING = "qDataSharing";
+    public static final String HTTPS_PROXY = "httpsProxy";
+    public static final String CA_CERT = "customCaCert";
 
     private Boolean isTelemetryOptInChecked;
     private Boolean isQDataSharingOptInChecked;
@@ -55,6 +59,8 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
 
     @Override
     protected final void createFieldEditors() {
+        ((GridLayout) getFieldEditorParent().getLayout()).numColumns = 1;
+
         createHorizontalSeparator();
         createHeading("Inline Suggestions");
         createCodeReferenceOptInField();
@@ -62,7 +68,9 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         createTelemetryOptInField();
         createHorizontalSeparator();
         createQDataSharingField();
-        adjustGridLayout();
+        createHeading("Proxy Settings");
+        createHttpsProxyField();
+        createCaCertField();
 
         GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
         params.setSection("aws.q");
@@ -174,6 +182,41 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         });
     }
 
+    private void createHttpsProxyField() {
+        Composite httpsProxyComposite = new Composite(getFieldEditorParent(), SWT.NONE);
+        httpsProxyComposite.setLayout(new GridLayout(2, false));
+        GridData httpsProxyCompositeData = new GridData(SWT.LEFT, SWT.CENTER, true, false);
+        httpsProxyCompositeData.horizontalIndent = 20;
+        httpsProxyComposite.setLayoutData(httpsProxyCompositeData);
+        StringFieldEditor httpsProxy = new StringFieldEditor(HTTPS_PROXY, "HTTPS Proxy URL", 65, httpsProxyComposite);
+        httpsProxy.setEmptyStringAllowed(true);
+        addField(httpsProxy);
+        createLabel("""
+                Sets the address of the proxy to use for all HTTPS connections. \
+                Leave blank if not using a proxy.
+                Eclipse restart required to take effect.
+                """, 20, getFieldEditorParent());
+    }
+
+    private void createCaCertField() {
+        Composite caCertComposite = new Composite(getFieldEditorParent(), SWT.NONE);
+        caCertComposite.setLayout(new GridLayout(2, false));
+        GridData caCertCompositeData = new GridData(SWT.LEFT, SWT.CENTER, true, false);
+        caCertCompositeData.horizontalIndent = 20;
+        caCertCompositeData.widthHint = 715;
+        caCertComposite.setLayoutData(caCertCompositeData);
+
+        FileFieldEditor caCert = new FileFieldEditor(CA_CERT, "CA Cert PEM", true, StringFieldEditor.VALIDATE_ON_KEY_STROKE, caCertComposite);
+        caCert.setFileExtensions(new String[] {"*.pem"});
+        caCert.setErrorMessage("CA cert must be an existing PEM file");
+        addField(caCert);
+        createLabel("""
+                Absolute path to file containing extra certificates to extend beyond the root CAs. \
+                Leave blank for default CA certs.
+                Eclipse restart required to take effect.
+                """, 20, getFieldEditorParent());
+    }
+
     private Link createLink(final String text, final int horizontalIndent, final Composite parent) {
         Link link = new Link(parent, SWT.NONE);
         link.setText(text);
@@ -181,6 +224,15 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         linkData.horizontalIndent = horizontalIndent;
         link.setLayoutData(linkData);
         return link;
+    }
+
+    private Label createLabel(final String text, final int horizontalIndent, final Composite parent) {
+        Label label = new Label(parent, SWT.HORIZONTAL);
+        label.setText(text);
+        GridData labelData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        labelData.horizontalIndent = horizontalIndent;
+        label.setLayoutData(labelData);
+        return label;
     }
 
     @Override
@@ -212,6 +264,11 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
                     changedDataSharingOptInChecked.toString());
             isQDataSharingOptInChecked = changedDataSharingOptInChecked;
         }
+    }
+
+    @Override
+    protected void adjustGridLayout() {
+        // deliberately left blank to prevent multiple columns from implicitly being created
     }
 
 }

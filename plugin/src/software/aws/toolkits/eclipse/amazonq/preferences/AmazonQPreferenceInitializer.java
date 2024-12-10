@@ -20,6 +20,8 @@ public class AmazonQPreferenceInitializer extends AbstractPreferenceInitializer 
         store.setDefault(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN, true);
         store.setDefault(AmazonQPreferencePage.TELEMETRY_OPT_IN, true);
         store.setDefault(AmazonQPreferencePage.Q_DATA_SHARING, true);
+        store.setDefault(AmazonQPreferencePage.HTTPS_PROXY, "");
+        store.setDefault(AmazonQPreferencePage.CA_CERT, "");
         store.addPropertyChangeListener(event -> {
             ThreadingUtils.executeAsyncTask(() -> {
                 Activator.getLspProvider().getAmazonQServer()

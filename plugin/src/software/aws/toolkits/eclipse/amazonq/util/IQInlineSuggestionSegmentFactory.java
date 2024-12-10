@@ -53,7 +53,7 @@ public final class IQInlineSuggestionSegmentFactory {
                 case CLOSE:
                     if (!unresolvedBrackets.isEmpty()) {
                         var closeBracket = new QInlineSuggestionCloseBracketSegment(startOffset + j, i,
-                                currentLine.substring(0, j), c);
+                                currentLine.substring(0, j), c, qSes.isMacOS());
                         var top = unresolvedBrackets.pop();
                         if (top.isAMatch(closeBracket)) {
                             top.pairUp(closeBracket);
@@ -70,7 +70,7 @@ public final class IQInlineSuggestionSegmentFactory {
             }
             distanceTraversed += sb.length() + 1; // plus one because we got rid of a \\R when we split it
             endOffset = startOffset + sb.length() - 1;
-            res.add(new QInlineSuggestionNormalSegment(startOffset, endOffset, i, sb.toString()));
+            res.add(new QInlineSuggestionNormalSegment(startOffset, endOffset, i, sb.toString(), qSes.isMacOS()));
         }
         return res;
     }

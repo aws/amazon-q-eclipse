@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
@@ -18,7 +19,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -28,22 +28,23 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
-import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
-import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 
 public final class CustomizationDialog extends Dialog {
 
     private static final String TITLE = "Amazon Q Customization";
     private Composite container;
     private Combo combo;
-    private Font magnifiedFont;
-    private Font boldFont;
+    private Font titleFont;
     private List<Customization> customizationsResponse;
     private ResponseSelection responseSelection;
     private Customization selectedCustomization;
@@ -53,38 +54,84 @@ public final class CustomizationDialog extends Dialog {
         CUSTOMIZATION
     }
 
-    private final class CustomRadioButton extends Composite {
+    public final class RadioButtonWithDescriptor extends Composite {
+
         private Button radioButton;
         private Label textLabel;
         private Label subtextLabel;
+        private Font textFont;
+        private Font subtextFont;
 
-        CustomRadioButton(final Composite parent, final String text, final String subText, final int style) {
-            super(parent, style);
-            Composite contentComposite = new Composite(parent, SWT.FILL);
-            GridLayout gridLayout = new GridLayout(2, false);
-            contentComposite.setLayout(gridLayout);
-            contentComposite.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
+        public RadioButtonWithDescriptor(final Composite parent, final String text, final String subtext,
+                final int style) {
+            super(parent, SWT.NONE);
 
-            radioButton = new Button(contentComposite, SWT.RADIO);
-            radioButton.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
+            GridLayout layout = new GridLayout(1, false);
+            layout.marginWidth = 0;
+            layout.marginHeight = 0;
+            layout.verticalSpacing = 2;
+            this.setLayout(layout);
 
-            textLabel = createLabelWithFontSize(contentComposite, text, 16);
-            textLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
+            Composite topRow = new Composite(this, SWT.NONE);
+            GridLayout topRowLayout = new GridLayout(2, false);
+            topRowLayout.marginWidth = 0;
+            topRowLayout.marginHeight = 0;
+            topRow.setLayout(topRowLayout);
+            topRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-            new Label(contentComposite, SWT.NONE);
+            radioButton = new Button(topRow, SWT.RADIO | style);
+            radioButton.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
-            subtextLabel = createLabelWithFontSize(contentComposite, subText, 16);
-            subtextLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
-            subtextLabel.setForeground(contentComposite.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+            textFont = createFont(12, SWT.NORMAL);
+
+            textLabel = new Label(topRow, SWT.WRAP);
+            textLabel.setText(text);
+            textLabel.setFont(textFont);
+            GridData textData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+            textData.horizontalIndent = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 3 : 0;
+            textLabel.setLayoutData(textData);
+
+            subtextFont = createFont(11, SWT.ITALIC);
+
+            subtextLabel = new Label(this, SWT.WRAP);
+            subtextLabel.setText(subtext);
+            subtextLabel.setFont(subtextFont);
+            subtextLabel.setForeground(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
+            GridData subtextData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+            subtextData.horizontalIndent = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 21 : 23; // Indent to align with text label
+            subtextLabel.setLayoutData(subtextData);
+
+            addDisposeListener(e -> {
+                if (subtextFont != null && !subtextFont.isDisposed()) {
+                    subtextFont.dispose();
+                }
+                if (textFont != null && !textFont.isDisposed()) {
+                    textFont.dispose();
+                }
+            });
         }
 
-        public Button getRadioButton() {
-            return radioButton;
+        public void setSelection(final boolean isSelected) {
+            radioButton.setSelection(isSelected);
         }
 
-        public Label getTextLabel() {
-            return textLabel;
+        public void addSelectionListener(final Runnable runnable) {
+            radioButton.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(final SelectionEvent event) {
+                    runnable.run();
+                }
+            });
+
+            textLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseDown(final MouseEvent event) {
+                    radioButton.setSelection(true);
+                    runnable.run();
+                }
+            });
         }
+
     }
 
     public CustomizationDialog(final Shell parentShell) {
@@ -115,63 +162,6 @@ public final class CustomizationDialog extends Dialog {
         return this.selectedCustomization;
     }
 
-    private void showNotification(final String customizationName) {
-        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
-                Constants.IDE_CUSTOMIZATION_NOTIFICATION_TITLE,
-                String.format(Constants.IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE, customizationName));
-        notification.open();
-    }
-
-    @Override
-    protected void createButtonsForButtonBar(final Composite parent) {
-        createButton(parent, IDialogConstants.OK_ID, "Select", true);
-        createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
-    }
-
-    @Override
-    protected void okPressed() {
-        if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
-            Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-            Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
-        } else if (Objects.nonNull(this.getSelectedCustomization()) && StringUtils.isNotBlank(this.getSelectedCustomization().getName())) {
-            Activator.getPluginStore().putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, this.getSelectedCustomization());
-            ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
-            Display.getCurrent().asyncExec(() -> showNotification(String.format("%s customization", this.getSelectedCustomization().getName())));
-        }
-        super.okPressed();
-    }
-
-    private Font magnifyFontSize(final Font originalFont, final int fontSize) {
-        FontData[] fontData = originalFont.getFontData();
-        for (int i = 0; i < fontData.length; i++) {
-            fontData[i].setHeight(fontSize);
-        }
-        Font magnifiedFont = new Font(getShell().getDisplay(), fontData);
-        if (this.magnifiedFont != null && !this.magnifiedFont.isDisposed()) {
-            this.magnifiedFont.dispose();
-        }
-        this.magnifiedFont = magnifiedFont;
-        return magnifiedFont;
-    }
-
-    private Font boldFont(final Font originalFont) {
-        FontData[] fontData = originalFont.getFontData();
-        for (FontData data : fontData) {
-            data.setStyle(SWT.BOLD);
-        }
-        Font boldFont = new Font(getShell().getDisplay(), fontData);
-        if (this.boldFont != null && !this.boldFont.isDisposed()) {
-            this.boldFont.dispose();
-        }
-        this.boldFont = boldFont;
-        return boldFont;
-    }
-
-    private static void addFormattedOption(final Combo combo, final String name, final String description) {
-        String formattedText = name + " (" + description + ")";
-        combo.add(formattedText);
-    }
-
     private List<Customization> getCustomizations() {
         List<Customization> customizations = new ArrayList<>();
         try {
@@ -180,6 +170,11 @@ public final class CustomizationDialog extends Dialog {
             Activator.getLogger().error("Error occurred in getCustomizations", e);
         }
         return customizations;
+    }
+
+    private static void addFormattedOption(final Combo combo, final String name, final String description) {
+        String formattedText = name + " (" + description + ")";
+        combo.add(formattedText);
     }
 
     private void updateComboOnUIThread(final List<Customization> customizations) {
@@ -207,152 +202,143 @@ public final class CustomizationDialog extends Dialog {
                 String selectedOption = combo.getItem(selectedIndex);
                 Customization selectedCustomization = (Customization) combo.getData(String.valueOf(selectedIndex));
                 CustomizationDialog.this.setSelectedCustomization(selectedCustomization);
-                Activator.getLogger().info(String.format("Selected option:%s with arn:%s", selectedOption, selectedCustomization.getArn()));
+                Activator.getLogger().info(String.format("Selected option:%s with arn:%s", selectedOption,
+                        selectedCustomization.getArn()));
             }
         });
-    }
-
-    private void createDropdownForCustomizations(final Composite parent) {
-        Composite contentComposite = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout(2, false);
-        layout.marginLeft = 18;
-        contentComposite.setLayout(layout);
-        GridData layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        layoutData.horizontalSpan = 2;
-        contentComposite.setLayoutData(layoutData);
-        combo = new Combo(contentComposite, SWT.READ_ONLY);
-        combo.setLayout(new GridLayout());
-        combo.setFont(magnifyFontSize(combo.getFont(), 16));
-        GridData comboGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        comboGridData.horizontalAlignment = GridData.FILL;
-        comboGridData.grabExcessHorizontalSpace = true;
-        comboGridData.horizontalSpan = 2;
-        combo.setLayoutData(comboGridData);
-
-        combo.setItems(new String[]{"Loading..."});
-        combo.select(0);
-        combo.setEnabled(false);
-
-        CompletableFuture.supplyAsync(() -> getCustomizations())
-                .thenAcceptAsync(customizations -> updateComboOnUIThread(customizations), Display.getDefault()::asyncExec);
     }
 
     @Override
-    protected Control createDialogArea(final Composite parent) {
-        container = (Composite) super.createDialogArea(parent);
-        GridLayout gridLayout = new GridLayout(2, false);
-        gridLayout.marginLeft = 10;
-        gridLayout.marginRight = 10;
-        gridLayout.marginTop = 10;
-        container.setLayout(gridLayout);
-        container.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, true));
-        Label heading = createLabelWithFontSize(container, "Select an Amazon Q Customization", 18);
-        GridData layoutWithHorizontalSpan = new GridData();
-        layoutWithHorizontalSpan.horizontalSpan = 2;
-        heading.setLayoutData(layoutWithHorizontalSpan);
-        heading.setFont(boldFont(heading.getFont()));
-        Boolean isDefaultAmazonQFoundationSelected = this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
-        CustomRadioButton defaultAmazonQFoundationButton = createCustomRadioButton(container, "Amazon Q foundation (Default)",
-                "Receive suggestions from Amazon Q base model.", SWT.NONE, isDefaultAmazonQFoundationSelected);
-        defaultAmazonQFoundationButton.setLayoutData(layoutWithHorizontalSpan);
-        CustomRadioButton customizationButton = createCustomRadioButton(container, "Customization",
-                "Receive Amazon Q suggestions based on your company's codebase.", SWT.NONE, !isDefaultAmazonQFoundationSelected);
-        customizationButton.setLayoutData(layoutWithHorizontalSpan);
-        defaultAmazonQFoundationButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(final SelectionEvent e) {
-                customizationButton.getRadioButton().setSelection(false);
-                responseSelection = ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT;
-                setSelectedCustomization(null);
-                combo.setEnabled(false);
-            }
-        });
-        defaultAmazonQFoundationButton.getTextLabel().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(final MouseEvent e) {
-                customizationButton.getRadioButton().setSelection(false);
-                defaultAmazonQFoundationButton.getRadioButton().setSelection(true);
-                responseSelection = ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT;
-                setSelectedCustomization(null);
-                combo.setEnabled(false);
-            }
-        });
-        customizationButton.getRadioButton().addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(final SelectionEvent e) {
-                defaultAmazonQFoundationButton.getRadioButton().setSelection(false);
-                responseSelection = ResponseSelection.CUSTOMIZATION;
-                combo.setEnabled(true);
-            }
-        });
-        customizationButton.getTextLabel().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseDown(final MouseEvent e) {
-                defaultAmazonQFoundationButton.getRadioButton().setSelection(false);
-                customizationButton.getRadioButton().setSelection(true);
-                responseSelection = ResponseSelection.CUSTOMIZATION;
-                combo.setEnabled(true);
-            }
-        });
-        createDropdownForCustomizations(container);
-        createSeparator(container);
-        return container;
-    }
-
-    private Label createLabelWithFontSize(final Composite parent, final String text, final int fontSize) {
-        Label label = new Label(parent, SWT.NONE);
-        label.setText(text);
-        label.setFont(magnifyFontSize(label.getFont(), fontSize));
-        return label;
-    }
-
-    private void createSeparator(final Composite parent) {
-        Label separatorLabel = new Label(parent, SWT.SEPARATOR | SWT.HORIZONTAL);
-        GridData separatorLayout = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        separatorLabel.setLayoutData(separatorLayout);
-    }
-
-    private CustomRadioButton createCustomRadioButton(final Composite parent, final String text,
-        final String subtext, final int style, final boolean isSelected) {
-        CustomRadioButton button = new CustomRadioButton(parent, text, subtext, style);
-        button.getRadioButton().setSelection(isSelected);
-        return button;
+    protected void createButtonsForButtonBar(final Composite parent) {
+        createButton(parent, IDialogConstants.OK_ID, "Select", true);
+        createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
     }
 
     @Override
     protected void configureShell(final Shell newShell) {
         super.configureShell(newShell);
         newShell.setText(TITLE);
-    }
 
-    @Override
-    protected Point getInitialSize() {
-        return new Point(600, 400);
-    }
-
-    @Override
-    public boolean close() {
-        disposeAllComponents(container);
-        disposeIndependentElements();
-        return super.close();
-    }
-
-    private void disposeAllComponents(final Composite container) {
-        for (Control control : container.getChildren()) {
-            if (control instanceof Composite) {
-                disposeAllComponents((Composite) control);
-            } else {
-                control.dispose();
+        newShell.addDisposeListener(e -> {
+            if (titleFont != null && !titleFont.isDisposed()) {
+                titleFont.dispose();
             }
-        }
+        });
     }
 
-    public void disposeIndependentElements() {
-        if (this.magnifiedFont != null && !this.magnifiedFont.isDisposed()) {
-            this.magnifiedFont.dispose();
-        }
-        if (this.boldFont != null && !this.boldFont.isDisposed()) {
-            this.boldFont.dispose();
-        }
+    @Override
+    protected Control createDialogArea(final Composite parent) {
+        container = (Composite) super.createDialogArea(parent);
+
+        GridLayout mainLayout = new GridLayout(1, false);
+        mainLayout.marginWidth = 15;
+        mainLayout.marginHeight = 15;
+        mainLayout.verticalSpacing = 10;
+        container.setLayout(mainLayout);
+
+        titleFont = createFont(14, SWT.BOLD);
+
+        Label titleLabel = new Label(container, SWT.NONE);
+        titleLabel.setText("Select an Amazon Q Customization");
+        titleLabel.setFont(titleFont);
+        titleLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        Label separator = new Label(container, SWT.HORIZONTAL | SWT.SEPARATOR);
+        separator.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        Boolean isDefaultAmazonQFoundationSelected = this.responseSelection
+                .equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT);
+
+        RadioButtonWithDescriptor defaultAmazonQFoundationButton = createRadioButton(container,
+                "Amazon Q foundation (Default)", "Receive suggestions from Amazon Q base model.", SWT.NONE,
+                isDefaultAmazonQFoundationSelected);
+        RadioButtonWithDescriptor customizationButton = createRadioButton(container, "Customization",
+                "Receive Amazon Q suggestions based on your company's codebase.", SWT.NONE,
+                !isDefaultAmazonQFoundationSelected);
+
+        defaultAmazonQFoundationButton.addSelectionListener(() -> {
+            customizationButton.setSelection(false);
+            defaultAmazonQFoundationButton.setSelection(true);
+            responseSelection = ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT;
+            setSelectedCustomization(null);
+            combo.setEnabled(false);
+        });
+        customizationButton.addSelectionListener(() -> {
+            defaultAmazonQFoundationButton.setSelection(false);
+            customizationButton.setSelection(true);
+            responseSelection = ResponseSelection.CUSTOMIZATION;
+            combo.setEnabled(true);
+        });
+
+        Composite comboComposite = new Composite(container, SWT.NONE);
+        GridLayout comboLayout = new GridLayout(1, false);
+        comboLayout.marginWidth = 0;
+        comboLayout.marginHeight = 0;
+        comboLayout.marginLeft = 20;
+        comboLayout.verticalSpacing = 0;
+        comboComposite.setLayout(comboLayout);
+
+        GridData comboCompositeData = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
+        comboCompositeData.verticalIndent = 0;
+        comboComposite.setLayoutData(comboCompositeData);
+
+        combo = new Combo(comboComposite, SWT.READ_ONLY | SWT.DROP_DOWN);
+
+        GridData comboData = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
+        comboData.verticalIndent = 0;
+        comboData.grabExcessHorizontalSpace = true;
+        comboData.horizontalSpan = 2;
+        combo.setLayoutData(comboData);
+
+        GridData containerData = new GridData(GridData.FILL_HORIZONTAL);
+        containerData.heightHint = SWT.DEFAULT; // Let the height be determined by contents
+        container.setLayoutData(containerData);
+
+        combo.setItems(new String[]{"Loading..."});
+        combo.select(0);
+        combo.setEnabled(false);
+
+        CompletableFuture.supplyAsync(() -> getCustomizations()).thenAcceptAsync(
+                customizations -> updateComboOnUIThread(customizations), Display.getDefault()::asyncExec);
+
+        return container;
     }
+
+    @Override
+    protected void okPressed() {
+        if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
+            Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+            Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
+        } else if (Objects.nonNull(this.getSelectedCustomization())
+                && StringUtils.isNotBlank(this.getSelectedCustomization().getName())) {
+            Activator.getPluginStore().putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,
+                    this.getSelectedCustomization());
+            ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
+            Display.getCurrent().asyncExec(() -> showNotification(
+                    String.format("%s customization", this.getSelectedCustomization().getName())));
+        }
+        super.okPressed();
+    }
+
+    private void showNotification(final String customizationName) {
+        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                Constants.IDE_CUSTOMIZATION_NOTIFICATION_TITLE,
+                String.format(Constants.IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE, customizationName));
+        notification.open();
+    }
+
+    private Font createFont(final int size, final int style) {
+        FontData[] fontData = getShell().getDisplay().getSystemFont().getFontData();
+        FontData newFontData = new FontData(fontData[0].getName(), size, // specify exact font size
+                style); // SWT.NORMAL, SWT.BOLD, SWT.ITALIC, or SWT.BOLD | SWT.ITALIC
+        return new Font(getShell().getDisplay(), newFontData);
+    }
+
+    private RadioButtonWithDescriptor createRadioButton(final Composite parent, final String text,
+            final String subtext, final int style, final boolean isSelected) {
+        RadioButtonWithDescriptor button = new RadioButtonWithDescriptor(parent, text, subtext, style);
+        button.setSelection(isSelected);
+        return button;
+    }
+
 }

@@ -45,7 +45,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
@@ -70,6 +69,7 @@ public final class RemoteLspFetcherTest {
     private LspFetcher lspFetcher;
     private Manifest sampleManifest;
     private final ArtifactVersion sampleLspVersion;
+    private HttpClient httpClient;
 
     @RegisterExtension
     private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
@@ -80,6 +80,7 @@ public final class RemoteLspFetcherTest {
     private RemoteLspFetcherTest() {
         sampleLspVersion = createLspVersion(sampleVersion);
         sampleManifest = createManifest(List.of(sampleLspVersion));
+        httpClient = mock(HttpClient.class);
         lspFetcher = createFetcher();
     }
 
@@ -88,9 +89,6 @@ public final class RemoteLspFetcherTest {
     private MockedStatic<LanguageServerTelemetryProvider> mockTelemetryProvider;
 
     private LoggingService mockLogger;
-
-    @Mock
-    private HttpClient httpClient;
 
     @TempDir(cleanup = CleanupMode.ALWAYS)
     private Path tempDir;

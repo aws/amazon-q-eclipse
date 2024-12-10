@@ -387,6 +387,7 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
+                                <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview" />
                             </or>
                         </with>
                     </and>

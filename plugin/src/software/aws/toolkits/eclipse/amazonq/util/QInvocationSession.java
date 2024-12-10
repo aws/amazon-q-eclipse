@@ -36,6 +36,7 @@ public final class QInvocationSession extends QResource {
     private volatile QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
+    private boolean isMacOS;
 
     private QSuggestionsContext suggestionsContext = null;
 
@@ -60,6 +61,7 @@ public final class QInvocationSession extends QResource {
     // Private constructor to prevent instantiation
     private QInvocationSession() {
         // Initialization code here
+        isMacOS = System.getProperty("os.name").toLowerCase().contains("mac");
     }
 
     // Method to get the single instance
@@ -489,6 +491,10 @@ public final class QInvocationSession extends QResource {
         return inlineTextFontBold;
     }
 
+    public boolean isMacOS() {
+        return isMacOS;
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
@@ -521,7 +527,6 @@ public final class QInvocationSession extends QResource {
         if (terminationListener != null) {
             widget.removeFocusListener(terminationListener);
         }
-        QInvocationSession.getInstance().getViewer().getTextWidget().redraw();
         if (paintListener != null) {
             paintListener.beforeRemoval();
             widget.removePaintListener(paintListener);
@@ -529,6 +534,12 @@ public final class QInvocationSession extends QResource {
         if (caretListener != null) {
             widget.removeCaretListener(caretListener);
         }
+        Display.getDefault().asyncExec(() -> {
+            if (!widget.isDisposed()) {
+                widget.redraw();
+                widget.update();
+            }
+        });
         paintListener = null;
         caretListener = null;
         inputListener = null;

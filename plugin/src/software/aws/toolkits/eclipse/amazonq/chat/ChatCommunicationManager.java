@@ -52,7 +52,7 @@ public final class ChatCommunicationManager {
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultMap chatPartialResultMap;
     private final LspEncryptionManager lspEncryptionManager;
-    private ChatUiRequestListener chatUiRequestListener;
+    private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
 
     private ChatCommunicationManager(final Builder builder) {
         this.jsonHandler = builder.jsonHandler != null ? builder.jsonHandler : new JsonHandler();
@@ -62,6 +62,7 @@ public final class ChatCommunicationManager {
                 : new ChatPartialResultMap();
         this.lspEncryptionManager = builder.lspEncryptionManager != null ? builder.lspEncryptionManager
                 : DefaultLspEncryptionManager.getInstance();
+        chatUiRequestListenerFuture = new CompletableFuture<>();
     }
 
     public static Builder builder() {
@@ -148,8 +149,7 @@ public final class ChatCommunicationManager {
         // only include files that are accessible via lsp which have absolute paths
         getOpenFileUri().ifPresent(filePathUri -> {
             chatRequestParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
-            getSelectionRangeCursorState()
-                    .ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+            getSelectionRangeCursorState().ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
         });
         return chatRequestParams;
     }
@@ -193,8 +193,7 @@ public final class ChatCommunicationManager {
             removePartialChatMessage(partialResultToken);
 
             if (exception != null) {
-                Activator.getLogger()
-                        .error("An error occurred while processing chat request: " + exception.getMessage());
+                Activator.getLogger().error("An error occurred while processing chat request: " + exception.getMessage());
                 sendErrorToUi(tabId, exception);
                 return null;
             } else {
@@ -213,8 +212,7 @@ public final class ChatCommunicationManager {
                     sendMessageToChatUI(chatUIInboundCommand);
                     return result;
                 } catch (Exception e) {
-                    Activator.getLogger()
-                            .error("An error occurred while processing chat response received: " + e.getMessage());
+                    Activator.getLogger().error("An error occurred while processing chat response received: " + e.getMessage());
                     sendErrorToUi(tabId, e);
                     return null;
                 }
@@ -233,21 +231,22 @@ public final class ChatCommunicationManager {
     }
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
-        chatUiRequestListener = listener;
+        chatUiRequestListenerFuture.complete(listener);
     }
 
     public void removeListener() {
-        chatUiRequestListener = null;
+        chatUiRequestListenerFuture = new CompletableFuture<>();
     }
 
     /*
      * Sends message to Chat UI to show in webview
      */
     public void sendMessageToChatUI(final ChatUIInboundCommand command) {
-        if (chatUiRequestListener != null) {
-            String message = jsonHandler.serialize(command);
-            chatUiRequestListener.onSendToChatUi(message);
-        }
+        String message = jsonHandler.serialize(command);
+        chatUiRequestListenerFuture.thenApply(listener -> {
+            listener.onSendToChatUi(message);
+            return listener;
+        });
     }
 
     /*

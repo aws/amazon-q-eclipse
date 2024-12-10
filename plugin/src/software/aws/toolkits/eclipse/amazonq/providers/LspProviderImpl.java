@@ -50,8 +50,8 @@ public final class LspProviderImpl implements LspProvider {
             CompletableFuture<LanguageServer> future = futures.remove(AmazonQLspServer.class);
             if (future != null) {
                 future.complete(server);
-                emitInitializeMetric();
             }
+            emitInitializeMetric();
         }
     }
 

@@ -23,7 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMeta
 
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
-    private static final String USER_AGENT_CLIENT_NAME = "AmazonQ-For-Eclipse";
+    private static final String USER_AGENT_CLIENT_NAME = "AmazonQ For Eclipse";
     private static Launcher<AmazonQLspServer> launcher;
 
     @Override

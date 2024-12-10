@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -18,11 +19,13 @@ import java.nio.file.StandardCopyOption;
 
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
@@ -45,10 +48,15 @@ public final class VersionManifestFetcherTest {
     void setUp() {
         mockedLogger = mock(LoggingService.class);
         testPreferences = new EclipsePreferences();
+        Activator activatorMock = Mockito.mock(Activator.class);
+        IPreferenceStore mockPreferenceStore = Mockito.mock(IPreferenceStore.class);
+        when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore);
         mockedActivator = mockStatic(Activator.class);
         mockedActivator.when(Activator::getLogger).thenReturn(mockedLogger);
         mockedActivator.when(Activator::getPluginStore).thenReturn(new DefaultPluginStore(testPreferences));
+        mockedActivator.when(Activator::getDefault).thenReturn(activatorMock);
         mockTelemetryProvider = mockStatic(LanguageServerTelemetryProvider.class);
+
     }
 
     @AfterEach

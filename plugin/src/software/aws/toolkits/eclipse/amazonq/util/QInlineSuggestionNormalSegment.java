@@ -8,6 +8,8 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.GlyphMetrics;
+import org.eclipse.swt.graphics.TextLayout;
+import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -17,13 +19,17 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
     private int lineInSuggestion;
     private String text;
     private StyleRange styleRange = new StyleRange();
+    private TextLayout layout;
+    private boolean isMacOS;
 
     public QInlineSuggestionNormalSegment(final int startCaretPosition, final int endCaretPosition,
-            final int lineInSuggestion, final String text) {
+            final int lineInSuggestion, final String text, final boolean isMacOS) {
+        this.isMacOS = isMacOS;
         this.text = text;
         this.startCaretOffset = startCaretPosition;
         this.endCaretOffset = endCaretPosition;
         this.lineInSuggestion = lineInSuggestion;
+        this.layout = isMacOS ? null : new TextLayout(Display.getCurrent());
     }
 
     @Override
@@ -73,13 +79,24 @@ public final class QInlineSuggestionNormalSegment implements IQInlineSuggestionS
         int scrollOffsetY = widget.getTopPixel();
         y -= scrollOffsetY;
 
-        gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
-        gc.setFont(qInvocationSessionInstance.getInlineTextFont());
-        gc.drawText(textToRender, x, y, true);
+        if (!isMacOS) {
+            layout.setText(textToRender);
+            layout.setFont(qInvocationSessionInstance.getInlineTextFont());
+            layout.setTabs(widget.getTabStops());
+            gc.setAlpha(127);
+            layout.draw(gc, x, y);
+        } else {
+            gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
+            gc.setFont(qInvocationSessionInstance.getInlineTextFont());
+            gc.drawText(textToRender, x, y, true);
+        }
     }
 
     @Override
     public void cleanUp() {
+        if (layout != null) {
+            layout.dispose();
+        }
         QInvocationSession session = QInvocationSession.getInstance();
         if (!session.isActive()) {
             return;

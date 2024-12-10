@@ -13,6 +13,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Optional;
+
+import javax.net.ssl.SSLHandshakeException;
+
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import org.eclipse.swt.widgets.Display;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -22,9 +28,11 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.ManifestLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
@@ -76,6 +84,14 @@ public final class VersionManifestFetcher {
             emitGetManifest(latestManifest.orElse(null), ManifestLocation.REMOTE, null);
             return latestManifest;
         } catch (Exception e) {
+            if (e.getCause() instanceof SSLHandshakeException) {
+                Display.getCurrent().asyncExec(() -> {
+                    AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                            Constants.IDE_SSL_HANDSHAKE_TITLE,
+                            Constants.IDE_SSL_HANDSHAKE_BODY);
+                    notification.open();
+                });
+            }
             Activator.getLogger().error("Error fetching manifest from remote location", e);
             emitGetManifest(null, ManifestLocation.UNKNOWN, ExceptionMetadata.scrubException(LspError.MANIFEST_FETCH_ERROR.toString(), e));
             return cachedManifest;

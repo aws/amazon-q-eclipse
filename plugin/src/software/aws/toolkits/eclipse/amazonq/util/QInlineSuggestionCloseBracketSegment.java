@@ -7,6 +7,8 @@ import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HIN
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.TextLayout;
+import org.eclipse.swt.widgets.Display;
 
 public final class QInlineSuggestionCloseBracketSegment implements IQInlineSuggestionSegment, IQInlineBracket {
     private QInlineSuggestionOpenBracketSegment openBracket;
@@ -15,16 +17,28 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
     private int lineInSuggestion;
     private String text;
     private Font adjustedTypedFont;
+    private TextLayout layout;
+    private TextLayout measureLayout;
+    private boolean isMacOS;
 
     public QInlineSuggestionCloseBracketSegment(final int caretOffset, final int lineInSuggestion, final String text,
-            final char symbol) {
+            final char symbol, final boolean isMacOS) {
         this.caretOffset = caretOffset;
         this.symbol = symbol;
         this.lineInSuggestion = lineInSuggestion;
         this.text = text;
+        this.layout = isMacOS ? null : new TextLayout(Display.getCurrent());
+        this.isMacOS = isMacOS;
 
         var qInvocationSessionInstance = QInvocationSession.getInstance();
         adjustedTypedFont = qInvocationSessionInstance.getBoldInlineFont();
+        if (!isMacOS) {
+            int[] tabStops = qInvocationSessionInstance.getViewer().getTextWidget().getTabStops();
+            measureLayout = new TextLayout(Display.getCurrent());
+            measureLayout.setText(text);
+            measureLayout.setFont(qInvocationSessionInstance.getInlineTextFont());
+            measureLayout.setTabs(tabStops);
+        }
     }
 
     @Override
@@ -57,25 +71,40 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
         int invocationLine = widget.getLineAtOffset(invocationOffset);
         int lineHt = widget.getLineHeight();
         int fontHt = gc.getFontMetrics().getHeight();
-        // educated guess:
-        int endPadding = gc.getAdvanceWidth(symbol) / 4;
         y = (invocationLine + lineInSuggestion + 1) * lineHt - fontHt;
-        x = gc.textExtent(text).x;
+        x = isMacOS ? gc.textExtent(text).x : (int) measureLayout.getBounds().width;
         if (lineInSuggestion == 0) {
             x += widget.getLocationAtOffset(invocationOffset).x;
         }
-
-        if (currentCaretOffset > openBracket.getRelevantOffset()) {
-            Color typedColor = widget.getForeground();
-            gc.setForeground(typedColor);
-            gc.setFont(adjustedTypedFont);
-        } else {
-            gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
-            gc.setFont(qInvocationSessionInstance.getInlineTextFont());
-        }
         int scrollOffsetY = widget.getTopPixel();
         y -= scrollOffsetY;
-        gc.drawText(String.valueOf(symbol), x, y, true);
+        String textToRender = String.valueOf(symbol);
+        if (currentCaretOffset > openBracket.getRelevantOffset()) {
+            Color typedColor = widget.getForeground();
+            if (isMacOS) {
+                gc.setForeground(typedColor);
+                gc.setFont(adjustedTypedFont);
+                gc.drawText(textToRender, x, y, false);
+            } else {
+                layout.setFont(adjustedTypedFont);
+                layout.setText(textToRender);
+                layout.setTabs(widget.getTabStops());
+                gc.setAlpha(255);
+                layout.draw(gc, x, y);
+            }
+        } else {
+            if (isMacOS) {
+                gc.setForeground(Q_INLINE_HINT_TEXT_COLOR);
+                gc.setFont(qInvocationSessionInstance.getInlineTextFont());
+                gc.drawText(textToRender, x, y, true);
+            } else {
+                layout.setFont(qInvocationSessionInstance.getInlineTextFont());
+                layout.setText(textToRender);
+                layout.setTabs(widget.getTabStops());
+                gc.setAlpha(127);
+                layout.draw(gc, x, y);
+            }
+        }
     }
 
     @Override
@@ -112,5 +141,11 @@ public final class QInlineSuggestionCloseBracketSegment implements IQInlineSugge
 
     @Override
     public void cleanUp() {
+        if (layout != null) {
+            layout.dispose();
+        }
+        if (measureLayout != null) {
+            measureLayout.dispose();
+        }
     }
 }

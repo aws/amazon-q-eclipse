@@ -4,8 +4,9 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -112,8 +113,13 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private String getContent() {
         try {
             URL jsFile = PluginUtils.getResource("webview/build/assets/js/getStart.js");
-            var jsParent = Paths.get(jsFile.toURI()).getParent();
-            var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+            String decodedPath = URLDecoder.decode(jsFile.getPath(), StandardCharsets.UTF_8);
+
+            // Remove leading slash for Windows paths
+            decodedPath = decodedPath.replaceFirst("^/([A-Za-z]:)", "$1");
+
+            Path jsParent = Paths.get(decodedPath).getParent();
+            String jsDirectoryPath = jsParent.normalize().toString();
 
             webviewAssetServer = new WebviewAssetServer();
             var result = webviewAssetServer.resolve(jsDirectoryPath);
@@ -170,7 +176,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
                             </html>
                             """,
                     loginJsPath, loginJsPath, loginJsPath, getWaitFunction(), isDarkTheme);
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             return "Failed to load JS";
         }
     }

@@ -4,6 +4,8 @@
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -25,7 +27,20 @@ public final class InlineQueryStatusBarContribution extends WorkbenchWindowContr
 
     @Override
     protected Control createControl(final Composite parent) {
+        GridData parentData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        parentData.verticalIndent = 0;
+        parent.setLayoutData(parentData);
+
+        GridLayout layout = new GridLayout();
+        layout.marginHeight = 0;
+        layout.marginLeft = 1;
+        layout.marginRight = 1;
+        layout.horizontalSpacing = 0;
+        layout.verticalSpacing = 0;
+        parent.setLayout(layout);
+
         statusLabel = new Label(parent, SWT.NONE);
+        statusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
         statusLabel.setText(IDLE_STATUS);
         QInvocationSession session = QInvocationSession.getInstance();
         session.assignQueryingCallback(new Runnable() {

@@ -9,6 +9,8 @@ import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
 import java.util.concurrent.ExecutionException;
@@ -45,6 +47,10 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
     }
 
     private boolean shouldSendQuery(final DocumentEvent e, final QInvocationSession session) {
+        if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
+            return false;
+        }
+
         if (e.getText().length() <= 0) {
             return false;
         }

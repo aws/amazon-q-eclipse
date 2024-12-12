@@ -27,12 +27,15 @@ import org.mockito.MockedStatic;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+
 public class AutoTriggerDocumentListenerTest {
     private static final String TEXT_STUB = "some stuff";
 
     private static MockedStatic<QInvocationSession> sessionMockStatic;
     private static MockedStatic<QEclipseEditorUtils> editorUtilsMockStatic;
     private static MockedStatic<PlatformUI> platformUIMockStatic;
+    private static MockedStatic<Activator> activatorMockStatic;
 
     private static QInvocationSession sessionMock;
     private static IExecutionListener executionListenerMock;
@@ -51,6 +54,9 @@ public class AutoTriggerDocumentListenerTest {
         ICommandService commandServiceMock = mock(ICommandService.class);
         platformUIMockStatic.when(() -> PlatformUI.getWorkbench().getService(ICommandService.class))
                 .thenReturn(commandServiceMock);
+
+        activatorMockStatic = mockStatic(Activator.class, RETURNS_DEEP_STUBS);
+        activatorMockStatic.when(() -> Activator.getLoginService().getAuthState().isLoggedIn()).thenReturn(true);
     }
 
     @AfterAll
@@ -58,6 +64,7 @@ public class AutoTriggerDocumentListenerTest {
         sessionMockStatic.close();
         editorUtilsMockStatic.close();
         platformUIMockStatic.close();
+        activatorMockStatic.close();
     }
 
     @Test

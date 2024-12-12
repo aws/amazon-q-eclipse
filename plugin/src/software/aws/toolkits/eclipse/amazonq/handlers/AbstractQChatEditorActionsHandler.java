@@ -15,6 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
@@ -27,7 +28,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
     @Override
     public final boolean isEnabled() {
         try {
-            return Activator.getLoginService().getAuthState().isLoggedIn();
+            return Activator.getLoginService().getAuthState().isLoggedIn() && !LspStatusManager.lspFailed();
         } catch (Exception e) {
             return false;
         }

@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
@@ -52,6 +53,7 @@ public final class LspProviderImpl implements LspProvider {
                 future.complete(server);
             }
             emitInitializeMetric();
+            LspStatusManager.setToActive();
         }
     }
 

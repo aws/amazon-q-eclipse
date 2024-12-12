@@ -25,5 +25,5 @@ public final class LspConstants {
     public static final String LSP_SUBDIRECTORY = "lsp";
     public static final String AMAZONQ_LSP_SUBDIRECTORY = Paths.get(LSP_SUBDIRECTORY, "AmazonQ").toString();
 
-    public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = new VersionRange("[2.2.0, 2.2.10)");
+    public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = new VersionRange("[2.3.0, 2.3.10)");
 }

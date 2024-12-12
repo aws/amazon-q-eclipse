@@ -422,6 +422,11 @@
                 class="software.aws.toolkits.eclipse.amazonq.views.actions.InlineQueryStatusBarContribution"
                 id="software.aws.toolkits.eclipse.amazonq.views.actions.InlineQueryStatusBarContribution"
                 >
+                <visibleWhen checkEnabled="false">
+                    <with variable="is_logged_in">
+                        <equals value="true"/>
+                    </with>
+                </visibleWhen>
                 </control>
            </toolbar>
         </menuContribution>

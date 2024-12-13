@@ -8,7 +8,7 @@ import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 public final class LspStatusManager {
 
     private LspStatusManager() {
-        //prevent
+        //prevent instantiation
     }
 
     private static LspState lspState = LspState.PENDING;

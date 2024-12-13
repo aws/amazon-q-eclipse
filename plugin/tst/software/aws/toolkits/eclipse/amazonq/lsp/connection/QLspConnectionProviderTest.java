@@ -3,16 +3,21 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.DefaultLspEncryptionManagerStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspManagerProviderStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtilsStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
+
 import org.eclipse.lsp4e.server.ProcessStreamConnectionProvider;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
@@ -30,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
 public final class QLspConnectionProviderTest {
@@ -47,6 +53,18 @@ public final class QLspConnectionProviderTest {
 
     @RegisterExtension
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();
+
+    private MockedStatic<LspStatusManager> mockLspStatusManager;
+
+    @BeforeEach
+    void setupBeforeEach() {
+        mockLspStatusManager = mockStatic(LspStatusManager.class);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockLspStatusManager.close();
+    }
 
     private static final class TestProcessConnectionProvider extends ProcessStreamConnectionProvider {
 

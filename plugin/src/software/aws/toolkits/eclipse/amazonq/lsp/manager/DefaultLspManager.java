@@ -14,6 +14,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 
+import org.eclipse.swt.widgets.Display;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
@@ -82,6 +87,10 @@ public final class DefaultLspManager implements LspManager {
             return overrideResult;
         }
         Manifest manifest = fetchManifest();
+
+        if (manifest.isManifestDeprecated()) {
+            showDeprecatedManifestNotification();
+        }
 
         var platform = platformOverride != null ? platformOverride : PluginUtils.getPlatform();
         var architecture = architectureOverride != null ? architectureOverride : PluginUtils.getArchitecture();
@@ -237,6 +246,15 @@ public final class DefaultLspManager implements LspManager {
                 PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
                 PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE));
         Files.setPosixFilePermissions(filePath, permissions);
+    }
+    private static void showDeprecatedManifestNotification() {
+        Display.getDefault().asyncExec(() -> {
+            AbstractNotificationPopup notification = new ToolkitNotification(
+                Display.getDefault(),
+                Constants.MANIFEST_DEPRECATED_NOTIFICATION_TITLE,
+                Constants.MANIFEST_DEPRECATED_NOTIFICATION_BODY);
+            notification.open();
+        });
     }
 
     public static class Builder {

@@ -23,6 +23,8 @@ public final class Constants {
     public static final String LSP_CODE_REFERENCES_OPT_OUT_KEY = "includeSuggestionsWithCodeReferences";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_TITLE = "Amazon Q Customization";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE = "Amazon Q inline suggestions are now coming from the %s";
+    public static final String MANIFEST_DEPRECATED_NOTIFICATION_TITLE = "Amazon Q Manifest Version is Deprecated";
+    public static final String MANIFEST_DEPRECATED_NOTIFICATION_BODY = "Current toolkit version will stop receiving updates. Please update the extension for continued support";
     public static final String DEFAULT_Q_FOUNDATION_DISPLAY_NAME = "Amazon Q foundation (Default)";
     public static final String LOGIN_TYPE_KEY = "LOGIN_TYPE";
     public static final String LOGIN_IDC_PARAMS_KEY = "IDC_PARAMS";

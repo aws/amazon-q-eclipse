@@ -1,12 +1,14 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
@@ -332,6 +334,65 @@ public final class RemoteLspFetcherTest {
         assertEquals(thirdAdditionalVersion, result.version());
 
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+    }
+
+    @Test
+    void testCleanup() throws IOException {
+
+        //set up compatible versions
+        String sampleLspVersionV2 = String.format("%s.1.0", versionRange.getLeft().getMajor());
+        String sampleLspVersionV3 = String.format("%s.2.0", versionRange.getLeft().getMajor());
+        sampleManifest = createManifest(
+                List.of(
+                        sampleLspVersion,
+                        createLspVersion(sampleLspVersionV2),
+                        createLspVersion(sampleLspVersionV3))
+                );
+
+        //create the compatible versions
+        Path acceptedVersion1 = Files.createDirectory(tempDir.resolve("1.7.0"));
+        Path acceptedVersion2 = Files.createDirectory(tempDir.resolve("1.2.0"));
+
+        //create delisted versions
+        Path delistedVersion1 = Files.createDirectory(tempDir.resolve("2.0.0"));
+        Path delistedVersion2 = Files.createDirectory(tempDir.resolve("1.0.0"));
+
+        //create extra version
+        Path extraVersion1 = Files.createDirectory(tempDir.resolve("1.1.0"));
+
+        //verify existence of files
+        assertTrue(Files.exists(acceptedVersion1));
+        assertTrue(Files.exists(acceptedVersion2));
+        assertTrue(Files.exists(extraVersion1));
+        assertTrue(Files.exists(delistedVersion1));
+        assertTrue(Files.exists(delistedVersion2));
+
+        lspFetcher = createFetcher();
+        lspFetcher.cleanup(tempDir);
+
+        //verify compatible versions still exist
+        assertTrue(Files.exists(acceptedVersion1));
+        assertTrue(Files.exists(acceptedVersion2));
+
+        //verify delisted versions were deleted
+        assertFalse(Files.exists(delistedVersion1));
+        assertFalse(Files.exists(delistedVersion2));
+        verify(mockLogger).info("Cleaning up 2 cached de-listed versions for Amazon Q Language Server");
+
+        //verify extra versions were deleted
+        assertFalse(Files.exists(extraVersion1));
+        verify(mockLogger).info("Cleaning up 1 cached extra versions for Amazon Q Language Server");
+    }
+
+    @Test
+    void testCleanupNullManifest() throws IOException {
+        sampleManifest = null;
+        Path delistedVersion1 = Files.createDirectory(tempDir.resolve("1.0.0"));
+        lspFetcher = createFetcher();
+        lspFetcher.cleanup(tempDir);
+
+        assertTrue(Files.exists(tempDir));
+        assertTrue(Files.exists(delistedVersion1));
     }
 
     private HttpResponse<Path> createMockHttpResponse(final Path file, final int statusCode) {

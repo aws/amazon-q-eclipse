@@ -25,6 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+import software.aws.toolkits.eclipse.amazonq.util.UpdateUtils;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 import org.eclipse.lsp4e.LanguageServiceAccessor;
@@ -55,6 +56,20 @@ public class LspStartupActivity implements IStartup {
             Activator.getLspProvider().getAmazonQServer();
             this.launchWebview();
         }
+        Job updateCheckJob = new Job("Check for updates") {
+            @Override
+            protected IStatus run(final IProgressMonitor monitor) {
+                try {
+                    UpdateUtils.getInstance().checkForUpdate();
+                } catch (Exception e) {
+                    return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
+                }
+                return Status.OK_STATUS;
+            }
+        };
+
+        updateCheckJob.setPriority(Job.DECORATE);
+        updateCheckJob.schedule();
     }
 
     private void launchWebview() {

@@ -9,7 +9,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import rx.Observer;
+import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
+import software.aws.toolkits.eclipse.amazonq.events.TestEvent;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
@@ -17,7 +20,8 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
+public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener,
+        Observer<TestEvent> {
 
     private AmazonQViewController viewController;
     private AmazonQCommonActions amazonQCommonActions;
@@ -25,6 +29,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
 
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
+        EventBroker.getInstance().subscribe(TestEvent.class, this);
     }
 
     public final Browser getBrowser() {
@@ -125,6 +130,21 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     public void dispose() {
         AuthStatusProvider.removeAuthStatusChangeListener(this);
         super.dispose();
+    }
+
+    @Override
+    public final void onNext(final TestEvent event) {
+        System.out.println(event.getMessage());
+    }
+
+    @Override
+    public final void onError(final Throwable throwable) {
+        System.out.println(throwable.getMessage());
+    }
+
+    @Override
+    public final void onCompleted() {
+        System.out.println("Completed");
     }
 
 }

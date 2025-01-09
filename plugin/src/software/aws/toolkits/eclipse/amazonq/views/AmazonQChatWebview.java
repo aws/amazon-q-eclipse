@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import rx.observers.TestSubscriber;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
@@ -24,6 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.publishers.TestPublisher;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -40,6 +42,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ChatTheme chatTheme;
     private Browser browser;
     private volatile boolean canDisposeState = false;
+    private final TestSubscriber testSubscriber;
 
     public AmazonQChatWebview() {
         super();
@@ -48,6 +51,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         this.chatTheme = new ChatTheme();
+        testSubscriber = new TestSubscriber();
     }
 
     @Override
@@ -117,6 +121,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
         // Check if user is authenticated and build view accordingly
         onAuthStatusChanged(authState);
+
+        new TestPublisher();
     }
 
     private Browser getAndUpdateStateManager() {

@@ -22,7 +22,8 @@ import org.eclipse.swt.SWT;
 public final class PersistentToolkitNotification extends ToolkitNotification {
     private final Consumer<Boolean> checkboxCallback;
 
-    public PersistentToolkitNotification(Display display, String title, String description, Consumer<Boolean> checkboxCallback) {
+    public PersistentToolkitNotification(final Display display, final String title,
+            final String description, final Consumer<Boolean> checkboxCallback) {
         super(display, title, description);
         this.checkboxCallback = checkboxCallback;
     }
@@ -63,7 +64,7 @@ public final class PersistentToolkitNotification extends ToolkitNotification {
         // make button text clickable
         checkboxLabel.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseUp(MouseEvent e) {
+            public void mouseUp(final MouseEvent e) {
                 doNotShowCheckbox.setSelection(!doNotShowCheckbox.getSelection());
                 if (checkboxCallback != null) {
                     checkboxCallback.accept(doNotShowCheckbox.getSelection());
@@ -73,7 +74,7 @@ public final class PersistentToolkitNotification extends ToolkitNotification {
 
         doNotShowCheckbox.addSelectionListener(new SelectionAdapter() {
             @Override
-            public void widgetSelected(SelectionEvent e) {
+            public void widgetSelected(final SelectionEvent e) {
                 if (checkboxCallback != null) {
                     checkboxCallback.accept(doNotShowCheckbox.getSelection());
                 }

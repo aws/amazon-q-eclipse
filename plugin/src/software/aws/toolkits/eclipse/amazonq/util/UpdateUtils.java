@@ -20,9 +20,9 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 
-public class UpdateUtils {
+public final class UpdateUtils {
     //env for this link?
-    private static final String requestURL = "https://amazonq.eclipsetoolkit.amazonwebservices.com/artifacts.xml.xz";
+    private static final String REQUESTURL = "https://amazonq.eclipsetoolkit.amazonwebservices.com/artifacts.xml.xz";
     private static Version mostRecentNotificationVersion;
     private static Version remoteVersion;
     private static Version localVersion;
@@ -40,7 +40,7 @@ public class UpdateUtils {
 
     private boolean newUpdateAvailable() {
         //fetch artifact file containing version info from repo
-        remoteVersion = fetchRemoteArtifactVersion(requestURL);
+        remoteVersion = fetchRemoteArtifactVersion(REQUESTURL);
 
         //return early if either version is unavailable
         if (remoteVersion == null || localVersion == null) {
@@ -59,7 +59,7 @@ public class UpdateUtils {
         }
     }
 
-    private Version fetchRemoteArtifactVersion(String repositoryUrl) {
+    private Version fetchRemoteArtifactVersion(final String repositoryUrl) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(repositoryUrl);
@@ -116,7 +116,7 @@ public class UpdateUtils {
         });
     }
 
-    private static boolean remoteVersionIsGreater(Version remote, Version local) {
+    private static boolean remoteVersionIsGreater(final Version remote, final Version local) {
         return remote.compareTo(local) > 0;
     }
 }

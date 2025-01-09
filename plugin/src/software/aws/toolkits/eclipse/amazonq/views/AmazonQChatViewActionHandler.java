@@ -2,7 +2,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,6 +23,7 @@ import org.eclipse.ui.PlatformUI;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpClickedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpType;
@@ -116,6 +116,9 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case AUTH_FOLLOW_UP_CLICKED:
                 AuthFollowUpClickedParams authFollowUpClickedParams = jsonHandler.convertObject(params, AuthFollowUpClickedParams.class);
                 handleAuthFollowUpClicked(authFollowUpClickedParams);
+                break;
+            case DISCLAIMER_ACKNOWLEDGED:
+                Activator.getPluginStore().put(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED, "true");
                 break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());

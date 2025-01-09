@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
@@ -223,6 +224,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     private String generateJS(final String jsEntrypoint) {
         var chatQuickActionConfig = generateQuickActionConfig();
+        var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
         return String.format("""
                 <script type="text/javascript" src="%s" defer></script>
                 <script type="text/javascript">
@@ -234,14 +236,18 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
-                                }, %s);
+                                }, {
+                                    quickActionCommands: %s,
+                                    disclaimerAcknowledged: %b
+                                });
                             })
                             .catch(error => console.error('Error initializing chat:', error));
                     }
 
                     window.addEventListener('load', init);
                 </script>
-                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig);
+                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
+                disclaimerAcknowledged.equals("true"));
     }
 
     /*
@@ -252,14 +258,13 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private String generateQuickActionConfig() {
         return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
                 .map(ChatOptions::quickActions).map(QuickActions::quickActionsCommandGroups)
-                .map(this::serializeQuickActionCommands).orElse("");
+                .map(this::serializeQuickActionCommands).orElse("[]");
     }
 
     private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {
         try {
             ObjectMapper mapper = ObjectMapperFactory.getInstance();
-            String json = mapper.writeValueAsString(quickActionCommands);
-            return String.format("{\"quickActionCommands\": %s}", json);
+            return mapper.writeValueAsString(quickActionCommands);
         } catch (Exception e) {
             Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
             return "";

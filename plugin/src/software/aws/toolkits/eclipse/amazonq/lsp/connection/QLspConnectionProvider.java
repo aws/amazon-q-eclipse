@@ -45,7 +45,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     protected final void addEnvironmentVariables(final Map<String, String> env) {
         String httpsProxyPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.HTTPS_PROXY);
         String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
-        if (!StringUtils.isEmpty(caCertPreference)) {
+        if (!StringUtils.isEmpty(httpsProxyPreference)) {
             env.put("HTTPS_PROXY", httpsProxyPreference);
         }
         if (!StringUtils.isEmpty(caCertPreference)) {

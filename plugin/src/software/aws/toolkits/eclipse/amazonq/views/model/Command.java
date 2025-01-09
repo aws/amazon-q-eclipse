@@ -24,6 +24,7 @@ public enum Command {
     CHAT_COPY_TO_CLIPBOARD("copyToClipboard"),
     CHAT_INSERT_TO_CURSOR_POSITION("insertToCursorPosition"),
     AUTH_FOLLOW_UP_CLICKED("authFollowUpClicked"), //Auth command handled in QChat webview
+    DISCLAIMER_ACKNOWLEDGED("disclaimerAcknowledged"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),

@@ -33,7 +33,7 @@ public class UpdateUtils {
     }
 
     private UpdateUtils() {
-        mostRecentNotificationVersion = Activator.getPluginStore().getObject(Constants.LAST_NOTIFIED_UPDATE_VERSION, Version.class);
+        mostRecentNotificationVersion = Activator.getPluginStore().getObject(Constants.DO_NOT_SHOW_UPDATE_KEY, Version.class);
         String localString = PluginClientMetadata.getInstance().getPluginVersion();
         localVersion = ArtifactUtils.parseVersion(localString.substring(0, localString.lastIndexOf(".")));
     }
@@ -55,11 +55,7 @@ public class UpdateUtils {
 
     public void checkForUpdate() {
         if (newUpdateAvailable()) {
-            //notify user
             showNotification();
-
-            //update storage with notification version
-            Activator.getPluginStore().putObject(Constants.LAST_NOTIFIED_UPDATE_VERSION, remoteVersion);
         }
     }
 
@@ -106,14 +102,21 @@ public class UpdateUtils {
 
     private void showNotification() {
         Display.getDefault().asyncExec(() -> {
-            AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+            AbstractNotificationPopup notification = new PersistentToolkitNotification(Display.getCurrent(),
                     Constants.PLUGIN_UPDATE_NOTIFICATION_TITLE,
-                    Constants.PLUGIN_UPDATE_NOTIFICATION_BODY);
+                    String.format(Constants.PLUGIN_UPDATE_NOTIFICATION_BODY, remoteVersion.toString()),
+                    (selected) -> {
+                        if (selected) {
+                            Activator.getPluginStore().putObject(Constants.DO_NOT_SHOW_UPDATE_KEY, remoteVersion);
+                        } else {
+                            Activator.getPluginStore().remove(Constants.DO_NOT_SHOW_UPDATE_KEY);
+                        }
+                    });
             notification.open();
         });
     }
 
     private static boolean remoteVersionIsGreater(Version remote, Version local) {
-        return (remote != null) && (local != null) && (remote.compareTo(local) > 0);
+        return remote.compareTo(local) > 0;
     }
 }

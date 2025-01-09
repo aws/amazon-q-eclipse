@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 
-public final class ToolkitNotification extends AbstractNotificationPopup {
+public class ToolkitNotification extends AbstractNotificationPopup {
 
     private final String title;
     private final String description;

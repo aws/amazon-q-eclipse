@@ -7,7 +7,11 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.widgets.Display;
@@ -21,8 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
 
 public final class UpdateUtils {
-    //env for this link?
-    private static final String REQUESTURL = "https://amazonq.eclipsetoolkit.amazonwebservices.com/artifacts.xml.xz";
+    private static final String REQUEST_URL = "https://amazonq.eclipsetoolkit.amazonwebservices.com/artifacts.xml.xz";
     private static Version mostRecentNotificationVersion;
     private static Version remoteVersion;
     private static Version localVersion;
@@ -40,7 +43,7 @@ public final class UpdateUtils {
 
     private boolean newUpdateAvailable() {
         //fetch artifact file containing version info from repo
-        remoteVersion = fetchRemoteArtifactVersion(REQUESTURL);
+        remoteVersion = fetchRemoteArtifactVersion(REQUEST_URL);
 
         //return early if either version is unavailable
         if (remoteVersion == null || localVersion == null) {
@@ -60,22 +63,24 @@ public final class UpdateUtils {
     }
 
     private Version fetchRemoteArtifactVersion(final String repositoryUrl) {
-        HttpURLConnection connection = null;
+        HttpClient connection = HttpClientFactory.getInstance();
         try {
-            URL url = new URL(repositoryUrl);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
+            HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(repositoryUrl))
+            .timeout(Duration.ofSeconds(5))
+            .GET()
+            .build();
+
+            HttpResponse<InputStream> response = connection.send(request,
+            HttpResponse.BodyHandlers.ofInputStream());
 
             // handle response codes
-            int responseCode = connection.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw new AmazonQPluginException("HTTP request failed with response code: " + responseCode);
+            if (response.statusCode() != HttpURLConnection.HTTP_OK) {
+                throw new AmazonQPluginException("HTTP request failed with response code: " + response.statusCode());
             }
 
             // process XZ content from input stream
-            try (InputStream inputStream = connection.getInputStream();
+            try (InputStream inputStream = response.body();
                  XZInputStream xzis = new XZInputStream(inputStream);
                  BufferedReader reader = new BufferedReader(new InputStreamReader(xzis))) {
 
@@ -92,10 +97,6 @@ public final class UpdateUtils {
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
         }
         return null;
     }

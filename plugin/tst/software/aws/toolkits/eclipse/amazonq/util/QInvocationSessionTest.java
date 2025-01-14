@@ -248,6 +248,7 @@ public class QInvocationSessionTest {
         localizedActivatorMock.when(Activator::getLspProvider).thenReturn(mockLspProvider);
         potentResponse = mock(InlineCompletionResponse.class);
         impotentResponse = mock(InlineCompletionResponse.class);
+        when(potentResponse.getSessionId()).thenReturn("sample-sessionId");
         when(potentResponse.getItems()).thenReturn(new ArrayList<>(getInlineCompletionItems()));
         when(impotentResponse.getItems()).thenReturn(Collections.emptyList());
         LoggingService loggingServiceMock = mock(LoggingService.class);

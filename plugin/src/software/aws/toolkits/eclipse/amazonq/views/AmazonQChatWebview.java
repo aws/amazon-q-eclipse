@@ -247,7 +247,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     window.addEventListener('load', init);
                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
-                disclaimerAcknowledged.equals("true"));
+                "true".equals(disclaimerAcknowledged));
     }
 
     /*

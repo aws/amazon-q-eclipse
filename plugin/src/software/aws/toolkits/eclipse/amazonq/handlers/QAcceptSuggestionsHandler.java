@@ -25,6 +25,8 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
         var suggestion = QInvocationSession.getInstance().getCurrentSuggestion();
         var widget = QInvocationSession.getInstance().getViewer().getTextWidget();
         var session = QInvocationSession.getInstance();
+        // mark current suggestion as accepted
+        session.setAccepted(suggestion.getItemId());
         session.setSuggestionAccepted(true);
         session.transitionToDecisionMade();
         Display display = widget.getDisplay();

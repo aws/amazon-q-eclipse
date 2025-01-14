@@ -274,18 +274,35 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         }
         String currentSuggestion = session.getCurrentSuggestion().getInsertText();
         int currentOffset = widget.getCaretOffset();
+
         if (input.isEmpty()) {
+            Activator.getLogger().info("distance traversed is 1:" + distanceTraversed);
             if (distanceTraversed <= 0) {
+                // discard all suggestions as caret position is less than request invocation position
+                session.updateCompletionStates(new ArrayList<String>());
                 session.transitionToDecisionMade();
                 session.end();
                 return;
             }
             distanceTraversed = typeaheadProcessor.getNewDistanceTraversedOnDeleteAndUpdateBracketState(
                     event.getLength(), distanceTraversed, brackets);
+            Activator.getLogger().info("distance traversed is" + distanceTraversed);
             if (distanceTraversed < 0) {
+                // discard all suggestions as caret position is less than request invocation position
+                session.updateCompletionStates(new ArrayList<String>());
                 session.transitionToDecisionMade();
                 session.end();
             }
+
+            // note: distanceTraversed as 0 is currently understood to be when a user presses BS removing any typeahead
+            if (distanceTraversed == 0) {
+                // reset completion states for all suggestions when user reverts to request
+                // invocation state
+                session.resetCompletionStates();
+                // mark currently displayed suggestion as seen
+                session.markSuggestionAsSeen();
+            }
+
             return;
         }
 
@@ -328,11 +345,18 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             session.transitionToDecisionMade(lineToUnsetIndent);
             Display.getCurrent().asyncExec(() -> {
                 if (session.isActive()) {
-                    session.end();
+                    // discard suggestions and end immediately as typeahead does not match
+                    session.updateCompletionStates(new ArrayList<String>());
+                    session.endImmediately();
                 }
             });
             return;
         }
+
+        // discard all other suggestions except for current one as typeahead matches it
+        // also mark current one as seen as it continues to be displayed
+        session.updateCompletionStates(List.of(session.getCurrentSuggestion().getItemId()));
+        session.markSuggestionAsSeen();
 
         // Here we perform "post closing bracket insertion caret correction", which
         // consists of the following:
@@ -398,7 +422,7 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         int currentOffset = invocationOffset + distanceTraversed;
         int lastKnownLine = widget.getLineAtOffset(currentOffset);
         qInvocationSessionInstance.transitionToDecisionMade(lastKnownLine + 1);
-        qInvocationSessionInstance.end();
+        qInvocationSessionInstance.endImmediately();
         return;
     }
 

@@ -22,6 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.LogInlineCompletionSessionResultsParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 
@@ -29,6 +30,9 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/textDocument/inlineCompletionWithReferences")
     CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(InlineCompletionParams params);
+
+    @JsonNotification("aws/logInlineCompletionSessionResults")
+    void logInlineCompletionSessionResult(LogInlineCompletionSessionResultsParams params);
 
     @JsonRequest("aws/chat/sendChatPrompt")
     CompletableFuture<String> sendChatPrompt(EncryptedChatParams encryptedChatRequestParams);

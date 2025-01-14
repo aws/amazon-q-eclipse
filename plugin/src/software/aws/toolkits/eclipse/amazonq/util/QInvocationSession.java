@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.custom.CaretListener;
@@ -12,15 +14,21 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionStates;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.LogInlineCompletionSessionResultsParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.model.InlineSuggestionCodeReference;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
@@ -39,6 +47,7 @@ public final class QInvocationSession extends QResource {
     private boolean isMacOS;
 
     private QSuggestionsContext suggestionsContext = null;
+    private ConcurrentHashMap<String, InlineCompletionStates> suggestionCompletionResults = new ConcurrentHashMap<String, InlineCompletionStates>();
 
     private ITextEditor editor = null;
     private ITextViewer viewer = null;
@@ -57,6 +66,10 @@ public final class QInvocationSession extends QResource {
     private Runnable changeStatusToQuerying;
     private Runnable changeStatusToIdle;
     private Runnable changeStatusToPreviewing;
+    private boolean hasSeenFirstSuggestion = false;
+    private long firstSuggestionDisplayLatency;
+    private StopWatch suggestionDisplaySessionStopWatch = new StopWatch();
+    private Optional<Integer> initialTypeaheadLength = Optional.empty();
 
     // Private constructor to prevent instantiation
     private QInvocationSession() {
@@ -152,32 +165,37 @@ public final class QInvocationSession extends QResource {
 
     private synchronized void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
         var uuid = UUID.randomUUID();
-        long invocationTimeInMs = System.currentTimeMillis();
         Activator.getLogger().info(uuid + " queried made at " + invocationOffset);
         var future = ThreadingUtils.executeAsyncTaskAndReturnFuture(() -> {
             try {
                 var session = QInvocationSession.getInstance();
+                List<InlineCompletionItem> newSuggestions = new ArrayList<InlineCompletionItem>();
+                List<String> sessionId = new ArrayList<String>();
+                long requestInvocation = System.currentTimeMillis();
 
-                List<InlineCompletionItem> newSuggestions = Activator.getLspProvider().getAmazonQServer().get()
-                        .inlineCompletionWithReferences(params)
-                        .thenApply(result -> result.getItems().parallelStream().map(item -> {
-                            if (isTabOnly) {
-                                String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
-                                item.setInsertText(sanitizedText);
-                            }
-                            return item;
-                        }).collect(Collectors.toList())).get();
-                unresolvedTasks.remove(uuid);
+                // request lsp for suggestions
+                var response = Activator.getLspProvider().getAmazonQServer().get()
+                        .inlineCompletionWithReferences(params);
+                response.thenAccept(result -> {
+                    sessionId.add(result.getSessionId());
+                    var suggestions = result.getItems().parallelStream().map(item -> {
+                        if (isTabOnly) {
+                            String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
+                            item.setInsertText(sanitizedText);
+                        }
+                        return item;
+                    }).collect(Collectors.toList());
+                    newSuggestions.addAll(suggestions);
+                }).get();
 
                 Display.getDefault().asyncExec(() -> {
-                    long curTimeInMs = System.currentTimeMillis();
-                    long timeUsedInMs = curTimeInMs - invocationTimeInMs;
-                    if (newSuggestions == null || newSuggestions.isEmpty()) {
+                    unresolvedTasks.remove(uuid);
+
+                    if (newSuggestions == null || newSuggestions.isEmpty() || sessionId.get(0) == null || sessionId.get(0).isEmpty()) {
                         if (!session.isPreviewingSuggestions()) {
                             end();
                         }
-                        Activator.getLogger()
-                                .info(uuid + " returned with no result. Time used: " + timeUsedInMs + " ms");
+                        Activator.getLogger().info(uuid + " returned with no result.");
                         if (params.getContext().getTriggerKind() == InlineCompletionTriggerKind.Invoke) {
                             Display display = Display.getDefault();
                             String message = "Q returned no suggestions";
@@ -185,9 +203,15 @@ public final class QInvocationSession extends QResource {
                         }
                         return;
                     } else {
-                        Activator.getLogger().info(uuid + " returned with " + newSuggestions.size()
-                                + " results. Time used: " + timeUsedInMs + " ms");
+                        Activator.getLogger().info(uuid + " returned with " + newSuggestions.size() + " results.");
                     }
+
+                    suggestionsContext.setSessionId(sessionId.get(0));
+                    suggestionsContext.setRequestedAtEpoch(requestInvocation);
+                    suggestionsContext.getDetails()
+                            .addAll(newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
+
+                    initializeSuggestionCompletionResults();
 
                     // If the caret positions has moved on from the invocation offset, we need to
                     // see if there exists in the suggestions fetched
@@ -199,6 +223,8 @@ public final class QInvocationSession extends QResource {
                     boolean hasAMatch = false;
                     var viewer = session.getViewer();
                     if (viewer == null || viewer.getTextWidget() == null || viewer.getTextWidget().getCaretOffset() < invocationOffset) {
+                        // discard all suggestions since the current caret is behind request position
+                        updateCompletionStates(new ArrayList<String>());
                         end();
                         return;
                     }
@@ -206,25 +232,37 @@ public final class QInvocationSession extends QResource {
                     if (viewer != null && viewer.getTextWidget() != null && viewer.getTextWidget().getCaretOffset() > invocationOffset) {
                         var widget = viewer.getTextWidget();
                         int currentOffset = widget.getCaretOffset();
+                        String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
+                        // Computes the typed prefix and typeahead length from when user invocation happened to
+                        // before suggestions are first shown in UI
+                        // Note: This computation may change later on but follows the same pattern for consistency across IDEs for now
+                        session.initialTypeaheadLength = Optional.of(prefix.length());
+
                         for (int i = 0; i < newSuggestions.size(); i++) {
-                            String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
                             if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
                                 currentIdxInSuggestion = i;
                                 hasAMatch = true;
                                 break;
                             }
                         }
+                        // indicates that typeahead prefix does not match any suggestions
                         if (invocationOffset != currentOffset && !hasAMatch) {
+                            // all suggestions filtered out, mark them as discarded
+                            updateCompletionStates(new ArrayList<String>());
                             end();
                             return;
+                        }
+
+                        // if typeahead exists, mark all suggestions except for current suggestion index with match as discarded
+                        // As of Jan 25, current logic blocks users from toggling between suggestions when a typeahead exists in QToggleSuggestionsHandler
+                        if (invocationOffset != currentOffset && hasAMatch) {
+                            var currentSuggestion = suggestionsContext.getDetails().get(currentIdxInSuggestion);
+                            var filteredSuggestions = List.of(currentSuggestion.getInlineCompletionItem().getItemId());
+                            updateCompletionStates(filteredSuggestions);
                         }
                     }
 
                     session.invocationOffset = invocationOffset;
-
-                    suggestionsContext.getDetails()
-                            .addAll(newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
-
                     suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
 
                     session.transitionToPreviewingState();
@@ -239,6 +277,64 @@ public final class QInvocationSession extends QResource {
             }
         });
         unresolvedTasks.put(uuid, future);
+    }
+
+
+    /*
+     *  Updates completion state of each suggestion in the `suggestionCompletionResult` map, given the updated filtered suggestion list
+     * @param filteredSuggestions
+     */
+    public void updateCompletionStates(final List<String> filteredSuggestions) {
+       // Mark all suggestions as unseen and discarded
+        suggestionCompletionResults.values().forEach(item -> {
+            item.setSeen(false);
+            item.setDiscarded(true);
+        });
+
+        // Reset discarded state for filtered suggestions
+        filteredSuggestions.forEach(itemId -> {
+            var item = suggestionCompletionResults.get(itemId);
+            item.setDiscarded(false);
+        });
+    }
+
+    /*
+     * Mark all suggestions as unseen and not discarded
+     */
+    public void resetCompletionStates() {
+        suggestionCompletionResults.values().forEach(item -> {
+            item.setSeen(false);
+            item.setDiscarded(false);
+        });
+    }
+
+    private void initializeSuggestionCompletionResults() {
+        suggestionsContext.getDetails().forEach(suggestion -> suggestionCompletionResults
+                .put(suggestion.getInlineCompletionItem().getItemId(), new InlineCompletionStates()));
+    }
+
+    public void setAccepted(final String suggestionId) {
+        var item =  Optional.ofNullable(suggestionCompletionResults.get(suggestionId));
+        item.ifPresent(result -> result.setAccepted(true));
+    }
+
+    /*
+     * When a suggestion is seen, marks it and starts display timer
+     */
+    public void markSuggestionAsSeen() {
+        var index = suggestionsContext.getCurrentIndex();
+        var suggestion = suggestionsContext.getDetails().get(index);
+        var item = Optional
+                .ofNullable(suggestionCompletionResults.get(suggestion.getInlineCompletionItem().getItemId()));
+        item.ifPresent(result -> {
+            result.setSeen(true);
+            // if this was the first suggestion displayed, start suggestion session display timer and record first suggestion's display latency
+            if (!hasSeenFirstSuggestion) {
+                suggestionDisplaySessionStopWatch.start();
+                firstSuggestionDisplayLatency = System.currentTimeMillis() - suggestionsContext.getRequestedAtEpoch();
+                hasSeenFirstSuggestion = true;
+            }
+        });
     }
 
     // Method to end the session
@@ -257,6 +353,10 @@ public final class QInvocationSession extends QResource {
         }
     }
 
+
+    /*
+     *  Usually called when user attempts to cancel the suggestion session such as by a diverging typeahead or hitting escape
+     */
     public void endImmediately() {
         if (isActive()) {
             if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
@@ -455,6 +555,7 @@ public final class QInvocationSession extends QResource {
     public void primeListeners() {
         inputListener.onNewSuggestion();
         paintListener.onNewSuggestion();
+        markSuggestionAsSeen();
     }
 
     public int getLastKnownLine() {
@@ -495,12 +596,68 @@ public final class QInvocationSession extends QResource {
         return isMacOS;
     }
 
+    /*
+     * Sends inline completion results for current suggestion session over to lsp for use with telemetry
+     */
+    private void sendSessionCompletionResult() {
+        try {
+            if (StringUtils.isEmpty(suggestionsContext.getSessionId()) || suggestionsContext.getDetails() == null
+                    || suggestionsContext.getDetails().isEmpty()) {
+                return;
+            }
+            if (suggestionDisplaySessionStopWatch.isStarted()) {
+                suggestionDisplaySessionStopWatch.stop();
+            }
+
+            final ConcurrentHashMap<String, InlineCompletionStates> completionStatesCopy = new ConcurrentHashMap<String, InlineCompletionStates>();
+            // Explicitly copy the map contents
+            for (Map.Entry<String, InlineCompletionStates> entry : suggestionCompletionResults.entrySet()) {
+                completionStatesCopy.put(String.valueOf(entry.getKey()), entry.getValue());
+            }
+
+            var result = new LogInlineCompletionSessionResultsParams(suggestionsContext.getSessionId(),
+                    completionStatesCopy);
+            if (firstSuggestionDisplayLatency > 0L) {
+                result.setFirstCompletionDisplayLatency(firstSuggestionDisplayLatency);
+            }
+
+            var sessionTime = suggestionDisplaySessionStopWatch.getTime(TimeUnit.MILLISECONDS);
+            if (sessionTime > 0L) {
+                result.setTotalSessionDisplayTime(sessionTime);
+            }
+
+            if (initialTypeaheadLength.isPresent()) {
+                result.setTypeaheadLength(initialTypeaheadLength.get());
+            }
+            sendCompletionSessionResult(result);
+        } catch (Exception e) {
+            Activator.getLogger()
+                    .error("Error occurred when sending suggestion completion results to Amazon Q language server", e);
+        }
+    }
+
+    private void sendCompletionSessionResult(final LogInlineCompletionSessionResultsParams result)
+            throws InterruptedException, ExecutionException {
+        ThreadingUtils.executeAsyncTask(() -> {
+            Activator.getLspProvider().getAmazonQServer().thenAccept(lsp -> lsp.logInlineCompletionSessionResult(result));
+        });
+    }
+
+    private void resetSessionResultParams() {
+        hasSeenFirstSuggestion = false;
+        firstSuggestionDisplayLatency = 0L;
+        suggestionDisplaySessionStopWatch.reset();
+        suggestionCompletionResults.clear();
+        initialTypeaheadLength = Optional.empty();
+    }
+
     // Additional methods for the session can be added here
     @Override
     public void dispose() {
         var widget = viewer.getTextWidget();
-
+        sendSessionCompletionResult();
         suggestionsContext = null;
+        resetSessionResultParams();
         if (inlineTextFont != null) {
             inlineTextFont.dispose();
         }

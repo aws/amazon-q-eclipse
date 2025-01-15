@@ -276,7 +276,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         int currentOffset = widget.getCaretOffset();
 
         if (input.isEmpty()) {
-            Activator.getLogger().info("distance traversed is 1:" + distanceTraversed);
             if (distanceTraversed <= 0) {
                 // discard all suggestions as caret position is less than request invocation position
                 session.updateCompletionStates(new ArrayList<String>());
@@ -286,7 +285,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
             }
             distanceTraversed = typeaheadProcessor.getNewDistanceTraversedOnDeleteAndUpdateBracketState(
                     event.getLength(), distanceTraversed, brackets);
-            Activator.getLogger().info("distance traversed is" + distanceTraversed);
             if (distanceTraversed < 0) {
                 // discard all suggestions as caret position is less than request invocation position
                 session.updateCompletionStates(new ArrayList<String>());

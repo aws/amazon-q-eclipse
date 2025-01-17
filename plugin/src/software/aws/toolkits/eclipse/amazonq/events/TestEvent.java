@@ -5,13 +5,19 @@ package software.aws.toolkits.eclipse.amazonq.events;
 
 public final class TestEvent {
     private final String message;
+    private final int sequenceNumber;
 
-    public TestEvent(final String message) {
+    public TestEvent(final String message, final int sequenceNumber) {
         this.message = message;
+        this.sequenceNumber = sequenceNumber;
     }
 
     public String getMessage() {
         return message;
+    }
+
+    public int getSequenceNumber() {
+        return sequenceNumber;
     }
 
 }

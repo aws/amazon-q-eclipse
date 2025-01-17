@@ -14,8 +14,8 @@ public final class TestPublisher {
                 Thread.sleep(5000);
                 EventBroker eventBroker = EventBroker.getInstance();
 
-                for (int i = 0; i < 10; i++) {
-                    eventBroker.post(new TestEvent("Test Event " + i));
+                for (int i = 0; i < 100000; i++) {
+                    eventBroker.post(new TestEvent("Test Event " + i, i));
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

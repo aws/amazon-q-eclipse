@@ -9,7 +9,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
-import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.events.TestEvent;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
@@ -30,7 +29,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
         new TestPublisher();
-        EventBroker.getInstance().subscribe(this);
+//        EventBroker.getInstance().subscribe(this);
     }
 
     public final Browser getBrowser() {

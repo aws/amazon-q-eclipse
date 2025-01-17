@@ -134,11 +134,6 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     }
 
     @Override
-    public final Class<TestEvent> getSubscriptionEventClass() {
-        return TestEvent.class;
-    }
-
-    @Override
     public final void handleEvent(final TestEvent event) {
         Activator.getLogger().info(event.getMessage());
     }

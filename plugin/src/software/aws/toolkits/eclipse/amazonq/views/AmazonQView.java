@@ -15,13 +15,13 @@ import software.aws.toolkits.eclipse.amazonq.events.TestEvent;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.observers.StreamObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.publishers.TestPublisher;
-import software.aws.toolkits.eclipse.amazonq.subscriber.Subscriber;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener, Subscriber<TestEvent> {
+public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener, StreamObserver<TestEvent> {
 
     private AmazonQViewController viewController;
     private AmazonQCommonActions amazonQCommonActions;
@@ -134,13 +134,18 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     }
 
     @Override
-    public final void handleEvent(final TestEvent event) {
+    public final void onEvent(final TestEvent event) {
         Activator.getLogger().info(event.getMessage());
     }
 
     @Override
-    public final void handleError(final Throwable error) {
+    public final void onError(final Throwable error) {
         error.printStackTrace();
+    }
+
+    @Override
+    public final void onComplete() {
+        System.out.println("Complete");
     }
 
 }

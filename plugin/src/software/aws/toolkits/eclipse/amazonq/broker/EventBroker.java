@@ -19,24 +19,22 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 
 import software.aws.toolkits.eclipse.amazonq.observers.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.observers.StreamObserver;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class EventBroker {
 
     @FunctionalInterface
     private interface TypedCallable<T> {
-        void call(T event);
+        void callWith(T event);
     }
 
-    private final class BlockingCallerRunsPolicy implements RejectedExecutionHandler {
+    public static final class CallerRunsPolicyBlocking implements RejectedExecutionHandler {
 
         private final BlockingQueue<Runnable> workQueue;
 
-        BlockingCallerRunsPolicy(final BlockingQueue<Runnable> workQueue) {
+        CallerRunsPolicyBlocking(final BlockingQueue<Runnable> workQueue) {
             this.workQueue = workQueue;
         }
 
@@ -56,42 +54,40 @@ public final class EventBroker {
 
     }
 
-    private class OrderedThreadPoolExecutor {
+    public static final class OrderedThreadPoolExecutor {
 
-        private final Map<String, BlockingQueue<?>> typedEventQueue;
-        private final Map<String, AtomicBoolean> typedJobStatus;
-        private final Map<String, ReentrantLock> typedJobLock;
-        private final Map<String, TypedCallable<?>> typedCallback;
+        private final Map<String, BlockingQueue<?>> interestIdToEventQueueMap;
+        private final Map<String, AtomicBoolean> interestIdToJobStatusMap;
+        private final Map<String, TypedCallable<?>> interestIdToCallbackMap;
 
-        private final BlockingQueue<Runnable> workQueue;
+        private final BlockingQueue<Runnable> scheduledJobsQueue;
         private final ThreadPoolExecutor executor;
         private final int eventQueueCapacity;
 
-        OrderedThreadPoolExecutor(final int coreThreadCount, final int maxThreadCount, final int queueCapacity,
-                final int keepAliveTime, final int eventQueueCapacity) {
-            workQueue = new ArrayBlockingQueue<>(queueCapacity);
-            typedEventQueue = new ConcurrentHashMap<>();
-            typedJobStatus = new ConcurrentHashMap<>();
-            typedJobLock = new ConcurrentHashMap<>();
-            typedCallback = new ConcurrentHashMap<>();
+        OrderedThreadPoolExecutor(final int coreThreadCount, final int maxThreadCount, final int jobQueueCapacity,
+                final int eventQueueCapacity, final int keepAliveTime, final TimeUnit keepAliveTimeUnit) {
+            scheduledJobsQueue = new ArrayBlockingQueue<>(jobQueueCapacity);
+            interestIdToEventQueueMap = new ConcurrentHashMap<>();
+            interestIdToJobStatusMap = new ConcurrentHashMap<>();
+            interestIdToCallbackMap = new ConcurrentHashMap<>();
 
             this.eventQueueCapacity = eventQueueCapacity;
 
-            executor = new ThreadPoolExecutor(coreThreadCount, maxThreadCount, keepAliveTime, TimeUnit.MILLISECONDS,
-                    workQueue, Executors.defaultThreadFactory(), new BlockingCallerRunsPolicy(workQueue));
+            executor = new ThreadPoolExecutor(coreThreadCount, maxThreadCount, keepAliveTime, keepAliveTimeUnit,
+                    scheduledJobsQueue, Executors.defaultThreadFactory(), new CallerRunsPolicyBlocking(scheduledJobsQueue));
         }
 
-        public <T, R> void registerCallback(final String interestId, final TypedCallable<R> callback) {
-            typedCallback.putIfAbsent(interestId, callback);
+        public <T, R> void registerCallbackForInterest(final String interestId, final TypedCallable<R> callback) {
+            interestIdToCallbackMap.putIfAbsent(interestId, callback);
         }
 
-        public <T> boolean hasRegisteredCallback(final String interestType) {
-            return typedCallback.containsKey(interestType);
+        public <T> boolean isCallbackRegisteredForInterest(final String interestId) {
+            return interestIdToCallbackMap.containsKey(interestId);
         }
 
         @SuppressWarnings("unchecked")
-        public <T, R> void submit(final String interestId, final R event) {
-            BlockingQueue<R> eventQueue = (BlockingQueue<R>) typedEventQueue.computeIfAbsent(interestId,
+        public <T, R> void submitEventForInterest(final String interestId, final R event) {
+            BlockingQueue<R> eventQueue = (BlockingQueue<R>) interestIdToEventQueueMap.computeIfAbsent(interestId,
                     k -> new ArrayBlockingQueue<>(eventQueueCapacity, true));
             try {
                 eventQueue.put(event);
@@ -99,79 +95,57 @@ public final class EventBroker {
                 e.printStackTrace();
             }
 
-            handleScheduling(interestId, (Class<R>) event.getClass(), eventQueue);
+            handleJobScheduling(interestId, (Class<R>) event.getClass(), eventQueue);
         }
 
-        public <T, R> void handleScheduling(final String interestId, final Class<R> eventType,
+        private <T, R> void handleJobScheduling(final String interestId, final Class<R> eventType,
                 final BlockingQueue<R> eventQueue) {
-            AtomicBoolean jobStatus = typedJobStatus.computeIfAbsent(interestId, k -> new AtomicBoolean(false));
-            ReentrantLock jobLock = typedJobLock.computeIfAbsent(interestId, k -> new ReentrantLock(true));
+            AtomicBoolean jobStatus = interestIdToJobStatusMap.computeIfAbsent(interestId, k -> new AtomicBoolean(false));
 
-            jobLock.lock();
-            try {
-                if (!jobStatus.get() && !eventQueue.isEmpty()) {
-                    if (jobStatus.compareAndSet(false, true)) {
-                        executor.submit(() -> processEventQueue(interestId, eventType,
-                                eventQueue, jobStatus, jobLock));
-                    }
-                }
-            } finally {
-                jobLock.unlock();
+            if (!jobStatus.get() && !eventQueue.isEmpty() && jobStatus.compareAndSet(false, true)) {
+                executor.submit(() -> processQueuedEvents(interestId, eventType, eventQueue, jobStatus));
             }
         }
 
         @SuppressWarnings("unchecked")
-        public <T, R> void processEventQueue(final String interestId, final Class<R> eventType,
-                final BlockingQueue<R> eventQueue, final AtomicBoolean jobStatus, final ReentrantLock jobLock) {
-            if (jobStatus == null || jobLock == null || eventQueue == null) {
-                throw new NullPointerException("ThreadPoolExecutor in unexpected state");
-            }
-
-            jobLock.lock();
+        private <T, R> void processQueuedEvents(final String interestId, final Class<R> eventType,
+                final BlockingQueue<R> eventQueue, final AtomicBoolean jobStatus) {
             try {
-                TypedCallable<R> eventCallback = (TypedCallable<R>) typedCallback.get(interestId);
+                TypedCallable<R> eventCallback = (TypedCallable<R>) interestIdToCallbackMap.get(interestId);
                 if (eventCallback == null) {
                     return;
                 }
 
                 while (!eventQueue.isEmpty()) {
-                    try {
-                        R newEvent = eventQueue.take();
-                        if (newEvent != null) {
-                            try {
-                                eventCallback.call(newEvent);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+                    R newEvent = eventQueue.poll();
+                    if (newEvent != null) {
+                        try {
+                            eventCallback.callWith(newEvent);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }
             } finally {
-                try {
-                    jobStatus.set(false);
-                } finally {
-                    jobLock.unlock();
-                }
+                jobStatus.set(false);
             }
         }
+
     }
 
     private static final EventBroker INSTANCE;
-    private final Map<Class<?>, SubmissionPublisher<?>> publishers;
-    private final OrderedThreadPoolExecutor emissionExecutor;
-    private final OrderedThreadPoolExecutor consumptionExecutor;
+    private final Map<Class<?>, SubmissionPublisher<?>> eventTypeToPublisherMap;
+    private final OrderedThreadPoolExecutor publisherExecutor;
+    private final OrderedThreadPoolExecutor subscriberExecutor;
 
     static {
         INSTANCE = new EventBroker();
     }
 
     private EventBroker() {
-        publishers = new ConcurrentHashMap<>();
-
-        emissionExecutor = new OrderedThreadPoolExecutor(5, 30, 30, 10, 100000000);
-        consumptionExecutor = new OrderedThreadPoolExecutor(5, 30, 30, 10, 100000000);
+        eventTypeToPublisherMap = new ConcurrentHashMap<>();
+        publisherExecutor = new OrderedThreadPoolExecutor(3, 10, 10, 100, 10, TimeUnit.MILLISECONDS);
+        subscriberExecutor = new OrderedThreadPoolExecutor(3, 10, 10, 100, 10, TimeUnit.MILLISECONDS);
     }
 
     public static EventBroker getInstance() {
@@ -184,20 +158,20 @@ public final class EventBroker {
             return;
         }
 
-        SubmissionPublisher<T> publisher = getPublisher((Class<T>) event.getClass());
-        if (!emissionExecutor.hasRegisteredCallback((event.getClass().getName()))) {
-            registerPublisherCallback(publisher, event.getClass().getName());
+        SubmissionPublisher<T> publisher = getPublisherForEventType((Class<T>) event.getClass());
+        if (!publisherExecutor.isCallbackRegisteredForInterest((event.getClass().getName()))) {
+            registerPublisherCallbackForInterest(event.getClass().getName(), publisher);
         }
 
-        emissionExecutor.submit(event.getClass().getName(), event);
+        publisherExecutor.submitEventForInterest(event.getClass().getName(), event);
     }
 
     public <T> Subscription subscribe(final EventObserver<T> observer) {
-        SubmissionPublisher<T> publisher = getPublisher(observer.getEventType());
+        SubmissionPublisher<T> publisher = getPublisherForEventType(observer.getEventType());
         AtomicReference<Subscription> subscriptionReference = new AtomicReference<>();
         String subscriberId = UUID.randomUUID().toString();
 
-        registerSubscriberCallback(observer, subscriberId);
+        registerSubscriberCallbackForInterest(subscriberId, observer);
 
         Subscriber<T> subscriber = new Subscriber<>() {
 
@@ -207,19 +181,18 @@ public final class EventBroker {
             public void onSubscribe(final Subscription subscription) {
                 this.subscription = subscription;
                 subscriptionReference.set(subscription);
-
                 this.subscription.request(1);
             }
 
             @Override
             public void onNext(final T event) {
-                consumptionExecutor.submit(subscriberId, event);
-                this.subscription.request(1);
+                subscriberExecutor.submitEventForInterest(subscriberId, event);
+                subscription.request(1);
             }
 
             @Override
-            public void onError(final Throwable throwable) {
-                return;
+            public void onError(final Throwable error) {
+                error.printStackTrace();
             }
 
             @Override
@@ -234,11 +207,11 @@ public final class EventBroker {
     }
 
     public <T> Subscription subscribe(final StreamObserver<T> observer) {
-        SubmissionPublisher<T> publisher = getPublisher(observer.getEventType());
+        SubmissionPublisher<T> publisher = getPublisherForEventType(observer.getEventType());
         AtomicReference<Subscription> subscriptionReference = new AtomicReference<>();
         String subscriberId = UUID.randomUUID().toString();
 
-        registerSubscriberCallback(observer, subscriberId);
+        registerSubscriberCallbackForInterest(subscriberId, observer);
 
         Subscriber<T> subscriber = new Subscriber<>() {
 
@@ -248,19 +221,18 @@ public final class EventBroker {
             public void onSubscribe(final Subscription subscription) {
                 this.subscription = subscription;
                 subscriptionReference.set(subscription);
-
                 this.subscription.request(1);
             }
 
             @Override
             public void onNext(final T event) {
-                consumptionExecutor.submit(subscriberId, event);
-                this.subscription.request(1);
+                subscriberExecutor.submitEventForInterest(subscriberId, event);
+                subscription.request(1);
             }
 
             @Override
-            public void onError(final Throwable throwable) {
-                observer.onError(throwable);
+            public void onError(final Throwable error) {
+                observer.onError(error);
             }
 
             @Override
@@ -275,30 +247,31 @@ public final class EventBroker {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> SubmissionPublisher<T> getPublisher(final Class<T> eventType) {
-        return (SubmissionPublisher<T>) publishers.computeIfAbsent(eventType,
+    private <T> SubmissionPublisher<T> getPublisherForEventType(final Class<T> eventType) {
+        return (SubmissionPublisher<T>) eventTypeToPublisherMap.computeIfAbsent(eventType,
                 key -> new SubmissionPublisher<>(Runnable::run, Flow.defaultBufferSize()));
     }
 
-    private <T> void registerSubscriberCallback(final EventObserver<T> subscriber, final String subscriberId) {
-        Activator.getLogger().info(subscriberId);
+    private <T> void registerSubscriberCallbackForInterest(final String interestId,
+            final EventObserver<T> observer) {
         TypedCallable<T> eventCallback = new TypedCallable<>() {
             @Override
-            public void call(final T event) {
-                subscriber.onEvent(event);
+            public void callWith(final T event) {
+                observer.onEvent(event);
             }
         };
-        consumptionExecutor.registerCallback(subscriberId, eventCallback);
+        subscriberExecutor.registerCallbackForInterest(interestId, eventCallback);
     }
 
-    private <T> void registerPublisherCallback(final SubmissionPublisher<T> publisher, final String eventId) {
+    private <T> void registerPublisherCallbackForInterest(final String interestId,
+            final SubmissionPublisher<T> publisher) {
         TypedCallable<T> eventCallback = new TypedCallable<>() {
             @Override
-            public void call(final T event) {
+            public void callWith(final T event) {
                 publisher.submit(event);
             }
         };
-        emissionExecutor.registerCallback(eventId, eventCallback);
+        publisherExecutor.registerCallbackForInterest(interestId, eventCallback);
     }
 
 }

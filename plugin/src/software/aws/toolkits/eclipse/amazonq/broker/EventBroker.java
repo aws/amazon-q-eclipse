@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.broker;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -63,6 +65,7 @@ public final class EventBroker {
         private final BlockingQueue<Runnable> scheduledJobsQueue;
         private final ThreadPoolExecutor executor;
         private final int eventQueueCapacity;
+        private static final int BATCH_PROCESSING_QUEUE_SIZE = 250;
 
         OrderedThreadPoolExecutor(final int coreThreadCount, final int maxThreadCount, final int jobQueueCapacity,
                 final int eventQueueCapacity, final int keepAliveTime, final TimeUnit keepAliveTimeUnit) {
@@ -116,15 +119,20 @@ public final class EventBroker {
                     return;
                 }
 
+                List<R> batchedEvents = new ArrayList<>(BATCH_PROCESSING_QUEUE_SIZE);
+
                 while (!eventQueue.isEmpty()) {
-                    R newEvent = eventQueue.poll();
-                    if (newEvent != null) {
+                    eventQueue.drainTo(batchedEvents);
+
+                    for (R newEvent : batchedEvents) {
                         try {
                             eventCallback.callWith(newEvent);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
+
+                    batchedEvents.clear();
                 }
             } finally {
                 jobStatus.set(false);

@@ -3,15 +3,15 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 import org.eclipse.jface.action.Action;
 
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.observers.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
-public final class SignoutAction extends Action implements AuthStatusChangedListener {
+public final class SignoutAction extends Action implements EventObserver<AuthState> {
     public SignoutAction() {
         setText("Sign out");
     }
@@ -42,7 +42,7 @@ public final class SignoutAction extends Action implements AuthStatusChangedList
     }
 
     @Override
-    public void onAuthStatusChanged(final AuthState authState) {
+    public void onEvent(final AuthState authState) {
         updateVisibility(authState);
     }
 }

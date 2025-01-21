@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Flow.Subscription;
 
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.AbstractSourceProvider;
@@ -13,7 +14,9 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
+import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.observers.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 /**
@@ -30,12 +33,13 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
  * @see software.aws.toolkits.eclipse.amazonq.toolbar
  * @see software.aws.toolkits.eclipse.amazonq.toolbar-unauthenticated
  */
-public final class AuthSourceProvider extends AbstractSourceProvider implements AuthStatusChangedListener {
+public final class AuthSourceProvider extends AbstractSourceProvider implements EventObserver<AuthState> {
     public static final String IS_LOGGED_IN_VARIABLE_ID = "is_logged_in";
     private boolean isLoggedIn = false;
+    private Subscription authStateSubscription;
 
     public AuthSourceProvider() {
-        AuthStatusProvider.addAuthStatusChangeListener(this);
+        authStateSubscription = EventBroker.getInstance().subscribe(this);
         isLoggedIn = Activator.getLoginService().getAuthState().isLoggedIn();
     }
 
@@ -53,8 +57,7 @@ public final class AuthSourceProvider extends AbstractSourceProvider implements 
 
         // Notify listeners that this provider is being disposed
         fireSourceChanged(ISources.WORKBENCH, IS_LOGGED_IN_VARIABLE_ID, null);
-
-        AuthStatusProvider.removeAuthStatusChangeListener(this);
+        authStateSubscription.cancel();
     }
 
     @Override
@@ -69,7 +72,7 @@ public final class AuthSourceProvider extends AbstractSourceProvider implements 
 
     public static AuthSourceProvider getProvider() {
         IWorkbench workbench = PlatformUI.getWorkbench();
-        ISourceProviderService sourceProviderService = (ISourceProviderService) workbench
+        ISourceProviderService sourceProviderService = workbench
                 .getService(ISourceProviderService.class);
         AuthSourceProvider provider = (AuthSourceProvider) sourceProviderService
                 .getSourceProvider(AuthSourceProvider.IS_LOGGED_IN_VARIABLE_ID);
@@ -77,7 +80,7 @@ public final class AuthSourceProvider extends AbstractSourceProvider implements 
     }
 
     @Override
-    public void onAuthStatusChanged(final AuthState authState) {
+    public void onEvent(final AuthState authState) {
         boolean isLoggedIn = authState.isLoggedIn();
         Display.getDefault().asyncExec(() -> {
             setIsLoggedIn(isLoggedIn);

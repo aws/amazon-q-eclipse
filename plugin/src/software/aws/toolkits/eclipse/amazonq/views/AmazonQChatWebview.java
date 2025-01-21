@@ -117,7 +117,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         });
 
         // Check if user is authenticated and build view accordingly
-        onAuthStatusChanged(authState);
+        onEvent(authState);
     }
 
     private Browser getAndUpdateStateManager() {
@@ -127,7 +127,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     @Override
-    public final void onAuthStatusChanged(final AuthState authState) {
+    public final void onEvent(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(authState, getViewSite());
             if (authState.isExpired()) {

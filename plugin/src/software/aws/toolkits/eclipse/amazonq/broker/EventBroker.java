@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.broker;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -21,6 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import software.aws.toolkits.eclipse.amazonq.observers.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.observers.StreamObserver;
@@ -61,11 +60,11 @@ public final class EventBroker {
         private final Map<String, BlockingQueue<?>> interestIdToEventQueueMap;
         private final Map<String, AtomicBoolean> interestIdToJobStatusMap;
         private final Map<String, TypedCallable<?>> interestIdToCallbackMap;
+        private final Map<String, ReentrantLock> interestIdToJobLockMap;
 
         private final BlockingQueue<Runnable> scheduledJobsQueue;
         private final ThreadPoolExecutor executor;
         private final int eventQueueCapacity;
-        private static final int BATCH_PROCESSING_QUEUE_SIZE = 250;
 
         OrderedThreadPoolExecutor(final int coreThreadCount, final int maxThreadCount, final int jobQueueCapacity,
                 final int eventQueueCapacity, final int keepAliveTime, final TimeUnit keepAliveTimeUnit) {
@@ -73,6 +72,7 @@ public final class EventBroker {
             interestIdToEventQueueMap = new ConcurrentHashMap<>();
             interestIdToJobStatusMap = new ConcurrentHashMap<>();
             interestIdToCallbackMap = new ConcurrentHashMap<>();
+            interestIdToJobLockMap = new ConcurrentHashMap<>();
 
             this.eventQueueCapacity = eventQueueCapacity;
 
@@ -92,10 +92,14 @@ public final class EventBroker {
         public <T, R> void submitEventForInterest(final String interestId, final R event) {
             BlockingQueue<R> eventQueue = (BlockingQueue<R>) interestIdToEventQueueMap.computeIfAbsent(interestId,
                     k -> new ArrayBlockingQueue<>(eventQueueCapacity, true));
+            ReentrantLock jobLock = interestIdToJobLockMap.computeIfAbsent(interestId, k -> new ReentrantLock(true));
+            jobLock.lock();
             try {
                 eventQueue.put(event);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+                jobLock.unlock();
             }
 
             handleJobScheduling(interestId, (Class<R>) event.getClass(), eventQueue);
@@ -119,20 +123,17 @@ public final class EventBroker {
                     return;
                 }
 
-                List<R> batchedEvents = new ArrayList<>(BATCH_PROCESSING_QUEUE_SIZE);
-
                 while (!eventQueue.isEmpty()) {
-                    eventQueue.drainTo(batchedEvents);
-
-                    for (R newEvent : batchedEvents) {
-                        try {
+                    try {
+                        R newEvent = eventQueue.poll();
+                        if (newEvent != null) {
                             eventCallback.callWith(newEvent);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        } else {
+                            break;
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-
-                    batchedEvents.clear();
                 }
             } finally {
                 jobStatus.set(false);
@@ -152,8 +153,8 @@ public final class EventBroker {
 
     private EventBroker() {
         eventTypeToPublisherMap = new ConcurrentHashMap<>();
-        publisherExecutor = new OrderedThreadPoolExecutor(3, 10, 10, 100, 10, TimeUnit.MILLISECONDS);
-        subscriberExecutor = new OrderedThreadPoolExecutor(3, 10, 10, 100, 10, TimeUnit.MILLISECONDS);
+        publisherExecutor = new OrderedThreadPoolExecutor(5, 20, 50, 100, 10, TimeUnit.MILLISECONDS);
+        subscriberExecutor = new OrderedThreadPoolExecutor(5, 20, 50, 100, 10, TimeUnit.MILLISECONDS);
     }
 
     public static EventBroker getInstance() {

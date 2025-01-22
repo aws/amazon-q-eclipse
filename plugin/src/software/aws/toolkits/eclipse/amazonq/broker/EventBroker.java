@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.broker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -61,6 +62,7 @@ public final class EventBroker {
         private final Map<String, BlockingQueue<?>> interestIdToEventQueueMap;
         private final Map<String, AtomicBoolean> interestIdToJobStatusMap;
         private final Map<String, TypedCallable<?>> interestIdToCallbackMap;
+        private final Map<String, Object> interestIdToLastEventMap;
 
         private final BlockingQueue<Runnable> scheduledJobsQueue;
         private final ThreadPoolExecutor executor;
@@ -74,6 +76,7 @@ public final class EventBroker {
             interestIdToEventQueueMap = new ConcurrentHashMap<>();
             interestIdToJobStatusMap = new ConcurrentHashMap<>();
             interestIdToCallbackMap = new ConcurrentHashMap<>();
+            interestIdToLastEventMap = new ConcurrentHashMap<>();
 
             this.eventQueueCapacity = eventQueueCapacity;
 
@@ -121,11 +124,16 @@ public final class EventBroker {
                 }
 
                 List<R> eventBatchQueue = new ArrayList<>(EVENT_BATCH_SIZE);
+                R lastEvent = Optional.ofNullable(interestIdToLastEventMap.get(interestId)).map(event -> (R) event)
+                        .orElse(null);
 
-                while (eventQueue.drainTo(eventBatchQueue) > 0) {
+                while (eventQueue.drainTo(eventBatchQueue, EVENT_BATCH_SIZE) > 0) {
                     for (R newEvent : eventBatchQueue) {
                         try {
-                            eventCallback.callWith(newEvent);
+                            if (!newEvent.equals(lastEvent)) {
+                                eventCallback.callWith(newEvent);
+                            }
+                            lastEvent = newEvent;
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -133,6 +141,8 @@ public final class EventBroker {
 
                     eventBatchQueue.clear();
                 }
+
+                interestIdToLastEventMap.put(interestId, lastEvent);
             } finally {
                 jobStatus.set(false);
             }

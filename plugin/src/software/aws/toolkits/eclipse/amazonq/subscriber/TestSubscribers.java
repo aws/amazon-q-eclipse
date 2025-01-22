@@ -17,7 +17,7 @@ public final class TestSubscribers implements EventObserver<TestEvent> {
 
     @Override
     public void onEvent(final TestEvent event) {
-        Activator.getLogger().info(event.getMessage());
+//        Activator.getLogger().info(event.getMessage());
 
         if (event.getSequenceNumber() - previousSequenceNumber != 1) {
             Activator.getLogger().info("OUT OF ORDER: " + event.getSequenceNumber() + " " + previousSequenceNumber);

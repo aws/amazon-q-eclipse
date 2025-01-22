@@ -16,7 +16,6 @@ import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.observers.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.publishers.TestPublisher;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -29,7 +28,6 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
 
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
-        new TestPublisher();
     }
 
     public final Browser getBrowser() {

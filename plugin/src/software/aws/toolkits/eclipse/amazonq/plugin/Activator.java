@@ -17,6 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
+import software.aws.toolkits.eclipse.amazonq.publishers.TestPublisher;
 import software.aws.toolkits.eclipse.amazonq.subscriber.TestSubscribers;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
@@ -57,6 +58,8 @@ public class Activator extends AbstractUIPlugin {
             testSubscriberList.add(testSubsciber);
             EventBroker.getInstance().subscribe(testSubsciber);
         }
+
+        new TestPublisher();
     }
 
     @Override

@@ -36,7 +36,7 @@ import software.aws.toolkits.eclipse.amazonq.observers.StreamObserver;
  * - Ordered event processing with batching support
  * - Configurable thread pools for publishers and subscribers
  * - De-duplication of consecutive identical events
- * 
+ *
  * Thread Safety: This implementation is thread-safe and can handle concurrent publications
  * and subscriptions from multiple threads.
  *
@@ -66,7 +66,7 @@ public final class EventBroker {
      * A rejection handler that defers task queuing by creating a new thread when the executor's queue is full.
      * Instead of dropping tasks or blocking the submitting thread, this policy creates a dedicated
      * "JobSubmissionPopUpThread" to handle the queuing of rejected tasks.
-     * 
+     *
      * When a task is rejected (due to queue capacity being reached):
      * 1. If the executor is running:
      *    - Creates a new thread to handle the rejected task
@@ -75,12 +75,12 @@ public final class EventBroker {
      *      throws RejectedExecutionException with the original exception as cause
      * 2. If the executor is shutdown:
      *    - Immediately throws RejectedExecutionException
-     * 
+     *
      * This approach ensures:
      * - Tasks are not lost during high load
      * - The submitting thread is not blocked
      * - Task ordering is maintained through the queue
-     * 
+     *
      * Note: Each rejection creates a new thread, which should be considered when
      * using this handler in scenarios with frequent queue rejections.
      */
@@ -144,7 +144,7 @@ public final class EventBroker {
      * );
      *
      * Thread Safety: This class is thread-safe and can handle concurrent task submissions
-     * from multiple threads while maintaining execution order. 
+     * from multiple threads while maintaining execution order.
      */
     public static final class OrderedThreadPoolExecutor {
 

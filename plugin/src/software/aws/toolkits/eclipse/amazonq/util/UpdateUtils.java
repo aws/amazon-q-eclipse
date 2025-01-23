@@ -96,7 +96,7 @@ public final class UpdateUtils {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Activator.getLogger().error("Error fetching artifact from remote location.", e);
         }
         return null;
     }

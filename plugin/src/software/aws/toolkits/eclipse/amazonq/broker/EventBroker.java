@@ -84,17 +84,17 @@ public final class EventBroker {
                     scheduledJobsQueue, Executors.defaultThreadFactory(), new CallerRunsPolicyBlocking(scheduledJobsQueue));
         }
 
-        public <T, R> void registerCallbackForInterest(final String interestId, final TypedCallable<R> callback) {
+        public <T> void registerCallbackForInterest(final String interestId, final TypedCallable<T> callback) {
             interestIdToCallbackMap.putIfAbsent(interestId, callback);
         }
 
-        public <T> boolean isCallbackRegisteredForInterest(final String interestId) {
+        public boolean isCallbackRegisteredForInterest(final String interestId) {
             return interestIdToCallbackMap.containsKey(interestId);
         }
 
         @SuppressWarnings("unchecked")
-        public <T, R> void submitEventForInterest(final String interestId, final R event) {
-            BlockingQueue<R> eventQueue = (BlockingQueue<R>) interestIdToEventQueueMap.computeIfAbsent(interestId,
+        public <T> void submitEventForInterest(final String interestId, final T event) {
+            BlockingQueue<T> eventQueue = (BlockingQueue<T>) interestIdToEventQueueMap.computeIfAbsent(interestId,
                     k -> new ArrayBlockingQueue<>(eventQueueCapacity, true));
             try {
                 eventQueue.put(event);
@@ -102,11 +102,11 @@ public final class EventBroker {
                 e.printStackTrace();
             }
 
-            handleJobScheduling(interestId, (Class<R>) event.getClass(), eventQueue);
+            handleJobScheduling(interestId, (Class<T>) event.getClass(), eventQueue);
         }
 
-        private <T, R> void handleJobScheduling(final String interestId, final Class<R> eventType,
-                final BlockingQueue<R> eventQueue) {
+        private <T> void handleJobScheduling(final String interestId, final Class<T> eventType,
+                final BlockingQueue<T> eventQueue) {
             AtomicBoolean jobStatus = interestIdToJobStatusMap.computeIfAbsent(interestId, k -> new AtomicBoolean(false));
 
             if (jobStatus.compareAndSet(false, true)) {
@@ -115,20 +115,20 @@ public final class EventBroker {
         }
 
         @SuppressWarnings("unchecked")
-        private <T, R> void processQueuedEvents(final String interestId, final Class<R> eventType,
-                final BlockingQueue<R> eventQueue, final AtomicBoolean jobStatus) {
+        private <T> void processQueuedEvents(final String interestId, final Class<T> eventType,
+                final BlockingQueue<T> eventQueue, final AtomicBoolean jobStatus) {
             try {
-                TypedCallable<R> eventCallback = (TypedCallable<R>) interestIdToCallbackMap.get(interestId);
+                TypedCallable<T> eventCallback = (TypedCallable<T>) interestIdToCallbackMap.get(interestId);
                 if (eventCallback == null) {
                     return;
                 }
 
-                List<R> eventBatchQueue = new ArrayList<>(EVENT_BATCH_SIZE);
-                R lastEvent = Optional.ofNullable(interestIdToLastEventMap.get(interestId)).map(event -> (R) event)
+                List<T> eventBatchQueue = new ArrayList<>(EVENT_BATCH_SIZE);
+                T lastEvent = Optional.ofNullable(interestIdToLastEventMap.get(interestId)).map(event -> (T) event)
                         .orElse(null);
 
                 while (eventQueue.drainTo(eventBatchQueue, EVENT_BATCH_SIZE) > 0) {
-                    for (R newEvent : eventBatchQueue) {
+                    for (T newEvent : eventBatchQueue) {
                         try {
                             if (!newEvent.equals(lastEvent)) {
                                 eventCallback.callWith(newEvent);
@@ -138,7 +138,6 @@ public final class EventBroker {
                             e.printStackTrace();
                         }
                     }
-
                     eventBatchQueue.clear();
                 }
 

@@ -92,6 +92,11 @@
           <version>9.41.2</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>3.9.9</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -134,7 +139,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/dependency</outputDirectory>
-                            <includeGroupIds>software.amazon.awssdk,com.fasterxml.jackson,com.nimbusds,jakarta.inject,commons-codec,org.apache.httpcomponents,org.reactivestreams</includeGroupIds>
+                            <includeGroupIds>software.amazon.awssdk,com.fasterxml.jackson,com.nimbusds,jakarta.inject,commons-codec,org.apache.httpcomponents,org.reactivestreams,org.apache.maven</includeGroupIds>
                         </configuration>
                     </execution>
                     <execution>
@@ -207,7 +212,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
                     <testSourceDirectory>${project.build.testSourceDirectory}</testSourceDirectory>
                 </configuration>
             </plugin>

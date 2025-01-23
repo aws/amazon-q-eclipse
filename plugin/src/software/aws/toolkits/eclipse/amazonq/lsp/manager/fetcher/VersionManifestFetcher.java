@@ -145,7 +145,7 @@ public final class VersionManifestFetcher {
         try {
             var manifest = OBJECT_MAPPER.readValue(content, Manifest.class);
             var version = ArtifactUtils.parseVersion(manifest.manifestSchemaVersion());
-            if (version.getMajor() == LspConstants.MANIFEST_MAJOR_VERSION) {
+            if (version.getMajorVersion() == LspConstants.MANIFEST_MAJOR_VERSION) {
                 return Optional.of(manifest);
             }
         } catch (Exception e) {

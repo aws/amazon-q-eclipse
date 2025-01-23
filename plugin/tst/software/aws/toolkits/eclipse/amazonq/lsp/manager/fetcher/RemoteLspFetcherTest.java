@@ -33,7 +33,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import org.eclipse.osgi.service.resolver.VersionRange;
+import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +53,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ArtifactUtilsStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspFetchResult;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ManifestArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
@@ -64,11 +65,19 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 
 public final class RemoteLspFetcherTest {
-    private static VersionRange versionRange = new VersionRange("[1.0.0, 2.0.0]");
-    private final String sampleVersion = String.format("%s.7.0", versionRange.getLeft().getMajor());
+    private static VersionRange versionRange;
+    static {
+        try {
+            versionRange = VersionRange.createFromVersionSpec("[1.0.0, 2.0.0]");
+        } catch (InvalidVersionSpecificationException e) {
+            throw new AmazonQPluginException("Failed to parse LSP supported version range", e);
+        }
+    }
+
+    private final String sampleVersion = "1.7.0";
     private LspFetcher lspFetcher;
     private Manifest sampleManifest;
-    private final ArtifactVersion sampleLspVersion;
+    private final ManifestArtifactVersion sampleLspVersion;
     private HttpClient httpClient;
 
     @RegisterExtension
@@ -218,7 +227,7 @@ public final class RemoteLspFetcherTest {
     }
 
     @Test
-    void fetchFromFallbackWhenRemoteReturnsHttpErrorAndNoFAllBackVersionFound()
+    void fetchFromFallbackWhenRemoteReturnsHttpErrorAndNoFallBackVersionFound()
             throws IOException, InterruptedException {
         var zipPath = Paths.get(tempDir.toString(), "remote", "servers.zip");
         setupZipTargetContent(zipPath, sampleLspVersion);
@@ -245,10 +254,10 @@ public final class RemoteLspFetcherTest {
         setupZipTargetContent(remoteZipPath, sampleLspVersion);
         ArtifactUtils.deleteFile(remoteZipPath);
 
-        String testFallbackVersion = String.format("%s.2.5", versionRange.getLeft().getMajor());
+        String testFallbackVersion = "1.0.2";
         var zipPath = Paths.get(tempDir.toString(), testFallbackVersion, "servers.zip");
         var unzippedPath = Paths.get(tempDir.toString(), testFallbackVersion, "servers");
-        ArtifactVersion testFallbackSampleLspVersion = createLspVersion(testFallbackVersion);
+        ManifestArtifactVersion testFallbackSampleLspVersion = createLspVersion(testFallbackVersion);
 
         setupZipTargetContent(zipPath, testFallbackSampleLspVersion);
 
@@ -267,14 +276,16 @@ public final class RemoteLspFetcherTest {
 
     @Test
     void fetchWhenMultipleVersionsChooseLatest() throws IOException, InterruptedException {
-        var oneAdditionalVersion = String.format("%s.8.3", versionRange.getLeft().getMajor());
+        var oneAdditionalVersion = "1.8.3-rc.1";
         var oneAdditionalLspVersion = createLspVersion(oneAdditionalVersion);
-        sampleManifest = createManifest(List.of(sampleLspVersion, oneAdditionalLspVersion));
+        var secondAdditionalVersion = "1.8.3";
+        var secondAdditionalLspVersion = createLspVersion(secondAdditionalVersion);
+        sampleManifest = createManifest(List.of(sampleLspVersion, secondAdditionalLspVersion));
 
         var zipPath = Paths.get(tempDir.toString(), "remote", "servers.zip");
         var unzippedPath = Paths.get(tempDir.toString(), "remote", "servers");
 
-        setupZipTargetContent(zipPath, oneAdditionalLspVersion);
+        setupZipTargetContent(zipPath, secondAdditionalLspVersion);
 
         var mockResponse = createMockHttpResponse(zipPath, HttpURLConnection.HTTP_OK);
         when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
@@ -283,10 +294,42 @@ public final class RemoteLspFetcherTest {
         lspFetcher = createFetcher();
         var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
 
-        var expectedAssetDirectory = Paths.get(tempDir.toString(), oneAdditionalVersion);
+        var expectedAssetDirectory = Paths.get(tempDir.toString(), secondAdditionalVersion);
         assertEquals(expectedAssetDirectory.toString(), result.assetDirectory());
         assertEquals(LanguageServerLocation.REMOTE, result.location());
-        assertEquals(oneAdditionalVersion, result.version());
+        assertEquals(secondAdditionalVersion, result.version());
+
+        assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
+    }
+
+    @Test
+    void fetchWhenMultipleLabelVersionsChooseLatest() throws IOException, InterruptedException {
+        var oneAdditionalVersion = "1.8.3-beta.1";
+        var oneAdditionalLspVersion = createLspVersion(oneAdditionalVersion);
+        var secondAdditionalVersion = "1.8.3-rc.1";
+        var secondAdditionalLspVersion = createLspVersion(secondAdditionalVersion);
+        var thirdAdditionalVersion = "1.8.3-rc.2";
+        var thirdAdditionalLspVersion = createLspVersion(thirdAdditionalVersion);
+
+        sampleManifest = createManifest(List.of(sampleLspVersion, oneAdditionalLspVersion,
+                secondAdditionalLspVersion, thirdAdditionalLspVersion));
+
+        var zipPath = Paths.get(tempDir.toString(), "remote", "servers.zip");
+        var unzippedPath = Paths.get(tempDir.toString(), "remote", "servers");
+
+        setupZipTargetContent(zipPath, thirdAdditionalLspVersion);
+
+        var mockResponse = createMockHttpResponse(zipPath, HttpURLConnection.HTTP_OK);
+        when(httpClient.send(any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<Path>>any()))
+                .thenReturn(mockResponse);
+
+        lspFetcher = createFetcher();
+        var result = lspFetcher.fetch(PluginPlatform.MAC, PluginArchitecture.ARM_64, tempDir, Instant.now());
+
+        var expectedAssetDirectory = Paths.get(tempDir.toString(), thirdAdditionalVersion);
+        assertEquals(expectedAssetDirectory.toString(), result.assetDirectory());
+        assertEquals(LanguageServerLocation.REMOTE, result.location());
+        assertEquals(thirdAdditionalVersion, result.version());
 
         assertTrue(zipContentsMatchUnzipped(zipPath, unzippedPath));
     }
@@ -314,7 +357,7 @@ public final class RemoteLspFetcherTest {
         assertEquals(expectedLocation, result.location());
     }
 
-    private void setupFileTargetContent(final String filename, final ArtifactVersion lspVersion, final String hash)
+    private void setupFileTargetContent(final String filename, final ManifestArtifactVersion lspVersion, final String hash)
             throws IOException, FileNotFoundException {
         var sampleContentPath = Paths.get(tempDir.toString(), lspVersion.serverVersion(), filename);
 
@@ -325,7 +368,7 @@ public final class RemoteLspFetcherTest {
         lspVersion.targets().get(0).contents().add(content);
     }
 
-    private void setupZipTargetContent(final Path zipPath, final ArtifactVersion lspVersion)
+    private void setupZipTargetContent(final Path zipPath, final ManifestArtifactVersion lspVersion)
             throws IOException, FileNotFoundException {
         var unzippedPath = zipPath.getParent().resolve(ArtifactUtils.getFilenameWithoutExtension(zipPath));
 
@@ -392,9 +435,9 @@ public final class RemoteLspFetcherTest {
     }
 
     private static Stream<Arguments> incompatibleManifestVersions() {
-        return Stream.of(Arguments.of(String.format("%s.0.2", versionRange.getLeft().getMajor() - 1)),
-                Arguments.of(String.format("%s.0.2", versionRange.getRight().getMajor() + 1)),
-                Arguments.of(String.format("%s.0.2", versionRange.getRight().getMajor() + 2)));
+        return Stream.of(Arguments.of("0.0.2"),
+                Arguments.of("2.0.2"),
+                Arguments.of("3.0.2"));
     }
 
     private void assertExceptionThrownWithMessage(final Exception exception, final String expectedMessage) {
@@ -402,14 +445,14 @@ public final class RemoteLspFetcherTest {
         assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
-    private ArtifactVersion createLspVersion(final String version) {
+    private ManifestArtifactVersion createLspVersion(final String version) {
         var content = new ArrayList<Content>();
         var target = new Target(PluginPlatform.MAC.getValue(), PluginArchitecture.ARM_64.getValue(), content);
         var targets = List.of(target);
-        return new ArtifactVersion(version, false, null, null, null, null, targets);
+        return new ManifestArtifactVersion(version, false, null, null, null, null, targets);
     }
 
-    private Manifest createManifest(final List<ArtifactVersion> lspVersions) {
+    private Manifest createManifest(final List<ManifestArtifactVersion> lspVersions) {
         return new Manifest(null, null, null, false, lspVersions);
     }
 

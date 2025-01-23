@@ -5,7 +5,10 @@ package software.aws.toolkits.eclipse.amazonq.lsp.manager;
 
 import java.nio.file.Paths;
 
-import org.eclipse.osgi.service.resolver.VersionRange;
+import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
+import org.apache.maven.artifact.versioning.VersionRange;
+
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 
 public final class LspConstants {
     private LspConstants() {
@@ -25,5 +28,13 @@ public final class LspConstants {
     public static final String LSP_SUBDIRECTORY = "lsp";
     public static final String AMAZONQ_LSP_SUBDIRECTORY = Paths.get(LSP_SUBDIRECTORY, "AmazonQ").toString();
 
-    public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = new VersionRange("[3.0.0, 3.0.10)");
+    public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = createVersionRange();
+
+    private static VersionRange createVersionRange() {
+        try {
+            return VersionRange.createFromVersionSpec("[3.0.0, 3.0.10)");
+        } catch (InvalidVersionSpecificationException e) {
+            throw new AmazonQPluginException("Failed to parse LSP supported version range", e);
+        }
+    }
 }

@@ -14,5 +14,5 @@ public record Manifest(
         String artifactId,
         String artifactDescription,
         Boolean isManifestDeprecated,
-        @JsonSetter(nulls = Nulls.AS_EMPTY) List<ArtifactVersion> versions) {
+        @JsonSetter(nulls = Nulls.AS_EMPTY) List<ManifestArtifactVersion> versions) {
 }

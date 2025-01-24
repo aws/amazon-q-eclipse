@@ -16,8 +16,9 @@ import java.util.Optional;
 
 import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+import software.aws.toolkits.eclipse.amazonq.util.PersistentToolkitNotification;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import org.osgi.framework.Version;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
@@ -88,8 +89,12 @@ public final class DefaultLspManager implements LspManager {
         }
         Manifest manifest = fetchManifest();
 
-        if (manifest.isManifestDeprecated()) {
-            showDeprecatedManifestNotification();
+        if (manifest.isManifestDeprecated() && manifest.manifestSchemaVersion() != null) {
+            try {
+                showDeprecatedManifestNotification(manifest.manifestSchemaVersion());
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to show deprecated manifest notification", e);
+            }
         }
 
         var platform = platformOverride != null ? platformOverride : PluginUtils.getPlatform();
@@ -247,14 +252,30 @@ public final class DefaultLspManager implements LspManager {
                 PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE));
         Files.setPosixFilePermissions(filePath, permissions);
     }
-    private static void showDeprecatedManifestNotification() {
-        Display.getDefault().asyncExec(() -> {
-            AbstractNotificationPopup notification = new ToolkitNotification(
-                Display.getDefault(),
-                Constants.MANIFEST_DEPRECATED_NOTIFICATION_TITLE,
-                Constants.MANIFEST_DEPRECATED_NOTIFICATION_BODY);
-            notification.open();
-        });
+
+    private static void showDeprecatedManifestNotification(final String version) {
+        Version storedValue = Activator.getPluginStore().getObject(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY, Version.class);
+        Version schemaVersion = ArtifactUtils.parseVersion(version);
+
+        if (storedValue == null || remoteVersionIsGreater(schemaVersion, storedValue)) {
+            Display.getDefault().asyncExec(() -> {
+                AbstractNotificationPopup notification = new PersistentToolkitNotification(Display.getCurrent(),
+                        Constants.MANIFEST_DEPRECATED_NOTIFICATION_TITLE,
+                        Constants.MANIFEST_DEPRECATED_NOTIFICATION_BODY ,
+                        (selected) -> {
+                            if (selected) {
+                                Activator.getPluginStore().putObject(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY, schemaVersion);
+                            } else {
+                                Activator.getPluginStore().remove(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY);
+                            }
+                        });
+                notification.open();
+            });
+        }
+    }
+
+    private static boolean remoteVersionIsGreater(final Version remote, final Version storedValue) {
+        return remote.compareTo(storedValue) > 0;
     }
 
     public static class Builder {

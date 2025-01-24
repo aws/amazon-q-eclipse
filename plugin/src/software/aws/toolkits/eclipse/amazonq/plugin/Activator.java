@@ -31,7 +31,7 @@ public class Activator extends AbstractUIPlugin {
     private static LoginService loginService;
     private static CodeReferenceLoggingService codeReferenceLoggingService;
     private static PluginStore pluginStore;
-    private static EventBroker eventBroker;
+    private static EventBroker eventBroker = new EventBroker();
 
     public Activator() {
         super();
@@ -46,7 +46,6 @@ public class Activator extends AbstractUIPlugin {
                 .initializeOnStartUp()
                 .build();
         codeReferenceLoggingService = DefaultCodeReferenceLoggingService.getInstance();
-        eventBroker = new EventBroker();
     }
 
     @Override
@@ -79,7 +78,6 @@ public class Activator extends AbstractUIPlugin {
     public static CodeReferenceLoggingService getCodeReferenceLoggingService() {
         return codeReferenceLoggingService;
     }
-
     public static EventBroker getEventBroker() {
         return eventBroker;
     }

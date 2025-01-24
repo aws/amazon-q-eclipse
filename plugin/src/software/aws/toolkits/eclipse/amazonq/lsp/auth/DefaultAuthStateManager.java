@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
+import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
@@ -119,7 +120,7 @@ public final class DefaultAuthStateManager implements AuthStateManager {
          * This notification is critical for ensuring all plugin components reflect the current
          * authentication state.
          */
-        AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
+        EventBroker.getInstance().post(getAuthState());
     }
 
     private void syncAuthStateWithPluginStore() {

@@ -9,19 +9,22 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public abstract class AmazonQView extends ViewPart implements AuthStatusChangedListener {
+public abstract class AmazonQView extends ViewPart implements EventObserver<AuthState> {
 
     private AmazonQViewController viewController;
     private AmazonQCommonActions amazonQCommonActions;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
+
+    private Subscription authStateSubscription;
 
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
@@ -81,10 +84,10 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
     }
 
     private void setupAuthStatusListeners() {
-        AuthStatusProvider.addAuthStatusChangeListener(this);
-        AuthStatusProvider.addAuthStatusChangeListener(amazonQCommonActions.getSignoutAction());
-        AuthStatusProvider.addAuthStatusChangeListener(amazonQCommonActions.getFeedbackDialogContributionAction());
-        AuthStatusProvider.addAuthStatusChangeListener(amazonQCommonActions.getCustomizationDialogContributionAction());
+        authStateSubscription = EventBroker.getInstance().subscribe(this);
+        EventBroker.getInstance().subscribe(amazonQCommonActions.getSignoutAction());
+        EventBroker.getInstance().subscribe(amazonQCommonActions.getFeedbackDialogContributionAction());
+        EventBroker.getInstance().subscribe(amazonQCommonActions.getCustomizationDialogContributionAction());
     }
 
     @Override
@@ -123,7 +126,7 @@ public abstract class AmazonQView extends ViewPart implements AuthStatusChangedL
      */
     @Override
     public void dispose() {
-        AuthStatusProvider.removeAuthStatusChangeListener(this);
+        authStateSubscription.cancel();
         super.dispose();
     }
 

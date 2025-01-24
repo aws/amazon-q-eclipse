@@ -261,7 +261,7 @@ public final class DefaultLspManager implements LspManager {
             Display.getDefault().asyncExec(() -> {
                 AbstractNotificationPopup notification = new PersistentToolkitNotification(Display.getCurrent(),
                         Constants.MANIFEST_DEPRECATED_NOTIFICATION_TITLE,
-                        Constants.MANIFEST_DEPRECATED_NOTIFICATION_BODY ,
+                        Constants.MANIFEST_DEPRECATED_NOTIFICATION_BODY,
                         (selected) -> {
                             if (selected) {
                                 Activator.getPluginStore().putObject(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY, schemaVersion);

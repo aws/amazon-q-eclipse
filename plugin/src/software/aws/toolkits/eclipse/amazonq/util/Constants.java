@@ -25,7 +25,8 @@ public final class Constants {
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE = "Amazon Q inline suggestions are now coming from the %s";
     public static final String MANIFEST_DEPRECATED_NOTIFICATION_KEY = "doNotShowDeprecatedManifest";
     public static final String MANIFEST_DEPRECATED_NOTIFICATION_TITLE = "Update Amazon Q Extension";
-    public static final String MANIFEST_DEPRECATED_NOTIFICATION_BODY = "This version of the plugin will no longer receive updates to Amazon Q Language authoring features";
+    public static final String MANIFEST_DEPRECATED_NOTIFICATION_BODY = "This version of the plugin"
+            + " will no longer receive updates to Amazon Q Language authoring features";
     public static final String DEFAULT_Q_FOUNDATION_DISPLAY_NAME = "Amazon Q foundation (Default)";
     public static final String LOGIN_TYPE_KEY = "LOGIN_TYPE";
     public static final String LOGIN_IDC_PARAMS_KEY = "IDC_PARAMS";

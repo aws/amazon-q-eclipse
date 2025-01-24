@@ -13,9 +13,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.widgets.Display;
-import org.osgi.framework.Version;
 
 import org.tukaani.xz.XZInputStream;
 
@@ -26,9 +26,9 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMeta
 
 public final class UpdateUtils {
     private static final String REQUEST_URL = "https://amazonq.eclipsetoolkit.amazonwebservices.com/artifacts.xml.xz";
-    private static Version mostRecentNotificationVersion;
-    private static Version remoteVersion;
-    private static Version localVersion;
+    private static ArtifactVersion mostRecentNotificationVersion;
+    private static ArtifactVersion remoteVersion;
+    private static ArtifactVersion localVersion;
     private static final UpdateUtils INSTANCE = new UpdateUtils();
 
     public static UpdateUtils getInstance() {
@@ -36,7 +36,7 @@ public final class UpdateUtils {
     }
 
     private UpdateUtils() {
-        mostRecentNotificationVersion = Activator.getPluginStore().getObject(Constants.DO_NOT_SHOW_UPDATE_KEY, Version.class);
+        mostRecentNotificationVersion = Activator.getPluginStore().getObject(Constants.DO_NOT_SHOW_UPDATE_KEY, ArtifactVersion.class);
         String localString = PluginClientMetadata.getInstance().getPluginVersion();
         localVersion = ArtifactUtils.parseVersion(localString.substring(0, localString.lastIndexOf(".")));
     }
@@ -62,7 +62,7 @@ public final class UpdateUtils {
         }
     }
 
-    private Version fetchRemoteArtifactVersion(final String repositoryUrl) {
+    private ArtifactVersion fetchRemoteArtifactVersion(final String repositoryUrl) {
         HttpClient connection = HttpClientFactory.getInstance();
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -117,7 +117,7 @@ public final class UpdateUtils {
         });
     }
 
-    private static boolean remoteVersionIsGreater(final Version remote, final Version local) {
+    private static boolean remoteVersionIsGreater(final ArtifactVersion remote, final ArtifactVersion local) {
         return remote.compareTo(local) > 0;
     }
 }

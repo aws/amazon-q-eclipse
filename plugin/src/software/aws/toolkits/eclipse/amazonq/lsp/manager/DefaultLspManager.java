@@ -17,8 +17,8 @@ import java.util.Optional;
 import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PersistentToolkitNotification;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
-import org.osgi.framework.Version;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
@@ -254,8 +254,10 @@ public final class DefaultLspManager implements LspManager {
     }
 
     private static void showDeprecatedManifestNotification(final String version) {
-        Version storedValue = Activator.getPluginStore().getObject(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY, Version.class);
-        Version schemaVersion = ArtifactUtils.parseVersion(version);
+        ArtifactVersion schemaVersion = ArtifactUtils.parseVersion(version);
+        ArtifactVersion storedValue = Optional.ofNullable(Activator.getPluginStore().get(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY))
+                .map(ArtifactUtils::parseVersion)
+                .orElse(null);
 
         if (storedValue == null || remoteVersionIsGreater(schemaVersion, storedValue)) {
             Display.getDefault().asyncExec(() -> {
@@ -264,7 +266,7 @@ public final class DefaultLspManager implements LspManager {
                         Constants.MANIFEST_DEPRECATED_NOTIFICATION_BODY,
                         (selected) -> {
                             if (selected) {
-                                Activator.getPluginStore().putObject(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY, schemaVersion);
+                                Activator.getPluginStore().put(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY, schemaVersion.toString());
                             } else {
                                 Activator.getPluginStore().remove(Constants.MANIFEST_DEPRECATED_NOTIFICATION_KEY);
                             }
@@ -274,7 +276,7 @@ public final class DefaultLspManager implements LspManager {
         }
     }
 
-    private static boolean remoteVersionIsGreater(final Version remote, final Version storedValue) {
+    private static boolean remoteVersionIsGreater(final ArtifactVersion remote, final ArtifactVersion storedValue) {
         return remote.compareTo(storedValue) > 0;
     }
 

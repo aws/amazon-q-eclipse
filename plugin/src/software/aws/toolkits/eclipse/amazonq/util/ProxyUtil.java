@@ -4,17 +4,24 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.io.FileInputStream;
+import java.net.URI;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import org.eclipse.swt.widgets.Display;
+
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 
 public final class ProxyUtil {
+
+    private static boolean hasSeenInvalidProxyNotification;
 
     private ProxyUtil() {
         // Prevent initialization
@@ -29,6 +36,22 @@ public final class ProxyUtil {
         String httpsProxy = envVarValue;
         if (!StringUtils.isEmpty(prefValue)) {
             httpsProxy = prefValue;
+        }
+        try {
+            if (!StringUtils.isEmpty(httpsProxy)) {
+                URI.create(httpsProxy);
+            }
+        } catch (IllegalArgumentException e) {
+            if (!hasSeenInvalidProxyNotification) {
+                hasSeenInvalidProxyNotification = true;
+                Display.getDefault().asyncExec(() -> {
+                    AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                            Constants.INVALID_PROXY_CONFIGURATION_TITLE,
+                            Constants.INVALID_PROXY_CONFIGURATION_BODY);
+                    notification.open();
+                });
+            }
+            return null;
         }
         return httpsProxy;
     }

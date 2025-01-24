@@ -193,6 +193,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         addField(httpsProxy);
         createLabel("""
                 Sets the address of the proxy to use for all HTTPS connections. \
+                For example "http://localhost:8888". \
                 Leave blank if not using a proxy.
                 Eclipse restart required to take effect.
                 """, 20, getFieldEditorParent());

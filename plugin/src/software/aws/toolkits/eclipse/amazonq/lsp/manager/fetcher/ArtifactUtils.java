@@ -16,7 +16,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.osgi.framework.Version;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -60,8 +61,8 @@ public final class ArtifactUtils {
              });
     }
 
-    public static Version parseVersion(final String versionString) {
-        return new Version(versionString);
+    public static ArtifactVersion parseVersion(final String versionString) {
+        return new DefaultArtifactVersion(versionString);
     }
 
     public static boolean validateHash(final Path file, final List<String> hashes, final boolean strict) {

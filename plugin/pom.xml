@@ -97,6 +97,11 @@
           <version>9.41.2</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>3.9.9</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -212,7 +217,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
                     <testSourceDirectory>${project.build.testSourceDirectory}</testSourceDirectory>
                 </configuration>
             </plugin>

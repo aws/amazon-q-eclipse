@@ -22,14 +22,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.osgi.framework.Version;
-import org.osgi.framework.VersionRange;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.artifact.versioning.VersionRange;
 
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.exception.LspError;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspFetchResult;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ArtifactVersion;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ManifestArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
@@ -187,7 +188,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
     }
 
-    private Optional<ArtifactVersion> resolveVersion(final Manifest manifestFile, final PluginPlatform platform,
+    private Optional<ManifestArtifactVersion> resolveVersion(final Manifest manifestFile, final PluginPlatform platform,
             final PluginArchitecture architecture, final Instant start) {
         if (manifestFile == null) {
             String failureReason = "No valid manifest version data was received. An error could have caused this. Please check logs.";
@@ -201,8 +202,8 @@ public final class RemoteLspFetcher implements LspFetcher {
                 .filter(version -> version.targets().stream()
                         .anyMatch(target -> hasRequiredTargetContent(target, platform, architecture)))
                 .max(Comparator.comparing(
-                        artifactVersion -> Version.parseVersion(artifactVersion.serverVersion())
-                    ));
+                        artifactVersion -> new DefaultArtifactVersion(artifactVersion.serverVersion())
+                ));
     }
 
     private boolean hasRequiredTargetContent(final Target target, final PluginPlatform platform, final PluginArchitecture architecture) {
@@ -215,11 +216,11 @@ public final class RemoteLspFetcher implements LspFetcher {
         return target.platform().equalsIgnoreCase(platform.getValue()) && target.arch().equalsIgnoreCase(architecture.getValue());
     }
 
-    private boolean isCompatibleVersion(final ArtifactVersion version) {
-        return versionRange.includes(ArtifactUtils.parseVersion(version.serverVersion())) && !version.isDelisted();
+    private boolean isCompatibleVersion(final ManifestArtifactVersion version) {
+        return versionRange.containsVersion(ArtifactUtils.parseVersion(version.serverVersion())) && !version.isDelisted();
     }
 
-    private Optional<Target> resolveTarget(final Optional<ArtifactVersion> targetVersion, final PluginPlatform platform,
+    private Optional<Target> resolveTarget(final Optional<ManifestArtifactVersion> targetVersion, final PluginPlatform platform,
             final PluginArchitecture architecture) {
         return targetVersion.flatMap(version -> version.targets().stream()
                 .filter(target -> isCompatibleTarget(target, platform, architecture))
@@ -320,9 +321,9 @@ public final class RemoteLspFetcher implements LspFetcher {
         // filter to get sorted list of compatible lsp versions that have a valid cache
         var sortedCachedLspVersions = compatibleLspVersions.stream()
                 .filter(artifactVersion -> isValidCachedVersion(artifactVersion, expectedServerVersion, cachedVersions))
-                .sorted(Comparator.comparing(x -> Version.parseVersion(x.serverVersion()), Comparator.reverseOrder()))
+                .sorted((v1, v2) -> new DefaultArtifactVersion(v2.serverVersion())
+                        .compareTo(new DefaultArtifactVersion(v1.serverVersion())))
                 .collect(Collectors.toList());
-
         var fallbackDir = sortedCachedLspVersions.stream()
                 .map(x -> getValidLocalCacheDirectory(x, platform, architecture, destinationFolder))
                 .filter(Objects::nonNull).findFirst().orElse(null);
@@ -333,7 +334,7 @@ public final class RemoteLspFetcher implements LspFetcher {
      * Validate the local cache directory of the given lsp version(matches expected hash)
      * If valid return cache directory, else return null
      */
-    private Path getValidLocalCacheDirectory(final ArtifactVersion artifactVersion, final PluginPlatform platform,
+    private Path getValidLocalCacheDirectory(final ManifestArtifactVersion artifactVersion, final PluginPlatform platform,
             final PluginArchitecture architecture, final Path destinationFolder) {
         var target = resolveTarget(Optional.of(artifactVersion), platform, architecture);
         if (!target.isPresent() || target.get().contents() == null || target.get().contents().isEmpty()) {
@@ -345,14 +346,14 @@ public final class RemoteLspFetcher implements LspFetcher {
         return hasValidCache ? cacheDir : null;
     }
 
-    private boolean isValidCachedVersion(final ArtifactVersion lspVersion, final Version expectedServerVersion,
-            final List<Version> cachedVersions) {
+    private boolean isValidCachedVersion(final ManifestArtifactVersion lspVersion, final ArtifactVersion expectedServerVersion,
+            final List<ArtifactVersion> cachedVersions) {
         var serverVersion = ArtifactUtils.parseVersion(lspVersion.serverVersion());
 
         return cachedVersions.contains(serverVersion) && (serverVersion.compareTo(expectedServerVersion) <= 0);
     }
 
-    private List<Version> getCachedVersions(final Path destinationFolder) {
+    private List<ArtifactVersion> getCachedVersions(final Path destinationFolder) {
         try {
             return Files.list(destinationFolder)
                        .filter(Files::isDirectory)
@@ -366,7 +367,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
     }
 
-    private Version getVersionedName(final String filename) {
+    private ArtifactVersion getVersionedName(final String filename) {
         try {
             return ArtifactUtils.parseVersion(filename);
         } catch (Exception e) {
@@ -374,7 +375,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         }
     }
 
-    private List<ArtifactVersion> getCompatibleArtifactVersions() {
+    private List<ManifestArtifactVersion> getCompatibleArtifactVersions() {
         return manifest.versions().stream()
                 .filter(version -> isCompatibleVersion(version))
                 .toList();
@@ -385,7 +386,8 @@ public final class RemoteLspFetcher implements LspFetcher {
         var cachedVersions = getCachedVersions(destinationFolder);
 
         // delete de-listed versions in the toolkit compatible version range
-        var delistedVersions = cachedVersions.stream().filter(x -> !compatibleVersions.contains(x) && versionRange.includes(x)).collect(Collectors.toList());
+        var delistedVersions = cachedVersions.stream()
+                .filter(x -> !compatibleVersions.contains(x) && versionRange.containsVersion(x)).collect(Collectors.toList());
         if (delistedVersions.size() > 0) {
             Activator.getLogger().info(String.format("Cleaning up %s cached de-listed versions for Amazon Q Language Server", delistedVersions.size()));
         }
@@ -398,7 +400,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         var cachedVersions = getCachedVersions(destinationFolder);
         // delete extra versions in the compatible toolkit version range except highest 2 versions
         var extraVersions = cachedVersions.stream()
-                .filter(x -> versionRange.includes(x))
+                .filter(x -> versionRange.containsVersion(x))
                 .sorted(Comparator.reverseOrder())
                 .skip(2)
                 .collect(Collectors.toList());
@@ -410,7 +412,7 @@ public final class RemoteLspFetcher implements LspFetcher {
         });
     }
 
-    private void deleteCachedVersion(final Path destinationFolder, final Version version) {
+    private void deleteCachedVersion(final Path destinationFolder, final ArtifactVersion version) {
         var versionPath = destinationFolder.resolve(version.toString());
         ArtifactUtils.deleteDirectory(versionPath);
     }

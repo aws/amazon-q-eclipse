@@ -3,9 +3,9 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher;
 
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.osgi.framework.Version;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -40,10 +40,19 @@ class ArtifactUtilsTest {
 
     @Test
     void testParseVersion() {
-        Version version = ArtifactUtils.parseVersion("1.2.3");
-        assertEquals(1, version.getMajor());
-        assertEquals(2, version.getMinor());
-        assertEquals(3, version.getMicro());
+        ArtifactVersion version = ArtifactUtils.parseVersion("1.2.3");
+        assertEquals(1, version.getMajorVersion());
+        assertEquals(2, version.getMinorVersion());
+        assertEquals(3, version.getIncrementalVersion());
+    }
+
+    @Test
+    void testParseVersionWithQualifier() {
+        ArtifactVersion version = ArtifactUtils.parseVersion("1.2.3-rc.1");
+        assertEquals(1, version.getMajorVersion());
+        assertEquals(2, version.getMinorVersion());
+        assertEquals(3, version.getIncrementalVersion());
+        assertEquals("rc.1", version.getQualifier());
     }
 
     @Test

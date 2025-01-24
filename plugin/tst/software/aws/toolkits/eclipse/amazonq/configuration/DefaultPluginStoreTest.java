@@ -69,6 +69,7 @@ public class DefaultPluginStoreTest {
         assertEquals(value, pluginStore.get(key));
         verifyNoInteractions(mockLogger);
     }
+
     @Test
     void testPutOverridingValue() throws BackingStoreException {
         String key = "testKey";

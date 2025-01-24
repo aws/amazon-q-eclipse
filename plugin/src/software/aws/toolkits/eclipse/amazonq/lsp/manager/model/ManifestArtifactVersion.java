@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
-public record ArtifactVersion(
+public record ManifestArtifactVersion(
         @JsonProperty(required = true) String serverVersion,
         boolean isDelisted,
         Runtime runtime,

@@ -3,8 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.broker.api;
 
+@FunctionalInterface
 public interface Subscription {
-
     void cancel();
-
 }

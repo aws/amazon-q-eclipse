@@ -9,7 +9,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import io.reactivex.rxjava3.subjects.Subject;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 
 public final class EventBroker {
 
@@ -22,7 +21,7 @@ public final class EventBroker {
         eventBus.onNext(event);
     }
 
-    public <T> Subscription subscribe(final EventObserver<T> observer) {
+    public <T> Disposable subscribe(final Class<T> eventType, final EventObserver<T> observer) {
         Consumer<T> consumer = new Consumer<>() {
             @Override
             public void accept(final T event) {
@@ -30,17 +29,9 @@ public final class EventBroker {
             }
         };
 
-        Disposable disposable = eventBus.ofType(observer.getEventType()).distinct()
+        return eventBus.ofType(eventType).distinct()
                 .observeOn(Schedulers.computation())
                 .subscribe(consumer);
-
-        Subscription subscription = new Subscription() {
-            @Override
-            public void cancel() {
-                disposable.dispose();
-            }
-        };
-        return subscription;
     }
 
 }

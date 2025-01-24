@@ -9,8 +9,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -23,7 +23,7 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
     private AmazonQCommonActions amazonQCommonActions;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
-    private Subscription authStateSubscription;
+    private Disposable authStateSubscription;
 
     protected AmazonQView() {
         this.viewController = new AmazonQViewController();
@@ -83,10 +83,10 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
     }
 
     private void setupAuthStatusListeners() {
-        authStateSubscription = Activator.getEventBroker().subscribe(this);
-        Activator.getEventBroker().subscribe(amazonQCommonActions.getSignoutAction());
-        Activator.getEventBroker().subscribe(amazonQCommonActions.getFeedbackDialogContributionAction());
-        Activator.getEventBroker().subscribe(amazonQCommonActions.getCustomizationDialogContributionAction());
+        authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
+        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getSignoutAction());
+        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getFeedbackDialogContributionAction());
+        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getCustomizationDialogContributionAction());
     }
 
     @Override
@@ -125,7 +125,7 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
      */
     @Override
     public void dispose() {
-        authStateSubscription.cancel();
+        authStateSubscription.dispose();
         super.dispose();
     }
 

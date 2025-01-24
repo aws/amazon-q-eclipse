@@ -3,41 +3,40 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
-
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
-import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+
 class DefaultAuthStateManagerTest {
 
     @Mock
     private PluginStore pluginStore;
-    private MockedStatic<Activator> mockedActivator;
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
 
     private DefaultAuthStateManager authStateManager;
     private LoginParams loginParams;
@@ -48,8 +47,6 @@ class DefaultAuthStateManagerTest {
         closeable = MockitoAnnotations.openMocks(this);
 
         assertNotNull(pluginStore, "PluginStore mock should not be null");
-        mockedActivator = mockStatic(Activator.class);
-        mockedActivator.when(Activator::getLogger).thenReturn(mock(LoggingService.class));
 
         authStateManager = new DefaultAuthStateManager(pluginStore);
         loginParams = new LoginParams();
@@ -61,7 +58,6 @@ class DefaultAuthStateManagerTest {
     @AfterEach
     void tearDown() throws Exception {
         clearInvocations(pluginStore);
-        mockedActivator.close();
         closeable.close();
     }
 

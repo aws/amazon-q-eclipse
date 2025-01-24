@@ -149,7 +149,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/dependency</outputDirectory>
-                            <includeGroupIds>io.reactivex,software.amazon.awssdk,com.fasterxml.jackson,com.nimbusds,jakarta.inject,commons-codec,org.apache.httpcomponents,org.reactivestreams</includeGroupIds>
+                            <includeGroupIds>io.reactivex,software.amazon.awssdk,com.fasterxml.jackson,com.nimbusds,jakarta.inject,commons-codec,org.apache.httpcomponents,org.reactivestreams,org.apache.maven</includeGroupIds>
                         </configuration>
                     </execution>
                     <execution>

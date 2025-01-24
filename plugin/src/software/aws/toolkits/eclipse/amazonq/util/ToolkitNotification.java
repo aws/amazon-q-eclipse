@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 
-public final class ToolkitNotification extends AbstractNotificationPopup {
+public class ToolkitNotification extends AbstractNotificationPopup {
 
     private final String title;
     private final String description;
@@ -43,6 +43,12 @@ public final class ToolkitNotification extends AbstractNotificationPopup {
         return this.infoIcon;
     }
 
+    /**
+     * Creates the content area for the notification.
+     * Subclasses may override this method to customize the notification content.
+     *
+     * @param parent the parent composite
+     */
     @Override
     protected void createContentArea(final Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
@@ -59,12 +65,12 @@ public final class ToolkitNotification extends AbstractNotificationPopup {
     }
 
     @Override
-    protected String getPopupShellTitle() {
+    protected final String getPopupShellTitle() {
         return this.title;
     }
 
     @Override
-    protected void initializeBounds() {
+    protected final void initializeBounds() {
         Rectangle clArea = getPrimaryClientArea();
         Point initialSize = getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT);
         int height = Math.max(initialSize.y, MIN_HEIGHT);
@@ -105,7 +111,7 @@ public final class ToolkitNotification extends AbstractNotificationPopup {
     }
 
     @Override
-    public boolean close() {
+    public final boolean close() {
         activeNotifications.remove(this);
         repositionNotifications();
         if (this.infoIcon != null && !this.infoIcon.isDisposed()) {

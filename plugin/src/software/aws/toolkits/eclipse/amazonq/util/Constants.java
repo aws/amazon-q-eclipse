@@ -15,6 +15,10 @@ public final class Constants {
     public static final String LSP_OPT_OUT_TELEMETRY_CONFIGURATION_KEY = "optOutTelemetry";
     public static final String LSP_Q_CONFIGURATION_KEY = "aws.q";
     public static final String LSP_CW_CONFIGURATION_KEY = "aws.codeWhisperer";
+    public static final String DO_NOT_SHOW_UPDATE_KEY = "doNotShowUpdate";
+    public static final String PLUGIN_UPDATE_NOTIFICATION_TITLE = "Amazon Q Update Available";
+    public static final String PLUGIN_UPDATE_NOTIFICATION_BODY = "Amazon Q plugin version %s is available."
+            + "Please update to receive the latest features and bug fixes.";
     public static final String LSP_CW_OPT_OUT_KEY = "shareCodeWhispererContentWithAWS";
     public static final String LSP_CODE_REFERENCES_OPT_OUT_KEY = "includeSuggestionsWithCodeReferences";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_TITLE = "Amazon Q Customization";

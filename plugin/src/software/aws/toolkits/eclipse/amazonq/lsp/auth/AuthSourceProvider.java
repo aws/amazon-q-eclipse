@@ -13,7 +13,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
-import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
@@ -39,7 +38,7 @@ public final class AuthSourceProvider extends AbstractSourceProvider implements 
     private Subscription authStateSubscription;
 
     public AuthSourceProvider() {
-        authStateSubscription = EventBroker.getInstance().subscribe(this);
+        authStateSubscription = Activator.getEventBroker().subscribe(this);
         isLoggedIn = Activator.getLoginService().getAuthState().isLoggedIn();
     }
 

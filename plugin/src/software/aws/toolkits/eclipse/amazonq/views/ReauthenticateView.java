@@ -18,7 +18,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
-import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
@@ -44,7 +43,7 @@ public final class ReauthenticateView extends CallToActionView implements EventO
     public ReauthenticateView() {
          // It is necessary for this view to be an `AuthStatusChangedListener` to switch the view back to Q Chat after the authentication
          // flow is successful. Without this listener, the re-authentication will succeed but the view will remain present.
-         authStateSubscription = EventBroker.getInstance().subscribe(this);
+         authStateSubscription = Activator.getEventBroker().subscribe(this);
     }
 
     @Override

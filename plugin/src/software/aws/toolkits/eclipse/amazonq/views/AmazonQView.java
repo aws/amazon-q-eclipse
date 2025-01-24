@@ -9,7 +9,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
-import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
@@ -84,10 +83,10 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
     }
 
     private void setupAuthStatusListeners() {
-        authStateSubscription = EventBroker.getInstance().subscribe(this);
-        EventBroker.getInstance().subscribe(amazonQCommonActions.getSignoutAction());
-        EventBroker.getInstance().subscribe(amazonQCommonActions.getFeedbackDialogContributionAction());
-        EventBroker.getInstance().subscribe(amazonQCommonActions.getCustomizationDialogContributionAction());
+        authStateSubscription = Activator.getEventBroker().subscribe(this);
+        Activator.getEventBroker().subscribe(amazonQCommonActions.getSignoutAction());
+        Activator.getEventBroker().subscribe(amazonQCommonActions.getFeedbackDialogContributionAction());
+        Activator.getEventBroker().subscribe(amazonQCommonActions.getCustomizationDialogContributionAction());
     }
 
     @Override

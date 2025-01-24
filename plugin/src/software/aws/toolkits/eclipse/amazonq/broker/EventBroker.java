@@ -13,18 +13,12 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.Subscription;
 
 public final class EventBroker {
 
-    private static final EventBroker INSTANCE;
     private final Subject<Object> eventBus = PublishSubject.create().toSerialized();
 
-    static {
-        INSTANCE = new EventBroker();
-    }
-
-    public static EventBroker getInstance() {
-        return INSTANCE;
-    }
-
     public <T> void post(final T event) {
+        if (event == null) {
+            return;
+        }
         eventBus.onNext(event);
     }
 
@@ -35,6 +29,7 @@ public final class EventBroker {
                 observer.onEvent(event);
             }
         };
+
         Disposable disposable = eventBus.ofType(observer.getEventType()).distinct()
                 .observeOn(Schedulers.computation())
                 .subscribe(consumer);

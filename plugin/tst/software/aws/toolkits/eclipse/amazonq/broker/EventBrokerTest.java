@@ -10,8 +10,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import java.util.Objects;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,37 +18,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 
 public final class EventBrokerTest {
 
-    private final class TestEvent {
-
-        private final String message;
-        private final int id;
-
-        TestEvent(final String message, final int id) {
-            this.message = message;
-            this.id = id;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            TestEvent other = (TestEvent) obj;
-            return this.id == other.getId();
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id);
-        }
-
+    private record TestEvent(String message, int id) {
     }
 
     private EventBroker eventBroker;
@@ -69,24 +37,6 @@ public final class EventBrokerTest {
         eventBroker.post(testEvent);
 
         verify(mockObserver, timeout(100)).onEvent(testEvent);
-
-        subscription.dispose();
-    }
-
-    @Test
-    void testDistinctEventsOnly() {
-        TestEvent testEvent = new TestEvent("a message", 1);
-        TestEvent duplicateEvent = new TestEvent("another message", 1);
-        TestEvent uniqueEvent = new TestEvent("a message", 2);
-
-        EventObserver<TestEvent> mockObserver = mock(EventObserver.class);
-
-        Disposable subscription = eventBroker.subscribe(TestEvent.class, mockObserver);
-        eventBroker.post(testEvent);
-        eventBroker.post(duplicateEvent);
-        eventBroker.post(uniqueEvent);
-
-        verify(mockObserver, timeout(100).times(2)).onEvent(any(TestEvent.class));
 
         subscription.dispose();
     }

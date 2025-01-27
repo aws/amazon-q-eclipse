@@ -29,9 +29,9 @@ public final class EventBroker {
             }
         };
 
-        return eventBus.ofType(eventType).distinct()
+        return eventBus.ofType(eventType)
                 .observeOn(Schedulers.computation())
                 .subscribe(consumer);
-    }
+        }
 
 }

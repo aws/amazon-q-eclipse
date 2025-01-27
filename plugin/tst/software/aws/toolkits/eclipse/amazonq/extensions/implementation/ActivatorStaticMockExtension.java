@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.extensions.api.StaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
@@ -44,6 +45,7 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
         LoginService loginServiceMock = Mockito.mock(LoginService.class);
         PluginStore pluginStoreMock = Mockito.mock(PluginStore.class);
         CodeReferenceLoggingService codeReferenceLoggingServiceMock = Mockito.mock(CodeReferenceLoggingService.class);
+        EventBroker eventBrokerMock = Mockito.mock(EventBroker.class);
 
         IPreferenceStore mockPreferenceStore = Mockito.mock(IPreferenceStore.class);
         when(activatorMock.getPreferenceStore()).thenReturn(mockPreferenceStore);
@@ -55,6 +57,7 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
         activatorStaticMock.when(Activator::getLoginService).thenReturn(loginServiceMock);
         activatorStaticMock.when(Activator::getPluginStore).thenReturn(pluginStoreMock);
         activatorStaticMock.when(Activator::getCodeReferenceLoggingService).thenReturn(codeReferenceLoggingServiceMock);
+        activatorStaticMock.when(Activator::getEventBroker).thenReturn(eventBrokerMock);
 
         Map<Class<?>, Object> newMocksMap = Map.of(
                 LoggingService.class, loggingServiceMock,
@@ -63,7 +66,8 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
                 LspProvider.class, lspProviderMock,
                 LoginService.class, loginServiceMock,
                 PluginStore.class, pluginStoreMock,
-                CodeReferenceLoggingService.class, codeReferenceLoggingServiceMock
+                CodeReferenceLoggingService.class, codeReferenceLoggingServiceMock,
+                EventBroker.class, eventBrokerMock
         );
         setMocksMap(newMocksMap);
     }

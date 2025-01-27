@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import java.util.Objects;
+
 import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -13,18 +14,19 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
+
 import jakarta.inject.Inject;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
-import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
-import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
+import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
-public final class CustomizationDialogContributionItem extends ContributionItem implements AuthStatusChangedListener {
+public final class CustomizationDialogContributionItem extends ContributionItem implements EventObserver<AuthState> {
     private static final String CUSTOMIZATION_MENU_ITEM_TEXT = "Select Customization";
 
     @Inject
@@ -45,7 +47,7 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
     }
 
     @Override
-    public void onAuthStatusChanged(final AuthState authState) {
+    public void onEvent(final AuthState authState) {
         updateVisibility(authState);
     }
 

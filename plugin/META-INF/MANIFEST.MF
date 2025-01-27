@@ -62,6 +62,7 @@ Bundle-Classpath: target/classes/,
  target/dependency/regions-2.28.26.jar,
  target/dependency/retries-2.28.26.jar,
  target/dependency/retries-spi-2.28.26.jar,
+ target/dependency/rxjava-3.1.5.jar,
  target/dependency/sdk-core-2.28.26.jar,
  target/dependency/third-party-jackson-core-2.28.26.jar,
  target/dependency/utils-2.28.26.jar

@@ -18,18 +18,18 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusProvider;
+import io.reactivex.rxjava3.disposables.Disposable;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
-import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 
-public final class ReauthenticateView extends CallToActionView implements AuthStatusChangedListener {
+public final class ReauthenticateView extends CallToActionView implements EventObserver<AuthState> {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView";
 
     private static final String ICON_PATH = "icons/AmazonQ64.png";
@@ -38,10 +38,12 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     private static final String BUTTON_LABEL = "Re-authenticate";
     private static final String LINK_LABEL = "Sign out";
 
+    private Disposable authStateSubscription;
+
     public ReauthenticateView() {
          // It is necessary for this view to be an `AuthStatusChangedListener` to switch the view back to Q Chat after the authentication
          // flow is successful. Without this listener, the re-authentication will succeed but the view will remain present.
-        AuthStatusProvider.addAuthStatusChangeListener(this);
+         authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
     }
 
     @Override
@@ -98,7 +100,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
     }
 
     @Override
-    public void onAuthStatusChanged(final AuthState authState) {
+    public void onEvent(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
             if (authState.isLoggedIn()) {
                 ViewVisibilityManager.showChatView("update");
@@ -138,7 +140,7 @@ public final class ReauthenticateView extends CallToActionView implements AuthSt
 
     @Override
     public void dispose() {
-        AuthStatusProvider.removeAuthStatusChangeListener(this);
+        authStateSubscription.dispose();
     }
 
     @Override

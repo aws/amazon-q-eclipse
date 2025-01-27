@@ -41,6 +41,7 @@ public final class DefaultAuthStateManager implements AuthStateManager {
     private LoginParams loginParams; // used in login's getSsoToken params
     private String issuerUrl; // used in AmazonQLspClientImpl.getConnectionMetadata()
     private String ssoTokenId; // used in logout's invalidateSsoToken params
+    private AuthState previousAuthState = null;
 
     public DefaultAuthStateManager(final PluginStore pluginStore) {
         this.authPluginStore = new AuthPluginStore(pluginStore);
@@ -82,7 +83,6 @@ public final class DefaultAuthStateManager implements AuthStateManager {
             toLoggedOut();
             return;
         }
-
         updateState(AuthStateType.EXPIRED, loginType, loginParams, ssoTokenId);
     }
 
@@ -119,7 +119,11 @@ public final class DefaultAuthStateManager implements AuthStateManager {
          * This notification is critical for ensuring all plugin components reflect the current
          * authentication state.
          */
-        AuthStatusProvider.notifyAuthStatusChanged(getAuthState());
+        AuthState newAuthState = getAuthState();
+        if (previousAuthState == null || newAuthState.authStateType() != previousAuthState.authStateType()) {
+            Activator.getEventBroker().post(newAuthState);
+        }
+        previousAuthState = newAuthState;
     }
 
     private void syncAuthStateWithPluginStore() {

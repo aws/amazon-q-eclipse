@@ -5,12 +5,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewSite;
 
 import jakarta.inject.Inject;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.AuthStatusChangedListener;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.views.DialogContributionItem;
 import software.aws.toolkits.eclipse.amazonq.views.FeedbackDialog;
 
-public final class FeedbackDialogContributionItem implements AuthStatusChangedListener {
+public final class FeedbackDialogContributionItem implements EventObserver<AuthState> {
     private static final String SHARE_FEEDBACK_MENU_ITEM_TEXT = "Share Feedback...";
 
     @Inject
@@ -40,7 +40,7 @@ public final class FeedbackDialogContributionItem implements AuthStatusChangedLi
     }
 
     @Override
-    public void onAuthStatusChanged(final AuthState authState) {
+    public void onEvent(final AuthState authState) {
         updateVisibility(authState);
     }
 }

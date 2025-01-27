@@ -92,11 +92,11 @@ public final class ToolkitLoginWebview extends AmazonQView {
         amazonQCommonActions = getAmazonQCommonActions();
 
         // Check if user is authenticated and build view accordingly
-        onAuthStatusChanged(authState);
+        onEvent(authState);
     }
 
     @Override
-    public void onAuthStatusChanged(final AuthState authState) {
+    public void onEvent(final AuthState authState) {
         var browser = getBrowser();
         Display.getDefault().asyncExec(() -> {
             amazonQCommonActions.updateActionVisibility(authState, getViewSite());

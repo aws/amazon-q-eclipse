@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.manager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,10 +110,7 @@ public class DefaultLspManagerTest {
         doReturn(expectedResult).when(lspManager).getLocalLspOverride();
 
         // confirm file does not have posix permission upon creation
-        assertFalse(verifyPosixPermissions(serverCommand));
-
-        mockedStaticArtifactUtils.when(() -> ArtifactUtils.hasPosixFilePermissions(any(Path.class)))
-                .thenReturn(isWindows);
+        verifyPosixPermissions(serverCommand, false);
 
         LspInstallResult result = lspManager.getLspInstallation();
         assertEquals(expectedResult, result);
@@ -128,7 +124,7 @@ public class DefaultLspManagerTest {
 
         // verify proper posix permissions given platform
         mockedStaticArtifactUtils.verify(() -> ArtifactUtils.hasPosixFilePermissions(any(Path.class)));
-        assertEquals(isWindows, verifyPosixPermissions(serverCommand));
+        verifyPosixPermissions(serverCommand, isWindows);
 
         // verify calling getLspInstallation again returns same instance
         LspInstallResult secondResult = lspManager.getLspInstallation();
@@ -150,10 +146,9 @@ public class DefaultLspManagerTest {
         Path serverCommand = lspServerSubDir.resolve("node");
         Files.createFile(lspArgsFile);
         Files.createFile(serverCommand);
-        assertFalse(verifyPosixPermissions(serverCommand));
+        verifyPosixPermissions(serverCommand, false);
         setUpFetchingTools();
 
-        mockedStaticArtifactUtils.when(() -> ArtifactUtils.hasPosixFilePermissions(any(Path.class))).thenReturn(true);
         LspInstallResult result = lspManager.getLspInstallation();
 
         // verify proper parameters returned
@@ -170,7 +165,7 @@ public class DefaultLspManagerTest {
         verify(mocklspFetcher).fetch(any(), any(), eq(tempDir), any());
         verify(mockLogger, never()).info(any());
         mockedStaticArtifactUtils.verify(() -> ArtifactUtils.hasPosixFilePermissions(any(Path.class)));
-        assertTrue(verifyPosixPermissions(serverCommand));
+        verifyPosixPermissions(serverCommand, true);
 
         // verify calling getLspInstallation again returns same instance
         LspInstallResult secondResult = lspManager.getLspInstallation();
@@ -286,14 +281,23 @@ public class DefaultLspManagerTest {
         return new LspFetchResult(serverDir.toString(), "version", LanguageServerLocation.OVERRIDE);
     }
 
-    private static boolean verifyPosixPermissions(final Path filePath) throws IOException {
+    private static void verifyPosixPermissions(final Path filePath, final boolean expectedResult) throws IOException {
+        // skip verifying posix permissions if test run in windows environment
+        if (isWindowsEnvironment(filePath)) {
+            return;
+        }
         Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(filePath);
-        return permissions.contains(PosixFilePermission.OWNER_EXECUTE)
+        var actualResult = permissions.contains(PosixFilePermission.OWNER_EXECUTE)
                 && permissions.contains(PosixFilePermission.OWNER_READ)
                 && permissions.contains(PosixFilePermission.OWNER_WRITE)
                 && permissions.contains(PosixFilePermission.GROUP_READ)
                 && permissions.contains(PosixFilePermission.GROUP_EXECUTE)
                 && permissions.contains(PosixFilePermission.OTHERS_EXECUTE)
                 && permissions.contains(PosixFilePermission.OTHERS_READ);
+        assertEquals(expectedResult, actualResult);
+    }
+
+    private static boolean isWindowsEnvironment(final Path filePath) {
+        return !filePath.getFileSystem().supportedFileAttributeViews().contains("posix");
     }
 }

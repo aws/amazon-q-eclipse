@@ -26,19 +26,20 @@ import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.VersionRange;
 
+import software.aws.toolkits.eclipse.amazonq.events.LspStatusUpdate;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.exception.LspError;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspFetchResult;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ManifestArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Content;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.ManifestArtifactVersion;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Target;
-import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
-import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
+import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
@@ -91,6 +92,7 @@ public final class RemoteLspFetcher implements LspFetcher {
                     versionRange.toString(), architecture, platform);
             setErrorReason(LspError.NO_COMPATIBLE_LSP.toString());
             emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
+            Activator.getEventBroker().post(new LspStatusUpdate(LspStatusUpdate.Status.ERROR));
             throw new AmazonQPluginException(failureReason);
         }
 
@@ -143,10 +145,12 @@ public final class RemoteLspFetcher implements LspFetcher {
 
         String failureReason = "Unable to find a compatible version of Amazon Q Language Server.";
         setErrorReason(LspError.NO_VALID_SERVER_FALLBACK.toString());
+        Activator.getEventBroker().post(new LspStatusUpdate(LspStatusUpdate.Status.ERROR));
         emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
         throw new AmazonQPluginException(failureReason);
     }
 
+    @Override
     public void cleanup(final Path destinationFolder) {
         if (manifest == null || manifest.versions().isEmpty()) {
             return;
@@ -194,6 +198,7 @@ public final class RemoteLspFetcher implements LspFetcher {
             String failureReason = "No valid manifest version data was received. An error could have caused this. Please check logs.";
             setErrorReason(LspError.INVALID_VERSION_MANIFEST.toString());
             emitGetServer(Result.FAILED, null, LanguageServerLocation.UNKNOWN, start);
+            Activator.getEventBroker().post(new LspStatusUpdate(LspStatusUpdate.Status.ERROR));
             throw new AmazonQPluginException(failureReason);
         }
 

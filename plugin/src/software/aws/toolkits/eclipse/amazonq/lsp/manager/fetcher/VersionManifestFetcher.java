@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.aws.toolkits.eclipse.amazonq.events.LspStatusUpdate;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.exception.LspError;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;
@@ -94,6 +95,7 @@ public final class VersionManifestFetcher {
             }
             Activator.getLogger().error("Error fetching manifest from remote location", e);
             emitGetManifest(null, ManifestLocation.UNKNOWN, ExceptionMetadata.scrubException(LspError.MANIFEST_FETCH_ERROR.toString(), e));
+            Activator.getEventBroker().post(new LspStatusUpdate(LspStatusUpdate.Status.ERROR));
             return cachedManifest;
         }
     }

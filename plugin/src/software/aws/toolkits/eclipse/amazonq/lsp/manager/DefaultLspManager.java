@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 
+import software.aws.toolkits.eclipse.amazonq.events.LspStatusUpdate;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.ArtifactUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.LspFetcher;
@@ -21,10 +22,10 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupA
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RemoteLspFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.VersionManifestFetcher;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.model.Manifest;
-import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -123,6 +124,7 @@ public final class DefaultLspManager implements LspManager {
             validateLsp(overrideResult);
         } catch (Exception e) {
             Activator.getLogger().error(e.getMessage(), e);
+            Activator.getEventBroker().post(new LspStatusUpdate(LspStatusUpdate.Status.ERROR));
             errorMessage = ExceptionMetadata.scrubException(e);
         } finally {
             emitValidate(overrideResult, errorMessage, start);
@@ -192,6 +194,7 @@ public final class DefaultLspManager implements LspManager {
             makeExecutable(nodeExecutable);
         } catch (Exception e) {
             errorMessage = ExceptionMetadata.scrubException(e);
+            Activator.getEventBroker().post(new LspStatusUpdate(LspStatusUpdate.Status.ERROR));
             throw e;
         } finally {
             emitValidate(result, errorMessage, start);

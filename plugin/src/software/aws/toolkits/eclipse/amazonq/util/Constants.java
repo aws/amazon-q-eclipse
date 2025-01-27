@@ -40,5 +40,7 @@ public final class Constants {
     public static final String AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to authenticate. Please try again.";
     public static final String IDE_SSL_HANDSHAKE_TITLE = "SSL Handshake Error";
     public static final String IDE_SSL_HANDSHAKE_BODY = "The plugin encountered an SSL handshake error. If using a proxy, check the plugin preferences.";
+    public static final String INVALID_PROXY_CONFIGURATION_TITLE = "Proxy Configuration Error";
+    public static final String INVALID_PROXY_CONFIGURATION_BODY = "The provided proxy URL is invalid. Please check your plugin configuration.";
 
 }

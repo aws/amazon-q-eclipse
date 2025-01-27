@@ -18,6 +18,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupA
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -43,7 +44,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
     @Override
     protected final void addEnvironmentVariables(final Map<String, String> env) {
-        String httpsProxyPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.HTTPS_PROXY);
+        String httpsProxyPreference = ProxyUtil.getHttpsProxyUrl();
         String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
         if (!StringUtils.isEmpty(httpsProxyPreference)) {
             env.put("HTTPS_PROXY", httpsProxyPreference);

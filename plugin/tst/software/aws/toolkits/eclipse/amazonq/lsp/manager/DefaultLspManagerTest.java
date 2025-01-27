@@ -124,7 +124,7 @@ public class DefaultLspManagerTest {
 
         // verify proper posix permissions given platform
         mockedStaticArtifactUtils.verify(() -> ArtifactUtils.hasPosixFilePermissions(any(Path.class)));
-        verifyPosixPermissions(serverCommand, !isWindows);
+        verifyPosixPermissions(serverCommand, true);
 
         // verify calling getLspInstallation again returns same instance
         LspInstallResult secondResult = lspManager.getLspInstallation();

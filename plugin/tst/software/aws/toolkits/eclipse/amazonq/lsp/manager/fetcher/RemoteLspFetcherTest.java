@@ -68,9 +68,11 @@ import software.aws.toolkits.telemetry.TelemetryDefinitions.LanguageServerLocati
 
 public final class RemoteLspFetcherTest {
     private static VersionRange versionRange;
+    private static String majorVersion;
     static {
         try {
             versionRange = VersionRange.createFromVersionSpec("[1.0.0, 2.0.0]");
+            majorVersion = "1";
         } catch (InvalidVersionSpecificationException e) {
             throw new AmazonQPluginException("Failed to parse LSP supported version range", e);
         }
@@ -340,8 +342,8 @@ public final class RemoteLspFetcherTest {
     void testCleanup() throws IOException {
 
         //set up compatible versions
-        String sampleLspVersionV2 = String.format("%s.1.0", versionRange.getLeft().getMajor());
-        String sampleLspVersionV3 = String.format("%s.2.0", versionRange.getLeft().getMajor());
+        String sampleLspVersionV2 = String.format("%s.1.0", majorVersion);
+        String sampleLspVersionV3 = String.format("%s.2.0", majorVersion);
         sampleManifest = createManifest(
                 List.of(
                         sampleLspVersion,

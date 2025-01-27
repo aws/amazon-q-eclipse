@@ -22,6 +22,12 @@
             class="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
         </view>
         <view
+            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+            id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
             name="Amazon Q"
             icon="icons/AmazonQ.png"

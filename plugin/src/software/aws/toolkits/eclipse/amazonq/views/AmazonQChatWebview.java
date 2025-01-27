@@ -142,7 +142,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 // chat view
                 if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
                     Optional<String> content = getContent();
-                    if (!content.isPresent() && !LspStatusManager.lspFailed()) {
+                    if (!content.isPresent() && !LspStatusManager.getInstance().lspFailed()) {
                         canDisposeState = true;
                         ViewVisibilityManager.showChatAssetMissingView("update");
                     } else {

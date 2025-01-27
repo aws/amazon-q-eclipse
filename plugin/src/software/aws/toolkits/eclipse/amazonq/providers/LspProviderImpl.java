@@ -53,7 +53,7 @@ public final class LspProviderImpl implements LspProvider {
                 future.complete(server);
             }
             emitInitializeMetric();
-            LspStatusManager.setToActive();
+            LspStatusManager.getInstance().setToActive();
         }
     }
 

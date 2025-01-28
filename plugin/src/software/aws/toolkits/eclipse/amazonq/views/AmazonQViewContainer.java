@@ -13,48 +13,51 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
+import software.aws.toolkits.eclipse.amazonq.views.router.ViewId;
 
 
-public class AmazonQViewContainer extends ViewPart {
+public class AmazonQViewContainer extends ViewPart implements EventObserver<ViewId> {
     private Composite parentComposite;
     private StackLayout layout;
-    private Map<String, BaseAmazonQView> views;
-    private String activeId;
+    private Map<ViewId, BaseAmazonQView> views;
+    private ViewId activeId;
     private BaseAmazonQView activeView;
+    private Disposable viewChangeEventSubscription;
 
     public AmazonQViewContainer() {
-        initializeViews();
-        //Activator.getBroker().subscribe(ViewId.class, this);
+        viewChangeEventSubscription = Activator.getEventBroker().subscribe(ViewId.class, this);
     }
 
-    /*
+    /* Router should be initialized, then init view container
      * ViewRouter.Initialize()
      * viewcontainer.init(activeViewId)
      */
 
-    //1. showView(viewContainer.ID)
-    //2. viewContainer.init(currentView)
+    /*
+     * When container is disposed and being reopened, class will be recreated
+     * need to call showView to reset viewContainer && follow up with init call to container
+     * 1. showView(viewContainer.ID)
+     * 2. viewContainer.init(currentView)
+     */
 
-    public void initializeViews() {
+    public void initializeViews(ViewId currentActiveViewId) {
 
         //init map containing all views
         var dependencyMissingView = new DependencyMissingView();
         var chatAssetMissingView = new ChatAssetMissingView();
         var reAuthView = new ReauthenticateView();
         views = Map.of(
-                ViewConstants.CHAT_ASSET_MISSING_VIEW_ID, chatAssetMissingView,
-                ViewConstants.DEPENDENCY_MISSING_VIEW_ID, dependencyMissingView,
-                ViewConstants.REAUTHENTICATE_VIEW_ID, reAuthView);
+                ViewId.CHAT_ASSET_MISSING_VIEW, chatAssetMissingView,
+                ViewId.DEPENDENCY_MISSING_VIEW, dependencyMissingView,
+                ViewId.RE_AUTHENTICATE_VIEW, reAuthView);
 
-        //default view
-        activeView = views.get(ViewConstants.REAUTHENTICATE_VIEW_ID);
-
-        //activeView == current activeView
-        //chatView as defaultView?
-
-        //query router --> grab current activeView
-
+        //default view passed in from router
+        //possible we'll use chatView as default?
+        activeView = views.get(currentActiveViewId);
     }
 
     public final void createPartControl(final Composite parent) {
@@ -71,7 +74,7 @@ public class AmazonQViewContainer extends ViewPart {
         parent.setLayout(gridLayout);
 
         setupStaticMenuActions();
-        updateChildView(activeView, ViewConstants.REAUTHENTICATE_VIEW_ID);
+        updateChildView(activeView, ViewId.RE_AUTHENTICATE_VIEW);
     }
 
     /* change methodology for setupMenuActions -- move outside of viewContainer?
@@ -83,7 +86,7 @@ public class AmazonQViewContainer extends ViewPart {
         new AmazonQStaticActions(getViewSite());
     }
 
-    private void updateChildView(BaseAmazonQView newView, String newViewId) {
+    private void updateChildView(BaseAmazonQView newView, ViewId newViewId) {
         Display.getDefault().asyncExec(() -> {
 
             if (activeView != null) {
@@ -105,17 +108,18 @@ public class AmazonQViewContainer extends ViewPart {
         });
     }
 
-    public void onChangeViewEvent(String newViewId) {
-        if (activeId != null && activeId.equals(newViewId)) {
-            return;
-        }
+    @Override
+    public void onEvent(final ViewId newViewId) {
+          if (activeId != null && activeId.equals(newViewId)) {
+          return;
+      }
 
-        if (views.containsKey(newViewId)) {
-            BaseAmazonQView newView = views.get(newViewId);
-            if (!parentComposite.isDisposed()) {
-                updateChildView(newView, newViewId);
-            }
-        }
+      if (views.containsKey(newViewId)) {
+          BaseAmazonQView newView = views.get(newViewId);
+          if (!parentComposite.isDisposed()) {
+              updateChildView(newView, newViewId);
+          }
+      }
     }
 
     @Override
@@ -126,6 +130,7 @@ public class AmazonQViewContainer extends ViewPart {
 
     @Override
     public void dispose() {
+        viewChangeEventSubscription.dispose();
         if (activeView != null) {
             activeView.dispose();
         }

@@ -23,9 +23,9 @@ public abstract class CallToActionView implements BaseAmazonQView {
     private String buttonLabel;
     private SelectionListener buttonHandler;
 
-    private final String ICON_PATH = getIconPath();
-    private final String HEADER_LABEL = getHeaderLabel();
-    private final String DETAIL_MESSAGE = getDetailMessage();
+    private final String iconPath = getIconPath();
+    private final String headerLabel = getHeaderLabel();
+    private final String detailMessage = getDetailMessage();
     private Image icon;
 
     protected abstract String getButtonLabel();
@@ -33,7 +33,7 @@ public abstract class CallToActionView implements BaseAmazonQView {
     protected abstract void setupButtonFooterContent(Composite composite);
 
     @Override
-     public Composite setupView(Composite parentComposite) {
+    public final Composite setupView(final Composite parentComposite) {
         Composite container = new Composite(parentComposite, SWT.NONE);
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = 10;
@@ -44,7 +44,7 @@ public abstract class CallToActionView implements BaseAmazonQView {
         container.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 
         Label iconLabel = new Label(container, SWT.NONE);
-        icon = loadImage(ICON_PATH);
+        icon = loadImage(iconPath);
         if (icon != null) {
             iconLabel.setImage(icon);
             iconLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
@@ -56,12 +56,12 @@ public abstract class CallToActionView implements BaseAmazonQView {
             });
         }
 
-        Label headerLabel = new Label(container, SWT.CENTER | SWT.WRAP);
-        headerLabel.setText(HEADER_LABEL);
-        headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        Label header = new Label(container, SWT.CENTER | SWT.WRAP);
+        header.setText(headerLabel);
+        header.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         Label detailLabel = new Label(container, SWT.CENTER | SWT.WRAP);
-        detailLabel.setText(DETAIL_MESSAGE);
+        detailLabel.setText(detailMessage);
         detailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         this.buttonLabel = getButtonLabel();
@@ -109,22 +109,14 @@ public abstract class CallToActionView implements BaseAmazonQView {
         // Default implementation - subclasses can override if they need to dispose of resources
     }
 
+    @SuppressWarnings("DesignForExtension")
     @Override
     public boolean canDisplay() {
         // Default implementation - subclasses should override to provide specific display logic
         return true;
     }
-    protected String getIconPath() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-    protected String getHeaderLabel() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-    protected String getDetailMessage() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    protected abstract String getIconPath();
+    protected abstract String getHeaderLabel();
+    protected abstract String getDetailMessage();
 
 }

@@ -6,7 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import org.eclipse.swt.widgets.Composite;
 
 public interface BaseAmazonQView {
-    public Composite setupView(Composite parentComposite);
-    public boolean canDisplay();
-    public void dispose();
+    Composite setupView(Composite parentComposite);
+    boolean canDisplay();
+    void dispose();
 }

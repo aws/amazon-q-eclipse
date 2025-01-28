@@ -20,7 +20,7 @@ import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
 import software.aws.toolkits.eclipse.amazonq.views.router.ViewId;
 
 
-public class AmazonQViewContainer extends ViewPart implements EventObserver<ViewId> {
+public final class AmazonQViewContainer extends ViewPart implements EventObserver<ViewId> {
     private Composite parentComposite;
     private StackLayout layout;
     private Map<ViewId, BaseAmazonQView> views;
@@ -44,7 +44,7 @@ public class AmazonQViewContainer extends ViewPart implements EventObserver<View
      * 2. viewContainer.init(currentView)
      */
 
-    public void initializeViews(ViewId currentActiveViewId) {
+    public void initializeViews(final ViewId currentActiveViewId) {
 
         //init map containing all views
         var dependencyMissingView = new DependencyMissingView();
@@ -60,7 +60,7 @@ public class AmazonQViewContainer extends ViewPart implements EventObserver<View
         activeView = views.get(currentActiveViewId);
     }
 
-    public final void createPartControl(final Composite parent) {
+    public void createPartControl(final Composite parent) {
         parentComposite = parent;
         layout = new StackLayout();
         parent.setLayout(layout);
@@ -86,7 +86,7 @@ public class AmazonQViewContainer extends ViewPart implements EventObserver<View
         new AmazonQStaticActions(getViewSite());
     }
 
-    private void updateChildView(BaseAmazonQView newView, ViewId newViewId) {
+    private void updateChildView(final BaseAmazonQView newView, final ViewId newViewId) {
         Display.getDefault().asyncExec(() -> {
 
             if (activeView != null) {
@@ -123,7 +123,7 @@ public class AmazonQViewContainer extends ViewPart implements EventObserver<View
     }
 
     @Override
-    public final void setFocus() {
+    public void setFocus() {
         parentComposite.setFocus();
 
     }

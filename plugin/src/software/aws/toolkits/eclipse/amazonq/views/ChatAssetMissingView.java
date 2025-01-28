@@ -35,7 +35,7 @@ public final class ChatAssetMissingView implements BaseAmazonQView {
     }
 
     @Override
-    public Composite setupView(Composite parentComposite) {
+    public Composite setupView(final Composite parentComposite) {
         container = new Composite(parentComposite, SWT.NONE);
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = 20;

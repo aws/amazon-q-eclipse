@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -98,7 +97,6 @@ public final class ReauthenticateView extends CallToActionView implements EventO
             }
         });
     }
-
     @Override
     public void onEvent(final AuthState authState) {
         Display.getDefault().asyncExec(() -> {
@@ -139,19 +137,16 @@ public final class ReauthenticateView extends CallToActionView implements EventO
     }
 
     @Override
+    public boolean canDisplay() {
+        return true;
+    }
+
+
+    @Override
     public void dispose() {
         authStateSubscription.dispose();
     }
 
-    @Override
-    protected CompletableFuture<Boolean> isViewDisplayable() {
-        return CompletableFuture.completedFuture(Activator.getLoginService().getAuthState().isExpired());
-    }
-
-    @Override
-    protected void showAlternateView() {
-        ViewVisibilityManager.showChatView("restart");
-    }
 
     private void resizeButtonFont(final Button button, final int newFontSize) {
         Font currentFont = button.getFont();

@@ -54,6 +54,7 @@ public final class ViewVisibilityManager {
 
     public static void showViewContainer(final String source) {
         showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
+        //put a call here to init viewContainer?
     }
 
     public static void showChatView(final String source) {

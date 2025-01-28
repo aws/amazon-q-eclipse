@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Label;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
 
 public final class ChatAssetMissingView implements BaseAmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView";

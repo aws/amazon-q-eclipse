@@ -23,7 +23,7 @@ public final class ViewRouter {
         EventObserver<ActiveViewUpdateRequest> activeViewUpdateRequestObserver = new EventObserver<>() {
             @Override
             public void onEvent(final ActiveViewUpdateRequest request) {
-                if (activeViewId != request.currentActiveView()) {
+                if (request.publishUnconditionally() || activeViewId != request.currentActiveView()) {
                     notifyActiveViewChange();
                 }
             }

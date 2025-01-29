@@ -3,5 +3,5 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.router;
 
-public record ActiveViewUpdateRequest(ViewId currentActiveView) {
+public record ActiveViewUpdateRequest(ViewId currentActiveView, boolean publishUnconditionally) {
 }

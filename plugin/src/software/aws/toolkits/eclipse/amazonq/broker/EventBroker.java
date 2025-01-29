@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.broker;
 
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -32,6 +33,10 @@ public final class EventBroker {
         return eventBus.ofType(eventType)
                 .observeOn(Schedulers.computation())
                 .subscribe(consumer);
-        }
+    }
+
+    public <T> Observable<T> ofObservable(final Class<T> eventType) {
+        return eventBus.ofType(eventType);
+    }
 
 }

@@ -137,12 +137,6 @@ public final class ReauthenticateView extends CallToActionView implements EventO
     }
 
     @Override
-    public boolean canDisplay() {
-        return true;
-    }
-
-
-    @Override
     public void dispose() {
         authStateSubscription.dispose();
     }

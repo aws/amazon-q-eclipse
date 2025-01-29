@@ -30,6 +30,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     public AmazonQViewContainer() {
         viewChangeEventSubscription = Activator.getEventBroker().subscribe(ViewId.class, this);
+        initializeViews(null);
     }
 
     /* Router should be initialized, then init view container
@@ -50,14 +51,17 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         var dependencyMissingView = new DependencyMissingView();
         var chatAssetMissingView = new ChatAssetMissingView();
         var reAuthView = new ReauthenticateView();
+        var lspFailedView = new LspStartUpFailedView();
         views = Map.of(
                 ViewId.CHAT_ASSET_MISSING_VIEW, chatAssetMissingView,
                 ViewId.DEPENDENCY_MISSING_VIEW, dependencyMissingView,
-                ViewId.RE_AUTHENTICATE_VIEW, reAuthView);
+                ViewId.RE_AUTHENTICATE_VIEW, reAuthView,
+                ViewId.LSP_STARTUP_FAILED_VIEW, lspFailedView
+                );
 
         //default view passed in from router
         //possible we'll use chatView as default?
-        activeView = views.get(currentActiveViewId);
+        activeView = views.get(ViewId.LSP_STARTUP_FAILED_VIEW);
     }
 
     public void createPartControl(final Composite parent) {
@@ -110,7 +114,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     @Override
     public void onEvent(final ViewId newViewId) {
-          if (activeId != null && activeId.equals(newViewId)) {
+      if (activeId != null && activeId.equals(newViewId)) {
           return;
       }
 

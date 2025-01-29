@@ -97,9 +97,4 @@ public final class DependencyMissingView extends CallToActionView {
     private String getDependency() {
         return PluginUtils.getPlatform() == PluginPlatform.WINDOWS ? "WebView2" : "WebKit";
     }
-
-    @Override
-    public boolean canDisplay() {
-        return true;
-    }
 }

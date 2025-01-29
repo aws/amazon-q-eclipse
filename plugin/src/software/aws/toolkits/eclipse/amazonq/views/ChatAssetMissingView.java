@@ -3,24 +3,15 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.io.IOException;
-import java.net.URL;
-
-import java.util.Optional;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
-
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
-public final class ChatAssetMissingView implements BaseAmazonQView {
+public final class ChatAssetMissingView extends BaseAmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView";
 
     private static final String ICON_PATH = "icons/AmazonQ64.png";
@@ -66,37 +57,11 @@ public final class ChatAssetMissingView implements BaseAmazonQView {
         return container;
     }
 
-    private Image loadImage(final String imagePath) {
-        Image loadedImage = null;
-        try {
-            URL imageUrl = PluginUtils.getResource(imagePath);
-            if (imageUrl != null) {
-                loadedImage = new Image(Display.getCurrent(), imageUrl.openStream());
-            }
-        } catch (IOException e) {
-            Activator.getLogger().warn(e.getMessage(), e);
-        }
-        return loadedImage;
-    }
-
     @Override
     public void dispose() {
         if (chatAssetProvider != null) {
             chatAssetProvider.dispose();
             chatAssetProvider = null;
-        }
-    }
-
-    //should live in the viewRouter for the time being
-
-    @Override
-    public boolean canDisplay() {
-        try {
-            Optional<String> chatAsset = chatAssetProvider.get();
-            return !chatAsset.isPresent();
-        } catch (Exception ex) {
-            Activator.getLogger().error("Failed to verify Amazon Q chat content is retrievable", ex);
-            return true; // Safer to display chat asset missing view by default
         }
     }
 }

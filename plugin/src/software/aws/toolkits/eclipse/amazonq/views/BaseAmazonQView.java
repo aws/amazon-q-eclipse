@@ -3,10 +3,30 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import org.eclipse.swt.widgets.Composite;
+import java.io.IOException;
+import java.net.URL;
 
-public interface BaseAmazonQView {
-    Composite setupView(Composite parentComposite);
-    boolean canDisplay();
-    void dispose();
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+
+public abstract class BaseAmazonQView {
+    public abstract Composite setupView(Composite parentComposite);
+    public abstract void dispose();
+
+    protected Image loadImage(final String imagePath) {
+        Image loadedImage = null;
+        try {
+            URL imageUrl = PluginUtils.getResource(imagePath);
+            if (imageUrl != null) {
+                loadedImage = new Image(Display.getCurrent(), imageUrl.openStream());
+            }
+        } catch (IOException e) {
+            Activator.getLogger().warn(e.getMessage(), e);
+        }
+        return loadedImage;
+    }
 }

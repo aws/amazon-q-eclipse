@@ -3,9 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.io.IOException;
-import java.net.URL;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
@@ -13,13 +10,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-
-public abstract class CallToActionView implements BaseAmazonQView {
+public abstract class CallToActionView extends BaseAmazonQView {
     private String buttonLabel;
     private SelectionListener buttonHandler;
 
@@ -72,19 +65,6 @@ public abstract class CallToActionView implements BaseAmazonQView {
         return container;
     }
 
-    private Image loadImage(final String imagePath) {
-        Image loadedImage = null;
-        try {
-            URL imageUrl = PluginUtils.getResource(imagePath);
-            if (imageUrl != null) {
-                loadedImage = new Image(Display.getCurrent(), imageUrl.openStream());
-            }
-        } catch (IOException e) {
-            Activator.getLogger().warn(e.getMessage(), e);
-        }
-        return loadedImage;
-    }
-
     private void setupButton(final Composite composite) {
         var button = new Button(composite, SWT.PUSH);
         updateButtonStyle(button);
@@ -109,12 +89,6 @@ public abstract class CallToActionView implements BaseAmazonQView {
         // Default implementation - subclasses can override if they need to dispose of resources
     }
 
-    @SuppressWarnings("DesignForExtension")
-    @Override
-    public boolean canDisplay() {
-        // Default implementation - subclasses should override to provide specific display logic
-        return true;
-    }
     protected abstract String getIconPath();
     protected abstract String getHeaderLabel();
     protected abstract String getDetailMessage();

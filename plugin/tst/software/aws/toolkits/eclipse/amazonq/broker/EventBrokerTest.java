@@ -129,6 +129,7 @@ public final class EventBrokerTest {
 
         firstTestEventSubscription.dispose();
         secondTestEventSubscription.dispose();
+        otherEventSubscription.dispose();
     }
 
     @Test

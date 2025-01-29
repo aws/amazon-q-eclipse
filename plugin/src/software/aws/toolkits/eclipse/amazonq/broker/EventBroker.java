@@ -21,7 +21,6 @@ public final class EventBroker {
 
     public EventBroker() {
         eventBus = BehaviorSubject.create().toSerialized();
-
         cachedObservables = new ConcurrentHashMap<>();
         eventBus.doOnNext(event -> getOrCreateObservable(event.getClass())).subscribe();
     }

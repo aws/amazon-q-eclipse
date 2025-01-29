@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -113,18 +114,44 @@ public final class EventBrokerTest {
 
         EventObserver<TestEvent> firstEventObserver = mock(EventObserver.class);
         EventObserver<TestEvent> secondEventObserver = mock(EventObserver.class);
+        EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);
 
         eventBroker.post(testEvent);
         eventBroker.post(otherEvent);
 
         Disposable firstTestEventSubscription = eventBroker.subscribe(TestEvent.class, firstEventObserver);
         Disposable secondTestEventSubscription = eventBroker.subscribe(TestEvent.class, secondEventObserver);
+        Disposable otherEventSubscription = eventBroker.subscribe(OtherTestEvent.class, otherEventObserver);
 
         verify(firstEventObserver, timeout(100).times(1)).onEvent(testEvent);
         verify(secondEventObserver, timeout(100).times(1)).onEvent(testEvent);
+        verify(otherEventObserver, timeout(100).times(1)).onEvent(otherEvent);
 
         firstTestEventSubscription.dispose();
         secondTestEventSubscription.dispose();
+    }
+
+    @Test
+    void testVerifyNoEventsEmitUnlessEventTypeMatches() {
+        class OtherTestEvent {
+        }
+
+        OtherTestEvent otherEvent = new OtherTestEvent();
+        TestEvent testEvent = new TestEvent("test message", 1);
+
+        EventObserver<TestEvent> eventObserver = mock(EventObserver.class);
+        EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);
+
+        eventBroker.post(otherEvent);
+
+        Disposable eventSubscription = eventBroker.subscribe(TestEvent.class, eventObserver);
+        Disposable otherEventSubscription = eventBroker.subscribe(OtherTestEvent.class, otherEventObserver);
+
+        verifyNoInteractions(eventObserver);
+        verify(otherEventObserver, timeout(100).times(1)).onEvent(otherEvent);
+
+        eventSubscription.dispose();
+        otherEventSubscription.dispose();
     }
 
 }

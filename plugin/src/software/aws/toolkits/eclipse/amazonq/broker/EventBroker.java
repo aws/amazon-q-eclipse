@@ -3,17 +3,28 @@
 
 package software.aws.toolkits.eclipse.amazonq.broker;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.observables.ConnectableObservable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import io.reactivex.rxjava3.subjects.Subject;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 
 public final class EventBroker {
 
-    private final Subject<Object> eventBus = PublishSubject.create().toSerialized();
+    private final Subject<Object> eventBus;
+    private final Map<Class<?>, Observable<?>> cachedObservables;
+
+    public EventBroker() {
+        eventBus = BehaviorSubject.create().toSerialized();
+
+        cachedObservables = new ConcurrentHashMap<>();
+        eventBus.doOnNext(event -> getOrCreateObservable(event.getClass())).subscribe();
+    }
 
     public <T> void post(final T event) {
         if (event == null) {
@@ -22,21 +33,23 @@ public final class EventBroker {
         eventBus.onNext(event);
     }
 
-    public <T> Disposable subscribe(final Class<T> eventType, final EventObserver<T> observer) {
-        Consumer<T> consumer = new Consumer<>() {
-            @Override
-            public void accept(final T event) {
-                observer.onEvent(event);
-            }
-        };
+    @SuppressWarnings("unchecked")
+    private <T> Observable<T> getOrCreateObservable(final Class<T> eventType) {
+        return (Observable<T>) cachedObservables.computeIfAbsent(eventType, type -> {
+            ConnectableObservable<?> observable = eventBus.ofType(type).replay(1);
+            observable.connect();
+            return observable;
+        });
+    }
 
-        return eventBus.ofType(eventType)
+    public <T> Disposable subscribe(final Class<T> eventType, final EventObserver<T> observer) {
+        return getOrCreateObservable(eventType)
                 .observeOn(Schedulers.computation())
-                .subscribe(consumer);
+                .subscribe(observer::onEvent);
     }
 
     public <T> Observable<T> ofObservable(final Class<T> eventType) {
-        return eventBus.ofType(eventType);
+        return getOrCreateObservable(eventType);
     }
 
 }

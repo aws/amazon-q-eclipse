@@ -69,7 +69,6 @@ public final class EventBrokerTest {
         verify(mockObserver, timeout(100)).onEvent(firstEvent);
         verify(mockObserver, timeout(100)).onEvent(secondEvent);
         verify(mockObserver, timeout(100)).onEvent(thirdEvent);
-
         verifyNoMoreInteractions(mockObserver);
 
         subscription.dispose();
@@ -78,20 +77,11 @@ public final class EventBrokerTest {
     @Test
     void testDifferentEventTypesIsolation() {
         class OtherTestEvent {
-            private final int value;
-
-            OtherTestEvent(final int value) {
-                this.value = value;
-            }
-
-            public int getValue() {
-                return value;
-            }
         }
 
         TestEvent testEvent = new TestEvent("test message", 1);
         TestEvent secondEvent = new TestEvent("test message", 2);
-        OtherTestEvent otherEvent = new OtherTestEvent(42);
+        OtherTestEvent otherEvent = new OtherTestEvent();
 
         EventObserver<TestEvent> testEventObserver = mock(EventObserver.class);
         EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);
@@ -111,6 +101,30 @@ public final class EventBrokerTest {
 
         testEventSubscription.dispose();
         otherEventSubscription.dispose();
+    }
+
+    @Test
+    void testLatestValueEmittedOnSubscription() throws InterruptedException {
+        class OtherTestEvent {
+        }
+
+        OtherTestEvent otherEvent = new OtherTestEvent();
+        TestEvent testEvent = new TestEvent("test message", 1);
+
+        EventObserver<TestEvent> firstEventObserver = mock(EventObserver.class);
+        EventObserver<TestEvent> secondEventObserver = mock(EventObserver.class);
+
+        eventBroker.post(testEvent);
+        eventBroker.post(otherEvent);
+
+        Disposable firstTestEventSubscription = eventBroker.subscribe(TestEvent.class, firstEventObserver);
+        Disposable secondTestEventSubscription = eventBroker.subscribe(TestEvent.class, secondEventObserver);
+
+        verify(firstEventObserver, timeout(100).times(1)).onEvent(testEvent);
+        verify(secondEventObserver, timeout(100).times(1)).onEvent(testEvent);
+
+        firstTestEventSubscription.dispose();
+        secondTestEventSubscription.dispose();
     }
 
 }

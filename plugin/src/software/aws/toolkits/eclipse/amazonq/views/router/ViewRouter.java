@@ -16,13 +16,6 @@ public final class ViewRouter {
     ) { }
 
     private ViewId activeViewId;
-<<<<<<< HEAD
-
-    // this state needs to be maintained to ensure correct resolution in refreshActiveView
-    private LspState lspState;
-    private AuthState authState;
-=======
->>>>>>> 66aae23 (Add listeners for combined state streams and view update request)
 
     public ViewRouter() {
         activeViewId = ViewId.CHAT_VIEW;

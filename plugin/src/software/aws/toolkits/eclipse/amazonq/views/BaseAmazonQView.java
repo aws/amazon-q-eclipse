@@ -6,6 +6,8 @@ package software.aws.toolkits.eclipse.amazonq.views;
 import java.io.IOException;
 import java.net.URL;
 
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -28,5 +30,13 @@ public abstract class BaseAmazonQView {
             Activator.getLogger().warn(e.getMessage(), e);
         }
         return loadedImage;
+    }
+    protected Font magnifyFontSize(final Composite parentComposite, final Font originalFont, final int fontSize) {
+        FontData[] fontData = originalFont.getFontData();
+        for (int i = 0; i < fontData.length; i++) {
+            fontData[i].setHeight(fontSize);
+        }
+        Font magnifiedFont = new Font(parentComposite.getDisplay(), fontData);
+        return magnifiedFont;
     }
 }

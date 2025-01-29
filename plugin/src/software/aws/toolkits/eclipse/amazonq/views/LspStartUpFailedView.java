@@ -49,6 +49,14 @@ public final class LspStartUpFailedView extends BaseAmazonQView {
         Label headerLabel = new Label(container, SWT.CENTER | SWT.WRAP);
         headerLabel.setText(HEADER_LABEL);
         headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        var font = magnifyFontSize(parentComposite, parentComposite.getFont(), 18);
+        headerLabel.setFont(font);
+
+        headerLabel.addDisposeListener(e -> {
+            if (font != null && !font.isDisposed()) {
+                font.dispose();
+            }
+        });
 
         Label detailLabel = new Label(container, SWT.CENTER | SWT.WRAP);
         detailLabel.setText(DETAIL_MESSAGE);

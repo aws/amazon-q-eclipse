@@ -19,10 +19,6 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
     private ViewId activeViewId;
 
-    public ViewRouter() {
-        this(new Builder());
-    }
-
     private ViewRouter(final Builder builder) {
         if (builder.authStateObservable == null) {
             builder.authStateObservable = Activator.getEventBroker().ofObservable(AuthState.class);

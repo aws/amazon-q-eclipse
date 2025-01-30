@@ -33,7 +33,7 @@ public class Activator extends AbstractUIPlugin {
     private static CodeReferenceLoggingService codeReferenceLoggingService;
     private static PluginStore pluginStore;
     private static EventBroker eventBroker = new EventBroker();
-    private static ViewRouter viewRouter = new ViewRouter();
+    private static ViewRouter viewRouter = ViewRouter.builder().build();
 
     public Activator() {
         super();

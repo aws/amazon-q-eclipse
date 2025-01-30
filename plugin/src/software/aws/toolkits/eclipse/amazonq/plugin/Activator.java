@@ -20,7 +20,6 @@ import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultCodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
-import software.aws.toolkits.eclipse.amazonq.views.router.ViewRouter;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -33,7 +32,6 @@ public class Activator extends AbstractUIPlugin {
     private static CodeReferenceLoggingService codeReferenceLoggingService;
     private static PluginStore pluginStore;
     private static EventBroker eventBroker = new EventBroker();
-    private static ViewRouter viewRouter = ViewRouter.builder().build();
 
     public Activator() {
         super();

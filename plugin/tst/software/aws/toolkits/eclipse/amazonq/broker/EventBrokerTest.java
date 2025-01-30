@@ -138,7 +138,6 @@ public final class EventBrokerTest {
         }
 
         OtherTestEvent otherEvent = new OtherTestEvent();
-        TestEvent testEvent = new TestEvent("test message", 1);
 
         EventObserver<TestEvent> eventObserver = mock(EventObserver.class);
         EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);

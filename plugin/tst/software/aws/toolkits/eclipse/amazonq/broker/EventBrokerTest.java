@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.broker;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -20,6 +21,9 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 public final class EventBrokerTest {
 
     private record TestEvent(String message, int id) {
+    }
+
+    private record OtherTestEvent() {
     }
 
     private EventBroker eventBroker;
@@ -77,9 +81,6 @@ public final class EventBrokerTest {
 
     @Test
     void testDifferentEventTypesIsolation() {
-        class OtherTestEvent {
-        }
-
         TestEvent testEvent = new TestEvent("test message", 1);
         TestEvent secondEvent = new TestEvent("test message", 2);
         OtherTestEvent otherEvent = new OtherTestEvent();
@@ -106,9 +107,6 @@ public final class EventBrokerTest {
 
     @Test
     void testLatestValueEmittedOnSubscription() throws InterruptedException {
-        class OtherTestEvent {
-        }
-
         OtherTestEvent otherEvent = new OtherTestEvent();
         TestEvent testEvent = new TestEvent("test message", 1);
 
@@ -134,9 +132,6 @@ public final class EventBrokerTest {
 
     @Test
     void testVerifyNoEventsEmitUnlessEventTypeMatches() {
-        class OtherTestEvent {
-        }
-
         OtherTestEvent otherEvent = new OtherTestEvent();
 
         EventObserver<TestEvent> eventObserver = mock(EventObserver.class);
@@ -154,4 +149,17 @@ public final class EventBrokerTest {
         otherEventSubscription.dispose();
     }
 
+    @Test
+    void testDisposeClearsAllSubscriptions() {
+        EventObserver<TestEvent> eventObserver = mock(EventObserver.class);
+        EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);
+
+        Disposable eventSubscription = eventBroker.subscribe(TestEvent.class, eventObserver);
+        Disposable otherEventSubscription = eventBroker.subscribe(OtherTestEvent.class, otherEventObserver);
+
+        eventBroker.dispose();
+
+        assertTrue(eventSubscription.isDisposed());
+        assertTrue(otherEventSubscription.isDisposed());
+    }
 }

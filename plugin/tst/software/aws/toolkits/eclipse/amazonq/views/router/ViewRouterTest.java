@@ -43,6 +43,7 @@ public final class ViewRouterTest {
         RxJavaPlugins.setComputationSchedulerHandler(scheduler -> Schedulers.trampoline());
 
         publishSubject = PublishSubject.create();
+
         authStateObservable = publishSubject.ofType(AuthState.class);
         lspStateObservable = publishSubject.ofType(LspState.class);
 
@@ -60,11 +61,11 @@ public final class ViewRouterTest {
     @ParameterizedTest
     @MethodSource("provideStateSource")
     void testActiveViewResolutionBasedOnPluginState(final LspState lspState, final AuthState authState,
-            final ViewId activeViewId) {
+            final ViewId expectedActiveViewId) {
         publishSubject.onNext(authState);
         publishSubject.onNext(lspState);
 
-        verify(eventBrokerMock).post(activeViewId);
+        verify(eventBrokerMock).post(expectedActiveViewId);
     }
 
     private static Stream<Arguments> provideStateSource() {

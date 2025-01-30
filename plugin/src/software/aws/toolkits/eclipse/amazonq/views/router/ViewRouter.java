@@ -20,12 +20,24 @@ public final class ViewRouter implements EventObserver<PluginState> {
     private ViewId activeViewId;
 
     public ViewRouter() {
-        /* Combine AuthState and LspState streams to emit latest values from both stream on event: */
-        Observable<AuthState> authStateObservable = Activator.getEventBroker().ofObservable(AuthState.class);
-        Observable<LspState> lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
-        Observable.combineLatest(authStateObservable, lspStateObservable, PluginState::new)
-                .observeOn(Schedulers.computation())
-                .subscribe(this::onEvent);
+        this(new Builder());
+    }
+
+    private ViewRouter(final Builder builder) {
+        if (builder.authStateObservable == null) {
+            builder.authStateObservable = Activator.getEventBroker().ofObservable(AuthState.class);
+        }
+
+        if (builder.lspStateObservable == null) {
+            builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
+        }
+
+        Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable, PluginState::new)
+                .observeOn(Schedulers.computation()).subscribe(this::onEvent);
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -40,8 +52,6 @@ public final class ViewRouter implements EventObserver<PluginState> {
             newActiveViewId = ViewId.DEPENDENCY_MISSING_VIEW;
         } else if (pluginState.lspState == LspState.FAILED) {
             newActiveViewId = ViewId.LSP_STARTUP_FAILED_VIEW;
-        } else if (pluginState.lspState == LspState.PENDING) { // TODO: this might make sense in ChatView
-            newActiveViewId = ViewId.LSP_INITIALIZING_VIEW;
         } else if (isChatUIAssetMissing()) { // TODO: chat missing logic needs to be implemented
             newActiveViewId = ViewId.CHAT_ASSET_MISSING_VIEW;
         } else if (pluginState.authState.isLoggedOut()) {
@@ -74,6 +84,27 @@ public final class ViewRouter implements EventObserver<PluginState> {
     // TODO: replace with relevant checks
     private boolean isChatUIAssetMissing() {
         return false;
+    }
+
+    public static final class Builder {
+
+        private Observable<AuthState> authStateObservable;
+        private Observable<LspState> lspStateObservable;
+
+        public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
+            this.authStateObservable = authStateObservable;
+            return this;
+        }
+
+        public Builder withLspStateObservable(final Observable<LspState> lspStateObservable) {
+            this.lspStateObservable = lspStateObservable;
+            return this;
+        }
+
+        public ViewRouter build() {
+            return new ViewRouter(this);
+        }
+
     }
 
 }

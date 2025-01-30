@@ -19,10 +19,15 @@ public final class EventBroker {
     private final Map<Class<?>, Observable<?>> cachedObservables;
 
     public EventBroker() {
-        eventBus = BehaviorSubject.create().toSerialized();
-        eventBus.subscribeOn(Schedulers.computation());
+        eventBus = BehaviorSubject.create().toSerialized(); // serialize for thread safety
+        eventBus.subscribeOn(Schedulers.computation()); // publish on dedicated thread
 
         cachedObservables = new ConcurrentHashMap<>();
+        /*
+         * Create ConnectableObservable stream before publishing event and connect to it
+         * eagerly to ensure that events get published to it regardless of whether the
+         * stream has subscribers:
+         */
         eventBus.doOnNext(event -> getOrCreateObservable(event.getClass())).subscribe();
     }
 
@@ -34,14 +39,14 @@ public final class EventBroker {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Observable<T> getOrCreateObservable(final Class<T> eventType) {
+    private <T> Observable<T> getOrCreateObservable(final Class<T> eventType) { // maintain stateful observables
         return (Observable<T>) cachedObservables.computeIfAbsent(eventType,
                 type -> eventBus.ofType(eventType).replay(1).autoConnect(-1)); // connect to stream immediately
     }
 
     public <T> Disposable subscribe(final Class<T> eventType, final EventObserver<T> observer) {
         return getOrCreateObservable(eventType)
-                .observeOn(Schedulers.computation())
+                .observeOn(Schedulers.computation()) // subscribe on dedicated thread
                 .subscribe(observer::onEvent);
     }
 

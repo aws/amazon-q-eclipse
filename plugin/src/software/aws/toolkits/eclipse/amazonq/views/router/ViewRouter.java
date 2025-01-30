@@ -28,6 +28,11 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
+        /*
+         * Combine auth and lsp streams and publish combined state updates on changes to
+         * either stream consisting of the latest events from both streams (this will
+         * happen only after one event has been published to both streams):
+         */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }

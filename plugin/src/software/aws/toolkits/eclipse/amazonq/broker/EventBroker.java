@@ -45,7 +45,22 @@ public final class EventBroker {
          */
         eventBus.doOnNext(event -> getOrCreateObservable(event.getClass())).subscribe();
 
+        /**
+         * Initialize subscription management and set up automatic tracking of event bus
+         * subscriptions.
+         */
         disposableSubscriptions = new CompositeDisposable();
+        
+        /**
+         * Configure the event bus to automatically track all new subscriptions.
+         * This ensures that all subscriptions created by the event bus are properly managed
+         * and can be disposed of when needed.
+         *
+         * The setup:
+         * 1. Hooks into the event bus subscription lifecycle using doOnSubscribe
+         * 2. Automatically adds each new subscription to the CompositeDisposable
+         * 3. Subscribes to start the subscription tracking
+         */
         eventBus.doOnSubscribe(subscription -> disposableSubscriptions.add(subscription)).subscribe();
     }
 

@@ -26,7 +26,6 @@ public final class ViewVisibilityManager {
     private static final String RE_AUTHENTICATE_VIEW = ReauthenticateView.ID;
     private static final String CHAT_ASSET_MISSING_VIEW = ChatAssetMissingView.ID;
     private static final String CODE_REFERENCE_VIEW = AmazonQCodeReferenceView.ID;
-    private static final String LSP_STARTUP_FAILED_VIEW = LspStartUpFailedView.ID;
     private static final String ERROR_LOG_VIEW = "org.eclipse.pde.runtime.LogView";
 
     private static final Set<String> MUTUALLY_EXCLUSIVE_VIEWS = Set.of(
@@ -34,17 +33,8 @@ public final class ViewVisibilityManager {
             CHAT_VIEW,
             DEPENDENCY_MISSING_VIEW,
             RE_AUTHENTICATE_VIEW,
-            CHAT_ASSET_MISSING_VIEW,
-            LSP_STARTUP_FAILED_VIEW
+            CHAT_ASSET_MISSING_VIEW
     );
-
-    public static void showDefaultView(final String source) {
-        if (Activator.getLoginService().getAuthState().isLoggedIn()) {
-            showChatView(source);
-        } else {
-            showLoginView(source);
-        }
-    }
 
     public static void showLoginView(final String source) {
         showMutuallyExclusiveView(TOOLKIT_LOGIN_VIEW, source);
@@ -64,10 +54,6 @@ public final class ViewVisibilityManager {
 
     public static void showChatAssetMissingView(final String source) {
         showMutuallyExclusiveView(CHAT_ASSET_MISSING_VIEW, source);
-    }
-
-    public static void showLspStartUpFailedView(final String source) {
-        showMutuallyExclusiveView(LSP_STARTUP_FAILED_VIEW, source);
     }
 
     public static void showCodeReferenceView(final String source) {

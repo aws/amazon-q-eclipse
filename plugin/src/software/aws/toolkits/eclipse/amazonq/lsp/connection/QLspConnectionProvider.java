@@ -14,7 +14,6 @@ import java.util.Map;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
@@ -28,25 +27,19 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
     public QLspConnectionProvider() throws IOException {
         super();
-        try {
-            LanguageServerTelemetryProvider.setAllStartPoint(Instant.now());
-            LspManager lspManager = LspManagerProvider.getInstance();
-            var lspInstallResult = lspManager.getLspInstallation();
+        LanguageServerTelemetryProvider.setAllStartPoint(Instant.now());
+        LspManager lspManager = LspManagerProvider.getInstance();
+        var lspInstallResult = lspManager.getLspInstallation();
 
-            setWorkingDirectory(lspInstallResult.getServerDirectory());
+        setWorkingDirectory(lspInstallResult.getServerDirectory());
 
-            var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
-            List<String> commands = new ArrayList<>();
-            commands.add(serverCommand.toString());
-            commands.add(lspInstallResult.getServerCommandArgs());
-            commands.add("--stdio");
-            commands.add("--set-credentials-encryption-key");
-            setCommands(commands);
-        } catch (Exception e) {
-            LspStatusManager.setToFailed();
-            throw(e);
-        }
-
+        var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
+        List<String> commands = new ArrayList<>();
+        commands.add(serverCommand.toString());
+        commands.add(lspInstallResult.getServerCommandArgs());
+        commands.add("--stdio");
+        commands.add("--set-credentials-encryption-key");
+        setCommands(commands);
     }
 
     @Override
@@ -77,12 +70,10 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
                 lspEncryption.initializeEncryptedCommunication(serverStdIn);
             } catch (Exception e) {
-                LspStatusManager.setToFailed();
                 emitInitFailure(ExceptionMetadata.scrubException(e));
                 Activator.getLogger().error("Error occured while initializing communication with Amazon Q Lsp Server", e);
             }
         } catch (Exception e) {
-            LspStatusManager.setToFailed();
             emitInitFailure(ExceptionMetadata.scrubException(e));
             throw e;
         }

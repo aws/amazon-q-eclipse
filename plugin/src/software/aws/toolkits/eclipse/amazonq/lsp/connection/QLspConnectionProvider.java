@@ -16,13 +16,13 @@ import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryption
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
@@ -43,7 +43,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             commands.add("--set-credentials-encryption-key");
             setCommands(commands);
         } catch (Exception e) {
-            LspStatusManager.getInstance().setToFailed();
+            LspStatusManager.setToFailed();
             throw(e);
         }
 
@@ -77,12 +77,12 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
                 lspEncryption.initializeEncryptedCommunication(serverStdIn);
             } catch (Exception e) {
-                LspStatusManager.getInstance().setToFailed();
+                LspStatusManager.setToFailed();
                 emitInitFailure(ExceptionMetadata.scrubException(e));
                 Activator.getLogger().error("Error occured while initializing communication with Amazon Q Lsp Server", e);
             }
         } catch (Exception e) {
-            LspStatusManager.getInstance().setToFailed();
+            LspStatusManager.setToFailed();
             emitInitFailure(ExceptionMetadata.scrubException(e));
             throw e;
         }

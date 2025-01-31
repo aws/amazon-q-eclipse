@@ -38,7 +38,7 @@ public final class LspStartUpFailedView extends BaseView {
 
     @Override
     protected CompletableFuture<Boolean> isViewDisplayable() {
-        return CompletableFuture.completedFuture(LspStatusManager.getInstance().lspFailed());
+        return CompletableFuture.completedFuture(LspStatusManager.lspFailed());
     }
 
 }

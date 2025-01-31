@@ -28,7 +28,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
     @Override
     public final boolean isEnabled() {
         try {
-            return Activator.getLoginService().getAuthState().isLoggedIn() && !LspStatusManager.getInstance().lspFailed();
+            return Activator.getLoginService().getAuthState().isLoggedIn() && !LspStatusManager.lspFailed();
         } catch (Exception e) {
             return false;
         }

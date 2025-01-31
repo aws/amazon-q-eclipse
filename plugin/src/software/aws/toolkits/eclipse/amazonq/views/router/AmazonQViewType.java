@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.router;
 
-public enum ViewId {
+public enum AmazonQViewType {
     TOOLKIT_LOGIN_VIEW, CHAT_VIEW, DEPENDENCY_MISSING_VIEW, RE_AUTHENTICATE_VIEW, CHAT_ASSET_MISSING_VIEW,
     LSP_STARTUP_FAILED_VIEW
 }

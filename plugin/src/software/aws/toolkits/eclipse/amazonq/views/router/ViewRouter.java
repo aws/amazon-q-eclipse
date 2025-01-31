@@ -17,7 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
  */
 public final class ViewRouter implements EventObserver<PluginState> {
 
-    private ViewId activeView;
+    private AmazonQViewType activeView;
 
     /**
      * Constructs a ViewRouter with the specified builder configuration. Initializes
@@ -73,20 +73,20 @@ public final class ViewRouter implements EventObserver<PluginState> {
      * @param pluginState The current combined auth and lsp state of the plugin
      */
     private void refreshActiveView(final PluginState pluginState) {
-        ViewId newActiveView;
+        AmazonQViewType newActiveView;
 
         if (isDependencyMissing()) { // TODO: dependency missing check logic needs to be implemented
-            newActiveView = ViewId.DEPENDENCY_MISSING_VIEW;
+            newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
         } else if (pluginState.lspState() == LspState.FAILED) {
-            newActiveView = ViewId.LSP_STARTUP_FAILED_VIEW;
+            newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
         } else if (isChatUIAssetMissing()) { // TODO: chat missing logic needs to be implemented
-            newActiveView = ViewId.CHAT_ASSET_MISSING_VIEW;
+            newActiveView = AmazonQViewType.CHAT_ASSET_MISSING_VIEW;
         } else if (pluginState.authState().isLoggedOut()) {
-            newActiveView = ViewId.TOOLKIT_LOGIN_VIEW;
+            newActiveView = AmazonQViewType.TOOLKIT_LOGIN_VIEW;
         } else if (pluginState.authState().isExpired()) {
-            newActiveView = ViewId.RE_AUTHENTICATE_VIEW;
+            newActiveView = AmazonQViewType.RE_AUTHENTICATE_VIEW;
         } else {
-            newActiveView = ViewId.CHAT_VIEW;
+            newActiveView = AmazonQViewType.CHAT_VIEW;
         }
 
         updateActiveView(newActiveView);
@@ -98,7 +98,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
      *
      * @param newActiveViewId The new view to be activated
      */
-    private void updateActiveView(final ViewId newActiveViewId) {
+    private void updateActiveView(final AmazonQViewType newActiveViewId) {
         if (activeView != newActiveViewId) {
             activeView = newActiveViewId;
             notifyActiveViewChange();
@@ -109,7 +109,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
      * Broadcasts the active view change through the event broker.
      */
     private void notifyActiveViewChange() {
-        Activator.getEventBroker().post(ViewId.class, activeView);
+        Activator.getEventBroker().post(AmazonQViewType.class, activeView);
     }
 
     /**

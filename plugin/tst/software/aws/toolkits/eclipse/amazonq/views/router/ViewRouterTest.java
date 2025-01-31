@@ -61,25 +61,25 @@ public final class ViewRouterTest {
     @ParameterizedTest
     @MethodSource("provideStateSource")
     void testActiveViewResolutionBasedOnPluginState(final LspState lspState, final AuthState authState,
-            final ViewId expectedActiveViewId) {
+            final AmazonQViewType expectedActiveViewId) {
         publishSubject.onNext(authState);
         publishSubject.onNext(lspState);
 
-        verify(eventBrokerMock).post(ViewId.class, expectedActiveViewId);
+        verify(eventBrokerMock).post(AmazonQViewType.class, expectedActiveViewId);
     }
 
     private static Stream<Arguments> provideStateSource() {
         return Stream.of(Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_IN),
-                        ViewId.LSP_STARTUP_FAILED_VIEW),
+                        AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
                 Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_OUT),
-                        ViewId.LSP_STARTUP_FAILED_VIEW),
+                        AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
                 Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.EXPIRED),
-                        ViewId.LSP_STARTUP_FAILED_VIEW),
-                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.LOGGED_OUT), ViewId.TOOLKIT_LOGIN_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_OUT), ViewId.TOOLKIT_LOGIN_VIEW),
-                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.EXPIRED), ViewId.RE_AUTHENTICATE_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.EXPIRED), ViewId.RE_AUTHENTICATE_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN), ViewId.CHAT_VIEW));
+                        AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
+                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.LOGGED_OUT), AmazonQViewType.TOOLKIT_LOGIN_VIEW),
+                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_OUT), AmazonQViewType.TOOLKIT_LOGIN_VIEW),
+                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.EXPIRED), AmazonQViewType.RE_AUTHENTICATE_VIEW),
+                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.EXPIRED), AmazonQViewType.RE_AUTHENTICATE_VIEW),
+                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN), AmazonQViewType.CHAT_VIEW));
     }
 
     private static AuthState getAuthStateObject(final AuthStateType authStateType) {

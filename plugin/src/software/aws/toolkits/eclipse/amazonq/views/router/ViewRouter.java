@@ -73,23 +73,23 @@ public final class ViewRouter implements EventObserver<PluginState> {
      * @param pluginState The current combined auth and lsp state of the plugin
      */
     private void refreshActiveView(final PluginState pluginState) {
-        ViewId newActiveViewId;
+        ViewId newActiveView;
 
         if (isDependencyMissing()) { // TODO: dependency missing check logic needs to be implemented
-            newActiveViewId = ViewId.DEPENDENCY_MISSING_VIEW;
+            newActiveView = ViewId.DEPENDENCY_MISSING_VIEW;
         } else if (pluginState.lspState() == LspState.FAILED) {
-            newActiveViewId = ViewId.LSP_STARTUP_FAILED_VIEW;
+            newActiveView = ViewId.LSP_STARTUP_FAILED_VIEW;
         } else if (isChatUIAssetMissing()) { // TODO: chat missing logic needs to be implemented
-            newActiveViewId = ViewId.CHAT_ASSET_MISSING_VIEW;
+            newActiveView = ViewId.CHAT_ASSET_MISSING_VIEW;
         } else if (pluginState.authState().isLoggedOut()) {
-            newActiveViewId = ViewId.TOOLKIT_LOGIN_VIEW;
+            newActiveView = ViewId.TOOLKIT_LOGIN_VIEW;
         } else if (pluginState.authState().isExpired()) {
-            newActiveViewId = ViewId.RE_AUTHENTICATE_VIEW;
+            newActiveView = ViewId.RE_AUTHENTICATE_VIEW;
         } else {
-            newActiveViewId = ViewId.CHAT_VIEW;
+            newActiveView = ViewId.CHAT_VIEW;
         }
 
-        updateActiveView(newActiveViewId);
+        updateActiveView(newActiveView);
     }
 
     /**

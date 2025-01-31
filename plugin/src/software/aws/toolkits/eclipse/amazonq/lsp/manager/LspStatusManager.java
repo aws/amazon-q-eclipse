@@ -17,7 +17,7 @@ public final class LspStatusManager {
 
     private LspStatusManager() {
         lspState = LspState.PENDING;
-        Activator.getEventBroker().post(lspState);
+        Activator.getEventBroker().post(LspState.class, lspState);
     }
 
     public static LspStatusManager getInstance() {
@@ -31,7 +31,7 @@ public final class LspStatusManager {
 
     public void setToActive() {
         lspState = LspState.ACTIVE;
-        Activator.getEventBroker().post(lspState);
+        Activator.getEventBroker().post(LspState.class, lspState);
         ViewVisibilityManager.showDefaultView("restart");
     }
 
@@ -41,7 +41,7 @@ public final class LspStatusManager {
             lspState = LspState.FAILED;
         }
 
-        Activator.getEventBroker().post(lspState);
+        Activator.getEventBroker().post(LspState.class, lspState);
     }
     public LspState getLspState() {
         return lspState;

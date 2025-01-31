@@ -39,7 +39,7 @@ public final class EventBrokerTest {
         EventObserver<TestEvent> mockObserver = mock(EventObserver.class);
 
         Disposable subscription = eventBroker.subscribe(TestEvent.class, mockObserver);
-        eventBroker.post(testEvent);
+        eventBroker.post(TestEvent.class, testEvent);
 
         verify(mockObserver, timeout(100)).onEvent(testEvent);
 
@@ -51,7 +51,7 @@ public final class EventBrokerTest {
         EventObserver<String> mockObserver = mock(EventObserver.class);
 
         Disposable subscription = eventBroker.subscribe(String.class, mockObserver);
-        eventBroker.post(null);
+        eventBroker.post(TestEvent.class, null);
 
         verify(mockObserver, never()).onEvent(any(String.class));
 
@@ -67,9 +67,9 @@ public final class EventBrokerTest {
         EventObserver<TestEvent> mockObserver = mock(EventObserver.class);
 
         Disposable subscription = eventBroker.subscribe(TestEvent.class, mockObserver);
-        eventBroker.post(firstEvent);
-        eventBroker.post(secondEvent);
-        eventBroker.post(thirdEvent);
+        eventBroker.post(TestEvent.class, firstEvent);
+        eventBroker.post(TestEvent.class, secondEvent);
+        eventBroker.post(TestEvent.class, thirdEvent);
 
         verify(mockObserver, timeout(100)).onEvent(firstEvent);
         verify(mockObserver, timeout(100)).onEvent(secondEvent);
@@ -91,9 +91,9 @@ public final class EventBrokerTest {
         Disposable testEventSubscription = eventBroker.subscribe(TestEvent.class, testEventObserver);
         Disposable otherEventSubscription = eventBroker.subscribe(OtherTestEvent.class, otherEventObserver);
 
-        eventBroker.post(testEvent);
-        eventBroker.post(otherEvent);
-        eventBroker.post(secondEvent);
+        eventBroker.post(TestEvent.class, testEvent);
+        eventBroker.post(OtherTestEvent.class, otherEvent);
+        eventBroker.post(TestEvent.class, secondEvent);
 
         verify(testEventObserver, timeout(100).times(2)).onEvent(any());
         verify(otherEventObserver, timeout(100).times(1)).onEvent(any());
@@ -108,22 +108,32 @@ public final class EventBrokerTest {
     @Test
     void testLatestValueEmittedOnSubscription() throws InterruptedException {
         OtherTestEvent otherEvent = new OtherTestEvent();
-        TestEvent testEvent = new TestEvent("test message", 1);
+        TestEvent firstTestEvent = new TestEvent("test message", 1);
+        TestEvent secondTestEvent = new TestEvent("test message 2", 2);
 
         EventObserver<TestEvent> firstEventObserver = mock(EventObserver.class);
         EventObserver<TestEvent> secondEventObserver = mock(EventObserver.class);
         EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);
 
-        eventBroker.post(testEvent);
-        eventBroker.post(otherEvent);
+        eventBroker.post(TestEvent.class, firstTestEvent);
+        eventBroker.post(OtherTestEvent.class, otherEvent);
 
         Disposable firstTestEventSubscription = eventBroker.subscribe(TestEvent.class, firstEventObserver);
-        Disposable secondTestEventSubscription = eventBroker.subscribe(TestEvent.class, secondEventObserver);
         Disposable otherEventSubscription = eventBroker.subscribe(OtherTestEvent.class, otherEventObserver);
 
-        verify(firstEventObserver, timeout(100).times(1)).onEvent(testEvent);
-        verify(secondEventObserver, timeout(100).times(1)).onEvent(testEvent);
-        verify(otherEventObserver, timeout(100).times(1)).onEvent(otherEvent);
+        verify(firstEventObserver, timeout(100).times(1)).onEvent(firstTestEvent);
+
+        Thread.sleep(100);
+
+        eventBroker.post(TestEvent.class, secondTestEvent);
+        eventBroker.post(OtherTestEvent.class, otherEvent);
+
+
+        Disposable secondTestEventSubscription = eventBroker.subscribe(TestEvent.class, secondEventObserver);
+
+        verify(firstEventObserver, timeout(100).times(1)).onEvent(secondTestEvent);
+        verify(secondEventObserver, timeout(100).times(1)).onEvent(secondTestEvent);
+        verify(otherEventObserver, timeout(100).times(2)).onEvent(otherEvent);
 
         firstTestEventSubscription.dispose();
         secondTestEventSubscription.dispose();
@@ -137,7 +147,7 @@ public final class EventBrokerTest {
         EventObserver<TestEvent> eventObserver = mock(EventObserver.class);
         EventObserver<OtherTestEvent> otherEventObserver = mock(EventObserver.class);
 
-        eventBroker.post(otherEvent);
+        eventBroker.post(OtherTestEvent.class, otherEvent);
 
         Disposable eventSubscription = eventBroker.subscribe(TestEvent.class, eventObserver);
         Disposable otherEventSubscription = eventBroker.subscribe(OtherTestEvent.class, otherEventObserver);

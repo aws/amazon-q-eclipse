@@ -15,84 +15,79 @@ import io.reactivex.rxjava3.subjects.Subject;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 
 /**
- * A thread-safe event broker that manages event publishing and subscription
- * using RxJava. This class provides a centralized mechanism for event handling
- * across the application, with support for type-safe event publishing and
- * subscription.
+ * A thread-safe event broker that implements the publish-subscribe pattern
+ * using RxJava.
+ *
+ * This broker manages event distribution using BehaviorSubjects, which cache
+ * the most recent event for each event type. It provides type-safe event
+ * publishing and subscription, with automatic resource management for
+ * subscriptions. Events are published and consumed on dedicated threads so
+ * operations are non-blocking.
  */
 public final class EventBroker {
 
-    private final Subject<Object> eventBus; // the main event bus
+    /** Maps event types to their corresponding subjects for event distribution */
+    private final Map<Class<?>, Subject<Object>> subjectsForType;
+
+    /** Tracks all subscriptions for proper cleanup */
     private final CompositeDisposable disposableSubscriptions;
 
-    /**
-     * Cache of type-specific observable streams. Each stream maintains its last
-     * emitted value and is "hot" due to eagerly connecting which allows for
-     * publishers to emit values event if no downstream publishers exist.
-     */
-    private final Map<Class<?>, Observable<?>> cachedStatefulObservablesForType;
-
     public EventBroker() {
-        eventBus = BehaviorSubject.create().toSerialized(); // serialize for thread safety
-        eventBus.subscribeOn(Schedulers.computation()); // publish on dedicated thread
-
-        cachedStatefulObservablesForType = new ConcurrentHashMap<>();
-        /*
-         * This hook runs before events are published and creates a
-         * ConnectableObservable before eagerly connecting to it to ensure that events
-         * get published to the stream regardless of whether the stream has subscribers
-         * allowing for events to be cached for late subscribers:
-         */
-        eventBus.doOnNext(event -> getOrCreateObservable(event.getClass())).subscribe();
-
-        /**
-         * Initialize subscription management and set up automatic tracking of event bus
-         * subscriptions.
-         */
+        subjectsForType = new ConcurrentHashMap<>();
         disposableSubscriptions = new CompositeDisposable();
-        
-        /**
-         * Configure the event bus to automatically track all new subscriptions.
-         * This ensures that all subscriptions created by the event bus are properly managed
-         * and can be disposed of when needed.
-         *
-         * The setup:
-         * 1. Hooks into the event bus subscription lifecycle using doOnSubscribe
-         * 2. Automatically adds each new subscription to the CompositeDisposable
-         * 3. Subscribes to start the subscription tracking
-         */
-        eventBus.doOnSubscribe(subscription -> disposableSubscriptions.add(subscription)).subscribe();
     }
 
     /**
-     * Posts an event to the event bus. The event will be delivered to all
-     * subscribers of the specific event type or cached for late subscribers.
+     * Posts an event of the specified type to all subscribers and caches it for
+     * late-subscribers.
      *
-     * @param <T>   the type of the event
-     * @param event the event to publish (must not be null)
+     * @param <T>       The type of the event
+     * @param eventType The class object representing the event type
+     * @param event     The event to publish
      */
-    public <T> void post(final T event) {
+    public <T> void post(final Class<T> eventType, final T event) {
         if (event == null) {
             return;
         }
-        eventBus.onNext(event);
+        getOrCreateSubject(eventType).onNext(event);
     }
 
     /**
-     * Gets or creates an Observable for the specified event type. The
-     * ConnectedObservable maintains the last emitted value in the stream and
-     * autoConnecting to the stream ensures that events are published regardless of
-     * whether subscribers exist downstream. When events are emitted the latest
-     * value is also cached for replay when late subscribers join.
+     * Gets or creates a Subject for the specified event type. Creates a new
+     * serialized BehaviorSubject if none exists.
      *
-     * @param <T>       the type of events the Observable will emit
-     * @param eventType the Class object representing the event type
-     * @return an Observable that emits events of the specified type
+     * @param <T>       The type of events the subject will handle
+     * @param eventType The class object representing the event type
+     * @return A Subject that handles events of the specified type
      */
-    @SuppressWarnings("unchecked")
-    private <T> Observable<T> getOrCreateObservable(final Class<T> eventType) { // maintain stateful observables
-        return (Observable<T>) cachedStatefulObservablesForType.computeIfAbsent(eventType,
-                type -> eventBus.ofType(eventType).replay(1).autoConnect(-1)); // connect to stream immediately
+    public <T> Subject<Object> getOrCreateSubject(final Class<T> eventType) {
+        return subjectsForType.computeIfAbsent(eventType, k -> {
+            Subject<Object> subject = BehaviorSubject.create().toSerialized();
+            subject.subscribeOn(Schedulers.computation());
+            /**
+             * Configure the subject to automatically track all new subscriptions.
+             * This ensures that all subscriptions created by this subject are properly managed
+             * and can be disposed of when needed.
+             *
+             * The setup:
+             * 1. Hooks into the subject subscription lifecycle using doOnSubscribe
+             * 2. Automatically adds each new subscription to the CompositeDisposable
+             * 3. Subscribes to start the subscription tracking
+             */
+            subject.doOnSubscribe(subscription -> disposableSubscriptions.add(subscription)).subscribe();
+            return subject;
+        });
+    }
+
+    /**
+     * Creates or retrieves an Observable for the specified event type.
+     *
+     * @param <T>       The type of events to observe
+     * @param eventType The class object representing the event type
+     * @return An Observable that emits events of the specified type
+     */
+    private <T> Observable<T> getOrCreateObservable(final Class<T> eventType) {
+        return getOrCreateSubject(eventType).ofType(eventType);
     }
 
     /**
@@ -106,11 +101,9 @@ public final class EventBroker {
      * @return a Disposable that can be used to unsubscribe from the events
      */
     public <T> Disposable subscribe(final Class<T> eventType, final EventObserver<T> observer) {
-        Disposable subscription = getOrCreateObservable(eventType)
+        return getOrCreateObservable(eventType)
                 .observeOn(Schedulers.computation()) // subscribe on dedicated thread
                 .subscribe(observer::onEvent);
-        disposableSubscriptions.add(subscription);
-        return subscription;
     }
 
     /**

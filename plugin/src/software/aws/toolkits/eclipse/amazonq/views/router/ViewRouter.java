@@ -109,7 +109,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
      * Broadcasts the active view change through the event broker.
      */
     private void notifyActiveViewChange() {
-        Activator.getEventBroker().post(activeView);
+        Activator.getEventBroker().post(ViewId.class, activeView);
     }
 
     /**

@@ -65,7 +65,7 @@ public final class ViewRouterTest {
         publishSubject.onNext(authState);
         publishSubject.onNext(lspState);
 
-        verify(eventBrokerMock).post(expectedActiveViewId);
+        verify(eventBrokerMock).post(ViewId.class, expectedActiveViewId);
     }
 
     private static Stream<Arguments> provideStateSource() {

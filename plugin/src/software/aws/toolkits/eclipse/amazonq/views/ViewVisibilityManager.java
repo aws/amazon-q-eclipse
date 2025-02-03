@@ -39,7 +39,10 @@ public final class ViewVisibilityManager {
     );
 
     public static void showDefaultView(final String source) {
-        if (Activator.getLoginService().getAuthState().isLoggedIn()) {
+        var authState = Activator.getLoginService().getAuthState();
+        if (authState.isExpired()) {
+            showReAuthView(source);
+        } else if (authState.isLoggedIn()) {
             showChatView(source);
         } else {
             showLoginView(source);

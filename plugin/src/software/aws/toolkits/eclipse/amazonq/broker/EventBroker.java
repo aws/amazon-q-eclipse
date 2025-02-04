@@ -26,10 +26,10 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
  */
 public final class EventBroker {
 
-    /** Maps event types to their corresponding subjects for event distribution */
+    /** Maps event types to their corresponding subjects for event distribution. */
     private final Map<Class<?>, Subject<Object>> subjectsForType;
 
-    /** Tracks all subscriptions for proper cleanup */
+    /** Tracks all subscriptions for proper cleanup. */
     private final CompositeDisposable disposableSubscriptions;
 
     public EventBroker() {
@@ -60,34 +60,12 @@ public final class EventBroker {
      * @param eventType The class object representing the event type
      * @return A Subject that handles events of the specified type
      */
-    public <T> Subject<Object> getOrCreateSubject(final Class<T> eventType) {
+    private <T> Subject<Object> getOrCreateSubject(final Class<T> eventType) {
         return subjectsForType.computeIfAbsent(eventType, k -> {
             Subject<Object> subject = BehaviorSubject.create().toSerialized();
             subject.subscribeOn(Schedulers.computation());
-            /**
-             * Configure the subject to automatically track all new subscriptions.
-             * This ensures that all subscriptions created by this subject are properly managed
-             * and can be disposed of when needed.
-             *
-             * The setup:
-             * 1. Hooks into the subject subscription lifecycle using doOnSubscribe
-             * 2. Automatically adds each new subscription to the CompositeDisposable
-             * 3. Subscribes to start the subscription tracking
-             */
-            subject.doOnSubscribe(subscription -> disposableSubscriptions.add(subscription)).subscribe();
             return subject;
         });
-    }
-
-    /**
-     * Creates or retrieves an Observable for the specified event type.
-     *
-     * @param <T>       The type of events to observe
-     * @param eventType The class object representing the event type
-     * @return An Observable that emits events of the specified type
-     */
-    private <T> Observable<T> getOrCreateObservable(final Class<T> eventType) {
-        return getOrCreateSubject(eventType).ofType(eventType);
     }
 
     /**
@@ -101,9 +79,11 @@ public final class EventBroker {
      * @return a Disposable that can be used to unsubscribe from the events
      */
     public <T> Disposable subscribe(final Class<T> eventType, final EventObserver<T> observer) {
-        return getOrCreateObservable(eventType)
+        Disposable subscription = ofObservable(eventType)
                 .observeOn(Schedulers.computation()) // subscribe on dedicated thread
                 .subscribe(observer::onEvent);
+        disposableSubscriptions.add(subscription); // track subscription for dispose call
+        return subscription;
     }
 
     /**
@@ -115,7 +95,7 @@ public final class EventBroker {
      * @return an Observable that emits events of the specified type
      */
     public <T> Observable<T> ofObservable(final Class<T> eventType) {
-        return getOrCreateObservable(eventType);
+        return getOrCreateSubject(eventType).ofType(eventType);
     }
 
     /**

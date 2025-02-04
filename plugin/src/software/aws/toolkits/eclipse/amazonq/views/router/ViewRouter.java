@@ -9,6 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+<<<<<<< HEAD
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
@@ -70,7 +71,6 @@ public final class ViewRouter implements EventObserver<PluginState> {
                 builder.browserCompatibilityStateObservable, builder.chatWebViewAssetStateObservable,
                 builder.toolkitLoginWebViewAssetStateObservable, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
-
     }
 
     public static Builder builder() {

@@ -21,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
@@ -143,7 +144,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     Optional<String> content = getContent();
                     if (!content.isPresent()) {
                         canDisposeState = true;
-                        ViewVisibilityManager.showChatAssetMissingView("update");
+                        if (!LspStatusManager.getInstance().lspFailed()) {
+                            ViewVisibilityManager.showChatAssetMissingView("update");
+                        }
                     } else {
                         browser.setText(content.get()); // Display the chat client
                     }

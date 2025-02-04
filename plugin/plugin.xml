@@ -34,6 +34,12 @@
             class="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
         </view>
         <view
+            id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
@@ -138,6 +144,12 @@
             </view>
              <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">

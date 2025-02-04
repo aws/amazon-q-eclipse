@@ -6,12 +6,12 @@ package software.aws.toolkits.eclipse.amazonq.views.router;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
 import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
-import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
-import software.aws.toolkits.eclipse.amazonq.broker.events.ViewRouterPluginState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ViewRouterPluginState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 

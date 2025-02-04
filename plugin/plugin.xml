@@ -329,6 +329,67 @@
             class="software.aws.toolkits.eclipse.amazonq.lsp.LspStartupActivity">
         </startup>
     </extension>
+   <extension point="org.eclipse.ui.editors.markerAnnotationSpecification">
+    <!-- Added code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.added"
+	        colorPreferenceKey="diffAnnotation.added.color"
+	        colorPreferenceValue="230,255,230"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.added.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Added Code"
+	        overviewRulerPreferenceKey="diffAnnotation.added.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.added.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.added.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	
+	    <!-- Modified code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.modified"
+	        colorPreferenceKey="diffAnnotation.modified.color"
+	        colorPreferenceValue="230,200,255"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.modified.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Modified Code"
+	        overviewRulerPreferenceKey="diffAnnotation.modified.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.modified.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.modified.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	
+	    <!-- Deleted code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.deleted"
+	        colorPreferenceKey="diffAnnotation.deleted.color"
+	        colorPreferenceValue="255,230,230"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.deleted.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Deleted Code"
+	        overviewRulerPreferenceKey="diffAnnotation.deleted.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.deleted.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.deleted.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	</extension>
     <extension point="org.eclipse.ui.preferencePages">
          <page
              class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"

@@ -19,12 +19,12 @@ public final class ChatRequestParams {
         @JsonProperty("tabId") final String tabId,
         @JsonProperty("prompt") final ChatPrompt prompt,
         @JsonProperty("textDocument") final TextDocumentIdentifier textDocument,
-        @JsonProperty("cursorState") final CursorState cursorState
+        @JsonProperty("cursorState") final List<CursorState> cursorState
     ) {
         this.tabId = tabId;
         this.prompt = prompt;
         this.textDocument = textDocument;
-        this.cursorState = (cursorState != null) ? List.of(cursorState) : List.of();
+        this.cursorState = (cursorState != null) ? cursorState : List.of();
     }
 
     public String getTabId() {

@@ -11,7 +11,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
-
 public final class ChatStateManager {
     private static ChatStateManager instance;
     private ChatAssetProvider chatAssetProvider;

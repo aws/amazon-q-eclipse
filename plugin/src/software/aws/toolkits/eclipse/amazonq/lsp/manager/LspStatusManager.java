@@ -3,30 +3,47 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.manager;
 
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 
 public final class LspStatusManager {
 
-    private LspStatusManager() {
-        //prevent instantiation
+    private static final LspStatusManager INSTANCE;
+    private LspState lspState;
+
+    static {
+        INSTANCE = new LspStatusManager();
     }
 
-    private static LspState lspState = LspState.PENDING;
+    private LspStatusManager() {
+        lspState = LspState.PENDING;
+        Activator.getEventBroker().post(lspState);
+    }
 
-    public static boolean lspFailed() {
+    public static LspStatusManager getInstance() {
+        return INSTANCE;
+    }
+
+
+    public boolean lspFailed() {
         return (lspState == LspState.FAILED);
     }
-    public static void setToActive() {
+
+    public void setToActive() {
         lspState = LspState.ACTIVE;
+        Activator.getEventBroker().post(lspState);
         ViewVisibilityManager.showDefaultView("restart");
     }
-    public static void setToFailed() {
+
+    public void setToFailed() {
         if (lspState != LspState.FAILED) {
             ViewVisibilityManager.showLspStartUpFailedView("update");
             lspState = LspState.FAILED;
+            Activator.getEventBroker().post(lspState);
         }
     }
-    public static LspState getLspState() {
+
+    public LspState getLspState() {
         return lspState;
     }
 }

@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +28,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -91,12 +95,31 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         amazonQCommonActions = getAmazonQCommonActions();
 
         chatCommunicationManager.setChatUiRequestListener(this);
+
         new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
                 ThreadingUtils.executeAsyncTask(() -> {
                     handleMessageFromUI(browser, arguments);
                 });
+                return null;
+            }
+        };
+
+        new BrowserFunction(browser, "isMacOs") {
+            @Override
+            public Object function(final Object[] arguments) {
+                return Boolean.TRUE.equals(PluginUtils.getPlatform() == PluginPlatform.MAC);
+            }
+        };
+
+        new BrowserFunction(browser, "copyToClipboard") {
+            @Override
+            public Object function(final Object[] arguments) {
+                if (arguments.length > 0 && arguments[0] instanceof String) {
+                    StringSelection stringSelection = new StringSelection((String) arguments[0]);
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                }
                 return null;
             }
         };
@@ -272,7 +295,33 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                             });
                         }
                     });
-                </script>
+
+                    window.addEventListener('load', () => {
+                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                        if (textarea) {
+                            textarea.addEventListener("keydown", (event) => {
+                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey)) && event.key === 'a') {
+                                    textarea.select();
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                }
+                            });
+                        }
+                    });
+
+                    window.addEventListener('load', () => {
+                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                        if (textarea) {
+                            textarea.addEventListener("keydown", (event) => {
+                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey)) && event.key === 'c') {
+                                    copyToClipboard(textarea.value);
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                }
+                            });
+                        }
+                    });
+                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
                 "true".equals(disclaimerAcknowledged));
     }

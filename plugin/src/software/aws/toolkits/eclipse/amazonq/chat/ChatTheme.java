@@ -100,6 +100,8 @@ public final class ChatTheme {
         // Card
         themeMap.put(QChatCssVariable.CardBackground, cardBackgroundColor);
 
+        themeMap.put(QChatCssVariable.LineHeight, "1.25em");
+
         return getCss(themeMap);
     }
 
@@ -149,6 +151,8 @@ public final class ChatTheme {
 
         // Card
         themeMap.put(QChatCssVariable.CardBackground, cardBackgroundColor);
+
+        themeMap.put(QChatCssVariable.LineHeight, "1.25em");
 
         return getCss(themeMap);
     }

@@ -21,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
@@ -141,7 +142,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 // chat view
                 if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
                     Optional<String> content = getContent();
-                    if (!content.isPresent()) {
+                    if (!content.isPresent() && !LspStatusManager.lspFailed()) {
                         canDisposeState = true;
                         ViewVisibilityManager.showChatAssetMissingView("update");
                     } else {
@@ -245,6 +246,38 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     }
 
                     window.addEventListener('load', init);
+
+                    window.addEventListener('load', () => {
+                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                        if (textarea) {
+                            textarea.addEventListener('keydown', (event) => {
+                                const cursorPosition = textarea.selectionStart;
+                                const hasText = textarea.value.length > 0;
+
+                                // block arrow keys on empty text area
+                                switch (event.key) {
+                                    case 'ArrowLeft':
+                                        if (!hasText || cursorPosition === 0) {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            return false;
+                                        }
+                                        break;
+
+                                    case 'ArrowRight':
+                                        if (!hasText || cursorPosition === textarea.value.length) {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            return false;
+                                        }
+                                        break;
+
+                                    default:
+                                    return true;
+                                }
+                            });
+                        }
+                    });
                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
                 "true".equals(disclaimerAcknowledged));

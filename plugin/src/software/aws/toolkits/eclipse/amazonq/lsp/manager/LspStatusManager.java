@@ -39,10 +39,10 @@ public final class LspStatusManager {
         if (lspState != LspState.FAILED) {
             ViewVisibilityManager.showLspStartUpFailedView("update");
             lspState = LspState.FAILED;
+            Activator.getEventBroker().post(lspState);
         }
-
-        Activator.getEventBroker().post(lspState);
     }
+
     public LspState getLspState() {
         return lspState;
     }

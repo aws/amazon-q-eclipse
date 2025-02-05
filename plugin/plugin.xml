@@ -28,6 +28,12 @@
             class="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView">
         </view>
         <view
+            id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
+            name="Amazon Q"
+            icon="icons/AmazonQ.png"
+            class="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView">
+        </view>
+        <view
             id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
@@ -115,6 +121,12 @@
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
+                id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
+                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">
             </view>

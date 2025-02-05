@@ -18,11 +18,15 @@ public final class Constants {
     public static final String DO_NOT_SHOW_UPDATE_KEY = "doNotShowUpdate";
     public static final String PLUGIN_UPDATE_NOTIFICATION_TITLE = "Amazon Q Update Available";
     public static final String PLUGIN_UPDATE_NOTIFICATION_BODY = "Amazon Q plugin version %s is available."
-            + "Please update to receive the latest features and bug fixes.";
+            + " Please update to receive the latest features and bug fixes.";
     public static final String LSP_CW_OPT_OUT_KEY = "shareCodeWhispererContentWithAWS";
     public static final String LSP_CODE_REFERENCES_OPT_OUT_KEY = "includeSuggestionsWithCodeReferences";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_TITLE = "Amazon Q Customization";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE = "Amazon Q inline suggestions are now coming from the %s";
+    public static final String MANIFEST_DEPRECATED_NOTIFICATION_KEY = "doNotShowDeprecatedManifest";
+    public static final String MANIFEST_DEPRECATED_NOTIFICATION_TITLE = "Update Amazon Q Extension";
+    public static final String MANIFEST_DEPRECATED_NOTIFICATION_BODY = "This version of the plugin"
+            + " will no longer receive updates to Amazon Q Language authoring features";
     public static final String DEFAULT_Q_FOUNDATION_DISPLAY_NAME = "Amazon Q foundation (Default)";
     public static final String LOGIN_TYPE_KEY = "LOGIN_TYPE";
     public static final String LOGIN_IDC_PARAMS_KEY = "IDC_PARAMS";

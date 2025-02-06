@@ -14,7 +14,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.BearerCredentials;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayloadData;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 
 public final class DefaultAuthCredentialsService implements AuthCredentialsService {
     private LspProvider lspProvider;

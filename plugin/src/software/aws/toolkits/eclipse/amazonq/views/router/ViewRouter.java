@@ -9,6 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 /**
  * Routes to appropriate views based on the combined auth and lsp states (plugin
@@ -37,12 +38,19 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
+        if (builder.browserCompatibilityState == null) {
+            builder.browserCompatibilityState = Activator.getEventBroker()
+                    .ofObservable(BrowserCompatibilityState.class);
+        }
+
         /*
          * Combine auth and lsp streams and publish combined state updates on changes to
          * either stream consisting of the latest events from both streams (this will
          * happen only after one event has been published to both streams):
          */
-        Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable, PluginState::new)
+        Observable
+                .combineLatest(builder.authStateObservable, builder.lspStateObservable,
+                        builder.browserCompatibilityState, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }
 
@@ -75,7 +83,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
     private void refreshActiveView(final PluginState pluginState) {
         AmazonQViewType newActiveView;
 
-        if (isDependencyMissing()) { // TODO: dependency missing check logic needs to be implemented
+        if (pluginState.browserCompatibilityState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
         } else if (pluginState.lspState() == LspState.FAILED) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
@@ -113,16 +121,6 @@ public final class ViewRouter implements EventObserver<PluginState> {
     }
 
     /**
-     * Checks if browsers available are compatible or is dependency missing.
-     * TODO: Implement actual dependency checking logic
-     *
-     * @return true if dependencies are missing, false otherwise
-     */
-    private boolean isDependencyMissing() {
-        return false;
-    }
-
-    /**
      * Checks if required chat UI assets are missing.
      * TODO: Implement actual asset checking logic
      *
@@ -136,6 +134,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         private Observable<AuthState> authStateObservable;
         private Observable<LspState> lspStateObservable;
+        private Observable<BrowserCompatibilityState> browserCompatibilityState;
 
         public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
             this.authStateObservable = authStateObservable;
@@ -144,6 +143,12 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         public Builder withLspStateObservable(final Observable<LspState> lspStateObservable) {
             this.lspStateObservable = lspStateObservable;
+            return this;
+        }
+
+        public Builder withBrowserCompatibilityStateObservable(
+                final Observable<BrowserCompatibilityState> browserCompatibilityState) {
+            this.browserCompatibilityState = browserCompatibilityState;
             return this;
         }
 

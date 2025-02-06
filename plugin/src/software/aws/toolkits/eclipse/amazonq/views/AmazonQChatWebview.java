@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
@@ -13,20 +12,14 @@ import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
-import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
-import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -42,6 +35,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private final ChatTheme chatTheme;
     private Browser browser;
     private volatile boolean canDisposeState = false;
+    private WebViewAssetProvider webViewAssetProvider;
 
     public AmazonQChatWebview() {
         super();
@@ -49,6 +43,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         this.commandParser = new LoginViewCommandParser();
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
+        this.webViewAssetProvider = new ChatWebViewAssetProvider();
         this.chatTheme = new ChatTheme();
     }
 
@@ -141,7 +136,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 // if browser is not null and there is no chat prior state, start a new blank
                 // chat view
                 if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
-                    Optional<String> content = getContent();
+                    Optional<String> content = webViewAssetProvider.getContent();
                     if (!content.isPresent() && !LspStatusManager.getInstance().lspFailed()) {
                         canDisposeState = true;
                         if (!LspStatusManager.getInstance().lspFailed()) {
@@ -164,116 +159,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         }
     }
 
-    private Optional<String> getContent() {
-        var chatAsset = chatStateManager.getContent();
-        if (!chatAsset.isPresent()) {
-            return Optional.empty();
-        }
-
-        String chatJsPath = chatAsset.get();
-
-        return Optional.of(String.format("""
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <meta
-                        http-equiv="Content-Security-Policy"
-                        content="default-src 'none'; script-src %s 'unsafe-inline'; style-src %s 'unsafe-inline';
-                        img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
-                    >
-                    <title>Amazon Q Chat</title>
-                    %s
-                </head>
-                <body>
-                    %s
-                </body>
-                </html>
-                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
-    }
-
-    private String generateCss() {
-        return """
-                <style>
-                    body,
-                    html {
-                        background-color: var(--mynah-color-bg);
-                        color: var(--mynah-color-text-default);
-                        height: 100vh;
-                        width: 100%%;
-                        overflow: hidden;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .mynah-ui-icon-plus,
-                    .mynah-ui-icon-cancel {
-                        -webkit-mask-size: 155% !important;
-                        mask-size: 155% !important;
-                        mask-position: center;
-                        scale: 60%;
-                    }
-                    .mynah-ui-icon-tabs {
-                        -webkit-mask-size: 102% !important;
-                        mask-size: 102% !important;
-                        mask-position: center;
-                    }
-                    textarea:placeholder-shown {
-                        line-height: 1.5rem;
-                    }
-                </style>
-                """;
-    }
-
-    private String generateJS(final String jsEntrypoint) {
-        var chatQuickActionConfig = generateQuickActionConfig();
-        var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
-        return String.format("""
-                <script type="text/javascript" src="%s" defer></script>
-                <script type="text/javascript">
-                    %s
-                    const init = () => {
-                        waitForFunction('ideCommand')
-                            .then(() => {
-                                amazonQChat.createChat({
-                                    postMessage: (message) => {
-                                        ideCommand(JSON.stringify(message));
-                                    }
-                                }, {
-                                    quickActionCommands: %s,
-                                    disclaimerAcknowledged: %b
-                                });
-                            })
-                            .catch(error => console.error('Error initializing chat:', error));
-                    }
-
-                    window.addEventListener('load', init);
-                </script>
-                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
-                "true".equals(disclaimerAcknowledged));
-    }
-
-    /*
-     * Generates javascript for chat options to be supplied to Chat UI defined here
-     * https://github.com/aws/language-servers/blob/
-     * 785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
-     */
-    private String generateQuickActionConfig() {
-        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
-                .map(ChatOptions::quickActions).map(QuickActions::quickActionsCommandGroups)
-                .map(this::serializeQuickActionCommands).orElse("[]");
-    }
-
-    private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {
-        try {
-            ObjectMapper mapper = ObjectMapperFactory.getInstance();
-            return mapper.writeValueAsString(quickActionCommands);
-        } catch (Exception e) {
-            Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
-            return "";
-        }
-    }
-
     @Override
     public final void onSendToChatUi(final String message) {
         String script = "window.postMessage(" + message + ");";
@@ -288,6 +173,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
         }
+        webViewAssetProvider.dispose();
         super.dispose();
     }
 }

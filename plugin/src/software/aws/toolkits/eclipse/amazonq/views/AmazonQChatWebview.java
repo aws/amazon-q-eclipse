@@ -233,6 +233,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         mask-position: center;
                         scale: 60%;
                     }
+                    .mynah-button.mynah-button-secondary.fill-state-always.code-snippet-close-button.mynah-ui-clickable-item
+                    .mynah-ui-icon-cancel {
+                        -webkit-mask-size: 187.5% !important;
+                        mask-size: 187.5% !important;
+                        mask-position: center;
+                        aspect-ratio: 1/1;
+                        width: 15px;
+                        height: 15px;
+                        scale: 50%
+                    }
                     .mynah-ui-icon-tabs {
                         -webkit-mask-size: 102% !important;
                         mask-size: 102% !important;

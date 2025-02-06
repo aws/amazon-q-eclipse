@@ -16,22 +16,16 @@
             id="amazonq">
         </category>
         <view
-            id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
+            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+            id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
             name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+            icon="icons/AmazonQ.png">
         </view>
         <view
-            id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
+            id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
-        </view>
-        <view
-            id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
+            class="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView">
         </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
@@ -107,43 +101,31 @@
         <perspectiveExtension
             targetID="*">
             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
                 relative="org.eclipse.ui.editorss"
                 relationship="right"
                 visible="false">
             </view>
             <view
+                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+                relationship="stack"
+                visible="false">
+            </view>
+            <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
                 relationship="stack"
                 visible="false">
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
+                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
                 relationship="stack"
                 visible="false">
             </view>
             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relationship="stack"
-                visible="false">
-            </view>
-             <view
-                id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
+                id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
                 visible="false">

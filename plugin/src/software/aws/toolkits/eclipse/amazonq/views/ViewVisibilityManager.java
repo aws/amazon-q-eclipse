@@ -28,6 +28,7 @@ public final class ViewVisibilityManager {
     private static final String CODE_REFERENCE_VIEW = AmazonQCodeReferenceView.ID;
     private static final String LSP_STARTUP_FAILED_VIEW = LspStartUpFailedView.ID;
     private static final String ERROR_LOG_VIEW = "org.eclipse.pde.runtime.LogView";
+    private static final String AMAZON_Q_VIEW_CONTAINER = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
 
     private static final Set<String> MUTUALLY_EXCLUSIVE_VIEWS = Set.of(
             TOOLKIT_LOGIN_VIEW,
@@ -35,7 +36,8 @@ public final class ViewVisibilityManager {
             DEPENDENCY_MISSING_VIEW,
             RE_AUTHENTICATE_VIEW,
             CHAT_ASSET_MISSING_VIEW,
-            LSP_STARTUP_FAILED_VIEW
+            LSP_STARTUP_FAILED_VIEW,
+            AMAZON_Q_VIEW_CONTAINER
     );
 
     public static void showDefaultView(final String source) {
@@ -51,6 +53,11 @@ public final class ViewVisibilityManager {
 
     public static void showLoginView(final String source) {
         showMutuallyExclusiveView(TOOLKIT_LOGIN_VIEW, source);
+    }
+
+    public static void showViewContainer(final String source) {
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
+        //put a call here to init viewContainer?
     }
 
     public static void showChatView(final String source) {

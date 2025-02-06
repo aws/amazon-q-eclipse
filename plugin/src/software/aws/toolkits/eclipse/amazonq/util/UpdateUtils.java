@@ -12,7 +12,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Optional;
 
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
@@ -37,9 +36,7 @@ public final class UpdateUtils {
     }
 
     private UpdateUtils() {
-        mostRecentNotificationVersion = Optional.ofNullable(Activator.getPluginStore().get(Constants.DO_NOT_SHOW_UPDATE_KEY))
-                .map(ArtifactUtils::parseVersion)
-                .orElse(null);
+        mostRecentNotificationVersion = Activator.getPluginStore().getObject(Constants.DO_NOT_SHOW_UPDATE_KEY, ArtifactVersion.class);
         String localString = PluginClientMetadata.getInstance().getPluginVersion();
         localVersion = ArtifactUtils.parseVersion(localString.substring(0, localString.lastIndexOf(".")));
     }
@@ -111,7 +108,7 @@ public final class UpdateUtils {
                     String.format(Constants.PLUGIN_UPDATE_NOTIFICATION_BODY, remoteVersion.toString()),
                     (selected) -> {
                         if (selected) {
-                            Activator.getPluginStore().put(Constants.DO_NOT_SHOW_UPDATE_KEY, remoteVersion.toString());
+                            Activator.getPluginStore().putObject(Constants.DO_NOT_SHOW_UPDATE_KEY, remoteVersion);
                         } else {
                             Activator.getPluginStore().remove(Constants.DO_NOT_SHOW_UPDATE_KEY);
                         }

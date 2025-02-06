@@ -319,6 +319,20 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         }
                     });
 
+                    window.addEventListener('load', () => {
+                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                        if (textarea) {
+                            textarea.addEventListener("keydown", (event) => {
+                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey)) && event.key === 'c') {
+                                    copyToClipboard(textarea.value);
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                }
+                            });
+                        }
+                    });
+
+
                 const observer = new MutationObserver((mutations) => {
                     try {
                         mutations.forEach((mutation) => {

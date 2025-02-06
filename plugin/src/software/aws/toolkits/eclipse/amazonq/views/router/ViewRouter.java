@@ -39,6 +39,11 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
+        if (builder.browserCompatibilityState == null) {
+            builder.browserCompatibilityState = Activator.getEventBroker()
+                    .ofObservable(BrowserCompatibilityState.class);
+        }
+
         if (builder.webViewAssetState == null) {
             builder.webViewAssetState = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
         }

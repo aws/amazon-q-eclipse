@@ -9,6 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 /**
@@ -38,9 +39,8 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
-        if (builder.browserCompatibilityState == null) {
-            builder.browserCompatibilityState = Activator.getEventBroker()
-                    .ofObservable(BrowserCompatibilityState.class);
+        if (builder.webViewAssetState == null) {
+            builder.webViewAssetState = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
         }
 
         /*
@@ -48,9 +48,8 @@ public final class ViewRouter implements EventObserver<PluginState> {
          * either stream consisting of the latest events from both streams (this will
          * happen only after one event has been published to both streams):
          */
-        Observable
-                .combineLatest(builder.authStateObservable, builder.lspStateObservable,
-                        builder.browserCompatibilityState, PluginState::new)
+        Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
+                builder.browserCompatibilityState, builder.webViewAssetState, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }
 
@@ -87,7 +86,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
         } else if (pluginState.lspState() == LspState.FAILED) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
-        } else if (isChatUIAssetMissing()) { // TODO: chat missing logic needs to be implemented
+        } else if (pluginState.webViewAssetState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.CHAT_ASSET_MISSING_VIEW;
         } else if (pluginState.authState().isLoggedOut()) {
             newActiveView = AmazonQViewType.TOOLKIT_LOGIN_VIEW;
@@ -120,21 +119,12 @@ public final class ViewRouter implements EventObserver<PluginState> {
         Activator.getEventBroker().post(AmazonQViewType.class, activeView);
     }
 
-    /**
-     * Checks if required chat UI assets are missing.
-     * TODO: Implement actual asset checking logic
-     *
-     * @return true if chat UI assets are missing, false otherwise
-     */
-    private boolean isChatUIAssetMissing() {
-        return false;
-    }
-
     public static final class Builder {
 
         private Observable<AuthState> authStateObservable;
         private Observable<LspState> lspStateObservable;
         private Observable<BrowserCompatibilityState> browserCompatibilityState;
+        private Observable<WebViewAssetState> webViewAssetState;
 
         public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
             this.authStateObservable = authStateObservable;
@@ -149,6 +139,11 @@ public final class ViewRouter implements EventObserver<PluginState> {
         public Builder withBrowserCompatibilityStateObservable(
                 final Observable<BrowserCompatibilityState> browserCompatibilityState) {
             this.browserCompatibilityState = browserCompatibilityState;
+            return this;
+        }
+
+        public Builder withWebViewAssetStateObservable(final Observable<WebViewAssetState> webViewAssetState) {
+            this.webViewAssetState = webViewAssetState;
             return this;
         }
 

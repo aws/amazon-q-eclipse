@@ -58,7 +58,6 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         }
         if (!StringUtils.isEmpty(caCertPreference)) {
             env.put("NODE_EXTRA_CA_CERTS", caCertPreference);
-            env.put("AWS_CA_BUNDLE", caCertPreference);
         }
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");

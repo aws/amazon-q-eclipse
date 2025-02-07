@@ -34,7 +34,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.QConstants;

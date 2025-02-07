@@ -18,7 +18,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;

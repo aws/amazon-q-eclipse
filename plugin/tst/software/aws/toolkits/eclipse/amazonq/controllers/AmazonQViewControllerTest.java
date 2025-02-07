@@ -15,10 +15,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
 public final class AmazonQViewControllerTest {
-    private AmazonQViewController viewController;
+    private AmazonQBrowserProvider viewController;
 
     @RegisterExtension
     private static ActivatorStaticMockExtension activatorExtension = new ActivatorStaticMockExtension();
@@ -26,7 +27,7 @@ public final class AmazonQViewControllerTest {
     @ParameterizedTest
     @MethodSource("provideBrowserStyleData")
     public void getBrowserStyle(final PluginPlatform platform, final int expectedStyle) {
-        viewController = new AmazonQViewController(platform);
+        viewController = new AmazonQBrowserProvider(platform);
         assertEquals(expectedStyle, viewController.getBrowserStyle());
     }
 
@@ -39,7 +40,7 @@ public final class AmazonQViewControllerTest {
     @ParameterizedTest
     @MethodSource("provideCompatibilityData")
     void checkWebViewCompatibility(final PluginPlatform platform, final String browserType, final boolean expectedResult) {
-        viewController = new AmazonQViewController(platform);
+        viewController = new AmazonQBrowserProvider(platform);
 
         assertFalse(viewController.hasWebViewDependency());
         viewController.checkWebViewCompatibility(browserType);

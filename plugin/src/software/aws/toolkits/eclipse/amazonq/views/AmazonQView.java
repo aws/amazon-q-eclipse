@@ -11,22 +11,22 @@ import org.eclipse.ui.part.ViewPart;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart implements EventObserver<AuthState> {
 
-    private AmazonQViewController viewController;
+    private AmazonQBrowserProvider viewController;
     private AmazonQCommonActions amazonQCommonActions;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
     private Disposable authStateSubscription;
 
     protected AmazonQView() {
-        this.viewController = new AmazonQViewController();
+        this.viewController = new AmazonQBrowserProvider();
     }
 
     public final Browser getBrowser() {

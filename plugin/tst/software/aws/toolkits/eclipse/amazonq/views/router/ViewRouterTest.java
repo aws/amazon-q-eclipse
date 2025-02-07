@@ -23,6 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.extensions.implementation.Activator
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 public final class ViewRouterTest {
 
@@ -30,6 +31,7 @@ public final class ViewRouterTest {
 
     private Observable<AuthState> authStateObservable;
     private Observable<LspState> lspStateObservable;
+    private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
 
     private ViewRouter viewRouter;
     private EventBroker eventBrokerMock;
@@ -46,11 +48,13 @@ public final class ViewRouterTest {
 
         authStateObservable = publishSubject.ofType(AuthState.class);
         lspStateObservable = publishSubject.ofType(LspState.class);
+        browserCompatibilityStateObservable = publishSubject.ofType(BrowserCompatibilityState.class);
 
         eventBrokerMock = activatorStaticMockExtension.getMock(EventBroker.class);
 
         viewRouter = ViewRouter.builder().withAuthStateObservable(authStateObservable)
-                .withLspStateObservable(lspStateObservable).build();
+                .withLspStateObservable(lspStateObservable)
+                .withBrowserCompatibilityStateObservable(browserCompatibilityStateObservable).build();
     }
 
     @AfterEach
@@ -61,25 +65,37 @@ public final class ViewRouterTest {
     @ParameterizedTest
     @MethodSource("provideStateSource")
     void testActiveViewResolutionBasedOnPluginState(final LspState lspState, final AuthState authState,
-            final AmazonQViewType expectedActiveViewId) {
+            final BrowserCompatibilityState browserCompatibilityState, final AmazonQViewType expectedActiveViewId) {
         publishSubject.onNext(authState);
         publishSubject.onNext(lspState);
+        publishSubject.onNext(browserCompatibilityState);
 
         verify(eventBrokerMock).post(AmazonQViewType.class, expectedActiveViewId);
     }
 
     private static Stream<Arguments> provideStateSource() {
-        return Stream.of(Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_IN),
+        return Stream.of(
+                Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_IN),
+                        BrowserCompatibilityState.DEPENDENCY_MISSING, AmazonQViewType.DEPENDENCY_MISSING_VIEW),
+                Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_IN),
+                        BrowserCompatibilityState.COMPATIBLE,
                         AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
                 Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_OUT),
+                        BrowserCompatibilityState.COMPATIBLE,
                         AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
                 Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.EXPIRED),
+                        BrowserCompatibilityState.COMPATIBLE,
                         AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
-                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.LOGGED_OUT), AmazonQViewType.TOOLKIT_LOGIN_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_OUT), AmazonQViewType.TOOLKIT_LOGIN_VIEW),
-                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.EXPIRED), AmazonQViewType.RE_AUTHENTICATE_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.EXPIRED), AmazonQViewType.RE_AUTHENTICATE_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN), AmazonQViewType.CHAT_VIEW));
+                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.LOGGED_OUT),
+                        BrowserCompatibilityState.COMPATIBLE, AmazonQViewType.TOOLKIT_LOGIN_VIEW),
+                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_OUT),
+                        BrowserCompatibilityState.COMPATIBLE, AmazonQViewType.TOOLKIT_LOGIN_VIEW),
+                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.EXPIRED),
+                        BrowserCompatibilityState.COMPATIBLE, AmazonQViewType.RE_AUTHENTICATE_VIEW),
+                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.EXPIRED),
+                        BrowserCompatibilityState.COMPATIBLE, AmazonQViewType.RE_AUTHENTICATE_VIEW),
+                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
+                        BrowserCompatibilityState.COMPATIBLE, AmazonQViewType.CHAT_VIEW));
     }
 
     private static AuthState getAuthStateObject(final AuthStateType authStateType) {

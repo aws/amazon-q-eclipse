@@ -23,7 +23,6 @@ import software.aws.toolkits.eclipse.amazonq.extensions.implementation.Activator
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
-<<<<<<< HEAD
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;

@@ -17,8 +17,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+<<<<<<< HEAD
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+=======
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
+>>>>>>> 4ec1937 (Add Browser Provider component (#357))
 
 public class DefaultAuthCredentialsServiceTest {
     private static DefaultAuthCredentialsService authCredentialsService;

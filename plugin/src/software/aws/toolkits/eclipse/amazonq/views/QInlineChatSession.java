@@ -33,6 +33,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.difflib.DiffUtils;
+import com.github.difflib.patch.AbstractDelta;
+import com.github.difflib.patch.DeltaType;
+import com.github.difflib.patch.Patch;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
@@ -79,6 +82,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jgit.diff.Edit;
@@ -95,6 +99,10 @@ import org.eclipse.jgit.diff.EditList;
 import java.nio.charset.StandardCharsets;
 
 public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
+	
+	private String previousPartialResponse= "";
+	private String originalCode;
+	 private int originalSelectionStart;
 
     public QInlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
@@ -590,30 +598,56 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             Display.getDefault().asyncExec(() -> {
               
                 var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                int selectionStart = selection.getOffset();
+                originalSelectionStart = selection.getOffset();
+                Activator.getLogger().info(String.format("SELECTION OFFSET: %d", originalSelectionStart));
            
                 // Show user input dialog
-                onUserInput(selectionStart);
+//                onUserInput(selectionStart);
+                
+                
+                /* PLAN OF ACTION
+                 * 1. test without input box
+                 * 2. purely want to insert some code to highlighted portion on CMD + C
+                 * 3. diff should check the code to see if it matches whats already there
+                 * 4. next step would be having diff react properly to partial results
+                 * */
                
                 // Sample code to play with for inserting a sample response
-               // var originalCode = selection.getText();                
-              //  String newCode = """
-                    /**
-                     * Adds two integer numbers together
-                     * @param a First integer number
-                     * @param b Second integer number
-                     * @return Sum of the two numbers
-                     */
-                 //  public int addTwoNumbers(int a , int b)
-                 //  {
-                  //      return a + b;
-                   // }
-                  //  """;
-                // showInlineDiff(originalCode, newCode, selectionStart);
-                
+                originalCode = selection.getText();                
+                var newCode = """
+                   public int add(int a , int b)
+                   {
+                	   int num = a + b;
+                       return num;
+                   }
+                    """;
+                var newCode2 = """
+                    public int addTwoNumbers(int a , int b)
+                    {
+                        int num = a + b;
+                        return num;
+                    }
+                     """;                
+                var newCode3 = """
+                        public int addTwoNumbers(int a , int b)
+                        {
+                            System.out.println(String.format("RESULT: %d", a+b));
+                            return a + b;
+                        }
+                         """;
+                onSendToChatUi(newCode);
+                Display.getDefault().timerExec(500, () -> {
+                    // Second call after 250ms
+                    onSendToChatUi(newCode2);
+                    
+                    Display.getDefault().timerExec(500, () -> {
+                        // Third call after another 250ms
+                        onSendToChatUi(newCode3);
+                    });
+                });
                
            
-               // showInlineDiff(originalCode, newCode);
+//                showInlineDiff(originalCode, newCode);
             });
         }
     }
@@ -654,7 +688,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 composite.setLayout(new GridLayout(1, false));
 
                 var titleLabel = new Label(composite, SWT.NONE);
-                titleLabel.setText("Enter instructions for Q");
+                titleLabel.setText("Enter instructions for Amazon Q");
                 titleLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
                 inputField = new Text(composite, SWT.BORDER | SWT.MULTI | SWT.WRAP);
@@ -737,24 +771,15 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 
 
     @Override
-    public void onSendToChatUi(String message) {
-        // TODO: When response completes fully i.e no partial response left, transition from Q generating indicator to the accept/reject popup
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            var rootNode = mapper.readTree(message);
-            var paramsNode = rootNode.get("params");
-            
-            var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
-            // we only care about fields of chatResult.body and chatResult code references
-            // see https://github.com/aws/aws-toolkit-vscode/blob/master/packages/amazonq/src/inlineChat/controller/inlineChatController.ts#L256-L295
-            // TODO: Ignore responses and show info to user when code references is off and response contains a reference
-            // TODO: run diff on the partial responses that produce results that may already contain the code added
-            // diff tool would allow showing only the relevant updates
-            insertAtCursor(chatResult.body());
-            
-          
-        } catch (JsonProcessingException e) {
-            Activator.getLogger().error("Failed to parse ChatResult", e);
+    public void onSendToChatUi(String latestResponse) {
+        Activator.getLogger().info("SEND TO CHAT UI INVOKED!!!!");
+        
+        if (!latestResponse.equals(previousPartialResponse)) {
+            Display.getDefault().asyncExec(() -> {
+                // Always insert at the originalSelectionStart position
+                insertWithInlineDiffUtils(originalCode, latestResponse, originalSelectionStart);
+            });
+            previousPartialResponse = latestResponse;
         }
     }
     
@@ -769,7 +794,120 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         });
         return range.get().map(CursorState::new);
     }
+
+
+    private void insertWithInlineDiffUtils(String originalCode, String newCode, int offset) {
+        IWorkbenchPage page = PlatformUI.getWorkbench()
+                .getActiveWorkbenchWindow()
+                .getActivePage();
+        IEditorPart editorPart = page.getActiveEditor();
+        
+        if (!(editorPart instanceof ITextEditor)) {
+            return;
+        }
+
+        ITextEditor editor = (ITextEditor) editorPart;
+        IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        IAnnotationModel annotationModel = editor.getDocumentProvider()
+                .getAnnotationModel(editor.getEditorInput());
+        
+        try {
+        	// Clear existing diff annotations prior to starting new diff
+        	clearDiffAnnotations(annotationModel);
+        	
+        	// Restore document to original state to prevent overlapping diff code
+        	int replaceLen = originalCode.length();
+        	doc.replace(offset, replaceLen, originalCode);
+        	
+        	// Split original and new code into lines for diff comparison
+            String[] originalLines = originalCode.split("\n");
+            String[] newLines = newCode.split("\n");
+            
+            // Diff generation
+            Patch<String> patch = DiffUtils.diff(Arrays.asList(originalLines), Arrays.asList(newLines));
+            
+            StringBuilder resultText = new StringBuilder();
+            List<Position> deletedPositions = new ArrayList<>();
+            List<Position> addedPositions = new ArrayList<>();
+            int currentPos = 0;
+            int currentLine = 0;
+            
+            for (AbstractDelta<String> delta : patch.getDeltas()) {
+                // Continuously copy unchanged lines until we hit a diff
+                while (currentLine < delta.getSource().getPosition()) {
+                    resultText.append(originalLines[currentLine]).append("\n");
+                    currentPos += originalLines[currentLine].length() + 1;
+                    currentLine++;
+                }
+                
+                List<String> originalChangedLines = delta.getSource().getLines();
+                List<String> newChangedLines = delta.getTarget().getLines();
+                
+                // Handle deleted lines and mark position
+                for (String line : originalChangedLines) {
+                    resultText.append(line).append("\n");
+                    Position position = new Position(offset + currentPos, line.length());
+                    deletedPositions.add(position);
+                    currentPos += line.length() + 1;
+                }
+                
+                // Handle added lines and mark position
+                for (String line : newChangedLines) {
+                    resultText.append(line).append("\n");
+                    Position position = new Position(offset + currentPos, line.length());
+                    addedPositions.add(position);
+                    currentPos += line.length() + 1;
+                }
+                
+                currentLine = delta.getSource().getPosition() + delta.getSource().size();
+            }
+            
+            // Loop through remaining unchanged lines
+            while (currentLine < originalLines.length) {
+                resultText.append(originalLines[currentLine]).append("\n");
+                currentPos += originalLines[currentLine].length() + 1;
+                currentLine++;
+            }
+
+            final String finalText = resultText.toString();
+            
+            // Clear existing annotations in the affected range
+            clearAnnotationsInRange(annotationModel, offset, offset + originalCode.length());
+            
+            // Apply new diff text
+            doc.replace(offset, replaceLen, finalText);
+            
+            // Add new annotations for this diff
+            for (Position position : deletedPositions) {
+                Annotation annotation = new Annotation("diffAnnotation.deleted", false, "Deleted Code");
+                annotationModel.addAnnotation(annotation, position);
+            }
+            
+            for (Position position : addedPositions) {
+                Annotation annotation = new Annotation("diffAnnotation.added", false, "Added Code");
+                annotationModel.addAnnotation(annotation, position);
+            }
+            
+        } catch (BadLocationException e) {
+            Activator.getLogger().error("Failed to insert inline diff", e);
+        }
+    }
+    
+    private void clearAnnotationsInRange(IAnnotationModel model, int start, int end) {
+        Iterator<Annotation> iterator = model.getAnnotationIterator();
+        while (iterator.hasNext()) {
+            Annotation annotation = iterator.next();
+            Position position = model.getPosition(annotation);
+            if (position != null && 
+                position.offset >= start && 
+                position.offset + position.length <= end) {
+                model.removeAnnotation(annotation);
+            }
+        }
+    }
+
+
     
 
-
+/////////
 }

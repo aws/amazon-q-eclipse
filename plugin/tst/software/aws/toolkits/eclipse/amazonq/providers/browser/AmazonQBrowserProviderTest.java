@@ -44,7 +44,7 @@ public final class AmazonQBrowserProviderTest {
     public void getBrowserStyle(final PluginPlatform platform, final int expectedStyle) {
         try (MockedStatic<Display> staticDisplay = mockStatic(Display.class)) {
             staticDisplay.when(Display::getDefault).thenReturn(mockDisplay);
-            doNothing().when(mockDisplay).syncExec(any(Runnable.class));
+            doNothing().when(mockDisplay).asyncExec(any(Runnable.class));
 
             browserProvider = new AmazonQBrowserProvider(platform);
             assertEquals(expectedStyle, browserProvider.getBrowserStyle());
@@ -62,7 +62,7 @@ public final class AmazonQBrowserProviderTest {
     void checkWebViewCompatibility(final PluginPlatform platform, final String browserType, final boolean expectedResult) {
         try (MockedStatic<Display> staticDisplay = mockStatic(Display.class)) {
             staticDisplay.when(Display::getDefault).thenReturn(mockDisplay);
-            doNothing().when(mockDisplay).syncExec(any(Runnable.class));
+            doNothing().when(mockDisplay).asyncExec(any(Runnable.class));
 
             browserProvider = new AmazonQBrowserProvider(platform);
 

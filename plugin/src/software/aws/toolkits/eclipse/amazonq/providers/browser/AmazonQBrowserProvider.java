@@ -25,7 +25,7 @@ public class AmazonQBrowserProvider {
     // Test constructor that accepts a platform
     public AmazonQBrowserProvider(final PluginPlatform platform) {
         this.pluginPlatform = platform;
-        Display.getDefault().syncExec(this::publishBrowserCompatibilityState);
+        Display.getDefault().asyncExec(this::publishBrowserCompatibilityState);
     }
 
     /*

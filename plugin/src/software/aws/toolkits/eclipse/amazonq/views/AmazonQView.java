@@ -56,6 +56,19 @@ public abstract class AmazonQView extends BaseAmazonQView {
         browserProvider.updateBrowser(browser);
     }
 
+    /**
+     * Sets up the view's browser component and initializes necessary configurations.
+     * This method is called during view creation to establish the browser environment.
+     *
+     * The setup process includes:
+     * - Setting up the browser's background color to match the parent
+     * - Initializing common actions for the view
+     * - Setting up authentication status listeners
+     * - Disabling the browser's default context menu
+     *
+     * @param parent The parent composite where the view will be created
+     * @return The configured parent composite containing the view
+     */
     @Override
     public Composite setupView(final Composite parent) {
         Browser browser = getBrowser();
@@ -94,7 +107,7 @@ public abstract class AmazonQView extends BaseAmazonQView {
                 amazonQCommonActions.getToggleAutoTriggerContributionAction());
     }
 
-    public void setViewSite(final IViewSite viewSite) {
+    public final void setViewSite(final IViewSite viewSite) {
         this.viewSite = viewSite;
     }
 

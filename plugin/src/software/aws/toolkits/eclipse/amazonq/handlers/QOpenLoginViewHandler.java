@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.handlers;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 
 public class QOpenLoginViewHandler extends AbstractHandler {

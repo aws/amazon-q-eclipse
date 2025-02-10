@@ -19,7 +19,7 @@ public abstract class BaseAmazonQView {
     public abstract Composite setupView(Composite parentComposite);
     public abstract void dispose();
 
-    protected Image loadImage(final String imagePath) {
+    protected final Image loadImage(final String imagePath) {
         Image loadedImage = null;
         try {
             URL imageUrl = PluginUtils.getResource(imagePath);
@@ -31,7 +31,8 @@ public abstract class BaseAmazonQView {
         }
         return loadedImage;
     }
-    protected Font magnifyFontSize(final Composite parentComposite, final Font originalFont, final int fontSize) {
+
+    protected final Font magnifyFontSize(final Composite parentComposite, final Font originalFont, final int fontSize) {
         FontData[] fontData = originalFont.getFontData();
         for (int i = 0; i < fontData.length; i++) {
             fontData[i].setHeight(fontSize);

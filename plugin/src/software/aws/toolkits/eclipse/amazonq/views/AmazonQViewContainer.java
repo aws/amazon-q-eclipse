@@ -46,7 +46,8 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         parent.setLayout(layout);
 
         GridLayout gridLayout = new GridLayout(1, false);
-        gridLayout.marginHeight = gridLayout.marginWidth = 0;
+        gridLayout.marginHeight = 0;
+        gridLayout.marginWidth = 0;
         parent.setLayout(gridLayout);
 
         parentComposite = parent;

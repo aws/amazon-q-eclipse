@@ -41,18 +41,11 @@ public final class ViewVisibilityManager {
     );
 
     public static void showDefaultView(final String source) {
-        var authState = Activator.getLoginService().getAuthState();
-        if (authState.isExpired()) {
-            showReAuthView(source);
-        } else if (authState.isLoggedIn()) {
-            showChatView(source);
-        } else {
-            showLoginView(source);
-        }
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showLoginView(final String source) {
-        showMutuallyExclusiveView(TOOLKIT_LOGIN_VIEW, source);
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showViewContainer(final String source) {
@@ -61,23 +54,23 @@ public final class ViewVisibilityManager {
     }
 
     public static void showChatView(final String source) {
-        showMutuallyExclusiveView(CHAT_VIEW, source);
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showDependencyMissingView(final String source) {
-        showMutuallyExclusiveView(DEPENDENCY_MISSING_VIEW, source);
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showReAuthView(final String source) {
-        showMutuallyExclusiveView(RE_AUTHENTICATE_VIEW, source);
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showChatAssetMissingView(final String source) {
-        showMutuallyExclusiveView(CHAT_ASSET_MISSING_VIEW, source);
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showLspStartUpFailedView(final String source) {
-        showMutuallyExclusiveView(LSP_STARTUP_FAILED_VIEW, source);
+        showMutuallyExclusiveView(AMAZON_Q_VIEW_CONTAINER, source);
     }
 
     public static void showCodeReferenceView(final String source) {

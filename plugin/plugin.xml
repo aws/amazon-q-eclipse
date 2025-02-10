@@ -42,13 +42,6 @@
             inject="true">
         </view>
         <view
-            id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            inject="true">
-        </view>
-        <view
               class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
               icon="icons/AmazonQ.png"
               id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
@@ -69,11 +62,6 @@
 	  </activity>
       <activity id="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView" name="Amazon Q Chat Missing">
 	  </activity>
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview">
-	  </activityPatternBinding>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
 	     isEqualityPattern="true"
@@ -108,12 +96,6 @@
             </view>
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
                 relationship="stack"
                 visible="false">
@@ -381,7 +363,6 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
-                                <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview" />
                             </or>
                         </with>
                     </and>

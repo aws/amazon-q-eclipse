@@ -12,6 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public final class SignoutAction extends Action implements EventObserver<AuthState> {
+
     public SignoutAction() {
         setText("Sign out");
     }
@@ -37,12 +38,9 @@ public final class SignoutAction extends Action implements EventObserver<AuthSta
         });
     }
 
-    public void updateVisibility(final AuthState authState) {
+    @Override
+    public void onEvent(final AuthState authState) {
         this.setEnabled(authState.isLoggedIn());
     }
 
-    @Override
-    public void onEvent(final AuthState authState) {
-        updateVisibility(authState);
-    }
 }

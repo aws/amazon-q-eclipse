@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.providers.browser;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -63,6 +64,10 @@ public class AmazonQBrowserProvider {
      */
     public final boolean setupBrowser(final Composite parent) {
         var browser = new Browser(parent, getBrowserStyle());
+
+        GridData layoutData = new GridData(GridData.FILL_BOTH);
+        browser.setLayoutData(layoutData);
+
         checkWebViewCompatibility(browser.getBrowserType());
         // only set the browser if compatible webview browser can be found for the
         // platform

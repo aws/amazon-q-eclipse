@@ -12,11 +12,12 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.IViewSite;
 
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
-public final class ToggleAutoTriggerContributionItem extends ContributionItem {
+public final class ToggleAutoTriggerContributionItem extends ContributionItem implements EventObserver<AuthState> {
 
     public static final String AUTO_TRIGGER_ENABLEMENT_KEY = "aws.q.autotrigger.eclipse";
     private static final String PAUSE_TEXT = "Pause Auto-Suggestions";
@@ -34,9 +35,11 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
         var resumeImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.ui.cheatsheets",
                 "icons/elcl16/start_task.png");
         resume = resumeImageDescriptor.createImage(Display.getCurrent());
+        Activator.getEventBroker().subscribe(AuthState.class, this);
     }
 
-    public void updateVisibility(final AuthState authState) {
+    @Override
+    public void onEvent(final AuthState authState) {
         this.setVisible(authState.isLoggedIn());
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();

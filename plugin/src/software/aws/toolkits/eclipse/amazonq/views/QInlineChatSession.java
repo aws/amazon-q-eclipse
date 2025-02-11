@@ -4,6 +4,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -19,8 +20,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.contexts.IContextActivation;
-import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -74,8 +73,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
     private ChatRequestParams params;
     private volatile SessionState currentState = SessionState.INACTIVE;
 	private ITextEditor editor = null;
-	IContextService contextService;
-	private IContextActivation contextActivation;
 	
 	// Diff generation and rendering variables
 	private String previousPartialResponse = null;
@@ -86,20 +83,19 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 	// Batching variables
 	private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 	private ScheduledFuture<?> pendingUpdate;
-	private static final int BATCH_DELAY_MS = 100;
-	private long lastUpdateTime = 0;
+	private static final int BATCH_DELAY_MS = 200;
+	private long lastUpdateTime;
 	
 	// Popup messaging
 	private PopupDialog popup;
-	private final String progressMessage = "Amazon Q is generating...";
-	private final String decisionMessage = "Accept: Tab, Reject: Esc";
+	private final String GENERATING_POPUP_MSG = "Amazon Q is generating...";
+	private final String USER_DECISION_POPUP_MSG = "Accept: Tab, Reject: Esc";
 
     public QInlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         // TODO: Update ChatCommunicationManager to track a list of listeners as opposed to tracking only one
         // For this startSession call to successful, the chat panel must be closed so that there is a single listener registered
         chatCommunicationManager.setChatUiRequestListener(this);
-        contextService = PlatformUI.getWorkbench().getService(IContextService.class);
     }
     
     public static synchronized QInlineChatSession getInstance() {
@@ -135,6 +131,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         try {
         	setSessionState(SessionState.ACTIVE);
         	this.editor = (ITextEditor) editorPart;
+        	this.lastUpdateTime = System.currentTimeMillis();
         	
             Display.getDefault().asyncExec(() -> {
                 
@@ -146,7 +143,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 // Show user input dialog
                 onUserInput(originalSelectionStart);
             });
-            contextActivation = contextService.activateContext("software.aws.toolkits.eclipse.amazonq.inlineChat.context");
             return true;
         } catch (Exception e) {
         	endSession();
@@ -181,12 +177,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 pendingUpdate.cancel(true);
             }
             
-            // Remove context
-            if (contextActivation != null) {
-            	contextService.deactivateContext(contextActivation);
-            	contextActivation = null;
-            }
-            
             // Clear state
             editor = null;
             previousPartialResponse = null;
@@ -197,68 +187,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             setSessionState(SessionState.INACTIVE);
         }
     }
-  
-    public final void showUserDecisionRequiredPopup(int selectionOffset) {
-        if (popup != null) {
-            popup.close();
-            if (popup.getShell() != null && !popup.getShell().isDisposed()) {
-                popup.getShell().dispose();
-            }
-            popup = null;
-        }
-
-        var viewer = getActiveTextViewer(editor);
-        var widget = viewer.getTextWidget();
-        
-        // Create key handler for accept/reject actions
-        KeyAdapter keyHandler = new KeyAdapter() {
-	        @Override
-	        public void keyPressed(KeyEvent e) {
-	            if (e.keyCode == SWT.TAB) {  // Accept changes
-	                handleAcceptInlineChat(editor);
-	            } else if (e.keyCode == SWT.ESC) {  // Reject changes
-	                handleDeclineInlineChat(editor);
-	            }
-	            cleanupKeyHandler();
-	        } 
-	        
-	        private void cleanupKeyHandler() {
-	            widget.removeKeyListener(this);
-	        }
-        };
-        popup = new PopupDialog(widget.getShell(), PopupDialog.HOVER_SHELLSTYLE, false, false, true, false, false,
-                null, null) {
-            private Point screenLocation; 
-            
-            @Override
-            protected Point getInitialLocation(final Point initialSize) {
-                if (screenLocation == null) {
-                    Point location = widget.getLocationAtOffset(selectionOffset);
-                    location.y -= widget.getLineHeight() * 1.1;
-                    screenLocation = Display.getCurrent().map(widget, null, location);
-                }
-                return screenLocation;
-            }
-
-            @Override
-            protected Control createDialogArea(final Composite parent) {
-                Composite composite = (Composite) super.createDialogArea(parent);
-                composite.setLayout(new GridLayout(1, false));
-                
-                Label infoLabel = new Label(composite, SWT.NONE);
-                infoLabel.setLayoutData(new GridData(GridData.FILL_BOTH));
-          
-                infoLabel.setText(decisionMessage);
-
-                return composite;
-            }
-        };
-
-        widget.addKeyListener(keyHandler);
-        popup.open();
-    }
-    
-    public final void showGeneratingPopup(int selectionOffset) {
+    public final void showPopup(int selectionOffset, KeyAdapter keyHandler, String message) {
         if (popup != null) {
             popup.close();
             if (popup.getShell() != null && !popup.getShell().isDisposed()) {
@@ -291,24 +220,46 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 
                 Label infoLabel = new Label(composite, SWT.NONE);
                 infoLabel.setLayoutData(new GridData(GridData.FILL_BOTH));
-                infoLabel.setText(progressMessage);
+                infoLabel.setText(message);
                 
                 return composite;
             }
         };
+
+        if (keyHandler != null) {
+            widget.addKeyListener(keyHandler);
+        }
         
         popup.open();
     }
-
-    private void handleAcceptInlineChat(ITextEditor editor) {
-    	handleUserDecision(editor, true);
+    
+    KeyAdapter createUserDecisionKeyHandler(StyledText widget) {
+    	return new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.keyCode == SWT.TAB) {  // Accept changes
+                    handleAcceptInlineChat();
+                } else if (e.keyCode == SWT.ESC) {  // Reject changes
+                    handleDeclineInlineChat();
+                }
+                cleanupKeyHandler();
+            } 
+            
+            private void cleanupKeyHandler() {
+                widget.removeKeyListener(this);
+            }
+        };
     }
 
-    private final void handleDeclineInlineChat(ITextEditor editor) {
-    	handleUserDecision(editor, false);
+    private void handleAcceptInlineChat() {
+    	handleUserDecision(true);
+    }
+
+    private final void handleDeclineInlineChat() {
+    	handleUserDecision(false);
     }
     
-    private final void handleUserDecision(ITextEditor editor, boolean acceptedChanges) {
+    private final void handleUserDecision(boolean acceptedChanges) {
     	IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         IAnnotationModel annotationModel = editor.getDocumentProvider()
                 .getAnnotationModel(editor.getEditorInput());
@@ -334,7 +285,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             popup.close();
         }
     }
-    
     
     public static ITextViewer asTextViewer(final IEditorPart editorPart) {
         return editorPart != null ? editorPart.getAdapter(ITextViewer.class) : null;
@@ -408,13 +358,12 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                             var prompt = new ChatPrompt(userInput, userInput, "");
 
                             var filePath = "C:\\Users\\somerandomusername\\Desktop\\lsp.txt";
-                            // use a random uuid for tabId instead
                             var id = UUID.randomUUID().toString();
                             params = new ChatRequestParams(id, prompt, new TextDocumentIdentifier(filePath), Arrays.asList(cursorState));
                                  
                             chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
                             // TODO: instead show the progress indicator that Q is thinking untill the full response comes
-                            showGeneratingPopup(selectionOffset);
+                            showPopup(selectionOffset, null, GENERATING_POPUP_MSG);
                          
                         } else if (e.character == SWT.ESC) {
                             close();
@@ -475,20 +424,31 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         	Activator.getLogger().info("CHAT RESPONSE MESSAGE: " + message);
         	
             if (isPartialResult) {
-                // Handle partial results with batching
+                // Only process if content has changed
                 if (!chatResult.body().equals(previousPartialResponse)) {
                     if (pendingUpdate != null) {
                         pendingUpdate.cancel(false);
                     }
                     
                     // Calculate remaining time since last UI update
-                    long timeSinceUpdate = System.currentTimeMillis() - lastUpdateTime;
-                    long delayToUse = Math.max(0, BATCH_DELAY_MS - timeSinceUpdate);
+                    long currentTime = System.currentTimeMillis();
+                    long timeSinceUpdate = currentTime - lastUpdateTime;
                     
-                    //set delay to guarantee 100ms delay between updates
-                    pendingUpdate = executor.schedule(() -> {
-                        updateUI(chatResult, isPartialResult);
-                    }, delayToUse, TimeUnit.MILLISECONDS);
+                    if (timeSinceUpdate >= BATCH_DELAY_MS) {
+                    	Activator.getLogger().info("Immediate update: " + timeSinceUpdate + "ms since last update");
+                        // Push update immediately if enough time has passed
+                    	updateUI(chatResult, isPartialResult);
+                    	lastUpdateTime = currentTime;
+                    } else {
+                        // Calculate remaining batch delay and schedule update
+                    	long delayToUse = BATCH_DELAY_MS - timeSinceUpdate;
+                    	Activator.getLogger().info("Scheduled update: waiting " + delayToUse + "ms");
+                        pendingUpdate = executor.schedule(() -> {
+                            updateUI(chatResult, isPartialResult);
+                            lastUpdateTime = System.currentTimeMillis();
+                        }, delayToUse, TimeUnit.MILLISECONDS);
+                    }
+                    
                 }
             } else {
                 // Final result - always update UI state regardless of content
@@ -502,12 +462,15 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
     }
     
     private void updateUI(ChatResult chatResult, boolean isPartialResult) {
+        var viewer = getActiveTextViewer(editor);
+        var widget = viewer.getTextWidget();
         Display.getDefault().asyncExec(() -> {
             insertWithInlineDiffUtils(originalCode, chatResult.body(), originalSelectionStart);
             previousPartialResponse = chatResult.body();
 
             if (!isPartialResult) {
-                showUserDecisionRequiredPopup(originalSelectionStart);
+            	KeyAdapter keyHandler = createUserDecisionKeyHandler(widget);
+                showPopup(originalSelectionStart, keyHandler, USER_DECISION_POPUP_MSG);
             }
         });
     }

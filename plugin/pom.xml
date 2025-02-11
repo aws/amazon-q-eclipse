@@ -186,7 +186,8 @@
                                 net.java.dev.jna,
                                 org.ini4j,
                                 org.javadelight,
-                                org.slf4j
+                                org.slf4j,
+                                io.github.java-diff-utils
                             </includeGroupIds>
                         </configuration>
                     </execution>

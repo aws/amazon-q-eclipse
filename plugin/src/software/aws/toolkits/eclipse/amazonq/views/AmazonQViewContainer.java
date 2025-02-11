@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
@@ -28,8 +29,14 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     private AmazonQViewType activeViewType;
     private BaseAmazonQView currentView;
     private Disposable activeViewTypeSubscription;
+    private final ReentrantLock containerLock;
 
     public AmazonQViewContainer() {
+        activeViewType = AmazonQViewType.CHAT_VIEW;
+        containerLock = new ReentrantLock(true);
+
+        Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
+
         views = Map.of(
                 AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new DependencyMissingView(),
                 AmazonQViewType.DEPENDENCY_MISSING_VIEW, new ChatAssetMissingView(),
@@ -53,9 +60,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         parentComposite = parent;
 
         setupStaticMenuActions();
-        if (activeViewTypeSubscription == null || activeViewTypeSubscription.isDisposed()) {
-            activeViewTypeSubscription = Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
-        }
+        updateChildView();
     }
 
     private void setupStaticMenuActions() {
@@ -64,6 +69,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     private void updateChildView() {
         Display.getDefault().asyncExec(() -> {
+            containerLock.lock();
             BaseAmazonQView newView = views.get(activeViewType);
 
             if (currentView != null) {
@@ -89,6 +95,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
             parentComposite.layout(true, true);
 
             currentView = newView;
+            containerLock.unlock();
         });
     }
 
@@ -98,7 +105,10 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
           return;
       }
 
+      containerLock.lock();
       activeViewType = newViewType;
+      containerLock.unlock();
+
       if (!parentComposite.isDisposed()) {
           updateChildView();
       }
@@ -114,10 +124,6 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     public void dispose() {
         if (currentView != null) {
             currentView.dispose();
-        }
-
-        if (activeViewTypeSubscription != null && !activeViewTypeSubscription.isDisposed()) {
-            activeViewTypeSubscription.dispose();
         }
 
         super.dispose();

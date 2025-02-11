@@ -39,19 +39,15 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
-        if (builder.browserCompatibilityState == null) {
-            builder.browserCompatibilityState = Activator.getEventBroker()
+        if (builder.browserCompatibilityStateObservable == null) {
+            builder.browserCompatibilityStateObservable = Activator.getEventBroker()
                     .ofObservable(BrowserCompatibilityState.class);
         }
 
-        if (builder.webViewAssetState == null) {
-            builder.webViewAssetState = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
+        if (builder.webViewAssetStateObservable == null) {
+            builder.webViewAssetStateObservable = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
         }
 
-        if (builder.toolkitLoginWebViewAssetStateObservable == null) {
-            builder.toolkitLoginWebViewAssetStateObservable = Activator.getEventBroker()
-                    .ofObservable(ToolkitLoginWebViewAssetState.class);
-        }
         /**
          * Combines all state observables into a single stream that emits a new PluginState
          * whenever any individual state changes. The combined stream:
@@ -59,7 +55,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
          * - Creates new PluginState from latest values of each observable upon update to any single stream
          */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
-                builder.browserCompatibilityState, builder.webViewAssetState, PluginState::new)
+                builder.browserCompatibilityStateObservable, builder.webViewAssetStateObservable, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }
 
@@ -133,8 +129,8 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         private Observable<AuthState> authStateObservable;
         private Observable<LspState> lspStateObservable;
-        private Observable<BrowserCompatibilityState> browserCompatibilityState;
-        private Observable<WebViewAssetState> webViewAssetState;
+        private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
+        private Observable<WebViewAssetState> webViewAssetStateObservable;
 
         public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
             this.authStateObservable = authStateObservable;
@@ -148,12 +144,12 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         public Builder withBrowserCompatibilityStateObservable(
                 final Observable<BrowserCompatibilityState> browserCompatibilityState) {
-            this.browserCompatibilityState = browserCompatibilityState;
+            this.browserCompatibilityStateObservable = browserCompatibilityState;
             return this;
         }
 
         public Builder withWebViewAssetStateObservable(final Observable<WebViewAssetState> webViewAssetState) {
-            this.webViewAssetState = webViewAssetState;
+            this.webViewAssetStateObservable = webViewAssetState;
             return this;
         }
 

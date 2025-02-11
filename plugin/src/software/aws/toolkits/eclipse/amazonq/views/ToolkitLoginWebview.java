@@ -39,9 +39,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
         setupParentBackground(parent);
         var result = setupBrowser(parent);
-        // if setup of amazon q view fails due to missing webview dependency, switch to
-        // that view
-        // and don't setup rest of the content
+
         if (!result) {
             return parent;
         }

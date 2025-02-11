@@ -35,7 +35,6 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem im
         var resumeImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.ui.cheatsheets",
                 "icons/elcl16/start_task.png");
         resume = resumeImageDescriptor.createImage(Display.getCurrent());
-        Activator.getEventBroker().subscribe(AuthState.class, this);
     }
 
     @Override

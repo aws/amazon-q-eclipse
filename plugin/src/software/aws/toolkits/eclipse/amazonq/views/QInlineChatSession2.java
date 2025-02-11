@@ -95,6 +95,7 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
 	private ScheduledFuture<?> pendingUpdate;
 	private static final int BATCH_DELAY_MS = 100;
 	private final String progressMessage = "Amazon Q is generating...";
+	private long lastUpdateTime = 0;
 
     public QInlineChatSession2() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
@@ -103,7 +104,6 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
         chatCommunicationManager.setChatUiRequestListener(this);
     }
   
-    //method used to display Accept/Decline prompt -- not currently wired up
     public final void showUserDecisionRequiredPopup(int selectionOffset) {
         if (popup != null) {
             popup.close();
@@ -176,6 +176,7 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
         widget.addKeyListener(keyHandler);
         popup.open();
     }
+    
     public final void showGeneratingPopup(int selectionOffset) {
         if (popup != null) {
             popup.close();
@@ -296,7 +297,8 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
                 var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
                 originalSelectionStart = selection.getOffset();
                 Activator.getLogger().info(String.format("SELECTION OFFSET: %d", originalSelectionStart));
-           
+                originalCode = selection.getText();
+                
                 // Show user input dialog
                 onUserInput(originalSelectionStart);
                 
@@ -308,8 +310,7 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
                  * 4. next step would be having diff react properly to partial results
                  * */
                
-                // Sample code to play with for inserting a sample response
-                originalCode = selection.getText();                
+                // Sample code to play with for inserting a sample response                
                 var partialResult = """
                    public int add(int a , int b)
                    {
@@ -414,8 +415,8 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
                                  
                             chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
                             // TODO: instead show the progress indicator that Q is thinking untill the full response comes
-//                            showGeneratingPopup(selectionOffset);
-                            showUserDecisionRequiredPopup(selectionOffset);
+                            showGeneratingPopup(selectionOffset);
+//                            showUserDecisionRequiredPopup(selectionOffset);
                          
                         } else if (e.character == SWT.ESC) {
                             close();
@@ -480,7 +481,6 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
 //    }
     @Override
     public void onSendToChatUi(String message) {
-        // TODO: When response completes fully i.e no partial response left, transition from Q generating indicator to the accept/reject popup
         try {
             ObjectMapper mapper = new ObjectMapper();
             var rootNode = mapper.readTree(message);
@@ -490,24 +490,27 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
             var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
         	Activator.getLogger().info("CHAT RESPONSE MESSAGE: " + message);
-            if (!chatResult.body().equals(previousPartialResponse)) {
-            	
-            	if (pendingUpdate != null) {
-            		pendingUpdate.cancel(false);
-            	}
-            	
-            	if (isPartialResult) {
-            		pendingUpdate = executor.schedule(() -> {
-            			updateUI(chatResult, isPartialResult);
-            		}, BATCH_DELAY_MS, TimeUnit.MILLISECONDS);
-            	} else {
-            		updateUI(chatResult, isPartialResult);
-            	}
-                Display.getDefault().asyncExec(() -> {
-                    // Always insert at the originalSelectionStart position
-                    insertWithInlineDiffUtils(originalCode, chatResult.body(), originalSelectionStart);
-                    previousPartialResponse = chatResult.body();
-                });
+        	
+            if (isPartialResult) {
+                // Handle partial results with batching
+                if (!chatResult.body().equals(previousPartialResponse)) {
+                    if (pendingUpdate != null) {
+                        pendingUpdate.cancel(false);
+                    }
+                    
+                    // Calculate remaining time since last UI update
+                    long timeSinceUpdate = System.currentTimeMillis() - lastUpdateTime;
+                    long delayToUse = Math.max(0, BATCH_DELAY_MS - timeSinceUpdate);
+                    
+                    //set delay to guarantee 100ms delay between updates
+                    pendingUpdate = executor.schedule(() -> {
+                        updateUI(chatResult, isPartialResult);
+                    }, delayToUse, TimeUnit.MILLISECONDS);
+                }
+            } else {
+                // Final result - always update UI state regardless of content
+                updateUI(chatResult, isPartialResult);
+                lastUpdateTime = System.currentTimeMillis();
             }
           
         } catch (JsonProcessingException e) {
@@ -519,18 +522,17 @@ public class QInlineChatSession2 implements KeyListener, ChatUiRequestListener {
         Display.getDefault().asyncExec(() -> {
             insertWithInlineDiffUtils(originalCode, chatResult.body(), originalSelectionStart);
             previousPartialResponse = chatResult.body();
-            
-            //TODO: fix logic here to get generating message to switch to accept/decline
-//            if (!isPartialResult) {
-//                showUserDecisionRequiredPopup(originalSelectionStart);
-//            }
+
+            if (!isPartialResult) {
+                showUserDecisionRequiredPopup(originalSelectionStart);
+            }
         });
     }
    
     
     
     /* I believe in the case that Q is only adding comments before
-     * the code I should use this method to insert in place of cursor
+     * use this method to insert in place of cursor
     */
     private Optional<CursorState> insertAtCursor(final String code) {
         AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();

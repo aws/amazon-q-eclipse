@@ -60,11 +60,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.toolkitLoginWebViewAssetStateObservable = Activator.getEventBroker()
                     .ofObservable(ToolkitLoginWebViewAssetState.class);
         }
-<<<<<<< HEAD
-        /*
-=======
-        /* 
->>>>>>> 65fb2d3 (Separate Chat and Toolkit Login webview asset event stream)
+        /**
          * Combines all state observables into a single stream that emits a new PluginState
          * whenever any individual state changes. The combined stream:
          * - Waits for initial events from all observables before emitting

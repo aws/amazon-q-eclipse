@@ -194,6 +194,11 @@
         </command>
         <command
             categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Trigger Inline Chat"
+            id="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+        </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
             name="Accept Suggestions"
             id="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions">
         </command>
@@ -250,6 +255,10 @@
             commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerSuggestions">
         </handler>
         <handler
+            class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerInlineChatHandler"
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+        </handler>
+        <handler
             class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptSuggestionsHandler"
             commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions">
         </handler>
@@ -297,6 +306,12 @@
             contextId="org.eclipse.ui.textEditorScope"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M3+C">
+        </key>
+        <key
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat"
+            contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M3+SHIFT+I">
         </key>
         <key
             commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"

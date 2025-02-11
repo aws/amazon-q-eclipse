@@ -10,7 +10,6 @@ import org.eclipse.core.commands.ExecutionException;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession;
-import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession2;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
@@ -49,7 +48,7 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
 //        }
 
       //  QInvocationSession.getInstance().invoke();
-        new QInlineChatSession2().startSession();
+        new QInlineChatSession().startSession();
 
         return null;
     }

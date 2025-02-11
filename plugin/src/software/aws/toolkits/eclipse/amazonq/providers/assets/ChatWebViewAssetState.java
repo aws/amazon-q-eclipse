@@ -3,7 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.providers.assets;
 
-public enum WebViewAssetState {
+public enum ChatWebViewAssetState {
+
     RESOLVED, DEPENDENCY_MISSING;
 
     public boolean isDependencyMissing() {

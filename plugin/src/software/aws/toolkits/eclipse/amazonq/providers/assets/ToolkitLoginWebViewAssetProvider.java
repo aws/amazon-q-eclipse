@@ -23,8 +23,9 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
 
     public ToolkitLoginWebViewAssetProvider() {
         Optional<String> content = getContent();
-        Activator.getEventBroker().post(WebViewAssetState.class,
-                content.isPresent() ? WebViewAssetState.RESOLVED : WebViewAssetState.DEPENDENCY_MISSING);
+        Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
+                content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
+                        : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
     }
 
     @Override

@@ -9,13 +9,19 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 /**
- * Routes to appropriate views based on the combined auth and lsp states (plugin
- * state). This router observes plugin state changes and updates the active view
- * accordingly, broadcasting view changes through the event broker.
+ * Routes to appropriate views based on the plugin's combined state by evaluating conditions in priority order:
+ * 1. Browser compatibility and dependencies
+ * 2. Language Server Protocol (LSP) status
+ * 3. Chat and login UI asset availability
+ * 4. Authentication state
+ *
+ * Observes changes in all states and automatically updates the active view when any state changes.
+ * Broadcasts view transitions through the event broker system.
  */
 public final class ViewRouter implements EventObserver<PluginState> {
 
@@ -28,7 +34,8 @@ public final class ViewRouter implements EventObserver<PluginState> {
      * observables directly from the event broker and combines them to create the
      * PluginState stream.
      *
-     * @param builder The builder containing auth and lsp state observables
+     * @param builder The builder containing auth and lsp state, browser
+     *                compatibility and asset state observables.
      */
     private ViewRouter(final Builder builder) {
         if (builder.authStateObservable == null) {
@@ -39,23 +46,31 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
-        if (builder.browserCompatibilityState == null) {
-            builder.browserCompatibilityState = Activator.getEventBroker()
+        if (builder.browserCompatibilityStateObservable == null) {
+            builder.browserCompatibilityStateObservable = Activator.getEventBroker()
                     .ofObservable(BrowserCompatibilityState.class);
         }
 
-        if (builder.webViewAssetState == null) {
-            builder.webViewAssetState = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
+        if (builder.chatWebViewAssetStateObservable == null) {
+            builder.chatWebViewAssetStateObservable = Activator.getEventBroker()
+                    .ofObservable(ChatWebViewAssetState.class);
         }
 
+        if (builder.toolkitLoginWebViewAssetStateObservable == null) {
+            builder.toolkitLoginWebViewAssetStateObservable = Activator.getEventBroker()
+                    .ofObservable(ToolkitLoginWebViewAssetState.class);
+        }
         /*
-         * Combine auth and lsp streams and publish combined state updates on changes to
-         * either stream consisting of the latest events from both streams (this will
-         * happen only after one event has been published to both streams):
+         * Combines all state observables into a single stream that emits a new PluginState
+         * whenever any individual state changes. The combined stream:
+         * - Waits for initial events from all observables before emitting
+         * - Creates new PluginState from latest values of each observable upon update to any single stream
          */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
-                builder.browserCompatibilityState, builder.webViewAssetState, PluginState::new)
+                builder.browserCompatibilityStateObservable, builder.chatWebViewAssetStateObservable,
+                builder.toolkitLoginWebViewAssetStateObservable, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
+
     }
 
     public static Builder builder() {
@@ -65,7 +80,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
     /**
      * Handles plugin state changes by refreshing the active view.
      *
-     * @param pluginState The current combined state auth and lsp state of the plugin
+     * @param pluginState Current combined state of the plugin
      */
     @Override
     public void onEvent(final PluginState pluginState) {
@@ -74,15 +89,14 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
     /**
      * Determines and sets the appropriate view based on the order of resolution.
-     * View selection follows a priority order:
-     * 1. Dependency Missing: can browsers be created.
-     * 2. LSP Startup Failed: has the language server initialization failed (not pending/active).
-     * 3. Chat UI Asset Missing: have chat assets been fetched and available?
-     * 4. Authentication Logged out: if user logged out, needs to login again.
-     * 5. Authentication Expired: if auth has expired, needs to be refreshed.
-     * 5. Chat View: happy path.
+     * View selection follows a priority order: 1. Dependency Missing: can browsers
+     * be created. 2. LSP Startup Failed: has the language server initialization
+     * failed (not pending/active). 3. Chat UI Asset Missing: have chat assets been
+     * fetched and available? 4. Authentication Logged out: if user logged out,
+     * needs to login again. 5. Authentication Expired: if auth has expired, needs
+     * to be refreshed. 5. Chat View: happy path.
      *
-     * @param pluginState The current combined auth and lsp state of the plugin
+     * @param pluginState Current combined state of the plugin
      */
     private void refreshActiveView(final PluginState pluginState) {
         AmazonQViewType newActiveView;
@@ -91,7 +105,8 @@ public final class ViewRouter implements EventObserver<PluginState> {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
         } else if (pluginState.lspState() == LspState.FAILED) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
-        } else if (pluginState.webViewAssetState().isDependencyMissing()) {
+        } else if (pluginState.chatWebViewAssetState().isDependencyMissing()
+                || pluginState.toolkitLoginWebViewAssetState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.CHAT_ASSET_MISSING_VIEW;
         } else if (pluginState.authState().isLoggedOut()) {
             newActiveView = AmazonQViewType.TOOLKIT_LOGIN_VIEW;
@@ -128,8 +143,9 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         private Observable<AuthState> authStateObservable;
         private Observable<LspState> lspStateObservable;
-        private Observable<BrowserCompatibilityState> browserCompatibilityState;
-        private Observable<WebViewAssetState> webViewAssetState;
+        private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
+        private Observable<ChatWebViewAssetState> chatWebViewAssetStateObservable;
+        private Observable<ToolkitLoginWebViewAssetState> toolkitLoginWebViewAssetStateObservable;
 
         public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
             this.authStateObservable = authStateObservable;
@@ -143,12 +159,19 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         public Builder withBrowserCompatibilityStateObservable(
                 final Observable<BrowserCompatibilityState> browserCompatibilityState) {
-            this.browserCompatibilityState = browserCompatibilityState;
+            this.browserCompatibilityStateObservable = browserCompatibilityState;
             return this;
         }
 
-        public Builder withWebViewAssetStateObservable(final Observable<WebViewAssetState> webViewAssetState) {
-            this.webViewAssetState = webViewAssetState;
+        public Builder withChatWebViewAssetStateObservable(
+                final Observable<ChatWebViewAssetState> webViewAssetStateObservable) {
+            this.chatWebViewAssetStateObservable = webViewAssetStateObservable;
+            return this;
+        }
+
+        public Builder withToolkitLoginWebViewAssetStateObservable(
+                final Observable<ToolkitLoginWebViewAssetState> webViewAssetStateObservable) {
+            this.toolkitLoginWebViewAssetStateObservable = webViewAssetStateObservable;
             return this;
         }
 

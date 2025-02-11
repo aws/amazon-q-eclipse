@@ -27,8 +27,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     public ChatWebViewAssetProvider() {
         Optional<String> content = getContent();
-        Activator.getEventBroker().post(WebViewAssetState.class,
-                content.isPresent() ? WebViewAssetState.RESOLVED : WebViewAssetState.DEPENDENCY_MISSING);
+        Activator.getEventBroker().post(ChatWebViewAssetState.class,
+                content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);
     }
 
     @Override

@@ -11,7 +11,7 @@ import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
 public class QOpenLoginViewHandler extends AbstractHandler {
     @Override
     public final Object execute(final ExecutionEvent event) {
-        ViewVisibilityManager.showViewContainer("statusBar");
+        ViewVisibilityManager.showDefaultView("statusBar");
         return null;
     }
 }

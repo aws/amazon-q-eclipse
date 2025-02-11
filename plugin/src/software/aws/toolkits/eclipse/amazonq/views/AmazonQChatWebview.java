@@ -43,7 +43,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         this.webViewAssetProvider = new ChatWebViewAssetProvider();
         this.chatTheme = new ChatTheme();
-        this.webViewAssetProvider = new ChatWebViewAssetProvider();
     }
 
     @Override

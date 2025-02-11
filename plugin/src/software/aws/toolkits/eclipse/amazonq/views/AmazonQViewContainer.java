@@ -23,6 +23,8 @@ import software.aws.toolkits.eclipse.amazonq.views.router.AmazonQViewType;
 
 
 public final class AmazonQViewContainer extends ViewPart implements EventObserver<AmazonQViewType> {
+    public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
+
     private Composite parentComposite;
     private StackLayout layout;
     private Map<AmazonQViewType, BaseAmazonQView> views;

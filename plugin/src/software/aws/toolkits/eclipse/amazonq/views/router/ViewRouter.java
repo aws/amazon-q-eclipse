@@ -104,7 +104,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         if (pluginState.browserCompatibilityState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
-        } else if (pluginState.lspState() == LspState.FAILED) {
+        } else if (pluginState.lspState().hasFailed()) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
         } else if (pluginState.chatWebViewAssetState().isDependencyMissing()
                 || pluginState.toolkitLoginWebViewAssetState().isDependencyMissing()) {

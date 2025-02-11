@@ -9,12 +9,8 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-<<<<<<< HEAD
-<<<<<<< HEAD
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetState;
-=======
->>>>>>> ac5becb (Add Browser Provider component (#357))
 import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 /**

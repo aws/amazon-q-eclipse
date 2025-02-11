@@ -48,10 +48,15 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.webViewAssetState = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
         }
 
-        /*
-         * Combine auth and lsp streams and publish combined state updates on changes to
-         * either stream consisting of the latest events from both streams (this will
-         * happen only after one event has been published to both streams):
+        if (builder.toolkitLoginWebViewAssetStateObservable == null) {
+            builder.toolkitLoginWebViewAssetStateObservable = Activator.getEventBroker()
+                    .ofObservable(ToolkitLoginWebViewAssetState.class);
+        }
+        /**
+         * Combines all state observables into a single stream that emits a new PluginState
+         * whenever any individual state changes. The combined stream:
+         * - Waits for initial events from all observables before emitting
+         * - Creates new PluginState from latest values of each observable upon update to any single stream
          */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
                 builder.browserCompatibilityState, builder.webViewAssetState, PluginState::new)
@@ -89,7 +94,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         if (pluginState.browserCompatibilityState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
-        } else if (pluginState.lspState() == LspState.FAILED) {
+        } else if (pluginState.lspState().hasFailed()) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
         } else if (pluginState.webViewAssetState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.CHAT_ASSET_MISSING_VIEW;

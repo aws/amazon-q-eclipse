@@ -60,7 +60,11 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.toolkitLoginWebViewAssetStateObservable = Activator.getEventBroker()
                     .ofObservable(ToolkitLoginWebViewAssetState.class);
         }
+<<<<<<< HEAD
         /*
+=======
+        /* 
+>>>>>>> 65fb2d3 (Separate Chat and Toolkit Login webview asset event stream)
          * Combines all state observables into a single stream that emits a new PluginState
          * whenever any individual state changes. The combined stream:
          * - Waits for initial events from all observables before emitting
@@ -89,12 +93,13 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
     /**
      * Determines and sets the appropriate view based on the order of resolution.
-     * View selection follows a priority order: 1. Dependency Missing: can browsers
-     * be created. 2. LSP Startup Failed: has the language server initialization
-     * failed (not pending/active). 3. Chat UI Asset Missing: have chat assets been
-     * fetched and available? 4. Authentication Logged out: if user logged out,
-     * needs to login again. 5. Authentication Expired: if auth has expired, needs
-     * to be refreshed. 5. Chat View: happy path.
+     * View selection follows a priority order:
+     * 1. Dependency Missing: can browsers be created.
+     * 2. LSP Startup Failed: has the language server initialization failed (not pending/active).
+     * 3. Chat UI Asset Missing: have chat assets been fetched and available?
+     * 4. Authentication Logged out: if user logged out, needs to login again.
+     * 5. Authentication Expired: if auth has expired, needs to be refreshed.
+     * 6. Chat View: happy path.
      *
      * @param pluginState Current combined state of the plugin
      */

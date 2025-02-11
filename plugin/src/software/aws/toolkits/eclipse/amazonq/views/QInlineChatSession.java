@@ -59,6 +59,17 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 	
+	private static QInlineChatSession instance;
+	
+    // Session state enum
+    private enum SessionState {
+        INACTIVE,
+        ACTIVE,
+        GENERATING
+    }
+	
+    private volatile SessionState currentState = SessionState.INACTIVE;
+	private ITextEditor editor = null;
 	private String previousPartialResponse = null;
 	private String originalCode;
 	private int originalSelectionStart;
@@ -75,6 +86,93 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         // TODO: Update ChatCommunicationManager to track a list of listeners as opposed to tracking only one
         // For this startSession call to successful, the chat panel must be closed so that there is a single listener registered
         chatCommunicationManager.setChatUiRequestListener(this);
+    }
+    
+    public static synchronized QInlineChatSession getInstance() {
+    	if (instance == null) {
+    		instance = new QInlineChatSession();
+    	}
+    	return instance;
+    }
+    
+    // Session state management methods
+    public synchronized boolean isSessionActive() {
+    	return currentState != SessionState.INACTIVE;
+    }
+    
+    private synchronized void setSessionState(SessionState newState) {
+        this.currentState = newState;
+    }
+    
+    // TODO: Implement an end session as well to track a single session is in progress and any resources tied up are disposed
+    public final boolean startSession(final ITextEditor editor) {
+    	
+    	if (isSessionActive()) {
+    		return false;
+    	}
+        IWorkbenchPage page = PlatformUI.getWorkbench()
+                .getActiveWorkbenchWindow()
+                .getActivePage();
+
+        IEditorPart editorPart = page.getActiveEditor();
+
+        if (!(editorPart instanceof ITextEditor)) {
+            return false;
+        }
+        try {
+        	setSessionState(SessionState.ACTIVE);
+        	this.editor = (ITextEditor) editorPart;
+        	
+            Display.getDefault().asyncExec(() -> {
+                
+                var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
+                originalSelectionStart = selection.getOffset();
+                Activator.getLogger().info(String.format("SELECTION OFFSET: %d", originalSelectionStart));
+                originalCode = selection.getText();
+                
+                // Show user input dialog
+                onUserInput(originalSelectionStart);
+            });
+            return true;
+        } catch (Exception e) {
+        	endSession();
+        	return false;
+        }
+    }
+    
+    public synchronized void endSession() {
+        if (!isSessionActive()) {
+            return;
+        }
+        
+        try {
+            // Cleanup resources
+            if (popup != null) {
+                Display.getDefault().asyncExec(() -> {
+                    if (popup != null) {
+                        popup.close();
+                        popup = null;
+                    }
+                });
+            }
+            
+            if (executor != null && !executor.isShutdown()) {
+                executor.shutdown();
+            }
+            
+            if (pendingUpdate != null) {
+                pendingUpdate.cancel(true);
+            }
+            
+            // Clear state
+            editor = null;
+            previousPartialResponse = null;
+            originalCode = null;
+            previousDisplayLength = 0;
+            
+        } finally {
+            setSessionState(SessionState.INACTIVE);
+        }
     }
   
     public final void showUserDecisionRequiredPopup(int selectionOffset) {
@@ -254,71 +352,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             }
         }
     }
-   
-    // TODO: Implement an end session as well to track a single session is in progress and any resources tied up are disposed
-    public final void startSession() {
-        IWorkbenchPage page = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow()
-                .getActivePage();
-
-        IEditorPart editorPart = page.getActiveEditor();
-        if (editorPart instanceof ITextEditor) {
-            final ITextEditor editor = (ITextEditor) editorPart;
-
-            Display.getDefault().asyncExec(() -> {
-              
-                var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                originalSelectionStart = selection.getOffset();
-                Activator.getLogger().info(String.format("SELECTION OFFSET: %d", originalSelectionStart));
-                originalCode = selection.getText();
-                
-                // Show user input dialog
-                onUserInput(originalSelectionStart);
-                
-                
-                /* PLAN OF ACTION
-                 * 1. test without input box
-                 * 2. purely want to insert some code to highlighted portion on CMD + C
-                 * 3. diff should check the code to see if it matches whats already there
-                 * 4. next step would be having diff react properly to partial results
-                 * */
-               
-                // Sample code to play with for inserting a sample response                
-                var partialResult = """
-                   public int add(int a , int b)
-                   {
-                	   int num = a + b;
-                       return num;
-                   }
-                    """;
-                var partialResult2 = """
-                    public int addTwoNumbers(int a , int b)
-                    {
-                        int num = a + b;
-                        return num;
-                    }
-                     """;                
-                var partialResult3 = """
-                        public int addTwoNumbers(int a , int b)
-                        {
-                            System.out.println(String.format("RESULT: %d", a+b));
-                            return a + b;
-                        }
-                         """;
-//                onSendToChatUi(partialResult);
-//                Display.getDefault().timerExec(500, () -> {
-//                    // Second call after 500ms
-//                    onSendToChatUi(partialResult2);
-//                    
-//                    Display.getDefault().timerExec(500, () -> {
-//                        // Third call after another 500ms
-//                        onSendToChatUi(partialResult3);
-//                    });
-//                });
-//                showUserDecisionRequiredPopup(originalSelectionStart);
-            });
-        }
-    }
     
     //method to display input box -- not currently wired up
     public final void onUserInput(int selectionOffset) {
@@ -383,13 +416,12 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 
                             var filePath = "C:\\Users\\somerandomusername\\Desktop\\lsp.txt";
                             // use a random uuid for tabId instead
-//                            var id = UUID.randomUUID().toString();
-                            params = new ChatRequestParams("abcd", prompt, new TextDocumentIdentifier(filePath), Arrays.asList(cursorState));
+                            var id = UUID.randomUUID().toString();
+                            params = new ChatRequestParams(id, prompt, new TextDocumentIdentifier(filePath), Arrays.asList(cursorState));
                                  
                             chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
                             // TODO: instead show the progress indicator that Q is thinking untill the full response comes
                             showGeneratingPopup(selectionOffset);
-//                            showUserDecisionRequiredPopup(selectionOffset);
                          
                         } else if (e.character == SWT.ESC) {
                             close();

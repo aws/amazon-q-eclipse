@@ -24,26 +24,22 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
             return null;
         }
 
-        //TODO: build logic guaranteeing single session
-//        if (QInlineChatSession.getInstance().isActive()) {
-//            Activator.getLogger().info("Inline Chat triggered with existing session active. Returning.");
-//            return null;
-//        }
+        if (QInlineChatSession.getInstance().isSessionActive()) {
+            Activator.getLogger().info("Inline Chat triggered with existing session active. Returning.");
+            return null;
+        }
 
-//        boolean newSession;
-//        try {
-//            newSession = QInvocationSession.getInstance().start(editor);
-//        } catch (java.util.concurrent.ExecutionException e) {
-//            Activator.getLogger().error("Session start interrupted", e);
-//            throw new ExecutionException("Session start interrupted", e);
-//        }
+        boolean newSession = false;
+        try {
+            newSession = QInlineChatSession.getInstance().startSession(editor);
+        } catch (Exception e) {
+            Activator.getLogger().error("Session start interrupted", e);
+        }
 
-//        if (!newSession) {
-//            Activator.getLogger().warn("Failed to start suggestion session.");
-//            return null;
-//        }
-
-        new QInlineChatSession().startSession();
+        if (!newSession) {
+            Activator.getLogger().warn("Failed to start inline chat session.");
+            return null;
+        }
         
         return null;
     }

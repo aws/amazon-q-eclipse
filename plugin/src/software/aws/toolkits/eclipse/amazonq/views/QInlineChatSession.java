@@ -19,6 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,8 +61,6 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 	
-	private static QInlineChatSession instance;
-	
     // Session state enum
     private enum SessionState {
         INACTIVE,
@@ -68,24 +68,38 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         GENERATING
     }
 	
+    // Session state variables
+	private static QInlineChatSession instance;
+    private ChatCommunicationManager chatCommunicationManager;
+    private ChatRequestParams params;
     private volatile SessionState currentState = SessionState.INACTIVE;
 	private ITextEditor editor = null;
+	IContextService contextService;
+	private IContextActivation contextActivation;
+	
+	// Diff generation and rendering variables
 	private String previousPartialResponse = null;
 	private String originalCode;
 	private int originalSelectionStart;
-	private PopupDialog popup;
 	private int previousDisplayLength;
+	
+	// Batching variables
 	private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 	private ScheduledFuture<?> pendingUpdate;
 	private static final int BATCH_DELAY_MS = 100;
-	private final String progressMessage = "Amazon Q is generating...";
 	private long lastUpdateTime = 0;
+	
+	// Popup messaging
+	private PopupDialog popup;
+	private final String progressMessage = "Amazon Q is generating...";
+	private final String decisionMessage = "Accept: Tab, Reject: Esc";
 
     public QInlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         // TODO: Update ChatCommunicationManager to track a list of listeners as opposed to tracking only one
         // For this startSession call to successful, the chat panel must be closed so that there is a single listener registered
         chatCommunicationManager.setChatUiRequestListener(this);
+        contextService = PlatformUI.getWorkbench().getService(IContextService.class);
     }
     
     public static synchronized QInlineChatSession getInstance() {
@@ -95,7 +109,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
     	return instance;
     }
     
-    // Session state management methods
     public synchronized boolean isSessionActive() {
     	return currentState != SessionState.INACTIVE;
     }
@@ -133,6 +146,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 // Show user input dialog
                 onUserInput(originalSelectionStart);
             });
+            contextActivation = contextService.activateContext("software.aws.toolkits.eclipse.amazonq.inlineChat.context");
             return true;
         } catch (Exception e) {
         	endSession();
@@ -148,9 +162,12 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         try {
             // Cleanup resources
             if (popup != null) {
-                Display.getDefault().asyncExec(() -> {
-                    if (popup != null) {
+                Display.getDefault().syncExec(() -> {
+                    if (popup != null && !popup.getShell().isDisposed()) {
                         popup.close();
+                        if (popup.getShell() != null) {
+                            popup.getShell().dispose();
+                        }
                         popup = null;
                     }
                 });
@@ -162,6 +179,12 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             
             if (pendingUpdate != null) {
                 pendingUpdate.cancel(true);
+            }
+            
+            // Remove context
+            if (contextActivation != null) {
+            	contextService.deactivateContext(contextActivation);
+            	contextActivation = null;
             }
             
             // Clear state
@@ -183,16 +206,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             }
             popup = null;
         }
-        IWorkbenchPage page = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow()
-                .getActivePage();
-        IEditorPart editorPart = page.getActiveEditor();
-        
-        if (!(editorPart instanceof ITextEditor)) {
-            return;
-        }
 
-        ITextEditor editor = (ITextEditor) editorPart;
         var viewer = getActiveTextViewer(editor);
         var widget = viewer.getTextWidget();
         
@@ -202,17 +216,14 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 	        public void keyPressed(KeyEvent e) {
 	            if (e.keyCode == SWT.TAB) {  // Accept changes
 	                handleAcceptInlineChat(editor);
-	                cleanup();
 	            } else if (e.keyCode == SWT.ESC) {  // Reject changes
 	                handleDeclineInlineChat(editor);
-	                cleanup();
 	            }
+	            cleanupKeyHandler();
 	        } 
 	        
-	        private void cleanup() {
-	            // Remove the key listener and close the popup
+	        private void cleanupKeyHandler() {
 	            widget.removeKeyListener(this);
-	            popup.close();
 	        }
         };
         popup = new PopupDialog(widget.getShell(), PopupDialog.HOVER_SHELLSTYLE, false, false, true, false, false,
@@ -237,8 +248,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 Label infoLabel = new Label(composite, SWT.NONE);
                 infoLabel.setLayoutData(new GridData(GridData.FILL_BOTH));
           
-                String tipToDisplay = "Accept: Tab, Reject: Esc";
-                infoLabel.setText(tipToDisplay);
+                infoLabel.setText(decisionMessage);
 
                 return composite;
             }
@@ -256,17 +266,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             }
             popup = null;
         }
-        
-        IWorkbenchPage page = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow()
-                .getActivePage();
-        IEditorPart editorPart = page.getActiveEditor();
-        
-        if (!(editorPart instanceof ITextEditor)) {
-            return;
-        }
 
-        ITextEditor editor = (ITextEditor) editorPart;
         var viewer = getActiveTextViewer(editor);
         var widget = viewer.getTextWidget();
         
@@ -324,7 +324,9 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             clearDiffAnnotations(annotationModel);
         } catch (BadLocationException ex) {
             Activator.getLogger().error("Error while " + errorMsg, ex);
-        }	      
+        } finally {
+        	endSession();
+        }
     }
 
     public final void beforeRemoval() {
@@ -358,16 +360,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         if (popup != null) {
             popup.close();
         }
-        IWorkbenchPage page = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow()
-                .getActivePage();
-        IEditorPart editorPart = page.getActiveEditor();
-        
-        if (!(editorPart instanceof ITextEditor)) {
-            return;
-        }
 
-        ITextEditor editor = (ITextEditor) editorPart;
         var widget = getActiveTextViewer(editor).getTextWidget();
         popup = new PopupDialog(widget.getShell(), PopupDialog.INFOPOPUP_SHELLSTYLE, false, false, true, false, false,
                 null, null) {
@@ -454,8 +447,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 
         return range.get().map(CursorState::new);
     }
-    private  ChatCommunicationManager chatCommunicationManager;
-    private ChatRequestParams params;
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -471,19 +462,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         
     }
 
-
-
-//    @Override
-//    public void onSendToChatUi(String message) {
-//    	Activator.getLogger().info("CHAT RESPONSE MESSAGE: " + message);
-//        if (!message.equals(previousPartialResponse)) {
-//            Display.getDefault().asyncExec(() -> {
-//                // Always insert at the originalSelectionStart position
-//                insertWithInlineDiffUtils(originalCode, message, originalSelectionStart);
-//                previousPartialResponse = message;
-//            });
-//        }
-//    }
     @Override
     public void onSendToChatUi(String message) {
         try {
@@ -533,7 +511,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             }
         });
     }
-   
     
     
     /* I believe in the case that Q is only adding comments before
@@ -552,16 +529,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 
 
     private void insertWithInlineDiffUtils(String originalCode, String newCode, int offset) {
-        IWorkbenchPage page = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow()
-                .getActivePage();
-        IEditorPart editorPart = page.getActiveEditor();
-        
-        if (!(editorPart instanceof ITextEditor)) {
-            return;
-        }
 
-        ITextEditor editor = (ITextEditor) editorPart;
         IDocument doc = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         
         // Annotation model provides highlighting for the diff additions/deletions

@@ -153,6 +153,11 @@ public final class ViewRouter implements EventObserver<PluginState> {
             return this;
         }
 
+        public Builder withWebViewAssetStateObservable(final Observable<WebViewAssetState> webViewAssetState) {
+            this.webViewAssetState = webViewAssetState;
+            return this;
+        }
+
         public ViewRouter build() {
             return new ViewRouter(this);
         }

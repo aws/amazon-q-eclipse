@@ -4,6 +4,8 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -111,11 +113,20 @@ public abstract class AmazonQView extends BaseAmazonQView {
         this.viewSite = viewSite;
     }
 
-    public final void setFocus() {
-        if (!browserProvider.hasWebViewDependency()) {
-            return;
-        }
-        getBrowser().setFocus();
+    public final void addFocusListener(final Composite parent, final Browser browser) {
+        parent.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(final FocusEvent event) {
+                if (!browser.isDisposed()) {
+                    browser.setFocus();
+                }
+            }
+
+            @Override
+            public void focusLost(final FocusEvent event) {
+                return;
+            }
+        });
     }
 
     /**

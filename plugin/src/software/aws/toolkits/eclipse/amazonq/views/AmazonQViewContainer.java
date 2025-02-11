@@ -117,7 +117,6 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     @Override
     public void setFocus() {
         parentComposite.setFocus();
-
     }
 
     @Override

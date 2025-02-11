@@ -19,18 +19,18 @@ import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends ViewPart implements EventObserver<AuthState> {
 
-    private AmazonQBrowserProvider viewController;
+    private AmazonQBrowserProvider browserProvider;
     private AmazonQCommonActions amazonQCommonActions;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
     private Disposable authStateSubscription;
 
     protected AmazonQView() {
-        this.viewController = new AmazonQBrowserProvider();
+        this.browserProvider = new AmazonQBrowserProvider();
     }
 
     public final Browser getBrowser() {
-        return viewController.getBrowser();
+        return browserProvider.getBrowser();
     }
 
     public final AmazonQCommonActions getAmazonQCommonActions() {
@@ -45,11 +45,11 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
     }
 
     protected final boolean setupBrowser(final Composite parent) {
-        return viewController.setupBrowser(parent);
+        return browserProvider.setupBrowser(parent);
     }
 
     protected final void updateBrowser(final Browser browser) {
-        viewController.updateBrowser(browser);
+        browserProvider.updateBrowser(browser);
     }
 
     protected final void setupAmazonQView(final Composite parent, final AuthState authState) {
@@ -91,30 +91,10 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
 
     @Override
     public final void setFocus() {
-        if (!viewController.hasWebViewDependency()) {
+        if (!browserProvider.hasWebViewDependency()) {
             return;
         }
         getBrowser().setFocus();
-    }
-
-    protected final String getWaitFunction() {
-        return """
-                function waitForFunction(functionName, timeout = 30000) {
-                    return new Promise((resolve, reject) => {
-                        const startTime = Date.now();
-                        const checkFunction = () => {
-                            if (typeof window[functionName] === 'function') {
-                                resolve(window[functionName]);
-                            } else if (Date.now() - startTime > timeout) {
-                                reject(new Error(`Timeout waiting for ${functionName}`));
-                            } else {
-                                setTimeout(checkFunction, 100);
-                            }
-                        };
-                        checkFunction();
-                    });
-                }
-                """;
     }
 
     /**

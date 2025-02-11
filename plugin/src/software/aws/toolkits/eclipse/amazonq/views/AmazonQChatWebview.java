@@ -78,7 +78,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             updateBrowser(browser);
         }
 
-        parent = super.setupView(parent);
+        super.setupView(parent);
 
         parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
         amazonQCommonActions = getAmazonQCommonActions();

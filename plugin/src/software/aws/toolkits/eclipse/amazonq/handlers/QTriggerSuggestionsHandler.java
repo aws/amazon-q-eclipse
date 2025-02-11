@@ -9,7 +9,6 @@ import org.eclipse.core.commands.ExecutionException;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
-import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
@@ -35,20 +34,19 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
         }
 
         boolean newSession;
-//        try {
-//            newSession = QInvocationSession.getInstance().start(editor);
-//        } catch (java.util.concurrent.ExecutionException e) {
-//            Activator.getLogger().error("Session start interrupted", e);
-//            throw new ExecutionException("Session start interrupted", e);
-//        }
+        try {
+            newSession = QInvocationSession.getInstance().start(editor);
+        } catch (java.util.concurrent.ExecutionException e) {
+            Activator.getLogger().error("Session start interrupted", e);
+            throw new ExecutionException("Session start interrupted", e);
+        }
 
-//        if (!newSession) {
-//            Activator.getLogger().warn("Failed to start suggestion session.");
-//            return null;
-//        }
+        if (!newSession) {
+            Activator.getLogger().warn("Failed to start suggestion session.");
+            return null;
+        }
 
-      //  QInvocationSession.getInstance().invoke();
-        new QInlineChatSession().startSession();
+        QInvocationSession.getInstance().invoke();
 
         return null;
     }

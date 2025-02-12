@@ -76,6 +76,9 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                 BaseAmazonQView newView = views.get(activeViewType);
 
                 if (currentView != null) {
+                	if (currentView.getClass() == AmazonQChatWebview.class) {
+                		((AmazonQChatWebview) currentView).disposeBrowserState();
+                	}
                     Control[] children = parentComposite.getChildren();
                     for (Control child : children) {
                         if (child != null && !child.isDisposed()) {

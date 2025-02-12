@@ -4,15 +4,18 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
@@ -20,101 +23,97 @@ import software.aws.toolkits.eclipse.amazonq.views.router.AmazonQViewType;
 
 
 public final class AmazonQViewContainer extends ViewPart implements EventObserver<AmazonQViewType> {
+    public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
+
     private Composite parentComposite;
     private StackLayout layout;
     private Map<AmazonQViewType, BaseAmazonQView> views;
-    private AmazonQViewType activeId;
-    private BaseAmazonQView activeView;
+    private AmazonQViewType activeViewType;
+    private BaseAmazonQView currentView;
+    private Disposable activeViewTypeSubscription;
+    private final ReentrantLock containerLock;
 
     public AmazonQViewContainer() {
+        activeViewType = AmazonQViewType.CHAT_VIEW;
+        containerLock = new ReentrantLock(true);
+
         Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
-    }
 
-    /* Router should be initialized, then init view container
-     * ViewRouter.Initialize()
-     * viewcontainer.init(activeViewId)
-     */
-
-    /*
-     * When container is disposed and being reopened, class will be recreated
-     * need to call showView to reset viewContainer && follow up with init call to container
-     * 1. showView(viewContainer.ID)
-     * 2. viewContainer.init(currentView)
-     */
-
-    public void initializeViews(final AmazonQViewType currentActiveViewId) {
-
-        //init map containing all views
-        var dependencyMissingView = new DependencyMissingView();
-        var chatAssetMissingView = new ChatAssetMissingView();
-        var reAuthView = new ReauthenticateView();
-        var lspFailedView = new LspStartUpFailedView();
         views = Map.of(
-                AmazonQViewType.CHAT_ASSET_MISSING_VIEW, chatAssetMissingView,
-                AmazonQViewType.DEPENDENCY_MISSING_VIEW, dependencyMissingView,
-                AmazonQViewType.RE_AUTHENTICATE_VIEW, reAuthView,
-                AmazonQViewType.LSP_STARTUP_FAILED_VIEW, lspFailedView
-                );
-
-        //default view passed in from router
-        //possible we'll use chatView as default?
-        activeId = currentActiveViewId;
+                AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new DependencyMissingView(),
+                AmazonQViewType.DEPENDENCY_MISSING_VIEW, new ChatAssetMissingView(),
+                AmazonQViewType.RE_AUTHENTICATE_VIEW, new ReauthenticateView(),
+                AmazonQViewType.LSP_STARTUP_FAILED_VIEW, new LspStartUpFailedView(),
+                AmazonQViewType.CHAT_VIEW, new AmazonQChatWebview(),
+                AmazonQViewType.TOOLKIT_LOGIN_VIEW, new ToolkitLoginWebview()
+        );
     }
 
+    @Override
     public void createPartControl(final Composite parent) {
-        parentComposite = parent;
         layout = new StackLayout();
         parent.setLayout(layout);
 
-        //add base stylings
         GridLayout gridLayout = new GridLayout(1, false);
-        gridLayout.marginLeft = 20;
-        gridLayout.marginRight = 20;
-        gridLayout.marginTop = 10;
-        gridLayout.marginBottom = 10;
+        gridLayout.marginHeight = 0;
+        gridLayout.marginWidth = 0;
         parent.setLayout(gridLayout);
+
+        parentComposite = parent;
 
         setupStaticMenuActions();
         updateChildView();
     }
 
-    /* change methodology for setupMenuActions -- move outside of viewContainer?
-     * will need ability to switch between the two based on which view is displaying && authState
-     * if viewId = static view --> new AmazonQStaticActions(getViewSite());
-     * if viewId = common view --> new AmazonQCommonActions(AuthState, getViewSite());
-     */
     private void setupStaticMenuActions() {
         new AmazonQStaticActions(getViewSite());
     }
 
     private void updateChildView() {
         Display.getDefault().asyncExec(() -> {
-        	BaseAmazonQView newView = views.get(activeId);
-        	
-            if (activeView != null) {
-                activeView.dispose();
-                if (layout.topControl != null) {
-                    layout.topControl.dispose();
+            try {
+                containerLock.lock();
+                BaseAmazonQView newView = views.get(activeViewType);
+
+                if (currentView != null) {
+                    Control[] children = parentComposite.getChildren();
+                    for (Control child : children) {
+                        if (child != null && !child.isDisposed()) {
+                            child.dispose();
+                        }
+                    }
+
+                    currentView.dispose();
                 }
+
+                if (activeViewType == AmazonQViewType.CHAT_VIEW
+                        || activeViewType == AmazonQViewType.TOOLKIT_LOGIN_VIEW) {
+                    ((AmazonQView) newView).setViewSite(getViewSite());
+                }
+
+                Composite newViewComposite = newView.setupView(parentComposite);
+                GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
+                newViewComposite.setLayoutData(gridData);
+
+                layout.topControl = newViewComposite;
+                parentComposite.layout(true, true);
+
+                currentView = newView;
+            } finally {
+                containerLock.unlock();
             }
-
-            Composite newViewComposite = newView.setupView(parentComposite);
-            GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
-            newViewComposite.setLayoutData(gridData);
-
-            layout.topControl = newViewComposite;
-            parentComposite.layout(true, true);
-
-            activeView = newView;
         });
     }
 
     @Override
-    public void onEvent(final AmazonQViewType newViewId) {
-      if (newViewId.equals(activeId) || !views.containsKey(newViewId)) {
+    public void onEvent(final AmazonQViewType newViewType) {
+        if (newViewType.equals(activeViewType) || !views.containsKey(newViewType)) {
           return;
       }
-      activeId = newViewId;
+
+      containerLock.lock();
+      activeViewType = newViewType;
+      containerLock.unlock();
 
       if (!parentComposite.isDisposed()) {
           updateChildView();
@@ -124,14 +123,14 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     @Override
     public void setFocus() {
         parentComposite.setFocus();
-
     }
 
     @Override
     public void dispose() {
-        if (activeView != null) {
-            activeView.dispose();
+        if (currentView != null) {
+            currentView.dispose();
         }
+
         super.dispose();
     }
 }

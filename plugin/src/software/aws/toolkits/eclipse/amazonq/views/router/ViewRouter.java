@@ -39,22 +39,23 @@ public final class ViewRouter implements EventObserver<PluginState> {
             builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
         }
 
-        if (builder.browserCompatibilityState == null) {
-            builder.browserCompatibilityState = Activator.getEventBroker()
+        if (builder.browserCompatibilityStateObservable == null) {
+            builder.browserCompatibilityStateObservable = Activator.getEventBroker()
                     .ofObservable(BrowserCompatibilityState.class);
         }
 
-        if (builder.webViewAssetState == null) {
-            builder.webViewAssetState = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
+        if (builder.webViewAssetStateObservable == null) {
+            builder.webViewAssetStateObservable = Activator.getEventBroker().ofObservable(WebViewAssetState.class);
         }
 
-        /*
-         * Combine auth and lsp streams and publish combined state updates on changes to
-         * either stream consisting of the latest events from both streams (this will
-         * happen only after one event has been published to both streams):
+        /**
+         * Combines all state observables into a single stream that emits a new PluginState
+         * whenever any individual state changes. The combined stream:
+         * - Waits for initial events from all observables before emitting
+         * - Creates new PluginState from latest values of each observable upon update to any single stream
          */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
-                builder.browserCompatibilityState, builder.webViewAssetState, PluginState::new)
+                builder.browserCompatibilityStateObservable, builder.webViewAssetStateObservable, PluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }
 
@@ -89,7 +90,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         if (pluginState.browserCompatibilityState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
-        } else if (pluginState.lspState() == LspState.FAILED) {
+        } else if (pluginState.lspState().hasFailed()) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
         } else if (pluginState.webViewAssetState().isDependencyMissing()) {
             newActiveView = AmazonQViewType.CHAT_ASSET_MISSING_VIEW;
@@ -128,8 +129,8 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         private Observable<AuthState> authStateObservable;
         private Observable<LspState> lspStateObservable;
-        private Observable<BrowserCompatibilityState> browserCompatibilityState;
-        private Observable<WebViewAssetState> webViewAssetState;
+        private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
+        private Observable<WebViewAssetState> webViewAssetStateObservable;
 
         public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
             this.authStateObservable = authStateObservable;
@@ -143,7 +144,12 @@ public final class ViewRouter implements EventObserver<PluginState> {
 
         public Builder withBrowserCompatibilityStateObservable(
                 final Observable<BrowserCompatibilityState> browserCompatibilityState) {
-            this.browserCompatibilityState = browserCompatibilityState;
+            this.browserCompatibilityStateObservable = browserCompatibilityState;
+            return this;
+        }
+
+        public Builder withWebViewAssetStateObservable(final Observable<WebViewAssetState> webViewAssetState) {
+            this.webViewAssetStateObservable = webViewAssetState;
             return this;
         }
 

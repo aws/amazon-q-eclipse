@@ -9,8 +9,6 @@ import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
@@ -36,17 +34,18 @@ public final class ToolkitLoginWebview extends AmazonQView {
     }
 
     @Override
-    public void createPartControl(final Composite parent) {
+    public Composite setupView(final Composite parent) {
+        super.setupView(parent);
+
         setupParentBackground(parent);
         var result = setupBrowser(parent);
-        // if setup of amazon q view fails due to missing webview dependency, switch to
-        // that view
-        // and don't setup rest of the content
+
         if (!result) {
-            showDependencyMissingView("update");
-            return;
+            return parent;
         }
         var browser = getBrowser();
+
+        addFocusListener(parent, browser);
 
         browser.setVisible(isViewVisible);
         browser.addProgressListener(new ProgressAdapter() {
@@ -60,9 +59,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
                 });
             }
         });
-
-        AuthState authState = Activator.getLoginService().getAuthState();
-        setupAmazonQView(parent, authState);
 
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
             @Override
@@ -82,24 +78,9 @@ public final class ToolkitLoginWebview extends AmazonQView {
         };
 
         amazonQCommonActions = getAmazonQCommonActions();
+        browser.setText(webViewAssetProvider.getContent().get());
 
-        // Check if user is authenticated and build view accordingly
-        onEvent(authState);
-    }
-
-    @Override
-    public void onEvent(final AuthState authState) {
-        var browser = getBrowser();
-        Display.getDefault().asyncExec(() -> {
-            amazonQCommonActions.updateActionVisibility(authState, getViewSite());
-            if (!authState.isLoggedIn()) {
-                if (!browser.isDisposed()) {
-                    browser.setText(webViewAssetProvider.getContent().get());
-                }
-            } else {
-                ViewVisibilityManager.showChatView("update");
-            }
-        });
+        return parent;
     }
 
     @Override

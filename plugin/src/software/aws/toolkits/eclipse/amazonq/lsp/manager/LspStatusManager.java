@@ -37,7 +37,6 @@ public final class LspStatusManager {
 
     public void setToFailed() {
         if (lspState != LspState.FAILED) {
-            ViewVisibilityManager.showLspStartUpFailedView("update");
             lspState = LspState.FAILED;
             Activator.getEventBroker().post(LspState.class, lspState);
         }

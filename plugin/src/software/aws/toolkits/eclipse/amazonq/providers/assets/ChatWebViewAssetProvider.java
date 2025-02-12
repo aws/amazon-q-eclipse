@@ -21,7 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 
-public class ChatWebViewAssetProvider extends WebViewAssetProvider {
+public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private WebviewAssetServer webviewAssetServer;
 

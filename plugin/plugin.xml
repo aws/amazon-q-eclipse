@@ -22,33 +22,6 @@
             icon="icons/AmazonQ.png">
         </view>
         <view
-            id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView">
-        </view>
-        <view
-            id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView">
-        </view>
-        <view
-            id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-            category="amazonq"
-            inject="true">
-        </view>
-        <view
-            id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-            inject="true">
-        </view>
-        <view
               class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
               icon="icons/AmazonQ.png"
               id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
@@ -59,40 +32,15 @@
     <extension point="org.eclipse.ui.activities">  
       <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
       <!-- ToolkitLoginWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview" name="Amazon Q Chat">
-	  </activity>
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
-	  </activity>
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
-	  </activity>
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
-	  </activity>
-      <activity id="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView" name="Amazon Q Chat Missing">
-	  </activity>
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview">
-	  </activityPatternBinding>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
 	  </activityPatternBinding>
 	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQViewContainer"
 	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
-	  </activityPatternBinding>
-        <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
 	  </activityPatternBinding>
 	 </extension>
     <extension
@@ -104,36 +52,6 @@
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
                 relative="org.eclipse.ui.editorss"
                 relationship="right"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relationship="stack"
-                visible="false">
-            </view>
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.LspStartUpFailedView"
-                relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
-                relationship="stack"
                 visible="false">
             </view>
         </perspectiveExtension>
@@ -381,7 +299,7 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
-                                <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview" />
+		                        <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>                       
                             </or>
                         </with>
                     </and>

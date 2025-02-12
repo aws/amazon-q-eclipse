@@ -15,8 +15,6 @@ import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
@@ -48,7 +46,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     @Override
-    public final void createPartControl(final Composite parent) {
+    public final Composite setupView(final Composite parent) {
         setupParentBackground(parent);
         browser = chatStateManager.getBrowser(parent);
         // attempt to use existing browser with chat history if present, else create a
@@ -59,10 +57,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             // if setup of amazon q view fails due to missing webview dependency, switch to
             // that view and don't setup rest of the content
             if (!result) {
-                canDisposeState = true;
-                showDependencyMissingView("update");
-                return;
+                return parent;
             }
+
             browser = getAndUpdateStateManager();
 
             browser.setVisible(false);
@@ -76,12 +73,12 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     });
                 }
             });
+
         } else {
             updateBrowser(browser);
         }
 
-        AuthState authState = Activator.getLoginService().getAuthState();
-        setupAmazonQView(parent, authState);
+        super.setupView(parent);
 
         parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
         amazonQCommonActions = getAmazonQCommonActions();
@@ -96,6 +93,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 return null;
             }
         };
+
+        addFocusListener(parent, browser);
 
         // Inject chat theme after mynah-ui has loaded
         browser.addProgressListener(new ProgressAdapter() {
@@ -112,42 +111,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             }
         });
 
-        // Check if user is authenticated and build view accordingly
-        onEvent(authState);
+        Optional<String> content = webViewAssetProvider.getContent();
+        browser.setText(content.get());
+
+        return parent;
     }
 
     private Browser getAndUpdateStateManager() {
         var browser = getBrowser();
         chatStateManager.updateBrowser(browser);
         return browser;
-    }
-
-    @Override
-    public final void onEvent(final AuthState authState) {
-        Display.getDefault().asyncExec(() -> {
-            amazonQCommonActions.updateActionVisibility(authState, getViewSite());
-            if (authState.isExpired()) {
-                canDisposeState = true;
-                ViewVisibilityManager.showReAuthView("update");
-            } else if (authState.isLoggedOut()) {
-                canDisposeState = true;
-                ViewVisibilityManager.showLoginView("update");
-            } else {
-                // if browser is not null and there is no chat prior state, start a new blank
-                // chat view
-                if (browser != null && !browser.isDisposed() && !chatStateManager.hasPreservedState()) {
-                    Optional<String> content = webViewAssetProvider.getContent();
-                    if (!content.isPresent() && !LspStatusManager.getInstance().lspFailed()) {
-                        canDisposeState = true;
-                        if (!LspStatusManager.getInstance().lspFailed()) {
-                            ViewVisibilityManager.showChatAssetMissingView("update");
-                        }
-                    } else {
-                        browser.setText(content.get()); // Display the chat client
-                    }
-                }
-            }
-        });
     }
 
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {

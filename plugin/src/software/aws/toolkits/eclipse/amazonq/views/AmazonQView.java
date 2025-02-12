@@ -4,26 +4,32 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.IViewSite;
 
 import io.reactivex.rxjava3.disposables.Disposable;
-import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public abstract class AmazonQView extends ViewPart implements EventObserver<AuthState> {
+public abstract class AmazonQView extends BaseAmazonQView {
 
     private AmazonQBrowserProvider browserProvider;
     private AmazonQCommonActions amazonQCommonActions;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
-    private Disposable authStateSubscription;
+    private Disposable signOutActionAuthStateSubscription;
+    private Disposable feedbackDialogAuthStateSubscription;
+    private Disposable customizationDialogAuthStateSubscription;
+    private Disposable toggleAutoTriggerAuthStateSubscription;
+
+    private IViewSite viewSite;
 
     protected AmazonQView() {
         this.browserProvider = new AmazonQBrowserProvider();
@@ -52,11 +58,31 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
         browserProvider.updateBrowser(browser);
     }
 
-    protected final void setupAmazonQView(final Composite parent, final AuthState authState) {
-        setupBrowserBackground(parent);
-        setupActions(authState);
-        setupAuthStatusListeners();
-        disableBrowserContextMenu();
+    /**
+     * Sets up the view's browser component and initializes necessary configurations.
+     * This method is called during view creation to establish the browser environment.
+     *
+     * The setup process includes:
+     * - Setting up the browser's background color to match the parent
+     * - Initializing common actions for the view
+     * - Setting up authentication status listeners
+     * - Disabling the browser's default context menu
+     *
+     * @param parent The parent composite where the view will be created
+     * @return The configured parent composite containing the view
+     */
+    @Override
+    public Composite setupView(final Composite parent) {
+        Browser browser = getBrowser();
+
+        if (browser != null && !browser.isDisposed()) {
+            setupBrowserBackground(parent);
+            setupActions();
+            setupAuthStatusListeners();
+            disableBrowserContextMenu();
+        }
+
+        return parent;
     }
 
     protected final void disableBrowserContextMenu() {
@@ -68,33 +94,39 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
         getBrowser().setBackground(bgColor);
     }
 
-    protected final void showDependencyMissingView(final String source) {
-        Display.getCurrent().asyncExec(() -> {
-            try {
-                ViewVisibilityManager.showDependencyMissingView(source);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error occured while attempting to show missing webview dependencies view", e);
-            }
-        });
-    }
-
-    private void setupActions(final AuthState authState) {
-        amazonQCommonActions = new AmazonQCommonActions(authState, getViewSite());
+    private void setupActions() {
+        amazonQCommonActions = new AmazonQCommonActions(viewSite);
     }
 
     private void setupAuthStatusListeners() {
-        authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
-        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getSignoutAction());
-        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getFeedbackDialogContributionAction());
-        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getCustomizationDialogContributionAction());
+        signOutActionAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                amazonQCommonActions.getSignoutAction());
+        feedbackDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                amazonQCommonActions.getFeedbackDialogContributionAction());
+        customizationDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                amazonQCommonActions.getCustomizationDialogContributionAction());
+        toggleAutoTriggerAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                amazonQCommonActions.getToggleAutoTriggerContributionAction());
     }
 
-    @Override
-    public final void setFocus() {
-        if (!browserProvider.hasWebViewDependency()) {
-            return;
-        }
-        getBrowser().setFocus();
+    public final void setViewSite(final IViewSite viewSite) {
+        this.viewSite = viewSite;
+    }
+
+    public final void addFocusListener(final Composite parent, final Browser browser) {
+        parent.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(final FocusEvent event) {
+                if (!browser.isDisposed()) {
+                    browser.setFocus();
+                }
+            }
+
+            @Override
+            public void focusLost(final FocusEvent event) {
+                return;
+            }
+        });
     }
 
     /**
@@ -105,8 +137,19 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
      */
     @Override
     public void dispose() {
-        authStateSubscription.dispose();
-        super.dispose();
+        if (signOutActionAuthStateSubscription != null && !signOutActionAuthStateSubscription.isDisposed()) {
+            signOutActionAuthStateSubscription.dispose();
+        }
+        if (feedbackDialogAuthStateSubscription != null && !feedbackDialogAuthStateSubscription.isDisposed()) {
+            feedbackDialogAuthStateSubscription.dispose();
+        }
+        if (customizationDialogAuthStateSubscription != null
+                && !customizationDialogAuthStateSubscription.isDisposed()) {
+            customizationDialogAuthStateSubscription.dispose();
+        }
+        if (toggleAutoTriggerAuthStateSubscription != null && !toggleAutoTriggerAuthStateSubscription.isDisposed()) {
+            toggleAutoTriggerAuthStateSubscription.dispose();
+        }
     }
 
 }

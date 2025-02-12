@@ -82,6 +82,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         };
 
         amazonQCommonActions = getAmazonQCommonActions();
+        browser.setText(webViewAssetProvider.getContent().get());
 
         if (!content.isPresent()) {
             content = webViewAssetProvider.getContent();

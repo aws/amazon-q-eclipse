@@ -71,33 +71,37 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     private void updateChildView() {
         Display.getDefault().asyncExec(() -> {
-            containerLock.lock();
-            BaseAmazonQView newView = views.get(activeViewType);
+            try {
+                containerLock.lock();
+                BaseAmazonQView newView = views.get(activeViewType);
 
-            if (currentView != null) {
-                Control[] children = parentComposite.getChildren();
-                for (Control child : children) {
-                    if (child != null && !child.isDisposed()) {
-                        child.dispose();
+                if (currentView != null) {
+                    Control[] children = parentComposite.getChildren();
+                    for (Control child : children) {
+                        if (child != null && !child.isDisposed()) {
+                            child.dispose();
+                        }
                     }
+
+                    currentView.dispose();
                 }
 
-                currentView.dispose();
+                if (activeViewType == AmazonQViewType.CHAT_VIEW
+                        || activeViewType == AmazonQViewType.TOOLKIT_LOGIN_VIEW) {
+                    ((AmazonQView) newView).setViewSite(getViewSite());
+                }
+
+                Composite newViewComposite = newView.setupView(parentComposite);
+                GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
+                newViewComposite.setLayoutData(gridData);
+
+                layout.topControl = newViewComposite;
+                parentComposite.layout(true, true);
+
+                currentView = newView;
+            } finally {
+                containerLock.unlock();
             }
-
-            if (activeViewType == AmazonQViewType.CHAT_VIEW || activeViewType == AmazonQViewType.TOOLKIT_LOGIN_VIEW) {
-                ((AmazonQView) newView).setViewSite(getViewSite());
-            }
-
-            Composite newViewComposite = newView.setupView(parentComposite);
-            GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
-            newViewComposite.setLayoutData(gridData);
-
-            layout.topControl = newViewComposite;
-            parentComposite.layout(true, true);
-
-            currentView = newView;
-            containerLock.unlock();
         });
     }
 

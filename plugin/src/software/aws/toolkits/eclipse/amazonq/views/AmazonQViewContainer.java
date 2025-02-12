@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -26,8 +27,14 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     private Composite parentComposite;
     private volatile StackLayout layout;
     private Map<AmazonQViewType, BaseAmazonQView> views;
+<<<<<<< HEAD
     private volatile AmazonQViewType activeViewType;
     private volatile BaseAmazonQView currentView;
+=======
+    private AmazonQViewType activeViewType;
+    private BaseAmazonQView currentView;
+    private Disposable activeViewTypeSubscription;
+>>>>>>> 4c33324 (Integrate browser based views in ViewContainer (#359))
     private final ReentrantLock containerLock;
 
     public AmazonQViewContainer() {
@@ -57,8 +64,18 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         parent.setLayout(gridLayout);
 
         parentComposite = parent;
+<<<<<<< HEAD
 
         updateChildView();
+=======
+
+        setupStaticMenuActions();
+        updateChildView();
+    }
+
+    private void setupStaticMenuActions() {
+        new AmazonQStaticActions(getViewSite());
+>>>>>>> 4c33324 (Integrate browser based views in ViewContainer (#359))
     }
 
     private void updateChildView() {
@@ -68,9 +85,12 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                 BaseAmazonQView newView = views.get(activeViewType);
 
                 if (currentView != null) {
+<<<<<<< HEAD
                     if (currentView instanceof AmazonQChatWebview) {
                         ((AmazonQChatWebview) currentView).disposeBrowserState();
                     }
+=======
+>>>>>>> 4c33324 (Integrate browser based views in ViewContainer (#359))
                     Control[] children = parentComposite.getChildren();
                     for (Control child : children) {
                         if (child != null && !child.isDisposed()) {
@@ -81,7 +101,14 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                     currentView.dispose();
                 }
 
+<<<<<<< HEAD
                 newView.setViewSite(getViewSite());
+=======
+                if (activeViewType == AmazonQViewType.CHAT_VIEW
+                        || activeViewType == AmazonQViewType.TOOLKIT_LOGIN_VIEW) {
+                    ((AmazonQView) newView).setViewSite(getViewSite());
+                }
+>>>>>>> 4c33324 (Integrate browser based views in ViewContainer (#359))
 
                 Composite newViewComposite = newView.setupView(parentComposite);
                 GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);

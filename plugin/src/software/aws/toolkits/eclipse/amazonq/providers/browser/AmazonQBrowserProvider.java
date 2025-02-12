@@ -26,10 +26,6 @@ public class AmazonQBrowserProvider {
     // Test constructor that accepts a platform
     public AmazonQBrowserProvider(final PluginPlatform platform) {
         this.pluginPlatform = platform;
-<<<<<<< HEAD
-=======
-        Display.getDefault().asyncExec(this::publishBrowserCompatibilityState);
->>>>>>> 37f5db1 (Integrate browser based views in ViewContainer (#359))
     }
 
     /*
@@ -98,7 +94,6 @@ public class AmazonQBrowserProvider {
         this.browser = browser;
     }
 
-<<<<<<< HEAD
     public final void publishBrowserCompatibilityState() {
         Display.getDefault().asyncExec(() -> {
             Display display = Display.getDefault();
@@ -106,14 +101,6 @@ public class AmazonQBrowserProvider {
             if (shell == null) {
                 shell = new Shell(display);
             }
-=======
-    protected final void publishBrowserCompatibilityState() {
-        Display display = Display.getDefault();
-        Shell shell = display.getActiveShell();
-        if (shell == null) {
-            shell = new Shell(display);
-        }
->>>>>>> 37f5db1 (Integrate browser based views in ViewContainer (#359))
 
             Composite parent = new Composite(shell, SWT.NONE);
             parent.setVisible(false);

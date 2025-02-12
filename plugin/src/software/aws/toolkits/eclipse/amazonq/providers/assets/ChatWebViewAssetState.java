@@ -7,8 +7,4 @@ public enum ChatWebViewAssetState {
 
     RESOLVED, DEPENDENCY_MISSING;
 
-    public boolean isDependencyMissing() {
-        return this == DEPENDENCY_MISSING;
-    }
-
 }

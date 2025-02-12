@@ -102,12 +102,12 @@ public final class ViewRouter implements EventObserver<PluginState> {
     private void refreshActiveView(final PluginState pluginState) {
         AmazonQViewType newActiveView;
 
-        if (pluginState.browserCompatibilityState().isDependencyMissing()) {
+        if (pluginState.browserCompatibilityState() == BrowserCompatibilityState.DEPENDENCY_MISSING) {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
-        } else if (pluginState.lspState().hasFailed()) {
+        } else if (pluginState.lspState() == LspState.FAILED) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
-        } else if (pluginState.chatWebViewAssetState().isDependencyMissing()
-                || pluginState.toolkitLoginWebViewAssetState().isDependencyMissing()) {
+        } else if (pluginState.chatWebViewAssetState() == ChatWebViewAssetState.DEPENDENCY_MISSING
+                || pluginState.toolkitLoginWebViewAssetState() == ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING) {
             newActiveView = AmazonQViewType.CHAT_ASSET_MISSING_VIEW;
         } else if (pluginState.authState().isLoggedOut()) {
             newActiveView = AmazonQViewType.TOOLKIT_LOGIN_VIEW;

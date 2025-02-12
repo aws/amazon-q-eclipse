@@ -4,10 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.providers.browser;
 
 public enum BrowserCompatibilityState {
-    COMPATIBLE, DEPENDENCY_MISSING;
 
-    public boolean isDependencyMissing() {
-        return this == DEPENDENCY_MISSING;
-    }
+    COMPATIBLE, DEPENDENCY_MISSING;
 
 }

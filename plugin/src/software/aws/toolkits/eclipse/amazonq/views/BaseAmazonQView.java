@@ -115,7 +115,6 @@ public abstract class BaseAmazonQView {
      */
     public void dispose() {
         if (amazonQCommonActions != null) {
-            amazonQCommonActions.dispose();
             amazonQCommonActions = null;
         }
 

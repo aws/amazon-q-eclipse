@@ -97,4 +97,8 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         args.setReason(reason);
         LanguageServerTelemetryProvider.emitSetupInitialize(Result.FAILED, args);
     }
+
+    public void addEnvironmentVariables(final Map<String, String> env) {
+        // TODO Auto-generated method stub
+    }
 }

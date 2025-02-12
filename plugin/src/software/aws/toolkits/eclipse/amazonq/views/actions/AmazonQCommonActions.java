@@ -12,7 +12,10 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.menus.AbstractContributionFactory;
 import org.eclipse.ui.menus.IMenuService;
 
+<<<<<<< HEAD
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+=======
+>>>>>>> c29e968 (Integrate browser based views in ViewContainer (#359))
 
 public final class AmazonQCommonActions {
     private final Actions actions;
@@ -44,10 +47,18 @@ public final class AmazonQCommonActions {
         }
     }
 
+<<<<<<< HEAD
     public AmazonQCommonActions(final AuthState authState, final IViewSite viewSite) {
         actions = new Actions(viewSite);
         fillLocalPullDown(viewSite.getActionBars().getMenuManager());
         updateActionVisibility(authState, viewSite);
+=======
+    private IActionBars bars;
+
+    public AmazonQCommonActions(final IViewSite viewSite) {
+        createActions(viewSite);
+        contributeToActionBars(viewSite);
+>>>>>>> c29e968 (Integrate browser based views in ViewContainer (#359))
     }
 
     public SignoutAction getSignoutAction() {
@@ -63,7 +74,36 @@ public final class AmazonQCommonActions {
     }
 
     public ToggleAutoTriggerContributionItem getToggleAutoTriggerContributionAction() {
+<<<<<<< HEAD
         return actions.toggleAutoTriggerContributionItem;
+=======
+        return toggleAutoTriggerContributionItem;
+    }
+
+    private void createActions(final IViewSite viewSite) {
+        signoutAction = new SignoutAction();
+        feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
+        customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
+        toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem(viewSite);
+        openUserGuideAction = new OpenUserGuideAction();
+        viewSourceAction = new ViewSourceAction();
+        viewLogsAction = new ViewLogsAction();
+        reportAnIssueAction = new ReportAnIssueAction();
+        openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
+    }
+
+    private void contributeToActionBars(final IViewSite viewSite) {
+        IActionBars bars = viewSite.getActionBars();
+        IMenuManager menuManager = bars.getMenuManager();
+        IToolBarManager toolBarManager = bars.getToolBarManager();
+
+        menuManager.removeAll();
+        toolBarManager.removeAll();
+        bars.updateActionBars();
+
+        fillLocalPullDown(menuManager);
+        fillLocalToolBar(toolBarManager);
+>>>>>>> c29e968 (Integrate browser based views in ViewContainer (#359))
     }
 
     private void fillLocalPullDown(final IMenuManager manager) {
@@ -110,6 +150,7 @@ public final class AmazonQCommonActions {
         manager.add(actions.signoutAction);
     }
 
+<<<<<<< HEAD
     public void updateActionVisibility(final AuthState authState, final IViewSite viewSite) {
         actions.signoutAction.updateVisibility(authState);
         actions.feedbackDialogContributionItem.updateVisibility(authState);
@@ -126,4 +167,6 @@ public final class AmazonQCommonActions {
             fillGlobalToolBar();
         });
     }
+=======
+>>>>>>> c29e968 (Integrate browser based views in ViewContainer (#359))
 }

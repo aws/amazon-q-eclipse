@@ -54,7 +54,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
         addFocusListener(parent, browser);
 
         amazonQCommonActions = getAmazonQCommonActions();
-
         setupAmazonQCommonActions();
 
         return parent;

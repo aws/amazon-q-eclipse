@@ -25,11 +25,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private WebviewAssetServer webviewAssetServer;
 
-    public ChatWebViewAssetProvider() {
-        getContent();
-        dispose();
-    }
-
     @Override
     public Optional<String> getContent() {
         Optional<String> content = resolveContent();

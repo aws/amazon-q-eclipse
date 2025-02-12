@@ -21,11 +21,6 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     private WebviewAssetServer webviewAssetServer;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
-    public ToolkitLoginWebViewAssetProvider() {
-        getContent();
-        dispose();
-    }
-
     @Override
     public Optional<String> getContent() {
         Optional<String> content = resolveContent();

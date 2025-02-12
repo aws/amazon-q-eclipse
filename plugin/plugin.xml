@@ -50,40 +50,15 @@
     <extension point="org.eclipse.ui.activities">  
       <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
       <!-- ToolkitLoginWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview" name="Amazon Q Chat">
-	  </activity>
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
-	  </activity>
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
-	  </activity>
-	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
-	  </activity>
-      <activity id="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView" name="Amazon Q Chat Missing">
-	  </activity>
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview">
-	  </activityPatternBinding>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
 	  </activityPatternBinding>
 	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQViewContainer"
 	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
-	  </activityPatternBinding>
-        <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
 	  </activityPatternBinding>
 	 </extension>
     <extension
@@ -97,6 +72,7 @@
                 relationship="right"
                 visible="false">
             </view>
+<<<<<<< HEAD
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
@@ -184,6 +160,8 @@
                 relationship="right"
                 visible="false">
             </view>
+=======
+>>>>>>> 4c33324 (Integrate browser based views in ViewContainer (#359))
         </perspectiveExtension>
     </extension>
     <extension

@@ -125,6 +125,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             }
         };
 
+        addFocusListener(parent, browser);
+
         // Inject chat theme after mynah-ui has loaded
         browser.addProgressListener(new ProgressAdapter() {
             @Override

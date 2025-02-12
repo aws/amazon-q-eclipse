@@ -3,11 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.providers.assets;
 
-public enum WebViewAssetState {
-    RESOLVED, DEPENDENCY_MISSING;
+public enum ToolkitLoginWebViewAssetState {
 
-    public boolean isDependencyMissing() {
-        return this == DEPENDENCY_MISSING;
-    }
+    RESOLVED, DEPENDENCY_MISSING;
 
 }

@@ -34,6 +34,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private Browser browser;
     private volatile boolean canDisposeState = false;
     private WebViewAssetProvider webViewAssetProvider;
+    private Optional<String> content;
 
     public AmazonQChatWebview() {
         super();
@@ -42,6 +43,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         this.chatCommunicationManager = ChatCommunicationManager.getInstance();
         this.actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         this.webViewAssetProvider = new ChatWebViewAssetProvider();
+        this.content = this.webViewAssetProvider.getContent();
         this.chatTheme = new ChatTheme();
     }
 
@@ -111,7 +113,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             }
         });
 
-        Optional<String> content = webViewAssetProvider.getContent();
+        if (!content.isPresent()) {
+            content = webViewAssetProvider.getContent();
+        }
         browser.setText(content.get());
 
         return parent;

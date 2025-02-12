@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.Optional;
+
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressAdapter;
 import org.eclipse.swt.browser.ProgressEvent;
@@ -23,6 +25,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
     private final WebViewAssetProvider webViewAssetProvider;
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
+    private Optional<String> content;
 
     private boolean isViewVisible = false;
 
@@ -31,6 +34,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
         this.commandParser = new LoginViewCommandParser();
         this.actionHandler = new LoginViewActionHandler();
         this.webViewAssetProvider = new ToolkitLoginWebViewAssetProvider();
+        this.content = this.webViewAssetProvider.getContent();
     }
 
     @Override
@@ -79,6 +83,12 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
         amazonQCommonActions = getAmazonQCommonActions();
         browser.setText(webViewAssetProvider.getContent().get());
+
+        if (!content.isPresent()) {
+            content = webViewAssetProvider.getContent();
+        }
+
+        browser.setText(content.get());
 
         return parent;
     }

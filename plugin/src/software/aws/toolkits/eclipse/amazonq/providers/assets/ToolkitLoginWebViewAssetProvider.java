@@ -21,14 +21,16 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     private WebviewAssetServer webviewAssetServer;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
-    public ToolkitLoginWebViewAssetProvider() {
-        Optional<String> content = getContent();
-        Activator.getEventBroker().post(WebViewAssetState.class,
-                content.isPresent() ? WebViewAssetState.RESOLVED : WebViewAssetState.DEPENDENCY_MISSING);
-    }
-
     @Override
     public Optional<String> getContent() {
+        Optional<String> content = resolveContent();
+        Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
+                content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
+                        : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
+        return content;
+    }
+
+    private Optional<String> resolveContent() {
         try {
             URL jsFile = PluginUtils.getResource("webview/build/assets/js/getStart.js");
             String decodedPath = URLDecoder.decode(jsFile.getPath(), StandardCharsets.UTF_8);

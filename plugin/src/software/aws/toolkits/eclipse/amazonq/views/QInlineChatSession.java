@@ -133,7 +133,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         	this.editor = (ITextEditor) editorPart;
         	this.lastUpdateTime = System.currentTimeMillis();
         	
-            Display.getDefault().asyncExec(() -> {
+            Display.getDefault().asyncExec(() -> { 
                 
                 var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
                 originalSelectionStart = selection.getOffset();
@@ -156,7 +156,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         }
         
         try {
-            // Cleanup resources
+            // Cleanup resources  
             if (popup != null) {
                 Display.getDefault().syncExec(() -> {
                     if (popup != null && !popup.getShell().isDisposed()) {
@@ -186,6 +186,10 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         } finally {
             setSessionState(SessionState.INACTIVE);
         }
+    }
+    public synchronized void endSessionImmediately() {
+    	handleDeclineInlineChat();
+    	endSession();
     }
     public final void showPopup(int selectionOffset, KeyAdapter keyHandler, String message) {
         if (popup != null) {
@@ -229,7 +233,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
         if (keyHandler != null) {
             widget.addKeyListener(keyHandler);
         }
-        
+
         popup.open();
     }
     
@@ -316,6 +320,14 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                 null, null) {
             private Point screenLocation;
             private Text inputField;
+            
+            @Override
+            public boolean close() {
+                Activator.getLogger().info("Closing input box!");
+                popup = null;
+                endSession();
+                return super.close();
+            }
 
             @Override
             protected Point getInitialLocation(final Point initialSize) {
@@ -399,7 +411,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-
         if (e.keyCode == SWT.ESC && popup != null) {
             popup.close();
         }
@@ -443,7 +454,8 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                         // Calculate remaining batch delay and schedule update
                     	long delayToUse = BATCH_DELAY_MS - timeSinceUpdate;
                     	Activator.getLogger().info("Scheduled update: waiting " + delayToUse + "ms");
-                        pendingUpdate = executor.schedule(() -> {
+                        pendingUpdate = executor.schedule(() -> {               	
+                        	Activator.getLogger().info("Executing scheduled update after " + (System.currentTimeMillis() - lastUpdateTime) + "ms delay");
                             updateUI(chatResult, isPartialResult);
                             lastUpdateTime = System.currentTimeMillis();
                         }, delayToUse, TimeUnit.MILLISECONDS);

@@ -15,7 +15,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
-import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
@@ -30,7 +29,6 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     private Map<AmazonQViewType, BaseAmazonQView> views;
     private AmazonQViewType activeViewType;
     private BaseAmazonQView currentView;
-    private Disposable activeViewTypeSubscription;
     private final ReentrantLock containerLock;
 
     public AmazonQViewContainer() {
@@ -76,9 +74,9 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                 BaseAmazonQView newView = views.get(activeViewType);
 
                 if (currentView != null) {
-                	if (currentView.getClass() == AmazonQChatWebview.class) {
-                		((AmazonQChatWebview) currentView).disposeBrowserState();
-                	}
+                    if (currentView instanceof AmazonQChatWebview) {
+                        ((AmazonQChatWebview) currentView).disposeBrowserState();
+                    }
                     Control[] children = parentComposite.getChildren();
                     for (Control child : children) {
                         if (child != null && !child.isDisposed()) {

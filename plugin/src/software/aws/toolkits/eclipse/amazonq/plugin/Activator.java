@@ -12,6 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
@@ -49,6 +50,7 @@ public class Activator extends AbstractUIPlugin {
                 .initializeOnStartUp()
                 .build();
         codeReferenceLoggingService = DefaultCodeReferenceLoggingService.getInstance();
+        new AmazonQBrowserProvider().publishBrowserCompatibilityState();
     }
 
     @Override

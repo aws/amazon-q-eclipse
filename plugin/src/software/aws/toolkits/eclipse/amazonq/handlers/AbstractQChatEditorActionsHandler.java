@@ -10,12 +10,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.swt.widgets.Display;
 
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
@@ -25,10 +28,27 @@ import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler {
 
+    private final Observable<AuthState> authStateObservable;
+    private final Observable<LspState> lspStateObservable;
+
+    private record PluginState(AuthState authState, LspState lspState) {
+    }
+
+    public AbstractQChatEditorActionsHandler() {
+        authStateObservable = Activator.getEventBroker().ofObservable(AuthState.class);
+        lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
+    }
+
+    public final PluginState getState() {
+        return Observable.combineLatest(authStateObservable, lspStateObservable, PluginState::new)
+                .observeOn(Schedulers.computation()).blockingFirst();
+    }
+
     @Override
     public final boolean isEnabled() {
         try {
-            return Activator.getLoginService().getAuthState().isLoggedIn() && !LspStatusManager.getInstance().lspFailed();
+            PluginState pluginState = getState();
+            return pluginState.authState.isLoggedIn() && !(pluginState.lspState == LspState.FAILED);
         } catch (Exception e) {
             return false;
         }

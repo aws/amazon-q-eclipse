@@ -324,10 +324,13 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
             @Override
             public boolean close() {
                 Activator.getLogger().info("Closing input box!");
-                popup = null;
-                endSession();
+                if (currentState != SessionState.GENERATING) {
+                    popup = null;
+                    endSession();
+                }
                 return super.close();
             }
+
 
             @Override
             protected Point getInitialLocation(final Point initialSize) {
@@ -364,6 +367,7 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                         // on enter, accept the input added
                         if (e.character == SWT.CR || e.character == SWT.LF) {
 
+                        	setSessionState(SessionState.GENERATING);
                             var userInput = inputField.getText();
                             close();
                             var cursorState = getSelectionRangeCursorState().get();
@@ -376,9 +380,6 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                             chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
                             // TODO: instead show the progress indicator that Q is thinking untill the full response comes
                             showPopup(selectionOffset, null, GENERATING_POPUP_MSG);
-                         
-                        } else if (e.character == SWT.ESC) {
-                            close();
                         }
                     }
                 });

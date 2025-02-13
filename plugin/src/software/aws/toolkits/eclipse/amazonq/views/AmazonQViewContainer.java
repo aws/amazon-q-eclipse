@@ -25,7 +25,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
 
     private Composite parentComposite;
-    private StackLayout layout;
+    private volatile StackLayout layout;
     private Map<AmazonQViewType, BaseAmazonQView> views;
     private volatile AmazonQViewType activeViewType;
     private volatile BaseAmazonQView currentView;

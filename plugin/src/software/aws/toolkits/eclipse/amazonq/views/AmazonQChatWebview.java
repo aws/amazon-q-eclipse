@@ -331,6 +331,51 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                             });
                         }
                     });
+
+
+                const observer = new MutationObserver((mutations) => {
+                    try {
+                        mutations.forEach((mutation) => {
+                            mutation.addedNodes.forEach((node) => {
+                                if (node.nodeType === 1) { // Check if it's an element node
+                                    // Check for direct match
+                                    if (node.matches('.mynah-button.mynah-button-secondary.mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option.mynah-ui-clickable-item')) {
+                                        attachEventListeners(node);
+                                    }
+
+                                    // Check for nested matches
+                                    const buttons = node.querySelectorAll('.mynah-button.mynah-button-secondary.mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option.mynah-ui-clickable-item');
+                                    buttons.forEach(attachEventListeners);
+                                }
+                            });
+                        });
+                    } catch (error) {
+                        console.error('Error in mutation observer:', error);
+                    }
+                });
+
+                function attachEventListeners(element) {
+                    if (!element || element.dataset.hasListener) return; // Prevent duplicate listeners
+
+                    element.addEventListener('mouseover', function(event) {
+                        const textSpan = this.querySelector('span.mynah-button-label');
+                        if (textSpan && textSpan.scrollWidth <= textSpan.offsetWidth) {
+                            event.stopImmediatePropagation();
+                            event.stopPropagation();
+                            event.preventDefault();
+                        }
+                    }, true);
+                    element.dataset.hasListener = 'true';
+                }
+
+                try {
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                } catch (error) {
+                    console.error('Error starting observer:', error);
+                }
                  </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
                 "true".equals(disclaimerAcknowledged));

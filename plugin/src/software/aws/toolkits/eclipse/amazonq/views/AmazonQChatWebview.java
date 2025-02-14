@@ -233,7 +233,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         mask-position: center;
                         scale: 60%;
                     }
-                    .mynah-button.mynah-button-secondary.fill-state-always.code-snippet-close-button.mynah-ui-clickable-item
+                    .mynah-button.mynah-button-secondary.fill-state-always.code-snippet-close-button
+                    .mynah-ui-clickable-item
                     .mynah-ui-icon-cancel {
                         -webkit-mask-size: 187.5% !important;
                         mask-size: 187.5% !important;
@@ -310,7 +311,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
                         if (textarea) {
                             textarea.addEventListener("keydown", (event) => {
-                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey)) && event.key === 'a') {
+                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
+                                        && event.key === 'a') {
                                     textarea.select();
                                     event.preventDefault();
                                     event.stopPropagation();
@@ -339,12 +341,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                             mutation.addedNodes.forEach((node) => {
                                 if (node.nodeType === 1) { // Check if it's an element node
                                     // Check for direct match
-                                    if (node.matches('.mynah-button.mynah-button-secondary.mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option.mynah-ui-clickable-item')) {
+                                    if (node.matches('.mynah-button.mynah-button-secondary
+                                            .mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option
+                                            .mynah-ui-clickable-item')) {
                                         attachEventListeners(node);
                                     }
 
                                     // Check for nested matches
-                                    const buttons = node.querySelectorAll('.mynah-button.mynah-button-secondary.mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option.mynah-ui-clickable-item');
+                                    const buttons = node.querySelectorAll('.mynah-button.mynah-button-secondary
+                                        .mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option
+                                        .mynah-ui-clickable-item');
                                     buttons.forEach(attachEventListeners);
                                 }
                             });

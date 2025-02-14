@@ -3,4 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.auth.model;
 
-public record GetSsoTokenResult(SsoToken ssoToken) { }
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+
+public record GetSsoTokenResult(SsoToken ssoToken, UpdateCredentialsPayload updateCredentialsParams) { }

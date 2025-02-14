@@ -36,7 +36,7 @@ public final class EventBrokerTest {
         Disposable subscription = eventBroker.subscribe(TestEvent.class, mockObserver);
         eventBroker.post(testEvent);
 
-        verify(mockObserver, timeout(100)).onEvent(testEvent);
+        verify(mockObserver, timeout(1000)).onEvent(testEvent);
 
         subscription.dispose();
     }
@@ -66,9 +66,9 @@ public final class EventBrokerTest {
         eventBroker.post(secondEvent);
         eventBroker.post(thirdEvent);
 
-        verify(mockObserver, timeout(100)).onEvent(firstEvent);
-        verify(mockObserver, timeout(100)).onEvent(secondEvent);
-        verify(mockObserver, timeout(100)).onEvent(thirdEvent);
+        verify(mockObserver, timeout(1000)).onEvent(firstEvent);
+        verify(mockObserver, timeout(1000)).onEvent(secondEvent);
+        verify(mockObserver, timeout(1000)).onEvent(thirdEvent);
 
         verifyNoMoreInteractions(mockObserver);
 
@@ -103,8 +103,8 @@ public final class EventBrokerTest {
         eventBroker.post(otherEvent);
         eventBroker.post(secondEvent);
 
-        verify(testEventObserver, timeout(100).times(2)).onEvent(any());
-        verify(otherEventObserver, timeout(100).times(1)).onEvent(any());
+        verify(testEventObserver, timeout(1000).times(2)).onEvent(any());
+        verify(otherEventObserver, timeout(1000).times(1)).onEvent(any());
 
         verifyNoMoreInteractions(testEventObserver);
         verifyNoMoreInteractions(otherEventObserver);

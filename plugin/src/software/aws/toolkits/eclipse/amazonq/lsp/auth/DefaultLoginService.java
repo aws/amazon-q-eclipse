@@ -15,8 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
-import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.AuthUtil;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -115,7 +114,7 @@ public final class DefaultLoginService implements LoginService {
     public CompletableFuture<Void> expire() {
         Activator.getLogger().info("Attempting to expire credentials...");
 
-        return authCredentialsService.updateTokenCredentials(null, false)
+        return authCredentialsService.updateTokenCredentials(new UpdateCredentialsPayload(null, false))
                 .thenRun(() -> {
                     authStateManager.toExpired();
                     Activator.getLogger().info("Successfully expired credentials");
@@ -157,16 +156,16 @@ public final class DefaultLoginService implements LoginService {
 
         return authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)
                 .thenApply(ssoToken -> {
-                    ssoTokenId.set(ssoToken.id());
+                    ssoTokenId.set(ssoToken.ssoToken().id());
                     return ssoToken;
                 })
                 .thenAccept(ssoToken -> {
-                    authCredentialsService.updateTokenCredentials(ssoToken.accessToken(), true);
+                    authCredentialsService.updateTokenCredentials(ssoToken.updateCredentialsParams());
                 })
                 .thenRun(() -> {
-                  authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
-                  Activator.getLogger().info("Successfully logged in");
-                  CustomizationUtil.triggerChangeConfigurationNotification();
+                    authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
+                    Activator.getLogger().info("Successfully logged in");
+                    CustomizationUtil.triggerChangeConfigurationNotification();
               })
               .exceptionally(throwable -> {
                   throw new AmazonQPluginException("Failed to process log in", throwable);
@@ -176,7 +175,6 @@ public final class DefaultLoginService implements LoginService {
     public static class Builder {
         private LspProvider lspProvider;
         private PluginStore pluginStore;
-        private LspEncryptionManager encryptionManager;
         private AuthStateManager authStateManager;
         private AuthCredentialsService authCredentialsService;
         private AuthTokenService authTokenService;
@@ -188,10 +186,6 @@ public final class DefaultLoginService implements LoginService {
         }
         public final Builder withPluginStore(final PluginStore pluginStore) {
             this.pluginStore = pluginStore;
-            return this;
-        }
-        public final Builder withEncryptionManager(final LspEncryptionManager encryptionManager) {
-            this.encryptionManager = encryptionManager;
             return this;
         }
         public final Builder withAuthStateManager(final AuthStateManager authStateManager) {
@@ -217,16 +211,12 @@ public final class DefaultLoginService implements LoginService {
             if (pluginStore == null) {
                 pluginStore = Activator.getPluginStore();
             }
-            if (encryptionManager == null) {
-                encryptionManager = DefaultLspEncryptionManager.getInstance();
-            }
             if (authStateManager == null) {
                 authStateManager = new DefaultAuthStateManager(pluginStore);
             }
             if (authCredentialsService == null) {
                 authCredentialsService = DefaultAuthCredentialsService.builder()
                         .withLspProvider(lspProvider)
-                        .withEncryptionManager(encryptionManager)
                         .build();
             }
             if (authTokenService == null) {

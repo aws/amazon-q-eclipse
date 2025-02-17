@@ -57,7 +57,6 @@ public abstract class BaseAmazonQView {
 
         amazonQStaticActions = new AmazonQStaticActions(viewSite);
         viewSite.getActionBars().updateActionBars();
-
     }
 
     protected final AmazonQCommonActions getAmazonQCommonActions() {
@@ -129,15 +128,18 @@ public abstract class BaseAmazonQView {
             signOutActionAuthStateSubscription.dispose();
             signOutActionAuthStateSubscription = null;
         }
+
         if (feedbackDialogAuthStateSubscription != null && !feedbackDialogAuthStateSubscription.isDisposed()) {
             feedbackDialogAuthStateSubscription.dispose();
             feedbackDialogAuthStateSubscription = null;
         }
+
         if (customizationDialogAuthStateSubscription != null
                 && !customizationDialogAuthStateSubscription.isDisposed()) {
             customizationDialogAuthStateSubscription.dispose();
             customizationDialogAuthStateSubscription = null;
         }
+
         if (toggleAutoTriggerAuthStateSubscription != null && !toggleAutoTriggerAuthStateSubscription.isDisposed()) {
             toggleAutoTriggerAuthStateSubscription.dispose();
             toggleAutoTriggerAuthStateSubscription = null;

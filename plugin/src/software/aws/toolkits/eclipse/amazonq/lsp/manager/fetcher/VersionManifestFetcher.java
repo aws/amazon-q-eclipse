@@ -32,6 +32,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.HttpClientFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.ManifestLocation;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
@@ -85,11 +86,25 @@ public final class VersionManifestFetcher {
             return latestManifest;
         } catch (Exception e) {
             if (e.getCause() instanceof SSLHandshakeException) {
-                Display.getCurrent().asyncExec(() -> {
-                    AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
-                            Constants.IDE_SSL_HANDSHAKE_TITLE,
-                            Constants.IDE_SSL_HANDSHAKE_BODY);
-                    notification.open();
+                ThreadingUtils.executeAsyncTask(() -> {
+                    Display display = null;
+                    while (display == null) {
+                        display = Display.getDefault();
+                        if (display == null) {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException interrupted) {
+                                Thread.currentThread().interrupt();
+                                return;
+                            }
+                        }
+                    }
+                    display.asyncExec(() -> {
+                        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                                Constants.IDE_SSL_HANDSHAKE_TITLE,
+                                Constants.IDE_SSL_HANDSHAKE_BODY);
+                        notification.open();
+                    });
                 });
             }
             Activator.getLogger().error("Error fetching manifest from remote location", e);

@@ -130,8 +130,8 @@ public abstract class BaseAmazonQView {
             signOutActionAuthStateSubscription = null;
         }
         if (feedbackDialogAuthStateSubscription != null && !feedbackDialogAuthStateSubscription.isDisposed()) {
-            signOutActionAuthStateSubscription.dispose();
-            signOutActionAuthStateSubscription = null;
+            feedbackDialogAuthStateSubscription.dispose();
+            feedbackDialogAuthStateSubscription = null;
         }
         if (customizationDialogAuthStateSubscription != null
                 && !customizationDialogAuthStateSubscription.isDisposed()) {

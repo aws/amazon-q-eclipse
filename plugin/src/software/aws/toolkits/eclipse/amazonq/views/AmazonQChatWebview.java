@@ -79,6 +79,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         addFocusListener(parent, browser);
         setupAmazonQCommonActions();
 
+        setupAmazonQCommonActions();
+
         return parent;
     }
 

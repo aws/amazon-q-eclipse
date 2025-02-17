@@ -56,6 +56,8 @@ public final class ToolkitLoginWebview extends AmazonQView {
         amazonQCommonActions = getAmazonQCommonActions();
         setupAmazonQCommonActions();
 
+        setupAmazonQCommonActions();
+
         return parent;
     }
 

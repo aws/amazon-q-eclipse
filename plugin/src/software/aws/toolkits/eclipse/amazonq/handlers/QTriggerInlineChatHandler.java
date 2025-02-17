@@ -40,7 +40,7 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
             Activator.getLogger().warn("Failed to start inline chat session.");
             return null;
         }
-        
+
         return null;
     }
 }

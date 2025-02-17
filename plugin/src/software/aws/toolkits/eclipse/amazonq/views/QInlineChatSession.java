@@ -10,6 +10,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
@@ -162,6 +163,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
             // Cleanup resources
             if (popup != null) {
                 Display.getDefault().syncExec(() -> {
+                	//fix this conditional 
                     if (popup != null && !popup.getShell().isDisposed()) {
                         popup.close();
                         if (popup.getShell() != null) {
@@ -206,8 +208,15 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         var viewer = getActiveTextViewer(editor);
         var widget = viewer.getTextWidget();
 
-        popup = new PopupDialog(widget.getShell(), PopupDialog.HOVER_SHELLSTYLE, false, false, true, false, false,
-                null, null) {
+        popup = new PopupDialog(widget.getShell(),
+        		PopupDialog.HOVER_SHELLSTYLE,
+        		true,
+        		false,
+        		false,
+        		false,
+        		false,
+                null,
+                null) {
             private Point screenLocation;
 
             @Override
@@ -231,6 +240,26 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 
                 return composite;
             }
+            
+            @Override
+            protected void configureShell(Shell shell) {
+                super.configureShell(shell);
+                
+                // Handle both shell deactivation and window switching
+                shell.addListener(SWT.Deactivate, event -> {
+                    Display.getCurrent().asyncExec(() -> {
+                        // Check if our window is still the active one
+                        if (!shell.isDisposed() && 
+                            (PlatformUI.getWorkbench().getActiveWorkbenchWindow() == null || 
+                             // Check if the active editor has changed
+                             PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor() != editor)) {
+                            close();
+                        }
+                    });
+                });                
+                // Ensure popup is owned by the editor window
+                shell.setParent(widget.getShell());
+            }       
         };
 
         if (keyHandler != null) {

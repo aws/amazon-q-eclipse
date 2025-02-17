@@ -72,7 +72,6 @@ public final class DependencyMissingView extends CallToActionView {
 
     private String getInstallUrl() {
         return platform == PluginPlatform.WINDOWS ? EDGE_INSTALL : WEBKIT_INSTALL;
-
     }
 
     private String getLearnMoreUrl() {

@@ -62,6 +62,8 @@ public abstract class CallToActionView extends BaseAmazonQView {
         setupButton(container);
         setupButtonFooterContent(container);
 
+        setupAmazonQStaticActions();
+
         return container;
     }
 
@@ -85,8 +87,8 @@ public abstract class CallToActionView extends BaseAmazonQView {
     }
 
     @Override
-    public void dispose() {
-        // Default implementation - subclasses can override if they need to dispose of resources
+    public final void dispose() {
+        super.dispose();
     }
 
     protected abstract String getIconPath();

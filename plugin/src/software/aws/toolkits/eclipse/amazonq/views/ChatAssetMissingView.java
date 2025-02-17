@@ -9,7 +9,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
-import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
 
 public final class ChatAssetMissingView extends BaseAmazonQView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView";
@@ -17,13 +16,8 @@ public final class ChatAssetMissingView extends BaseAmazonQView {
     private static final String ICON_PATH = "icons/AmazonQ64.png";
     private static final String HEADER_LABEL = "Error loading Q chat.";
     private static final String DETAIL_MESSAGE = "Restart Eclipse or review error logs for troubleshooting";
-    private ChatAssetProvider chatAssetProvider;
     private Image icon;
     private Composite container;
-
-    public ChatAssetMissingView() {
-        this.chatAssetProvider = new ChatAssetProvider();
-    }
 
     @Override
     public Composite setupView(final Composite parentComposite) {
@@ -62,14 +56,13 @@ public final class ChatAssetMissingView extends BaseAmazonQView {
         detailLabel.setText(DETAIL_MESSAGE);
         detailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
+        setupAmazonQStaticActions();
+
         return container;
     }
 
     @Override
     public void dispose() {
-        if (chatAssetProvider != null) {
-            chatAssetProvider.dispose();
-            chatAssetProvider = null;
-        }
+        super.dispose();
     }
 }

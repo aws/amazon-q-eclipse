@@ -64,6 +64,10 @@ public abstract class BaseAmazonQView {
         return amazonQCommonActions;
     }
 
+    protected final AmazonQStaticActions getAmazonQStaticActions() {
+        return amazonQStaticActions;
+    }
+
     protected final Image loadImage(final String imagePath) {
         Image loadedImage = null;
         try {
@@ -111,23 +115,32 @@ public abstract class BaseAmazonQView {
      * to prevent potential null pointer exceptions.
      */
     public void dispose() {
+        if (amazonQCommonActions != null) {
+            amazonQCommonActions.dispose();
+            amazonQCommonActions = null;
+        }
+
+        if (amazonQStaticActions != null) {
+            amazonQStaticActions.dispose();
+            amazonQStaticActions = null;
+        }
+
         if (signOutActionAuthStateSubscription != null && !signOutActionAuthStateSubscription.isDisposed()) {
             signOutActionAuthStateSubscription.dispose();
+            signOutActionAuthStateSubscription = null;
         }
         if (feedbackDialogAuthStateSubscription != null && !feedbackDialogAuthStateSubscription.isDisposed()) {
-            feedbackDialogAuthStateSubscription.dispose();
+            signOutActionAuthStateSubscription.dispose();
+            signOutActionAuthStateSubscription = null;
         }
         if (customizationDialogAuthStateSubscription != null
                 && !customizationDialogAuthStateSubscription.isDisposed()) {
             customizationDialogAuthStateSubscription.dispose();
+            customizationDialogAuthStateSubscription = null;
         }
         if (toggleAutoTriggerAuthStateSubscription != null && !toggleAutoTriggerAuthStateSubscription.isDisposed()) {
             toggleAutoTriggerAuthStateSubscription.dispose();
-        }
-
-        if (amazonQCommonActions != null) {
-            amazonQCommonActions.dispose();
-            amazonQCommonActions = null;
+            toggleAutoTriggerAuthStateSubscription = null;
         }
     }
 

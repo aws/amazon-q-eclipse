@@ -65,7 +65,7 @@ public final class LspStartUpFailedView extends BaseAmazonQView {
 
     @Override
     public void dispose() {
-        //default implementation
+        super.dispose();
     }
 
 }

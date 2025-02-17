@@ -79,8 +79,16 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem im
 
     @Override
     public void dispose() {
-        pause.dispose();
-        resume.dispose();
+        if (pause != null) {
+            pause.dispose();
+            pause = null;
+        }
+
+        if (resume != null) {
+            resume.dispose();
+            resume = null;
+        }
+
         super.dispose();
     }
 }

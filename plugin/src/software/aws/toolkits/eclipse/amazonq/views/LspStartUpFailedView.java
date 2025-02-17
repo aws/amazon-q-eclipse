@@ -21,10 +21,6 @@ public final class LspStartUpFailedView extends BaseAmazonQView {
     private Image icon;
     private Composite container;
 
-    public LspStartUpFailedView() {
-        //
-    }
-
     @Override
     public Composite setupView(final Composite parentComposite) {
         container = new Composite(parentComposite, SWT.NONE);
@@ -61,6 +57,8 @@ public final class LspStartUpFailedView extends BaseAmazonQView {
         Label detailLabel = new Label(container, SWT.CENTER | SWT.WRAP);
         detailLabel.setText(DETAIL_MESSAGE);
         detailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        setupAmazonQStaticActions();
 
         return container;
     }

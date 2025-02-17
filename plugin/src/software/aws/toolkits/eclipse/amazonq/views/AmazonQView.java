@@ -9,27 +9,14 @@ import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IViewSite;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
 public abstract class AmazonQView extends BaseAmazonQView {
 
     private AmazonQBrowserProvider browserProvider;
-    private AmazonQCommonActions amazonQCommonActions;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
-
-    private Disposable signOutActionAuthStateSubscription;
-    private Disposable feedbackDialogAuthStateSubscription;
-    private Disposable customizationDialogAuthStateSubscription;
-    private Disposable toggleAutoTriggerAuthStateSubscription;
-
-    private IViewSite viewSite;
 
     protected AmazonQView() {
         this.browserProvider = new AmazonQBrowserProvider();
@@ -37,10 +24,6 @@ public abstract class AmazonQView extends BaseAmazonQView {
 
     public final Browser getBrowser() {
         return browserProvider.getBrowser();
-    }
-
-    public final AmazonQCommonActions getAmazonQCommonActions() {
-        return amazonQCommonActions;
     }
 
     protected final void setupParentBackground(final Composite parent) {
@@ -77,8 +60,6 @@ public abstract class AmazonQView extends BaseAmazonQView {
 
         if (browser != null && !browser.isDisposed()) {
             setupBrowserBackground(parent);
-            setupActions();
-            setupAuthStatusListeners();
             disableBrowserContextMenu();
         }
 
@@ -92,25 +73,6 @@ public abstract class AmazonQView extends BaseAmazonQView {
     private void setupBrowserBackground(final Composite parent) {
         var bgColor = parent.getBackground();
         getBrowser().setBackground(bgColor);
-    }
-
-    private void setupActions() {
-        amazonQCommonActions = new AmazonQCommonActions(viewSite);
-    }
-
-    private void setupAuthStatusListeners() {
-        signOutActionAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getSignoutAction());
-        feedbackDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getFeedbackDialogContributionAction());
-        customizationDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getCustomizationDialogContributionAction());
-        toggleAutoTriggerAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getToggleAutoTriggerContributionAction());
-    }
-
-    public final void setViewSite(final IViewSite viewSite) {
-        this.viewSite = viewSite;
     }
 
     public final void addFocusListener(final Composite parent, final Browser browser) {
@@ -137,19 +99,7 @@ public abstract class AmazonQView extends BaseAmazonQView {
      */
     @Override
     public void dispose() {
-        if (signOutActionAuthStateSubscription != null && !signOutActionAuthStateSubscription.isDisposed()) {
-            signOutActionAuthStateSubscription.dispose();
-        }
-        if (feedbackDialogAuthStateSubscription != null && !feedbackDialogAuthStateSubscription.isDisposed()) {
-            feedbackDialogAuthStateSubscription.dispose();
-        }
-        if (customizationDialogAuthStateSubscription != null
-                && !customizationDialogAuthStateSubscription.isDisposed()) {
-            customizationDialogAuthStateSubscription.dispose();
-        }
-        if (toggleAutoTriggerAuthStateSubscription != null && !toggleAutoTriggerAuthStateSubscription.isDisposed()) {
-            toggleAutoTriggerAuthStateSubscription.dispose();
-        }
+        super.dispose();
     }
 
 }

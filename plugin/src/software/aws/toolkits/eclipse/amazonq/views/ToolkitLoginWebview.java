@@ -90,6 +90,8 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
         browser.setText(content.get());
 
+        setupAmazonQStaticActions();
+
         return parent;
     }
 

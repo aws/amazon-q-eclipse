@@ -16,7 +16,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.widgets.Display;
@@ -154,6 +156,21 @@ public final class ProxyUtil {
     }
 
     private static SSLContext createSslContextWithCustomCert(final String certPath) throws Exception {
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init((KeyStore) null);
+
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null, null);
+
+        for (TrustManager tm : tmf.getTrustManagers()) {
+            if (tm instanceof X509TrustManager) {
+                X509TrustManager xtm = (X509TrustManager) tm;
+                for (X509Certificate cert : xtm.getAcceptedIssuers()) {
+                    keyStore.setCertificateEntry(cert.getSubjectX500Principal().getName(), cert);
+                }
+            }
+        }
+
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         X509Certificate cert;
 
@@ -161,15 +178,13 @@ public final class ProxyUtil {
             cert = (X509Certificate) certificateFactory.generateCertificate(fis);
         }
 
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        keyStore.load(null, null);
         keyStore.setCertificateEntry("custom-cert", cert);
 
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(keyStore);
+        TrustManagerFactory customTmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        customTmf.init(keyStore);
 
         SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-        sslContext.init(null, tmf.getTrustManagers(), null);
+        sslContext.init(null, customTmf.getTrustManagers(), null);
         Activator.getLogger().info("Picked up custom CA cert.");
 
         return sslContext;

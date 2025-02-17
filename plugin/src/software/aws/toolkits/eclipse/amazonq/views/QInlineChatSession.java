@@ -33,6 +33,8 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -245,6 +247,8 @@ public class QInlineChatSession implements KeyListener, ChatUiRequestListener {
                     handleAcceptInlineChat();
                 } else if (e.keyCode == SWT.ESC) {  // Reject changes
                     handleDeclineInlineChat();
+                } else {
+                	endSessionImmediately();
                 }
                 cleanupKeyHandler();
             } 

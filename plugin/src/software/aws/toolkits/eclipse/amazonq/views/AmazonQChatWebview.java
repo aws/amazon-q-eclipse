@@ -280,111 +280,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
                     window.addEventListener('load', init);
 
-                    window.addEventListener('load', () => {
-                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
-                        if (textarea) {
-                            textarea.addEventListener('keydown', (event) => {
-                                const cursorPosition = textarea.selectionStart;
-                                const hasText = textarea.value.length > 0;
+                    %s
 
-                                // block arrow keys on empty text area
-                                switch (event.key) {
-                                    case 'ArrowLeft':
-                                        if (!hasText || cursorPosition === 0) {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                        }
-                                        break;
+                    %s
 
-                                    case 'ArrowRight':
-                                        if (!hasText || cursorPosition === textarea.value.length) {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                        }
-                                        break;
-                                }
-                            });
-                        }
-                    });
+                    %s
 
-                    window.addEventListener('load', () => {
-                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
-                        if (textarea) {
-                            textarea.addEventListener("keydown", (event) => {
-                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
-                                        && event.key === 'a') {
-                                    textarea.select();
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                }
-                            });
-                        }
-                    });
-
-                    window.addEventListener('load', () => {
-                        const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
-                        if (textarea) {
-                            textarea.addEventListener("keydown", (event) => {
-                                if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey)) && event.key === 'c') {
-                                    copyToClipboard(textarea.value);
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                }
-                            });
-                        }
-                    });
-
-
-                const observer = new MutationObserver((mutations) => {
-                    try {
-                        mutations.forEach((mutation) => {
-                            mutation.addedNodes.forEach((node) => {
-                                if (node.nodeType === 1) { // Check if it's an element node
-                                    // Check for direct match
-                                    if (node.matches('.mynah-button.mynah-button-secondary
-                                            .mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option
-                                            .mynah-ui-clickable-item')) {
-                                        attachEventListeners(node);
-                                    }
-
-                                    // Check for nested matches
-                                    const buttons = node.querySelectorAll('.mynah-button.mynah-button-secondary
-                                        .mynah-button-border.fill-state-always.mynah-chat-item-followup-question-option
-                                        .mynah-ui-clickable-item');
-                                    buttons.forEach(attachEventListeners);
-                                }
-                            });
-                        });
-                    } catch (error) {
-                        console.error('Error in mutation observer:', error);
-                    }
-                });
-
-                function attachEventListeners(element) {
-                    if (!element || element.dataset.hasListener) return; // Prevent duplicate listeners
-
-                    element.addEventListener('mouseover', function(event) {
-                        const textSpan = this.querySelector('span.mynah-button-label');
-                        if (textSpan && textSpan.scrollWidth <= textSpan.offsetWidth) {
-                            event.stopImmediatePropagation();
-                            event.stopPropagation();
-                            event.preventDefault();
-                        }
-                    }, true);
-                    element.dataset.hasListener = 'true';
-                }
-
-                try {
-                    observer.observe(document.body, {
-                        childList: true,
-                        subtree: true
-                    });
-                } catch (error) {
-                    console.error('Error starting observer:', error);
-                }
-                 </script>
+                </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
-                "true".equals(disclaimerAcknowledged));
+                "true".equals(disclaimerAcknowledged), getArrowKeyBlockingFunction(),
+                getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction());
     }
 
     /*
@@ -406,6 +311,118 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
             return "";
         }
+    }
+
+    private String getArrowKeyBlockingFunction() {
+        return """
+                window.addEventListener('load', () => {
+                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                    if (textarea) {
+                        textarea.addEventListener('keydown', (event) => {
+                            const cursorPosition = textarea.selectionStart;
+                            const hasText = textarea.value.length > 0;
+
+                            // block arrow keys on empty text area
+                            switch (event.key) {
+                                case 'ArrowLeft':
+                                    if (!hasText || cursorPosition === 0) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    break;
+
+                                case 'ArrowRight':
+                                    if (!hasText || cursorPosition === textarea.value.length) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    break;
+                            }
+                        });
+                    }
+                });
+                """;
+    }
+
+    private String getSelectAllAndCopySupportFunctions() {
+        return """
+                window.addEventListener('load', () => {
+                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                    if (textarea) {
+                        textarea.addEventListener("keydown", (event) => {
+                            if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
+                                    && event.key === 'a') {
+                                textarea.select();
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                        });
+                    }
+                });
+
+                window.addEventListener('load', () => {
+                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                    if (textarea) {
+                        textarea.addEventListener("keydown", (event) => {
+                            if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
+                                    && event.key === 'c') {
+                                copyToClipboard(textarea.value);
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                        });
+                    }
+                });
+                """;
+    }
+
+    private String getPreventEmptyPopupFunction() {
+        String selector = ".mynah-button" + ".mynah-button-secondary.mynah-button-border" + ".fill-state-always"
+                + ".mynah-chat-item-followup-question-option" + ".mynah-ui-clickable-item";
+
+        return """
+                const observer = new MutationObserver((mutations) => {
+                    try {
+                        const selector = '%s';
+
+                        mutations.forEach((mutation) => {
+                            mutation.addedNodes.forEach((node) => {
+                                if (node.nodeType === 1) { // Check if it's an element node
+                                    // Check for direct match
+                                    if (node.matches(selector)) {
+                                        attachEventListeners(node);
+                                    }
+                                    // Check for nested matches
+                                    const buttons = node.querySelectorAll();
+                                    buttons.forEach(attachEventListeners);
+                                }
+                            });
+                        });
+                    } catch (error) {
+                        console.error('Error in mutation observer:', error);
+                    }
+                });
+                function attachEventListeners(element) {
+                    if (!element || element.dataset.hasListener) return; // Prevent duplicate listeners
+                    element.addEventListener('mouseover', function(event) {
+                        const textSpan = this.querySelector('span.mynah-button-label');
+                        if (textSpan && textSpan.scrollWidth <= textSpan.offsetWidth) {
+                            event.stopImmediatePropagation();
+                            event.stopPropagation();
+                            event.preventDefault();
+                        }
+                    }, true);
+                    element.dataset.hasListener = 'true';
+                }
+                try {
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                } catch (error) {
+                    console.error('Error starting observer:', error);
+                }
+                """.formatted(selector);
     }
 
     @Override

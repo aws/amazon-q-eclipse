@@ -250,6 +250,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     textarea:placeholder-shown {
                         line-height: 1.5rem;
                     }
+                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
+                        opacity: 1 !important;
+                    }
                 </style>
                 """;
     }

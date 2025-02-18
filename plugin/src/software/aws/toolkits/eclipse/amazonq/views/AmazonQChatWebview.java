@@ -268,7 +268,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
-                                }, {
+                                },
+                                {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
                                 });
@@ -284,10 +285,12 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
                     %s
 
+                    %s
+
                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
                 "true".equals(disclaimerAcknowledged), getArrowKeyBlockingFunction(),
-                getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction());
+                getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(), getFocusOnChatPromptFunction());
     }
 
     /*
@@ -421,6 +424,21 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     console.error('Error starting observer:', error);
                 }
                 """.formatted(selector);
+    }
+
+    private String getFocusOnChatPromptFunction() {
+        return """
+                window.addEventListener('load', () => {
+                    const chatContainer = document.querySelector('.mynah-chat-prompt');
+                    if (chatContainer) {
+                        chatContainer.addEventListener('click', (event) => {
+                            if (!event.target.closest('.mynah-chat-prompt-input')) {
+                                keepFocusOnPrompt();
+                            }
+                        });
+                    }
+                });
+                """;
     }
 
     @Override

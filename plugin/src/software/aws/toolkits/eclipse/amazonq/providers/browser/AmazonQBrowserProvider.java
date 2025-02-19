@@ -25,7 +25,6 @@ public class AmazonQBrowserProvider {
     // Test constructor that accepts a platform
     public AmazonQBrowserProvider(final PluginPlatform platform) {
         this.pluginPlatform = platform;
-        Display.getDefault().asyncExec(this::publishBrowserCompatibilityState);
     }
 
     /*
@@ -94,18 +93,20 @@ public class AmazonQBrowserProvider {
         this.browser = browser;
     }
 
-    protected final void publishBrowserCompatibilityState() {
-        Display display = Display.getDefault();
-        Shell shell = display.getActiveShell();
-        if (shell == null) {
-            shell = new Shell(display);
-        }
+    public final void publishBrowserCompatibilityState() {
+        Display.getDefault().asyncExec(() -> {
+            Display display = Display.getDefault();
+            Shell shell = display.getActiveShell();
+            if (shell == null) {
+                shell = new Shell(display);
+            }
 
-        Composite parent = new Composite(shell, SWT.NONE);
-        parent.setVisible(false);
+            Composite parent = new Composite(shell, SWT.NONE);
+            parent.setVisible(false);
 
-        setupBrowser(parent);
-        parent.dispose();
+            setupBrowser(parent);
+            parent.dispose();
+        });
     }
 
 }

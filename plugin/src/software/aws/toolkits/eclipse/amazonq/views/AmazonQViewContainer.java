@@ -15,7 +15,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
-import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
@@ -26,11 +25,10 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
 
     private Composite parentComposite;
-    private StackLayout layout;
+    private volatile StackLayout layout;
     private Map<AmazonQViewType, BaseAmazonQView> views;
-    private AmazonQViewType activeViewType;
-    private BaseAmazonQView currentView;
-    private Disposable activeViewTypeSubscription;
+    private volatile AmazonQViewType activeViewType;
+    private volatile BaseAmazonQView currentView;
     private final ReentrantLock containerLock;
 
     public AmazonQViewContainer() {

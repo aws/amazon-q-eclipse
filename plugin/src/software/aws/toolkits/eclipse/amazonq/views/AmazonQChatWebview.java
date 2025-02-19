@@ -116,6 +116,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 });
             }
         });
+      
+        setupAmazonQCommonActions();
 
         return parent;
     }

@@ -10,8 +10,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -21,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.lsp4e.server.ProcessStreamConnectionProvider;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.MockedStatic;
@@ -34,7 +30,6 @@ import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspManage
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtilsStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspStatusManager;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
@@ -54,20 +49,6 @@ public final class QLspConnectionProviderTest {
     @RegisterExtension
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();
 
-    private MockedStatic<LspStatusManager> mockStaticLspStatusManager;
-    private LspStatusManager mockLspStatusManager;
-
-    @BeforeEach
-    void setupBeforeEach() {
-        mockStaticLspStatusManager = mockStatic(LspStatusManager.class);
-        mockLspStatusManager = mock(LspStatusManager.class);
-        mockStaticLspStatusManager.when(LspStatusManager::getInstance).thenReturn(mockLspStatusManager);
-    }
-
-    @AfterEach
-    void tearDown() {
-        mockStaticLspStatusManager.close();
-    }
 
     private static final class TestProcessConnectionProvider extends ProcessStreamConnectionProvider {
 

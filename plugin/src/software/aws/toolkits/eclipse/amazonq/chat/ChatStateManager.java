@@ -10,17 +10,17 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.PlatformUI;
 
-import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
 
 public final class ChatStateManager {
     private static ChatStateManager instance;
-    private ChatAssetProvider chatAssetProvider;
+    private ChatWebViewAssetProvider chatAssetProvider;
     private Browser browser;
     private Composite dummyParent;
     private volatile boolean hasPreservedState  = false;
 
     private ChatStateManager() {
-        chatAssetProvider = new ChatAssetProvider();
+        chatAssetProvider = new ChatWebViewAssetProvider();
     }
 
     public static synchronized ChatStateManager getInstance() {
@@ -49,7 +49,7 @@ public final class ChatStateManager {
     }
 
     public synchronized Optional<String> getContent() {
-        return chatAssetProvider.get();
+        return chatAssetProvider.getContent();
     }
 
     public synchronized boolean hasPreservedState() {

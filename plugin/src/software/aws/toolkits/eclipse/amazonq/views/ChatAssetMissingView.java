@@ -20,8 +20,8 @@ public final class ChatAssetMissingView extends BaseAmazonQView {
     private Composite container;
 
     @Override
-    public Composite setupView(final Composite parentComposite) {
-        container = new Composite(parentComposite, SWT.NONE);
+    public Composite setupView(final Composite parent) {
+        container = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = 20;
         layout.marginHeight = 10;
@@ -43,7 +43,7 @@ public final class ChatAssetMissingView extends BaseAmazonQView {
         Label headerLabel = new Label(container, SWT.CENTER | SWT.WRAP);
         headerLabel.setText(HEADER_LABEL);
         headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        var font = magnifyFontSize(parentComposite, parentComposite.getFont(), 18);
+        var font = magnifyFontSize(parent, parent.getFont(), 18);
         headerLabel.setFont(font);
 
         headerLabel.addDisposeListener(e -> {
@@ -63,6 +63,7 @@ public final class ChatAssetMissingView extends BaseAmazonQView {
 
     @Override
     public void dispose() {
+        container.dispose();
         super.dispose();
     }
 }

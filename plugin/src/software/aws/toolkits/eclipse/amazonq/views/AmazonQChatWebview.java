@@ -76,6 +76,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 }
             });
 
+            if (!content.isPresent()) {
+                content = webViewAssetProvider.getContent();
+            }
+            browser.setText(content.get());
         } else {
             updateBrowser(browser);
         }
@@ -113,11 +117,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             }
         });
 
-        if (!content.isPresent()) {
-            content = webViewAssetProvider.getContent();
-        }
-        browser.setText(content.get());
-
         setupAmazonQCommonActions();
 
         return parent;
@@ -146,13 +145,17 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         });
     }
 
+    public final void disposeBrowserState() {
+        canDisposeState = true;
+    }
+
     @Override
     public final void dispose() {
         chatCommunicationManager.removeListener();
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
+            webViewAssetProvider.dispose();
         }
-        webViewAssetProvider.dispose();
         super.dispose();
     }
 }

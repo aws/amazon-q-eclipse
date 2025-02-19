@@ -56,11 +56,14 @@ public final class ChatAssetMissingView extends BaseAmazonQView {
         detailLabel.setText(DETAIL_MESSAGE);
         detailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
+        setupAmazonQStaticActions();
+
         return container;
     }
 
     @Override
     public void dispose() {
         container.dispose();
+        super.dispose();
     }
 }

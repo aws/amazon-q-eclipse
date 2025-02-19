@@ -17,7 +17,6 @@ import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
 import software.aws.toolkits.eclipse.amazonq.views.router.AmazonQViewType;
 
 
@@ -59,12 +58,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
         parentComposite = parent;
 
-        setupStaticMenuActions();
         updateChildView();
-    }
-
-    private void setupStaticMenuActions() {
-        new AmazonQStaticActions(getViewSite());
     }
 
     private void updateChildView() {
@@ -84,10 +78,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                     currentView.dispose();
                 }
 
-                if (activeViewType == AmazonQViewType.CHAT_VIEW
-                        || activeViewType == AmazonQViewType.TOOLKIT_LOGIN_VIEW) {
-                    ((AmazonQView) newView).setViewSite(getViewSite());
-                }
+                newView.setViewSite(getViewSite());
 
                 Composite newViewComposite = newView.setupView(parentComposite);
                 GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);

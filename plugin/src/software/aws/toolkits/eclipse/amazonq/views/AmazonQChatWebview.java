@@ -155,6 +155,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
             webViewAssetProvider.dispose();
+            content = Optional.empty();
         }
         super.dispose();
     }

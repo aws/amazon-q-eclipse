@@ -24,7 +24,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
@@ -32,6 +31,7 @@ import com.github.difflib.patch.Patch;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferenceInitializer;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
@@ -78,6 +78,10 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private volatile SessionState currentState = SessionState.INACTIVE;
 	private ITextEditor editor = null;
 	private final int MAX_INPUT_LENGTH = 512;
+	
+	// Annotation coloring variables
+	private String ANNOTATION_ADDED = "diffAnnotation.added";
+	private String ANNOTATION_DELETED = "diffAnnotation.deleted";
 
 	// Diff generation and rendering variables
 	private String previousPartialResponse = null;
@@ -137,6 +141,12 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         	setSessionState(SessionState.ACTIVE);
         	this.editor = (ITextEditor) editorPart;
         	this.lastUpdateTime = System.currentTimeMillis();
+        	
+        	// Change diff colors to dark mode settings if necessary
+        	if (AmazonQPreferenceInitializer.isDarkThemeEnabled()) {
+        	    this.ANNOTATION_ADDED += ".dark";
+        	    this.ANNOTATION_DELETED += ".dark";
+        	}
 
             Display.getDefault().asyncExec(() -> {
       
@@ -652,12 +662,12 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 
             // Add new annotations for this diff
             for (Position position : deletedPositions) {
-                Annotation annotation = new Annotation("diffAnnotation.deleted", false, "Deleted Code");
+                Annotation annotation = new Annotation(ANNOTATION_DELETED, false, "Deleted Code");
                 annotationModel.addAnnotation(annotation, position);
             }
 
             for (Position position : addedPositions) {
-                Annotation annotation = new Annotation("diffAnnotation.added", false, "Added Code");
+                Annotation annotation = new Annotation(ANNOTATION_ADDED, false, "Added Code");
                 annotationModel.addAnnotation(annotation, position);
             }
 

@@ -233,11 +233,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         mask-position: center;
                         scale: 60%;
                     }
-                    .mynah-button.mynah-button-secondary.fill-state-always.code-snippet-close-button
-                    .mynah-ui-clickable-item
-                    .mynah-ui-icon-cancel {
-                        -webkit-mask-size: 187.5% !important;
-                        mask-size: 187.5% !important;
+                    .code-snippet-close-button i.mynah-ui-icon-cancel,
+                    .mynah-chat-item-card-related-content-show-more i.mynah-ui-icon-down-open {
+                        -webkit-mask-size: 195.5% !important;
+                        mask-size: 195.5% !important;
                         mask-position: center;
                         aspect-ratio: 1/1;
                         width: 15px;
@@ -251,6 +250,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     }
                     textarea:placeholder-shown {
                         line-height: 1.5rem;
+                    }
+                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
+                        opacity: 1 !important;
                     }
                 </style>
                 """;
@@ -270,7 +272,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
-                                }, {
+                                },
+                                {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
                                 });
@@ -286,10 +289,12 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
                     %s
 
+                    %s
+
                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
                 "true".equals(disclaimerAcknowledged), getArrowKeyBlockingFunction(),
-                getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction());
+                getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(), getFocusOnChatPromptFunction());
     }
 
     /*
@@ -423,6 +428,21 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     console.error('Error starting observer:', error);
                 }
                 """.formatted(selector);
+    }
+
+   private String getFocusOnChatPromptFunction() {
+        return """
+                window.addEventListener('load', () => {
+                    const chatContainer = document.querySelector('.mynah-chat-prompt');
+                    if (chatContainer) {
+                        chatContainer.addEventListener('click', (event) => {
+                            if (!event.target.closest('.mynah-chat-prompt-input')) {
+                                keepFocusOnPrompt();
+                            }
+                        });
+                    }
+                });
+                """;
     }
 
     @Override

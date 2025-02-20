@@ -7,7 +7,9 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+
 public interface AuthCredentialsService {
-    CompletableFuture<ResponseMessage> updateTokenCredentials(String accessToken, boolean isEncrypted);
+    CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload params);
     CompletableFuture<Void> deleteTokenCredentials();
 }

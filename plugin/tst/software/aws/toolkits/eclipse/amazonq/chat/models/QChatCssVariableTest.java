@@ -14,7 +14,7 @@ public class QChatCssVariableTest {
 
     @Test
     void testEnumValues() {
-        assertEquals(27, QChatCssVariable.values().length);
+        assertEquals(28, QChatCssVariable.values().length);
     }
 
     @Test
@@ -70,6 +70,11 @@ public class QChatCssVariableTest {
     @Test
     void testCardValues() {
         assertEquals("--mynah-card-bg", QChatCssVariable.CardBackground.getValue());
+    }
+
+    @Test
+    void testLineHeighValues() {
+        assertEquals("--mynah-line-height", QChatCssVariable.LineHeight.getValue());
     }
 
     @Test

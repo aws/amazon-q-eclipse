@@ -292,7 +292,8 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     private void handleAcceptInlineChat() {
     	handleUserDecision(true);
     }
-
+    
+    // This method should be using undo manager in order to reset state
     private void handleDeclineInlineChat() {
     	handleUserDecision(false);
     }
@@ -354,6 +355,17 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                 null, null) {
             private Point screenLocation;
             private Text inputField;
+            
+            @Override
+            public int open() {
+                int result = super.open();
+                Display.getCurrent().asyncExec(() -> {
+                    if (inputField != null && !inputField.isDisposed()) {
+                        inputField.setFocus();
+                    }
+                });
+                return result;
+            }
 
             @Override
             public boolean close() {
@@ -418,13 +430,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                         }
                     }
                 });
-
-                inputField.setFocus();
                 return composite;
-            }
-
-            public String getInputText() {
-                return inputField != null ? inputField.getText() : "";
             }
         };
 
@@ -528,7 +534,6 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         var widget = viewer.getTextWidget();
         Display.getDefault().asyncExec(() -> {
             insertWithInlineDiffUtils(originalCode, chatResult.body(), originalSelectionStart);
-            previousPartialResponse = chatResult.body();
 
             if (!isPartialResult) {
             	KeyAdapter keyHandler = createUserDecisionKeyHandler(widget);
@@ -538,9 +543,6 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     }
 
 
-    /* I believe in the case that Q is only adding comments before
-     * use this method to insert in place of cursor
-    */
     private Optional<CursorState> insertAtCursor(final String code) {
         AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();
         Display.getDefault().syncExec(new Runnable() {
@@ -646,6 +648,9 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 
         } catch (BadLocationException e) {
             Activator.getLogger().error("Failed to insert inline diff", e);
+            endSessionImmediately();
+        } finally {
+            previousPartialResponse = newCode;
         }
     }
 

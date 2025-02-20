@@ -430,7 +430,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 """.formatted(selector);
     }
 
-    private String getFocusOnChatPromptFunction() {
+   private String getFocusOnChatPromptFunction() {
         return """
                 window.addEventListener('load', () => {
                     const chatContainer = document.querySelector('.mynah-chat-prompt');

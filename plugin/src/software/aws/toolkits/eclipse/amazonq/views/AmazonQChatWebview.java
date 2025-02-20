@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +28,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
@@ -91,12 +95,31 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         amazonQCommonActions = getAmazonQCommonActions();
 
         chatCommunicationManager.setChatUiRequestListener(this);
+
         new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
                 ThreadingUtils.executeAsyncTask(() -> {
                     handleMessageFromUI(browser, arguments);
                 });
+                return null;
+            }
+        };
+
+        new BrowserFunction(browser, "isMacOs") {
+            @Override
+            public Object function(final Object[] arguments) {
+                return Boolean.TRUE.equals(PluginUtils.getPlatform() == PluginPlatform.MAC);
+            }
+        };
+
+        new BrowserFunction(browser, "copyToClipboard") {
+            @Override
+            public Object function(final Object[] arguments) {
+                if (arguments.length > 0 && arguments[0] instanceof String) {
+                    StringSelection stringSelection = new StringSelection((String) arguments[0]);
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                }
                 return null;
             }
         };
@@ -210,6 +233,16 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                         mask-position: center;
                         scale: 60%;
                     }
+                    .code-snippet-close-button i.mynah-ui-icon-cancel,
+                    .mynah-chat-item-card-related-content-show-more i.mynah-ui-icon-down-open {
+                        -webkit-mask-size: 195.5% !important;
+                        mask-size: 195.5% !important;
+                        mask-position: center;
+                        aspect-ratio: 1/1;
+                        width: 15px;
+                        height: 15px;
+                        scale: 50%
+                    }
                     .mynah-ui-icon-tabs {
                         -webkit-mask-size: 102% !important;
                         mask-size: 102% !important;
@@ -217,6 +250,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     }
                     textarea:placeholder-shown {
                         line-height: 1.5rem;
+                    }
+                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
+                        opacity: 1 !important;
                     }
                 </style>
                 """;
@@ -236,7 +272,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
-                                }, {
+                                },
+                                {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
                                 });
@@ -245,9 +282,19 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     }
 
                     window.addEventListener('load', init);
+
+                    %s
+
+                    %s
+
+                    %s
+
+                    %s
+
                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig,
-                "true".equals(disclaimerAcknowledged));
+                "true".equals(disclaimerAcknowledged), getArrowKeyBlockingFunction(),
+                getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(), getFocusOnChatPromptFunction());
     }
 
     /*
@@ -269,6 +316,133 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
             return "";
         }
+    }
+
+    private String getArrowKeyBlockingFunction() {
+        return """
+                window.addEventListener('load', () => {
+                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                    if (textarea) {
+                        textarea.addEventListener('keydown', (event) => {
+                            const cursorPosition = textarea.selectionStart;
+                            const hasText = textarea.value.length > 0;
+
+                            // block arrow keys on empty text area
+                            switch (event.key) {
+                                case 'ArrowLeft':
+                                    if (!hasText || cursorPosition === 0) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    break;
+
+                                case 'ArrowRight':
+                                    if (!hasText || cursorPosition === textarea.value.length) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                    }
+                                    break;
+                            }
+                        });
+                    }
+                });
+                """;
+    }
+
+    private String getSelectAllAndCopySupportFunctions() {
+        return """
+                window.addEventListener('load', () => {
+                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                    if (textarea) {
+                        textarea.addEventListener("keydown", (event) => {
+                            if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
+                                    && event.key === 'a') {
+                                textarea.select();
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                        });
+                    }
+                });
+
+                window.addEventListener('load', () => {
+                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
+                    if (textarea) {
+                        textarea.addEventListener("keydown", (event) => {
+                            if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
+                                    && event.key === 'c') {
+                                copyToClipboard(textarea.value);
+                                event.preventDefault();
+                                event.stopPropagation();
+                            }
+                        });
+                    }
+                });
+                """;
+    }
+
+    private String getPreventEmptyPopupFunction() {
+        String selector = ".mynah-button" + ".mynah-button-secondary.mynah-button-border" + ".fill-state-always"
+                + ".mynah-chat-item-followup-question-option" + ".mynah-ui-clickable-item";
+
+        return """
+                const observer = new MutationObserver((mutations) => {
+                    try {
+                        const selector = '%s';
+
+                        mutations.forEach((mutation) => {
+                            mutation.addedNodes.forEach((node) => {
+                                if (node.nodeType === 1) { // Check if it's an element node
+                                    // Check for direct match
+                                    if (node.matches(selector)) {
+                                        attachEventListeners(node);
+                                    }
+                                    // Check for nested matches
+                                    const buttons = node.querySelectorAll();
+                                    buttons.forEach(attachEventListeners);
+                                }
+                            });
+                        });
+                    } catch (error) {
+                        console.error('Error in mutation observer:', error);
+                    }
+                });
+                function attachEventListeners(element) {
+                    if (!element || element.dataset.hasListener) return; // Prevent duplicate listeners
+                    element.addEventListener('mouseover', function(event) {
+                        const textSpan = this.querySelector('span.mynah-button-label');
+                        if (textSpan && textSpan.scrollWidth <= textSpan.offsetWidth) {
+                            event.stopImmediatePropagation();
+                            event.stopPropagation();
+                            event.preventDefault();
+                        }
+                    }, true);
+                    element.dataset.hasListener = 'true';
+                }
+                try {
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                } catch (error) {
+                    console.error('Error starting observer:', error);
+                }
+                """.formatted(selector);
+    }
+
+   private String getFocusOnChatPromptFunction() {
+        return """
+                window.addEventListener('load', () => {
+                    const chatContainer = document.querySelector('.mynah-chat-prompt');
+                    if (chatContainer) {
+                        chatContainer.addEventListener('click', (event) => {
+                            if (!event.target.closest('.mynah-chat-prompt-input')) {
+                                keepFocusOnPrompt();
+                            }
+                        });
+                    }
+                });
+                """;
     }
 
     @Override

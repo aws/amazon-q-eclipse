@@ -365,26 +365,6 @@
 	        verticalRulerPreferenceValue="true">
 	    </specification>
 	
-	    <!-- Modified code annotation -->
-	    <specification
-	        annotationType="diffAnnotation.modified"
-	        colorPreferenceKey="diffAnnotation.modified.color"
-	        colorPreferenceValue="230,200,255"
-	        contributesToHeader="false"
-	        highlightPreferenceKey="diffAnnotation.modified.highlight"
-	        highlightPreferenceValue="true"
-	        includeOnPreferencePage="true"
-	        label="Modified Code"
-	        overviewRulerPreferenceKey="diffAnnotation.modified.overview"
-	        overviewRulerPreferenceValue="true"
-	        presentationLayer="0"
-	        textPreferenceKey="diffAnnotation.modified.text"
-	        textPreferenceValue="true"
-	        textStylePreferenceValue="BACKGROUND"
-	        verticalRulerPreferenceKey="diffAnnotation.modified.ruler"
-	        verticalRulerPreferenceValue="true">
-	    </specification>
-	
 	    <!-- Deleted code annotation -->
 	    <specification
 	        annotationType="diffAnnotation.deleted"
@@ -404,6 +384,46 @@
 	        verticalRulerPreferenceKey="diffAnnotation.deleted.ruler"
 	        verticalRulerPreferenceValue="true">
 	    </specification>
+	        <!-- Dark mode - Added code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.added.dark"
+	        colorPreferenceKey="diffAnnotation.added.dark.color"
+	        colorPreferenceValue="0,70,0"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.added.dark.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Added Code (Dark Theme)"
+	        overviewRulerPreferenceKey="diffAnnotation.added.dark.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.added.dark.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.added.dark.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	
+	    <!-- Dark mode - Deleted code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.deleted.dark"
+	        colorPreferenceKey="diffAnnotation.deleted.dark.color"
+	        colorPreferenceValue="70,0,0"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.deleted.dark.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Deleted Code (Dark Theme)"
+	        overviewRulerPreferenceKey="diffAnnotation.deleted.dark.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.deleted.dark.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.deleted.dark.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+
 	</extension>
     <extension point="org.eclipse.ui.preferencePages">
          <page

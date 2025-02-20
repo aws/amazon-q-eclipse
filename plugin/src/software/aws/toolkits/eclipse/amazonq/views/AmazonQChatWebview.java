@@ -394,39 +394,43 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                             mutation.addedNodes.forEach((node) => {
                                 if (node.nodeType === 1) { // Check if it's an element node
                                     // Check for direct match
-                                    if (node.matches(selector)) {
+                                    if (node.matches && node.matches(selector)) {
                                         attachEventListeners(node);
                                     }
                                     // Check for nested matches
-                                    const buttons = node.querySelectorAll();
-                                    buttons.forEach(attachEventListeners);
-                                }
+                                    if (node.querySelectorAll) {
+                                        const buttons = node.querySelectorAll(selector); // Missing selector parameter
+                                        buttons.forEach(attachEventListeners);
+                        }
+                    }
                             });
                         });
                     } catch (error) {
                         console.error('Error in mutation observer:', error);
                     }
                 });
+
                 function attachEventListeners(element) {
                     if (!element || element.dataset.hasListener) return; // Prevent duplicate listeners
-                    element.addEventListener('mouseover', function(event) {
+
+                    const handleMouseOver = function(event) {
                         const textSpan = this.querySelector('span.mynah-button-label');
                         if (textSpan && textSpan.scrollWidth <= textSpan.offsetWidth) {
                             event.stopImmediatePropagation();
                             event.stopPropagation();
                             event.preventDefault();
                         }
-                    }, true);
+                    };
+
+                    element.addEventListener('mouseover', handleMouseOver, true);
                     element.dataset.hasListener = 'true';
                 }
-                try {
-                    observer.observe(document.body, {
-                        childList: true,
-                        subtree: true
-                    });
-                } catch (error) {
-                    console.error('Error starting observer:', error);
-                }
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true
+                });
                 """.formatted(selector);
     }
 

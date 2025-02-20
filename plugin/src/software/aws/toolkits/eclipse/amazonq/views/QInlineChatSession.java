@@ -77,7 +77,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private ChatRequestParams params;
 	private volatile SessionState currentState = SessionState.INACTIVE;
 	private ITextEditor editor = null;
-	private final int MAX_INPUT_LENGTH = 512;
+	private final int MAX_INPUT_LENGTH = 128;
 	
 	// Annotation coloring variables
 	private String ANNOTATION_ADDED = "diffAnnotation.added";
@@ -425,6 +425,15 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                 gridData.widthHint = 350;
                 gridData.heightHint = 20;
                 inputField.setLayoutData(gridData);
+                
+                // Enforce maximum character count that can be entered into the input
+                inputField.addVerifyListener(e -> {
+                    String currentText = inputField.getText();
+                    String newText = currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
+                    if (newText.length() > MAX_INPUT_LENGTH) {
+                        e.doit = false; // Prevent the input
+                    }
+                });
 
                 var instructionsLabel = new Label(composite, SWT.CENTER);
                 instructionsLabel.setText("Press Enter to confirm, Esc to cancel");
@@ -462,10 +471,10 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         popup.setBlockOnOpen(true);
         popup.open();
     }
+    
     private boolean userInputIsValid(String input) {
     	return input != null && input.length() > 5 && input.length() < MAX_INPUT_LENGTH;
     }
-
 
     protected Optional<CursorState> getSelectionRangeCursorState() {
         AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();

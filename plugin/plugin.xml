@@ -8,9 +8,7 @@
 	</extension>
 	    <extension
         point="org.eclipse.ui.views">
-        <!-- If adding a new view: -->
-        <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
-        <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
+        <!-- Old View Ids registered necessary to migrate to ViewContainer -->
         <category
             name="Amazon Q"
             id="amazonq">

@@ -8,9 +8,6 @@ import java.util.Collections;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.themes.ITheme;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -32,21 +29,6 @@ public class AmazonQPreferenceInitializer extends AbstractPreferenceInitializer 
                             new DidChangeConfigurationParams(Collections.EMPTY_MAP)));
             });
         });
-    }
-    
-    public static boolean isDarkThemeEnabled() {
-        try {
-            ITheme currentTheme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-            Color backgroundColor = currentTheme.getColorRegistry().get("org.eclipse.ui.workbench.ACTIVE_TAB_BG_START");
-            // Check if the background color is dark by examining its RGB values
-            if (backgroundColor != null) {
-                int brightness = (backgroundColor.getRed() + backgroundColor.getGreen() + backgroundColor.getBlue()) / 3;
-                return brightness < 128; // If average RGB value is less than 128, we consider it dark
-            }
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
     }
 
 }

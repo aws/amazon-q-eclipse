@@ -10,6 +10,9 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionItem;
@@ -48,6 +51,9 @@ public final class QInvocationSession extends QResource {
 
     private QSuggestionsContext suggestionsContext = null;
     private ConcurrentHashMap<String, InlineCompletionStates> suggestionCompletionResults = new ConcurrentHashMap<String, InlineCompletionStates>();
+    private IContextService contextService;
+    private IContextActivation contextActivation;
+    private final String CONTEXT_ID = "org.eclipse.ui.suggestionsContext";
 
     private ITextEditor editor = null;
     private ITextViewer viewer = null;
@@ -97,6 +103,11 @@ public final class QInvocationSession extends QResource {
             }
             Activator.getLogger().info("Starting inline session");
             transitionToInvokingState();
+            
+            // Get and activate the suggestions context
+            contextService = PlatformUI.getWorkbench()
+                    .getService(IContextService.class);
+            contextActivation = contextService.activateContext(CONTEXT_ID);
 
             // Start session logic here
             this.editor = editor;
@@ -347,6 +358,11 @@ public final class QInvocationSession extends QResource {
             if (changeStatusToIdle != null) {
                 changeStatusToIdle.run();
             }
+            // Deactivate context
+            if (contextService != null && contextActivation != null) {
+                contextService.deactivateContext(contextActivation);
+                contextActivation = null;
+            }
             dispose();
             state = QInvocationSessionState.INACTIVE;
             Activator.getLogger().info("Session ended");
@@ -365,6 +381,11 @@ public final class QInvocationSession extends QResource {
             }
             if (changeStatusToIdle != null) {
                 changeStatusToIdle.run();
+            }
+            // Deactivate context
+            if (contextService != null && contextActivation != null) {
+                contextService.deactivateContext(contextActivation);
+                contextActivation = null;
             }
             dispose();
             state = QInvocationSessionState.INACTIVE;

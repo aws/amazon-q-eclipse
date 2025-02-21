@@ -13,8 +13,7 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
 
     @Override
     public final boolean isEnabled() {
-        // TODO: add logic to only trigger on conditions
-        return true;
+        return Activator.getLoginService().getAuthState().isLoggedIn();
     }
     @Override
     public final synchronized Object execute(final ExecutionEvent event) throws ExecutionException {
@@ -31,6 +30,7 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
 
         boolean newSession = false;
         try {
+            Activator.getLogger().info("STARTING NEW SESSION!");
             newSession = QInlineChatSession.getInstance().startSession(editor);
         } catch (Exception e) {
             Activator.getLogger().error("Session start interrupted", e);

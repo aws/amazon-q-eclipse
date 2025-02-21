@@ -208,6 +208,16 @@
             id="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
         </command>
         <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Accept Inline Chat"
+            id="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat">
+        </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Reject Inline Chat"
+            id="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat">
+        </command>
+        <command
               categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
               id="software.aws.toolkits.eclipse.amazonq.commands.toggleSuggestionsForward"
               name="Toggle Suggestions Forward">
@@ -258,13 +268,21 @@
             class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerInlineChatHandler"
             commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
         </handler>
-        <handler
-            class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptSuggestionsHandler"
-            commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions">
-        </handler>
+	    <handler
+	        commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"
+	        class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptSuggestionsHandler">
+	    </handler>
         <handler
                 class="software.aws.toolkits.eclipse.amazonq.handlers.QRejectSuggestionsHandler"
                 commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
+        </handler>
+	    <handler
+	        commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat"
+	        class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptInlineChatHandler">
+	    </handler>
+        <handler
+                class="software.aws.toolkits.eclipse.amazonq.handlers.QRejectInlineChatHandler"
+                commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat">
         </handler>
         <handler
               class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsForwardHandler"
@@ -315,13 +333,25 @@
         </key>
         <key
             commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"
-            contextId="org.eclipse.ui.textEditorScope"
+            contextId="org.eclipse.ui.suggestionsContext"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="TAB">
         </key>
         <key
             commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions"
-            contextId="org.eclipse.ui.textEditorScope"
+            contextId="org.eclipse.ui.suggestionsContext"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="ESC">
+        </key>
+        <key
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat"
+            contextId="org.eclipse.ui.inlineChatContext"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="TAB">
+        </key>
+        <key
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat"
+            contextId="org.eclipse.ui.inlineChatContext"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="ESC">
         </key>

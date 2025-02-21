@@ -33,6 +33,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferenceInitializer;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 //import org.eclipse.swt.events.FocusAdapter;
@@ -78,6 +79,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private volatile SessionState currentState = SessionState.INACTIVE;
 	private ITextEditor editor = null;
 	private final int MAX_INPUT_LENGTH = 128;
+	private ThemeDetector themeDetector;
 	
 	// Annotation coloring variables
 	private String ANNOTATION_ADDED = "diffAnnotation.added";
@@ -105,6 +107,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         // TODO: Update ChatCommunicationManager to track a list of listeners as opposed to tracking only one
         // For this startSession call to successful, the chat panel must be closed so that there is a single listener registered
         chatCommunicationManager.setChatUiRequestListener(this);
+        themeDetector = new ThemeDetector();
     }
 
     public static synchronized QInlineChatSession getInstance() {
@@ -143,7 +146,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         	this.lastUpdateTime = System.currentTimeMillis();
         	
         	// Change diff colors to dark mode settings if necessary
-        	if (AmazonQPreferenceInitializer.isDarkThemeEnabled()) {
+        	if (themeDetector.isDarkTheme()) {
         	    this.ANNOTATION_ADDED += ".dark";
         	    this.ANNOTATION_DELETED += ".dark";
         	}

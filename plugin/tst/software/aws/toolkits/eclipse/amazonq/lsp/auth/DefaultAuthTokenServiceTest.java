@@ -77,10 +77,10 @@ public final class DefaultAuthTokenServiceTest {
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = false;
 
-        SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
+        GetSsoTokenResult result = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
 
-        assertEquals(expectedToken.id(), actualToken.id());
-        assertEquals(expectedToken.accessToken(), actualToken.accessToken());
+        assertEquals(expectedToken.id(), result.ssoToken().id());
+        assertEquals(expectedToken.accessToken(), result.ssoToken().accessToken());
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
@@ -93,10 +93,10 @@ public final class DefaultAuthTokenServiceTest {
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = true;
 
-        SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
+        GetSsoTokenResult result = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
 
-        assertEquals(expectedToken.id(), actualToken.id());
-        assertEquals(expectedToken.accessToken(), actualToken.accessToken());
+        assertEquals(expectedToken.id(), result.ssoToken().id());
+        assertEquals(expectedToken.accessToken(), result.ssoToken().accessToken());
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
@@ -109,10 +109,10 @@ public final class DefaultAuthTokenServiceTest {
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = false;
 
-        SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
+        GetSsoTokenResult result = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
 
-        assertEquals(expectedToken.id(), actualToken.id());
-        assertEquals(expectedToken.accessToken(), actualToken.accessToken());
+        assertEquals(expectedToken.id(), result.ssoToken().id());
+        assertEquals(expectedToken.accessToken(), result.ssoToken().accessToken());
         verify(mockAmazonQServer).getSsoToken(any(GetSsoTokenParams.class));
         verifyNoMoreInteractions(mockAmazonQServer);
     }
@@ -129,10 +129,10 @@ public final class DefaultAuthTokenServiceTest {
         when(mockSsoTokenResult.ssoToken()).thenReturn(expectedToken);
         boolean loginOnInvalidToken = true;
 
-        SsoToken actualToken = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
+        GetSsoTokenResult result = invokeGetSsoToken(loginType, loginParams, loginOnInvalidToken);
 
-        assertEquals(expectedToken.id(), actualToken.id());
-        assertEquals(expectedToken.accessToken(), actualToken.accessToken());
+        assertEquals(expectedToken.id(), result.ssoToken().id());
+        assertEquals(expectedToken.accessToken(), result.ssoToken().accessToken());
         verify(mockAmazonQServer).updateProfile(updateProfileParamsCaptor.capture());
         UpdateProfileParams actualParams = updateProfileParamsCaptor.getValue();
         verifyUpdateProfileParams(actualParams);
@@ -140,15 +140,15 @@ public final class DefaultAuthTokenServiceTest {
         verifyNoMoreInteractions(mockAmazonQServer);
     }
 
-    private SsoToken invokeGetSsoToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) throws Exception {
+    private GetSsoTokenResult invokeGetSsoToken(final LoginType loginType, final LoginParams loginParams, final boolean loginOnInvalidToken) throws Exception {
         Object getSsoTokenFuture = authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken);
         assertTrue(getSsoTokenFuture instanceof CompletableFuture<?>, "Return value should be CompletableFuture");
 
         CompletableFuture<?> future = (CompletableFuture<?>) getSsoTokenFuture;
         Object result = future.get();
-        assertTrue(result instanceof SsoToken, "getSsoTokenFuture result should be SsoToken");
+        assertTrue(result instanceof GetSsoTokenResult, "getSsoTokenFuture result should be GetSsoTokenResult");
 
-        return (SsoToken) result;
+        return (GetSsoTokenResult) result;
     }
 
     private LoginParams createValidLoginParams() {

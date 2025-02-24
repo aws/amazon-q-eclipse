@@ -14,6 +14,7 @@ import java.util.Objects;
 import javax.net.ssl.SSLContext;
 
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
@@ -141,7 +142,7 @@ public final class DefaultTelemetryService implements TelemetryService {
             null,
             SSLConnectionSocketFactory.getDefaultHostnameVerifier()
         );
-        var proxyUrl = ProxyUtil.getHttpsProxyUrl();
+        var proxyUrl = ProxyUtil.getHttpsProxyUrlForEndpoint(endpoint);
         var httpClientBuilder = ApacheHttpClient.builder();
         if (!StringUtils.isEmpty(proxyUrl)) {
             httpClientBuilder.proxyConfiguration(ProxyConfiguration.builder()
@@ -151,7 +152,9 @@ public final class DefaultTelemetryService implements TelemetryService {
 
         httpClientBuilder.socketFactory(sslSocketFactory);
 
-        SdkHttpClient sdkHttpClient = httpClientBuilder.build();
+        SdkHttpClient sdkHttpClient = httpClientBuilder
+                .credentialsProvider(new SystemDefaultCredentialsProvider())
+                .build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()
                 .credentialsProvider(AnonymousCredentialsProvider.create())
                 .region(region)

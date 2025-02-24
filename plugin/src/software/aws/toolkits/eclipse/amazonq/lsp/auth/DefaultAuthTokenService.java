@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenSource;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenResult;
@@ -22,7 +23,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.Profile;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ProfileSettings;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSession;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSessionSettings;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoToken;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -41,7 +41,7 @@ public final class DefaultAuthTokenService implements AuthTokenService {
     }
 
     @Override
-    public CompletableFuture<SsoToken> getSsoToken(final LoginType loginType, final LoginParams loginParams,
+    public CompletableFuture<GetSsoTokenResult> getSsoToken(final LoginType loginType, final LoginParams loginParams,
                 final boolean loginOnInvalidToken) {
         GetSsoTokenParams getSsoTokenParams = createGetSsoTokenParams(loginType, loginOnInvalidToken);
         return lspProvider.getAmazonQServer()
@@ -70,7 +70,7 @@ public final class DefaultAuthTokenService implements AuthTokenService {
                 })
                 .thenCompose(server -> server.getSsoToken(getSsoTokenParams))
                 .thenApply(response -> {
-                    return response.ssoToken();
+                    return response;
                 })
                 .exceptionally(throwable -> {
                     throw new AmazonQPluginException("Failed to fetch SSO token", throwable);

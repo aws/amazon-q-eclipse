@@ -104,7 +104,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private PopupDialog inputBox;
 	private Shell promptShell;
 	private final String GENERATING_POPUP_MSG = "Amazon Q is generating...";
-	private final String USER_DECISION_POPUP_MSG = "Accept: Tab, Reject: Esc";
+	private final String USER_DECISION_POPUP_MSG = "Accept (Tab) | Reject (Esc)";
 	
 	// Context handler variables
     private IContextService contextService;
@@ -131,6 +131,9 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     }
     public synchronized boolean isDeciding() {
         return currentState == SessionState.DECIDING;
+    }
+    public synchronized boolean isGenerating() {
+        return currentState == SessionState.GENERATING;
     }
     private synchronized void setSessionState(final SessionState newState) {
         this.currentState = newState;
@@ -179,6 +182,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 
         	this.ANNOTATION_ADDED = "diffAnnotation.added";
         	this.ANNOTATION_DELETED = "diffAnnotation.deleted";
+
         	// Change diff colors to dark mode settings if necessary
         	if (themeDetector.isDarkTheme()) {
         	    this.ANNOTATION_ADDED += ".dark";

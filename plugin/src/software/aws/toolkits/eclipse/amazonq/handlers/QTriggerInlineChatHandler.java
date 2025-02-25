@@ -5,8 +5,11 @@ import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.get
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession;
 
 public class QTriggerInlineChatHandler extends AbstractHandler {
@@ -24,6 +27,9 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
         }
 
         if (QInlineChatSession.getInstance().isSessionActive()) {
+            if (QInlineChatSession.getInstance().isDeciding() || QInlineChatSession.getInstance().isGenerating()) {
+                showErrorNotification();
+            }
             Activator.getLogger().info("Inline Chat triggered with existing session active. Returning.");
             return null;
         }
@@ -42,5 +48,11 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
         }
 
         return null;
+    }
+    private void showErrorNotification() {
+        var notification = new ToolkitNotification(Display.getCurrent(),
+                "Amazon Q",
+                Constants.INLINE_CHAT_MULTIPLE_TRIGGER_MESSAGE);
+        notification.open();
     }
 }

@@ -30,7 +30,7 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
 
         boolean newSession = false;
         try {
-            Activator.getLogger().info("STARTING NEW SESSION!");
+            Activator.getLogger().info("INLINE CHAT TRIGGERED!");
             newSession = QInlineChatSession.getInstance().startSession(editor);
         } catch (Exception e) {
             Activator.getLogger().error("Session start interrupted", e);

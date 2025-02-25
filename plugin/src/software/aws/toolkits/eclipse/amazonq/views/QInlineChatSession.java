@@ -4,7 +4,6 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -38,15 +37,12 @@ import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
-//import org.eclipse.swt.events.FocusAdapter;
-//import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.jface.dialogs.PopupDialog;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
@@ -82,7 +78,6 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private volatile SessionState currentState = SessionState.INACTIVE;
 	private ITextEditor editor = null;
     private ITextViewer viewer = null;
-    private StyledText widget = null;
     private IDocumentUndoManager undoManager;
     private IDocument document;
     private boolean isCompoundChange = false;
@@ -90,8 +85,8 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 
 	// Annotation coloring variables
     private ThemeDetector themeDetector;
-	private String ANNOTATION_ADDED = "diffAnnotation.added";
-	private String ANNOTATION_DELETED = "diffAnnotation.deleted";
+	private String ANNOTATION_ADDED;
+	private String ANNOTATION_DELETED;
 
 	// Diff generation and rendering variables
 	private String previousPartialResponse = null;
@@ -100,7 +95,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private int previousDisplayLength;
 
 	// Batching variables
-	private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	private ScheduledExecutorService executor;
 	private ScheduledFuture<?> pendingUpdate;
 	private static final int BATCH_DELAY_MS = 200;
 	private long lastUpdateTime;
@@ -140,6 +135,9 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     private synchronized void setSessionState(final SessionState newState) {
         this.currentState = newState;
     }
+    private synchronized SessionState getSessionState() {
+        return currentState;
+    }
     
     public void initUndoManager() {
         try {
@@ -168,22 +166,19 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                     .getService(IContextService.class);
             contextActivation = contextService.activateContext(CONTEXT_ID);
             
+            // Set session variables
         	setSessionState(SessionState.ACTIVE);
         	this.editor = (ITextEditor) editor;
             this.viewer = getActiveTextViewer(editor);
-            if (viewer == null) {
-                Activator.getLogger().info("Viewer is null!!!!");
-            }
-            this.widget = viewer.getTextWidget();
-            if (this.widget == null) {
-                Activator.getLogger().info("Widget is null!!!!");
-            }
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
             this.undoManager = DocumentUndoManagerRegistry.getDocumentUndoManager(document);
         	this.lastUpdateTime = System.currentTimeMillis();
+        	this.executor = Executors.newSingleThreadScheduledExecutor();
         	
         	initUndoManager();
-        	
+
+        	this.ANNOTATION_ADDED = "diffAnnotation.added";
+        	this.ANNOTATION_DELETED = "diffAnnotation.deleted";
         	// Change diff colors to dark mode settings if necessary
         	if (themeDetector.isDarkTheme()) {
         	    this.ANNOTATION_ADDED += ".dark";
@@ -191,7 +186,6 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         	}
 
             Display.getDefault().asyncExec(() -> {
-      
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
                 originalSelectionStart = selection.getOffset();
                 Activator.getLogger().info(String.format("SELECTION OFFSET: %d", originalSelectionStart));
@@ -202,16 +196,21 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
             });
             return true;
         } catch (Exception e) {
+            Activator.getLogger().error("SESSION ENDING AT START: " + e.getMessage(), e);
         	endSession();
         	return false;
         }
     }
     public void showUserInputBox(final int selectionOffset) {
+        if (!isSessionActive()) {
+            return;
+        }
         if (inputBox != null) {
             inputBox.close();
         }
+        var widget = viewer.getTextWidget();
 
-        inputBox = new PopupDialog(this.widget.getShell(), PopupDialog.INFOPOPUP_SHELLSTYLE, false, false, true, false, false,
+        inputBox = new PopupDialog(widget.getShell(), PopupDialog.INFOPOPUP_SHELLSTYLE, false, false, true, false, false,
                 null, null) {
             private Point screenLocation;
             private Text inputField;
@@ -226,11 +225,11 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                 });
                 return result;
             }
-
+            
             @Override
             public boolean close() {
                 Activator.getLogger().info("Closing input box!");
-                if (currentState != SessionState.GENERATING) {
+                if (getSessionState() != SessionState.GENERATING) {
                     inputBox = null;
                     endSession();
                 }
@@ -295,20 +294,26 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                     public void keyPressed(final KeyEvent e) {
                         // on enter, accept the input added
                         if (e.character == SWT.CR || e.character == SWT.LF) {
-                            var userInput = inputField.getText();
-                            if (userInputIsValid(userInput)) {
-                                setSessionState(SessionState.GENERATING);
+                            try {
+                                var userInput = inputField.getText();
+                                if (userInputIsValid(userInput)) {
+                                    setSessionState(SessionState.GENERATING);
+                                    var cursorState = getSelectionRangeCursorState().get();
+                                    var prompt = new ChatPrompt(userInput, userInput, "");
+
+                                    var filePath = "C:\\Users\\somerandomusername\\Desktop\\lsp.txt";
+                                    var id = UUID.randomUUID().toString();
+                                    params = new ChatRequestParams(id, prompt, new TextDocumentIdentifier(filePath), Arrays.asList(cursorState));
+
+                                    chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
+                                    // TODO: instead show the progress indicator that Q is thinking untill the full response comes
+                                    showPrompt(GENERATING_POPUP_MSG, selectionOffset);
+                                }
+                            } catch (Exception ex) {
+                                Activator.getLogger().error("Error while transitioning to generating state: " + ex.getMessage(), ex);
+                                endSession();
+                            } finally {
                                 close();
-                                var cursorState = getSelectionRangeCursorState().get();
-                                var prompt = new ChatPrompt(userInput, userInput, "");
-
-                                var filePath = "C:\\Users\\somerandomusername\\Desktop\\lsp.txt";
-                                var id = UUID.randomUUID().toString();
-                                params = new ChatRequestParams(id, prompt, new TextDocumentIdentifier(filePath), Arrays.asList(cursorState));
-
-                                chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
-                                // TODO: instead show the progress indicator that Q is thinking untill the full response comes
-                                showPrompt(GENERATING_POPUP_MSG, selectionOffset);
                             }
                         }
                     }
@@ -320,8 +325,12 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         inputBox.setBlockOnOpen(true);
         inputBox.open();
     }
+    
     @Override
     public void onSendToChatUi(final String message) {
+        if (!isSessionActive()) {
+            return;
+        }
         try {
             
             // Deserialize object
@@ -339,8 +348,6 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
             
             var isPartialResult = rootNode.get("isPartialResult").asBoolean();
             var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
-
-            Activator.getLogger().info("CHAT RESPONSE MESSAGE: " + message);
 
             if (isPartialResult) {
                 // Only process if content has changed
@@ -375,28 +382,35 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                 updateUI(chatResult, isPartialResult);
                 lastUpdateTime = System.currentTimeMillis();
             }
-
         } catch (Exception e) {
             Activator.getLogger().error("Failed to handle ChatResult", e);
-            endSessionImmediately();
+            restoreAndEndSession();
         }
     }
     
     private void updateUI(final ChatResult chatResult, final boolean isPartialResult) {
-        Display.getDefault().asyncExec(() -> {
-            insertWithInlineDiffUtils(originalCode, chatResult.body(), originalSelectionStart);
-
-            if (!isPartialResult) {
-                showPrompt(USER_DECISION_POPUP_MSG, originalSelectionStart);
+        Display.getDefault().syncExec(() -> {
+            try {
+                boolean success = generateAndInsertDiff(originalCode, chatResult.body(), originalSelectionStart);
+                if (success && !isPartialResult) {
+                    setSessionState(SessionState.DECIDING);
+                    showPrompt(USER_DECISION_POPUP_MSG, originalSelectionStart);
+                }
+            } catch (Exception e) {
+                restoreAndEndSession();
             }
         });
     }
     
-    private void insertWithInlineDiffUtils(final String originalCode, final String newCode, final int offset) {
+    private boolean generateAndInsertDiff(final String originalCode, final String newCode, final int offset) throws Exception{
+        if (!isSessionActive()) {
+            return false;
+        }
 
         // Annotation model provides highlighting for the diff additions/deletions
         IAnnotationModel annotationModel = editor.getDocumentProvider()
                 .getAnnotationModel(editor.getEditorInput());
+        var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 
         try {
             // Clear existing diff annotations prior to starting new diff
@@ -408,7 +422,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                     : previousDisplayLength;
 
             // Restore document to original state
-//            document.replace(offset, replaceLen, originalCode);
+            document.replace(offset, replaceLen, originalCode);
 
             // Split original and new code into lines for diff comparison
             String[] originalLines = originalCode.lines().toArray(String[]::new);
@@ -465,7 +479,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
             clearAnnotationsInRange(annotationModel, offset, offset + originalCode.length());
 
             // Apply new diff text
-            document.replace(offset, replaceLen, finalText);
+            document.replace(offset, originalCode.length(), finalText);
 
             // Store rendered text length for proper clearing next iteration
             previousDisplayLength = finalText.length();
@@ -480,10 +494,10 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                 Annotation annotation = new Annotation(ANNOTATION_ADDED, false, "Added Code");
                 annotationModel.addAnnotation(annotation, position);
             }
-
-        } catch (BadLocationException e) {
+            return true;
+        } catch (Exception e) {
             Activator.getLogger().error("Failed to insert inline diff", e);
-            endSessionImmediately();
+            throw e;
         } finally {
             previousPartialResponse = newCode;
         }
@@ -492,6 +506,8 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     private void showPrompt(String promptText, int selectionOffset) {
         closePrompt();
         Display.getDefault().syncExec(() -> {
+            var widget = viewer.getTextWidget();
+            
             promptShell = new Shell(Display.getDefault().getActiveShell(), SWT.TOOL | SWT.NO_TRIM);
             promptShell.setLayout(new GridLayout(1, false));
             
@@ -513,28 +529,34 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         });
     }
     public void handleAccepted() throws Exception {
-        closePrompt();
-        final IAnnotationModel annotationModel = editor.getDocumentProvider()
-                .getAnnotationModel(editor.getEditorInput());
-        try {
-            
-            document.replace(originalSelectionStart, previousDisplayLength, previousPartialResponse);
-            clearDiffAnnotations(annotationModel);
-            
-            undoManager.endCompoundChange();
-        } catch (final Exception e) {
-            Activator.getLogger().error("Error while accepting changes", e);
-            throw e;
-        } finally {
-            endSession();
-        }
+        Display.getDefault().asyncExec(() -> {
+            final IAnnotationModel annotationModel = editor.getDocumentProvider()
+                    .getAnnotationModel(editor.getEditorInput());
+            var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+            try {
+                closePrompt();
+                document.replace(originalSelectionStart, previousDisplayLength, previousPartialResponse);
+                clearDiffAnnotations(annotationModel);
+                
+                undoManager.endCompoundChange();
+                endSession();
+            } catch (final Exception e) {
+                Activator.getLogger().error("Accepting inline chat results failed with: " + e.getMessage(), e);
+                restoreAndEndSession();
+            }
+        });
     }
     public void handleDeclined() throws Exception {
-        closePrompt();
-        if (undoManager.undoable()) {
-            undoManager.undo();
-        }
-        endSession();
+        Display.getDefault().asyncExec(() -> {
+            try {
+                closePrompt();
+                cleanupDocumentState(true);
+                endSession();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        });
     }
     private void closePrompt() {
         if (promptShell != null && !promptShell.isDisposed()) {
@@ -549,49 +571,25 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         if (!isSessionActive()) {
             return;
         }
-        try {
-            if (this.widget != null && !this.widget.isDisposed()) {
-                this.widget = null;
-            }
-            
-            if (this.viewer != null) {
-                this.viewer = null;
-            }
-            if (isCompoundChange) {
-                undoManager.endCompoundChange();
-                undoManager.disconnect(document);
-                isCompoundChange = false;
-            }
-            
-            if (contextService != null && contextActivation != null) {
-                contextService.deactivateContext(contextActivation);
-                contextActivation = null;
-            }
-            
-            // Clear session state
-            this.originalCode = null;
-            previousPartialResponse = null;
-            this.editor = null;
-            this.document = null;
-            this.undoManager = null;
-            this.lastUpdateTime = 0;
-            this.previousDisplayLength = 0;
-            this.originalSelectionStart = 0;
-
-            if (executor != null && !executor.isShutdown()) {
-                executor.shutdown();
-            }
-
-            if (pendingUpdate != null) {
-                pendingUpdate.cancel(true);
-            }
-        } catch (Exception e) {
-            Activator.getLogger().error("Error while ending session: " + e.getMessage(), e);
-        } finally {
-            setSessionState(SessionState.INACTIVE);
-        }
+        // Clean up batching components
+        cancelBatchingOperations();
+        
+        // Clean up undoManager
+        cleanupDocumentState(false);
+        
+        // Clean up context service
+        cleanupContext();
+        
+        // Restore all session state variables to default values
+        cleanupSessionState();
+        
+        // Set session to inactive
+        setSessionState(SessionState.INACTIVE);
+        
+        Activator.getLogger().info("SESSION ENDED!");
     }
-    public synchronized void endSessionImmediately() {
+    
+    public synchronized void restoreAndEndSession() {
         try {
             handleDeclined();
         } catch (Exception e) {
@@ -639,7 +637,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     }
     
     private boolean userInputIsValid(String input) {
-    	return input != null && input.length() > 5 && input.length() < MAX_INPUT_LENGTH;
+    	return input != null && input.length() >= 2 && input.length() < MAX_INPUT_LENGTH;
     }
 
     protected Optional<CursorState> getSelectionRangeCursorState() {
@@ -676,5 +674,58 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
             }
         });
         return range.get().map(CursorState::new);
+    }
+    private void cancelBatchingOperations() {
+        try {
+            if (pendingUpdate != null) {
+                pendingUpdate.cancel(true);
+            }
+            if (executor != null && !executor.isShutdown()) {
+                executor.shutdownNow();
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error cancelling async operations: " + e.getMessage(), e);
+        }
+    }
+
+    private void cleanupDocumentState(boolean shouldRestoreState) {
+        try {
+            if (isCompoundChange) {
+                if (undoManager != null) {
+                    undoManager.endCompoundChange();
+                    if (shouldRestoreState) {
+                        undoManager.undo();
+                    }
+                    undoManager.disconnect(document);
+                }
+                isCompoundChange = false;
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error cleaning up document state: " + e.getMessage(), e);
+        }
+    }
+
+    private void cleanupContext() {
+        try {
+            if (contextService != null && contextActivation != null) {
+                contextService.deactivateContext(contextActivation);
+                contextActivation = null;
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error cleaning up context: " + e.getMessage(), e);
+        }
+    }
+    
+    private void cleanupSessionState() {
+        this.originalCode = null;
+        this.previousPartialResponse = null;
+        this.editor = null;
+        this.inputBox = null;
+        this.viewer = null;
+        this.document = null;
+        this.undoManager = null;
+        this.lastUpdateTime = 0;
+        this.previousDisplayLength = 0;
+        this.originalSelectionStart = 0;
     }
 }

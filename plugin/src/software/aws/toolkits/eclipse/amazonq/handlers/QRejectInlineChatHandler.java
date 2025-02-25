@@ -18,9 +18,8 @@ public class QRejectInlineChatHandler extends AbstractHandler {
                 .getService(IContextService.class);
         var activeContexts = contextService.getActiveContextIds();
         
-        //TODO: Update check to verify that sessionState is deciding
         return activeContexts.contains(INLINE_CONTEXT_ID) && 
-                QInlineChatSession.getInstance().isSessionActive();
+                QInlineChatSession.getInstance().isDeciding();
     }
     
     @Override

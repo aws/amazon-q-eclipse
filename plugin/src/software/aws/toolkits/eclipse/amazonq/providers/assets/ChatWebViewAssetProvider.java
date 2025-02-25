@@ -277,65 +277,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                 """;
     }
 
-    private String generateCss() {
-        return """
-                <style>
-                    body,
-                    html {
-                        background-color: var(--mynah-color-bg);
-                        color: var(--mynah-color-text-default);
-                        height: 100vh;
-                        width: 100%%;
-                        overflow: hidden;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .mynah-ui-icon-plus,
-                    .mynah-ui-icon-cancel {
-                        -webkit-mask-size: 155% !important;
-                        mask-size: 155% !important;
-                        mask-position: center;
-                        scale: 60%;
-                    }
-                    .mynah-ui-icon-tabs {
-                        -webkit-mask-size: 102% !important;
-                        mask-size: 102% !important;
-                        mask-position: center;
-                    }
-                    textarea:placeholder-shown {
-                        line-height: 1.5rem;
-                    }
-                </style>
-                """;
-    }
-
-    private String generateJS(final String jsEntrypoint) {
-        var chatQuickActionConfig = generateQuickActionConfig();
-        var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
-        return String.format("""
-                <script type="text/javascript" src="%s" defer></script>
-                <script type="text/javascript">
-                    %s
-                    const init = () => {
-                        waitForFunction('ideCommand')
-                            .then(() => {
-                                amazonQChat.createChat({
-                                    postMessage: (message) => {
-                                        ideCommand(JSON.stringify(message));
-                                    }
-                                }, {
-                                    quickActionCommands: %s,
-                                    disclaimerAcknowledged: %b
-                                });
-                            })
-                            .catch(error => console.error('Error initializing chat:', error));
-                    }
-
-                    window.addEventListener('load', init);
-                </script>
-                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig, "true".equals(disclaimerAcknowledged));
-    }
-
     /*
      * Generates javascript for chat options to be supplied to Chat UI defined here
      * https://github.com/aws/language-servers/blob/

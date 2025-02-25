@@ -395,7 +395,8 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     private void updateUI(final ChatResult chatResult, final boolean isPartialResult) {
         Display.getDefault().syncExec(() -> {
             try {
-                boolean success = generateAndInsertDiff(originalCode, chatResult.body(), originalSelectionStart);
+                var newCode = unescapeChatResult(chatResult.body());
+                boolean success = generateAndInsertDiff(originalCode, newCode, originalSelectionStart);
                 if (success && !isPartialResult) {
                     setSessionState(SessionState.DECIDING);
                     showPrompt(USER_DECISION_POPUP_MSG, originalSelectionStart);
@@ -732,4 +733,23 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         this.previousDisplayLength = 0;
         this.originalSelectionStart = 0;
     }
+    private String unescapeChatResult(String s) {
+        if (s == null || s.isEmpty()) {
+            return s;
+        }
+        
+        return s.replace("&quot;", "\"")
+               .replace("&#39;", "'")
+               .replace("&lt;", "<")
+               .replace("=&lt;", "=<")
+               .replace("&lt;=", "<=")
+               .replace("&gt;", ">")
+               .replace("=&gt;", "=>")
+               .replace("&gt;=", ">=")
+               .replace("&nbsp;", " ")
+               .replace("&lsquo;", "'")
+               .replace("&rsquo;", "'")
+               .replace("&amp;", "&");
+    }
+
 }

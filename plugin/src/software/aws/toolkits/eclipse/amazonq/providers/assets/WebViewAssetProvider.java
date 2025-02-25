@@ -5,9 +5,13 @@ package software.aws.toolkits.eclipse.amazonq.providers.assets;
 
 import java.util.Optional;
 
+import org.eclipse.swt.browser.Browser;
+
 public abstract class WebViewAssetProvider {
 
-    public abstract Optional<String> getContent();
+    public abstract void injectAssets(final Browser browser);
+
+    protected abstract Optional<String> getContent();
 
     public abstract void dispose();
 
@@ -29,6 +33,10 @@ public abstract class WebViewAssetProvider {
                     });
                 }
                 """;
+    }
+
+    protected final void disableBrowserContextMenu(final Browser browser) {
+        browser.execute("document.oncontextmenu = e => e.preventDefault();");
     }
 
 }

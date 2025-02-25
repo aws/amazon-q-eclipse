@@ -3,25 +3,16 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
-import java.util.Optional;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.PlatformUI;
 
-import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
-
 public final class ChatStateManager {
     private static ChatStateManager instance;
-    private ChatWebViewAssetProvider chatAssetProvider;
     private Browser browser;
     private Composite dummyParent;
     private volatile boolean hasPreservedState  = false;
-
-    private ChatStateManager() {
-        chatAssetProvider = new ChatWebViewAssetProvider();
-    }
 
     public static synchronized ChatStateManager getInstance() {
         if (instance == null) {
@@ -46,10 +37,6 @@ public final class ChatStateManager {
         // resetting browser indicates that no state is preserved
         hasPreservedState = false;
         this.browser = browser;
-    }
-
-    public synchronized Optional<String> getContent() {
-        return chatAssetProvider.getContent();
     }
 
     public synchronized boolean hasPreservedState() {
@@ -83,7 +70,6 @@ public final class ChatStateManager {
             browser = null;
         }
         disposeDummyParent();
-        chatAssetProvider.dispose();
         hasPreservedState = false;
     }
 }

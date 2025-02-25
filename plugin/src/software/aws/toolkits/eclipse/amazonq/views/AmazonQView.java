@@ -63,14 +63,9 @@ public abstract class AmazonQView extends BaseAmazonQView {
 
         if (browser != null && !browser.isDisposed()) {
             setupBrowserBackground(parent);
-            disableBrowserContextMenu();
         }
 
         return parent;
-    }
-
-    protected final void disableBrowserContextMenu() {
-        getBrowser().execute("document.oncontextmenu = e => e.preventDefault();");
     }
 
     private void setupBrowserBackground(final Composite parent) {

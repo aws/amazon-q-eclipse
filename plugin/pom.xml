@@ -17,7 +17,7 @@
         <aws.java.sdk.version>2.28.26</aws.java.sdk.version>
         <node.version>v20.9.0</node.version>
         <npm.version>10.1.0</npm.version>
-        <jackson.version>2.17.2</jackson.version>
+        <jackson.version>2.17.3</jackson.version>
         <maven.compiler.release>17</maven.compiler.release>
         <junit.version>5.11.3</junit.version>
     </properties>
@@ -135,6 +135,21 @@
                 <version>${tycho.version}</version>
                 <configuration>
                     <pomDependencies>consider</pomDependencies>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-packaging-plugin</artifactId>
+                <version>${tycho.version}</version>
+                <configuration>
+                    <additionalFileSets>
+                     <fileSet>
+                      <directory>${project.build.directory}/classes/</directory>
+                      <includes>
+                       <include>**/*</include>
+                      </includes>
+                     </fileSet>
+                    </additionalFileSets>
                 </configuration>
             </plugin>
             <plugin>

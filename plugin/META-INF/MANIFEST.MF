@@ -28,7 +28,7 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
  org.apache.commons.logging;bundle-version="1.2.0",
  slf4j.api;bundle-version="2.0.13",
  org.apache.commons.lang3;bundle-version="3.14.0"
-Bundle-Classpath: target/classes/,
+Bundle-Classpath: .,
  target/dependency/annotations.jar,
  target/dependency/apache-client.jar,
  target/dependency/auth.jar,

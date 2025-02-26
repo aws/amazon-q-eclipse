@@ -11,21 +11,19 @@ import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession;
 
 public class QRejectInlineChatHandler extends AbstractHandler {
     private final String INLINE_CONTEXT_ID = "org.eclipse.ui.inlineChatContext";
-    
+
     @Override
     public final boolean isEnabled() {
-        IContextService contextService = PlatformUI.getWorkbench()
-                .getService(IContextService.class);
+        IContextService contextService = PlatformUI.getWorkbench().getService(IContextService.class);
         var activeContexts = contextService.getActiveContextIds();
-        
-        return activeContexts.contains(INLINE_CONTEXT_ID) && 
-                QInlineChatSession.getInstance().isDeciding();
+
+        return activeContexts.contains(INLINE_CONTEXT_ID) && QInlineChatSession.getInstance().isDeciding();
     }
-    
+
     @Override
     public final synchronized Object execute(final ExecutionEvent event) throws ExecutionException {
         try {
-            QInlineChatSession.getInstance().handleDeclined();
+            QInlineChatSession.getInstance().handleDecision(false);
         } catch (Exception e) {
             Activator.getLogger().error("Declining inline chat results failed with: " + e.getMessage(), e);
         }

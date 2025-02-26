@@ -12,7 +12,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
+import org.eclipse.text.undo.IDocumentUndoListener;
 import org.eclipse.text.undo.IDocumentUndoManager;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
@@ -79,6 +81,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
 	private ITextEditor editor = null;
     private ITextViewer viewer = null;
     private IDocumentUndoManager undoManager;
+    private IDocumentUndoListener undoListener;
     private IDocument document;
     private boolean isCompoundChange = false;
 	private final int MAX_INPUT_LENGTH = 128;
@@ -142,7 +145,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         return currentState;
     }
     
-    public void initUndoManager() {
+    public void initUndoManager(IDocument document) {
         try {
             undoManager.disconnect(document);
         } catch (Exception e) {
@@ -151,6 +154,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         undoManager.connect(document);
         undoManager.beginCompoundChange();
         isCompoundChange = true;
+        setupUndoDetection(document);
     }
 
     public boolean startSession(final ITextEditor editor) {
@@ -178,7 +182,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         	this.lastUpdateTime = System.currentTimeMillis();
         	this.executor = Executors.newSingleThreadScheduledExecutor();
         	
-        	initUndoManager();
+        	initUndoManager(this.document);
 
         	this.ANNOTATION_ADDED = "diffAnnotation.added";
         	this.ANNOTATION_DELETED = "diffAnnotation.deleted";
@@ -510,7 +514,7 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
     
     private void showPrompt(String promptText, int selectionOffset) {
         closePrompt();
-        Display.getDefault().syncExec(() -> {
+        Display.getDefault().asyncExec(() -> {
             var widget = viewer.getTextWidget();
             
             promptShell = new Shell(Display.getDefault().getActiveShell(), SWT.TOOL | SWT.NO_TRIM);
@@ -697,6 +701,9 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         try {
             if (isCompoundChange) {
                 if (undoManager != null) {
+                    if (undoListener != null) {
+                        undoManager.removeDocumentUndoListener(undoListener);
+                    }
                     undoManager.endCompoundChange();
                     if (shouldRestoreState) {
                         undoManager.undo();
@@ -707,6 +714,25 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error cleaning up document state: " + e.getMessage(), e);
+        }
+    }
+    
+    // Ensure that undo operation ends session correctly 
+    private void setupUndoDetection(IDocument document) {
+        if (undoManager != null) {
+            undoListener = new IDocumentUndoListener() {
+                @Override
+                public void documentUndoNotification(DocumentUndoEvent event) {
+                    if (event.getEventType() == 17 && isSessionActive()) {
+                        Activator.getLogger().info("Undo request being processed!");
+                        if (isGenerating() || isDeciding()) {
+                            closePrompt();
+                            endSession();
+                        }
+                    }
+                }
+            };
+            undoManager.addDocumentUndoListener(undoListener);
         }
     }
 
@@ -729,10 +755,12 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
         this.viewer = null;
         this.document = null;
         this.undoManager = null;
+        this.undoListener = null;
         this.lastUpdateTime = 0;
         this.previousDisplayLength = 0;
         this.originalSelectionStart = 0;
     }
+
     private String unescapeChatResult(String s) {
         if (s == null || s.isEmpty()) {
             return s;

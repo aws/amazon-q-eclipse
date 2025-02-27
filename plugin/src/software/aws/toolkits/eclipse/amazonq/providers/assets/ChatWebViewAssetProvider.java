@@ -102,7 +102,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     }
 
     @Override
-    protected Optional<String> getContent() {
+    public Optional<String> getContent() {
         Optional<String> content = resolveContent();
         Activator.getEventBroker().post(ChatWebViewAssetState.class,
                 content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);

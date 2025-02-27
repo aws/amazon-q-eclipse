@@ -11,7 +11,7 @@ public abstract class WebViewAssetProvider {
 
     public abstract void injectAssets(final Browser browser);
 
-    protected abstract Optional<String> getContent();
+    public abstract Optional<String> getContent();
 
     public abstract void dispose();
 

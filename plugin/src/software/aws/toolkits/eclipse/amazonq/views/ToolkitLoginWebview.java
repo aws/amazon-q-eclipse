@@ -24,7 +24,8 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     public ToolkitLoginWebview() {
         super();
-        this.webViewAssetProvider = new ToolkitLoginWebViewAssetProvider();
+        webViewAssetProvider = new ToolkitLoginWebViewAssetProvider();
+        webViewAssetProvider.getContent();
     }
 
     @Override

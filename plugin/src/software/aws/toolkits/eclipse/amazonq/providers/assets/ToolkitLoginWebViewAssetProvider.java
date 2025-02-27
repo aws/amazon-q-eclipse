@@ -13,9 +13,6 @@ import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
-import org.eclipse.swt.browser.ProgressAdapter;
-import org.eclipse.swt.browser.ProgressEvent;
-import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
@@ -42,18 +39,6 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
 
     @Override
     public void injectAssets(final Browser browser) {
-        browser.setVisible(false);
-        browser.addProgressListener(new ProgressAdapter() {
-            @Override
-            public void completed(final ProgressEvent event) {
-                Display.getDefault().asyncExec(() -> {
-                    if (!browser.isDisposed()) {
-                        browser.setVisible(true);
-                    }
-                });
-            }
-        });
-
         new BrowserFunction(browser, ViewConstants.COMMAND_FUNCTION_NAME) {
             @Override
             public Object function(final Object[] arguments) {

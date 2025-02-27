@@ -20,8 +20,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     private final WebViewAssetProvider webViewAssetProvider;
 
-    private boolean isViewVisible = false;
-
     public ToolkitLoginWebview() {
         super();
         webViewAssetProvider = new ToolkitLoginWebViewAssetProvider();

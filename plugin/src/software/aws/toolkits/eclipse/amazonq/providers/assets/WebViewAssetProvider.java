@@ -9,7 +9,7 @@ import org.eclipse.swt.browser.Browser;
 
 public abstract class WebViewAssetProvider {
 
-    public abstract void injectAssets(final Browser browser);
+    public abstract void injectAssets(Browser browser);
 
     public abstract Optional<String> getContent();
 

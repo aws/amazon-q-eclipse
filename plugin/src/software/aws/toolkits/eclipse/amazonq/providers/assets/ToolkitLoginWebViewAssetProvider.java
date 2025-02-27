@@ -61,7 +61,7 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     }
 
     @Override
-    protected Optional<String> getContent() {
+    public Optional<String> getContent() {
         Optional<String> content = resolveContent();
         Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
                 content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED

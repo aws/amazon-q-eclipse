@@ -19,6 +19,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
@@ -69,6 +70,8 @@ public class LspStartupActivity implements IStartup {
 
         updateCheckJob.setPriority(Job.DECORATE);
         updateCheckJob.schedule();
+
+        new AmazonQBrowserProvider().publishBrowserCompatibilityState();
     }
 
     private void launchWebview() {

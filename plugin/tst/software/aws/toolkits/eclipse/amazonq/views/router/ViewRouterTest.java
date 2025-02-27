@@ -19,20 +19,21 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
+import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
-import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetState;
-import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetState;
-import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 public final class ViewRouterTest {
 
     private PublishSubject<Object> publishSubject;
 
     private Observable<AuthState> authStateObservable;
-    private Observable<LspState> lspStateObservable;
+    private Observable<AmazonQLspState> lspStateObservable;
     private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
     private Observable<ChatWebViewAssetState> chatWebViewAssetStateObservable;
     private Observable<ToolkitLoginWebViewAssetState> toolkitLoginWebViewAssetStateObservable;
@@ -51,7 +52,7 @@ public final class ViewRouterTest {
         publishSubject = PublishSubject.create();
 
         authStateObservable = publishSubject.ofType(AuthState.class);
-        lspStateObservable = publishSubject.ofType(LspState.class);
+        lspStateObservable = publishSubject.ofType(AmazonQLspState.class);
         browserCompatibilityStateObservable = publishSubject.ofType(BrowserCompatibilityState.class);
         chatWebViewAssetStateObservable = publishSubject.ofType(ChatWebViewAssetState.class);
         toolkitLoginWebViewAssetStateObservable = publishSubject.ofType(ToolkitLoginWebViewAssetState.class);
@@ -72,7 +73,7 @@ public final class ViewRouterTest {
 
     @ParameterizedTest
     @MethodSource("provideStateSource")
-    void testActiveViewResolutionBasedOnPluginState(final LspState lspState, final AuthState authState,
+    void testActiveViewResolutionBasedOnPluginState(final AmazonQLspState lspState, final AuthState authState,
             final BrowserCompatibilityState browserCompatibilityState,
             final ChatWebViewAssetState chatWebViewAssetState,
             final ToolkitLoginWebViewAssetState toolkitLoginWebViewAssetState,
@@ -88,37 +89,37 @@ public final class ViewRouterTest {
 
     private static Stream<Arguments> provideStateSource() {
         return Stream.of(
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
+                Arguments.of(AmazonQLspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
                         BrowserCompatibilityState.DEPENDENCY_MISSING, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.DEPENDENCY_MISSING_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
+                Arguments.of(AmazonQLspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.DEPENDENCY_MISSING,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.CHAT_ASSET_MISSING_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
+                Arguments.of(AmazonQLspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING, AmazonQViewType.CHAT_ASSET_MISSING_VIEW),
-                Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_IN),
+                Arguments.of(AmazonQLspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_IN),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
-                Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_OUT),
+                Arguments.of(AmazonQLspState.FAILED, getAuthStateObject(AuthStateType.LOGGED_OUT),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
-                Arguments.of(LspState.FAILED, getAuthStateObject(AuthStateType.EXPIRED),
+                Arguments.of(AmazonQLspState.FAILED, getAuthStateObject(AuthStateType.EXPIRED),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.LSP_STARTUP_FAILED_VIEW),
-                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.LOGGED_OUT),
+                Arguments.of(AmazonQLspState.PENDING, getAuthStateObject(AuthStateType.LOGGED_OUT),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.TOOLKIT_LOGIN_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_OUT),
+                Arguments.of(AmazonQLspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_OUT),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.TOOLKIT_LOGIN_VIEW),
-                Arguments.of(LspState.PENDING, getAuthStateObject(AuthStateType.EXPIRED),
+                Arguments.of(AmazonQLspState.PENDING, getAuthStateObject(AuthStateType.EXPIRED),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.RE_AUTHENTICATE_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.EXPIRED),
+                Arguments.of(AmazonQLspState.ACTIVE, getAuthStateObject(AuthStateType.EXPIRED),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.RE_AUTHENTICATE_VIEW),
-                Arguments.of(LspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
+                Arguments.of(AmazonQLspState.ACTIVE, getAuthStateObject(AuthStateType.LOGGED_IN),
                         BrowserCompatibilityState.COMPATIBLE, ChatWebViewAssetState.RESOLVED,
                         ToolkitLoginWebViewAssetState.RESOLVED, AmazonQViewType.CHAT_VIEW));
     }

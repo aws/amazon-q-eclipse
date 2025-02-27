@@ -3,14 +3,24 @@
 
 package software.aws.toolkits.eclipse.amazonq.providers.assets;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.BrowserFunction;
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
+import org.eclipse.swt.widgets.Display;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
@@ -19,11 +29,77 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
+import software.aws.toolkits.eclipse.amazonq.views.AmazonQChatViewActionHandler;
+import software.aws.toolkits.eclipse.amazonq.views.LoginViewCommandParser;
+import software.aws.toolkits.eclipse.amazonq.views.ViewActionHandler;
+import software.aws.toolkits.eclipse.amazonq.views.ViewCommandParser;
 
 public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private WebviewAssetServer webviewAssetServer;
+    private final ChatTheme chatTheme;
+    private final ViewCommandParser commandParser;
+    private final ViewActionHandler actionHandler;
+    private final ChatCommunicationManager chatCommunicationManager;
+
+    public ChatWebViewAssetProvider() {
+        chatTheme = new ChatTheme();
+        commandParser = new LoginViewCommandParser();
+        chatCommunicationManager = ChatCommunicationManager.getInstance();
+        actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
+    }
+
+    @Override
+    public void injectAssets(final Browser browser) {
+        new BrowserFunction(browser, "ideCommand") {
+            @Override
+            public Object function(final Object[] arguments) {
+                ThreadingUtils.executeAsyncTask(() -> {
+                    handleMessageFromUI(browser, arguments);
+                });
+                return null;
+            }
+        };
+
+        new BrowserFunction(browser, "isMacOs") {
+            @Override
+            public Object function(final Object[] arguments) {
+                return Boolean.TRUE.equals(PluginUtils.getPlatform() == PluginPlatform.MAC);
+            }
+        };
+
+        new BrowserFunction(browser, "copyToClipboard") {
+            @Override
+            public Object function(final Object[] arguments) {
+                if (arguments.length > 0 && arguments[0] instanceof String) {
+                    StringSelection stringSelection = new StringSelection((String) arguments[0]);
+                    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                }
+                return null;
+            }
+        };
+
+        // Inject chat theme after mynah-ui has loaded
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(final ProgressEvent event) {
+                Display.getDefault().syncExec(() -> {
+                    try {
+                        chatTheme.injectTheme(browser);
+                        disableBrowserContextMenu(browser);
+                    } catch (Exception e) {
+                        Activator.getLogger().info("Error occurred while injecting theme into Q chat", e);
+                    }
+                });
+            }
+        });
+
+        browser.setText(getContent().get());
+    }
 
     @Override
     public Optional<String> getContent() {
@@ -295,6 +371,15 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
         } catch (Exception e) {
             Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
             return "";
+        }
+    }
+
+    private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
+        try {
+            commandParser.parseCommand(arguments)
+                    .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+        } catch (Exception e) {
+            Activator.getLogger().error("Error processing message from Amazon Q chat", e);
         }
     }
 

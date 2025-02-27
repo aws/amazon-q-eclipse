@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
@@ -102,7 +103,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     }
 
     @Override
-    public Optional<String> getContent() {
+    protected Optional<String> getContent() {
         Optional<String> content = resolveContent();
         Activator.getEventBroker().post(ChatWebViewAssetState.class,
                 content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);

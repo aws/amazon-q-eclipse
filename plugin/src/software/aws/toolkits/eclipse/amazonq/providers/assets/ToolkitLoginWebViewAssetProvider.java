@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
+import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -60,7 +61,7 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     }
 
     @Override
-    public Optional<String> getContent() {
+    protected Optional<String> getContent() {
         Optional<String> content = resolveContent();
         Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
                 content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED

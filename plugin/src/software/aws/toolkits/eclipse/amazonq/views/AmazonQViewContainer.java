@@ -16,8 +16,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.views.router.AmazonQViewType;
 
 
 public final class AmazonQViewContainer extends ViewPart implements EventObserver<AmazonQViewType> {

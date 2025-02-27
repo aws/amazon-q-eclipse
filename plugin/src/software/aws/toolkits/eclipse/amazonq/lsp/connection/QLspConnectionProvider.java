@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -43,7 +43,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             commands.add("--set-credentials-encryption-key");
             setCommands(commands);
         } catch (Exception e) {
-            Activator.getEventBroker().post(LspState.class, LspState.FAILED);
+            Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.FAILED);
             throw(e);
         }
 
@@ -78,12 +78,12 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
                 lspEncryption.initializeEncryptedCommunication(serverStdIn);
             } catch (Exception e) {
-                Activator.getEventBroker().post(LspState.class, LspState.FAILED);
+                Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.FAILED);
                 emitInitFailure(ExceptionMetadata.scrubException(e));
                 Activator.getLogger().error("Error occured while initializing communication with Amazon Q Lsp Server", e);
             }
         } catch (Exception e) {
-            Activator.getEventBroker().post(LspState.class, LspState.FAILED);
+            Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.FAILED);
             emitInitFailure(ExceptionMetadata.scrubException(e));
             throw e;
         }

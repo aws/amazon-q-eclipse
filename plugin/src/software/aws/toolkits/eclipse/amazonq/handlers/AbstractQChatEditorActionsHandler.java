@@ -12,13 +12,13 @@ import org.eclipse.swt.widgets.Display;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.TriggerType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
@@ -29,14 +29,14 @@ import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler {
 
     private final Observable<AuthState> authStateObservable;
-    private final Observable<LspState> lspStateObservable;
+    private final Observable<AmazonQLspState> lspStateObservable;
 
-    private record PluginState(AuthState authState, LspState lspState) {
+    private record PluginState(AuthState authState, AmazonQLspState lspState) {
     }
 
     public AbstractQChatEditorActionsHandler() {
         authStateObservable = Activator.getEventBroker().ofObservable(AuthState.class);
-        lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
+        lspStateObservable = Activator.getEventBroker().ofObservable(AmazonQLspState.class);
     }
 
     public final PluginState getState() {
@@ -48,7 +48,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
     public final boolean isEnabled() {
         try {
             PluginState pluginState = getState();
-            return pluginState.authState.isLoggedIn() && !(pluginState.lspState == LspState.FAILED);
+            return pluginState.authState.isLoggedIn() && !(pluginState.lspState == AmazonQLspState.FAILED);
         } catch (Exception e) {
             return false;
         }

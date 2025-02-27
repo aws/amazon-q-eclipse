@@ -6,12 +6,14 @@ package software.aws.toolkits.eclipse.amazonq.views.router;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
+import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ViewRouterPluginState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetState;
-import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetState;
-import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 /**
  * Routes to appropriate views based on the plugin's combined state by evaluating conditions in priority order:
@@ -23,7 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibil
  * Observes changes in all states and automatically updates the active view when any state changes.
  * Broadcasts view transitions through the event broker system.
  */
-public final class ViewRouter implements EventObserver<PluginState> {
+public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
 
     private AmazonQViewType activeView;
 
@@ -43,7 +45,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
         }
 
         if (builder.lspStateObservable == null) {
-            builder.lspStateObservable = Activator.getEventBroker().ofObservable(LspState.class);
+            builder.lspStateObservable = Activator.getEventBroker().ofObservable(AmazonQLspState.class);
         }
 
         if (builder.browserCompatibilityStateObservable == null) {
@@ -68,7 +70,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
          */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
                 builder.browserCompatibilityStateObservable, builder.chatWebViewAssetStateObservable,
-                builder.toolkitLoginWebViewAssetStateObservable, PluginState::new)
+                builder.toolkitLoginWebViewAssetStateObservable, ViewRouterPluginState::new)
                 .observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }
 
@@ -82,7 +84,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
      * @param pluginState Current combined state of the plugin
      */
     @Override
-    public void onEvent(final PluginState pluginState) {
+    public void onEvent(final ViewRouterPluginState pluginState) {
         refreshActiveView(pluginState);
     }
 
@@ -98,12 +100,12 @@ public final class ViewRouter implements EventObserver<PluginState> {
      *
      * @param pluginState Current combined state of the plugin
      */
-    private void refreshActiveView(final PluginState pluginState) {
+    private void refreshActiveView(final ViewRouterPluginState pluginState) {
         AmazonQViewType newActiveView;
 
         if (pluginState.browserCompatibilityState() == BrowserCompatibilityState.DEPENDENCY_MISSING) {
             newActiveView = AmazonQViewType.DEPENDENCY_MISSING_VIEW;
-        } else if (pluginState.lspState() == LspState.FAILED) {
+        } else if (pluginState.lspState() == AmazonQLspState.FAILED) {
             newActiveView = AmazonQViewType.LSP_STARTUP_FAILED_VIEW;
         } else if (pluginState.chatWebViewAssetState() == ChatWebViewAssetState.DEPENDENCY_MISSING
                 || pluginState.toolkitLoginWebViewAssetState() == ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING) {
@@ -142,7 +144,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
     public static final class Builder {
 
         private Observable<AuthState> authStateObservable;
-        private Observable<LspState> lspStateObservable;
+        private Observable<AmazonQLspState> lspStateObservable;
         private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
         private Observable<ChatWebViewAssetState> chatWebViewAssetStateObservable;
         private Observable<ToolkitLoginWebViewAssetState> toolkitLoginWebViewAssetStateObservable;
@@ -152,7 +154,7 @@ public final class ViewRouter implements EventObserver<PluginState> {
             return this;
         }
 
-        public Builder withLspStateObservable(final Observable<LspState> lspStateObservable) {
+        public Builder withLspStateObservable(final Observable<AmazonQLspState> lspStateObservable) {
             this.lspStateObservable = lspStateObservable;
             return this;
         }

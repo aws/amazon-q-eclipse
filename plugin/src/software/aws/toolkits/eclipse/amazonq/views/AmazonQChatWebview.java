@@ -79,8 +79,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         addFocusListener(parent, browser);
         setupAmazonQCommonActions();
 
-        setupAmazonQCommonActions();
-
         return parent;
     }
 
@@ -108,7 +106,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
         }
-        webViewAssetProvider.dispose();
         super.dispose();
     }
 }

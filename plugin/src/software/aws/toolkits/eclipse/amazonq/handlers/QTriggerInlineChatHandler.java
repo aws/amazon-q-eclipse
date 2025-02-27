@@ -7,10 +7,10 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.swt.widgets.Display;
 
+import software.aws.toolkits.eclipse.amazonq.inlineChat.QInlineChatSession;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
-import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession;
 
 public class QTriggerInlineChatHandler extends AbstractHandler {
 

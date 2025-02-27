@@ -547,7 +547,6 @@ public final class QInlineChatSession implements KeyListener, ChatUiRequestListe
                         .sorted((a, b) -> Integer.compare(b.offset, a.offset)) // Sort in reverse order
                         .collect(Collectors.toList());
 
-                undoManager.beginCompoundChange();
                 for (TextDiff diff : diffsToRemove) {
                     int lineNumber = document.getLineOfOffset(diff.offset);
                     int lineStart = document.getLineOffset(lineNumber);

@@ -6,8 +6,8 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.contexts.IContextService;
 
+import software.aws.toolkits.eclipse.amazonq.inlineChat.QInlineChatSession;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.views.QInlineChatSession;
 
 public class QRejectInlineChatHandler extends AbstractHandler {
     private final String INLINE_CONTEXT_ID = "org.eclipse.ui.inlineChatContext";

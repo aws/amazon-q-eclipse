@@ -3,7 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
@@ -35,6 +38,18 @@ public final class ToolkitLoginWebview extends AmazonQView {
             return parent;
         }
         var browser = getBrowser();
+
+        browser.setVisible(false);
+        browser.addProgressListener(new ProgressAdapter() {
+            @Override
+            public void completed(final ProgressEvent event) {
+                Display.getDefault().asyncExec(() -> {
+                    if (!browser.isDisposed()) {
+                        browser.setVisible(true);
+                    }
+                });
+            }
+        });
 
         webViewAssetProvider.injectAssets(browser);
         addFocusListener(parent, browser);

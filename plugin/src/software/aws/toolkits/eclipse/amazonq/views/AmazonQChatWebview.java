@@ -4,7 +4,10 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.ProgressAdapter;
+import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
@@ -46,6 +49,19 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             }
 
             browser = getAndUpdateStateManager();
+
+            browser.setVisible(false);
+            browser.addProgressListener(new ProgressAdapter() {
+                @Override
+                public void completed(final ProgressEvent event) {
+                    Display.getDefault().asyncExec(() -> {
+                        if (!browser.isDisposed()) {
+                            browser.setVisible(true);
+                        }
+                    });
+                }
+            });
+
             webViewAssetProvider.injectAssets(browser);
         } else {
             updateBrowser(browser);

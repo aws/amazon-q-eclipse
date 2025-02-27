@@ -99,19 +99,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
             }
         });
 
-        browser.setVisible(false);
-        browser.addProgressListener(new ProgressAdapter() {
-            @Override
-            public void completed(final ProgressEvent event) {
-                Display.getDefault().asyncExec(() -> {
-                    if (!browser.isDisposed()) {
-                        browser.setVisible(true);
-                    }
-                });
-            }
-        });
-
-       browser.setText(getContent().get());
+        browser.setText(getContent().get());
     }
 
     @Override

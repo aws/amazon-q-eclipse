@@ -25,21 +25,37 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
 public class InlineChatUIManager {
+
+    // State variables
+    private static InlineChatUIManager instance;
+    private InlineChatTask task;
+
+    // UI elements
     private PopupDialog inputBox;
     private Shell promptShell;
-    private final ITextViewer viewer;
+    private ITextViewer viewer;
     private final int MAX_INPUT_LENGTH = 128;
-    private final InlineChatTask task;
     private final String GENERATING_MESSAGE = "Amazon Q is generating...";
     private final String DECIDING_MESSAGE = "Accept (Tab) | Reject (Esc)";
 
-    public InlineChatUIManager(final InlineChatTask task) {
+    private InlineChatUIManager() {
+        //
+    }
+
+    public static InlineChatUIManager getInstance() {
+        if (instance == null) {
+            instance = new InlineChatUIManager();
+        }
+        return instance;
+    }
+
+    public void initNewTask(final InlineChatTask task) {
         this.task = task;
         this.viewer = task.getEditor().getAdapter(ITextViewer.class);
     }
 
-    public CompletableFuture<InlineChatTask> showUserInputPrompt() {
-        CompletableFuture<InlineChatTask> future = new CompletableFuture<>();
+    public CompletableFuture<Void> showUserInputPrompt() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
         Display.getDefault().syncExec(() -> {
             if (inputBox != null) {
                 inputBox.close();
@@ -128,7 +144,7 @@ public class InlineChatUIManager {
                                     var cursorState = getSelectionRangeCursorState().get();
                                     task.setCursorState(cursorState);
                                     task.setPrompt(userInput);
-                                    future.complete(task);
+                                    future.complete(null);
                                     inputBox.close();
                                 }
                             }
@@ -195,6 +211,7 @@ public class InlineChatUIManager {
 
     void cleanupState() {
         closePrompt();
+        task = null;
     }
 
     private boolean userInputIsValid(final String input) {

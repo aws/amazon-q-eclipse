@@ -35,6 +35,7 @@ public class InlineChatSession implements ChatUiRequestListener {
     private SessionState currentState = SessionState.INACTIVE;
     private final Object stateLock = new Object();
     private InlineChatTask task;
+    private String sessionTabId;
 
     // Dependencies
     private InlineChatUIManager uiManager;
@@ -56,7 +57,7 @@ public class InlineChatSession implements ChatUiRequestListener {
 
     private InlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
-        chatCommunicationManager.setChatUiRequestListener(this);
+        chatCommunicationManager.setInlineChatRequestListener(this);
         themeDetector = new ThemeDetector();
         contextService = PlatformUI.getWorkbench().getService(IContextService.class);
     }
@@ -79,6 +80,9 @@ public class InlineChatSession implements ChatUiRequestListener {
 
             // Get the context service and activate inline chat context used for button
             contextActivation = contextService.activateContext(CONTEXT_ID);
+
+            sessionTabId = UUID.randomUUID().toString();
+            chatCommunicationManager.updateInlineChatTabId(sessionTabId);
 
             // Set up undoManager to batch document edits together
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
@@ -121,16 +125,8 @@ public class InlineChatSession implements ChatUiRequestListener {
 
             // If result exists -> user submitted prompt
             if (result != null) {
-                var prompt = result.getPrompt();
-                var cursorState = result.getCursorState();
                 task = result;
-
-                var chatPrompt = new ChatPrompt(prompt, prompt, "");
-                var filePath = "C:\\Users\\somerandomusername\\Desktop\\lsp.txt";
-                var id = UUID.randomUUID().toString();
-                params = new ChatRequestParams(id, chatPrompt, new TextDocumentIdentifier(filePath), Arrays.asList(cursorState));
-
-                chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
+                sendInlineChatRequest(result);
                 uiManager.transitionToGeneratingPrompt();
                 setState(SessionState.GENERATING);
             } else {
@@ -191,6 +187,14 @@ public class InlineChatSession implements ChatUiRequestListener {
         });
     }
 
+    private void sendInlineChatRequest(final InlineChatTask task) {
+        var prompt = task.getPrompt();
+        var chatPrompt = new ChatPrompt(prompt, prompt, "");
+        var filePath = "C:\\Users\\somerandomusername\\Desktop\\willBeReplaced.txt";
+        params = new ChatRequestParams(sessionTabId, chatPrompt, new TextDocumentIdentifier(filePath), Arrays.asList(task.getCursorState()));
+        chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
+    }
+
     private void endSession() {
         cleanupDocumentState(false);
         cleanupContext();
@@ -202,7 +206,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         Activator.getLogger().info("SESSION ENDED!");
     }
 
-    public synchronized void restoreAndEndSession() {
+    private synchronized void restoreAndEndSession() {
         try {
             restoreState();
         } catch (Exception e) {
@@ -229,7 +233,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         });
     }
 
-    public void initUndoManager(final IDocument document) {
+    private void initUndoManager(final IDocument document) {
         try {
             undoManager.disconnect(document);
         } catch (Exception e) {
@@ -297,6 +301,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         this.uiManager = null;
         this.diffManager = null;
         this.task = null;
+        this.sessionTabId = null;
     }
 
     private void cleanupContext() {

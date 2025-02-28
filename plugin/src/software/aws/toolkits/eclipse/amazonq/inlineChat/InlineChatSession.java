@@ -21,7 +21,9 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -33,6 +35,7 @@ public class InlineChatSession implements ChatUiRequestListener {
     private SessionState currentState = SessionState.INACTIVE;
     private final Object stateLock = new Object();
     private InlineChatTask task;
+    boolean referencesEnabled;
 
     // Dependencies
     private final InlineChatUIManager uiManager;
@@ -82,6 +85,10 @@ public class InlineChatSession implements ChatUiRequestListener {
             // Set up undoManager to batch document edits together
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
             this.undoManager = DocumentUndoManagerRegistry.getDocumentUndoManager(this.document);
+
+            // Check if user has code references enabled
+            this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
+                    && Activator.getLoginService().getAuthState().loginType().equals(LoginType.BUILDER_ID);
             initUndoManager(this.document);
 
             // Create InlineChatTask to unify context between managers
@@ -132,6 +139,9 @@ public class InlineChatSession implements ChatUiRequestListener {
     // Chat server response handler
     @Override
     public void onSendToChatUi(final String message) {
+        if (!isSessionActive()) {
+            return;
+        }
         try {
             // Deserialize object
             ObjectMapper mapper = ObjectMapperFactory.getInstance();
@@ -141,11 +151,21 @@ public class InlineChatSession implements ChatUiRequestListener {
             // Check and pass through error message if server returns exception
             if (rootNode.has("commandName") && "errorMessage".equals(rootNode.get("commandName").asText())) {
                 String errorMessage = (paramsNode != null && paramsNode.has("message")) ? paramsNode.get("message").asText() : "Unknown error occurred";
-                throw new RuntimeException("Error returned by server: " + errorMessage);
+                Activator.getLogger().error("Chat server responded with error: " + errorMessage);
+                restoreAndEndSession();
+                return;
             }
 
             var isPartialResult = rootNode.get("isPartialResult").asBoolean();
             var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
+
+            // TODO: validate JSON structure matches path to codeReferences used here
+            var codeReferences = rootNode.get("codeReferences");
+            if (codeReferences != null && codeReferences.isArray() && codeReferences.size() > 0) {
+                if (!this.referencesEnabled) {
+                    restoreAndEndSession();
+                }
+            }
 
             // Render diffs and move to deciding once we receive final result
             diffManager.processDiff(chatResult, isPartialResult).thenRun(() -> {

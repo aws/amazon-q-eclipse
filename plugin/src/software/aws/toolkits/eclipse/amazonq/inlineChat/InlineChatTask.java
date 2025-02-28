@@ -16,10 +16,9 @@ public class InlineChatTask {
     private final String tabId;
     private final int offset;
 
+    // Use atomics for thread-safe mutable states
     private final AtomicReference<String> prompt = new AtomicReference<>(null);
     private final AtomicReference<CursorState> cursorState = new AtomicReference<>(null);
-
-    // Use atomic and concurrent collections for thread-safe state
     private final AtomicReference<String> previousPartialResponse = new AtomicReference<>();
     private final AtomicInteger previousDisplayLength;
     private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
@@ -34,7 +33,6 @@ public class InlineChatTask {
         this.lastUpdateTime = new AtomicLong(System.currentTimeMillis());
     }
 
-    // Thread-safe operations
     public ScheduledFuture<?> getPendingUpdate() {
         return pendingUpdate.get();
     }

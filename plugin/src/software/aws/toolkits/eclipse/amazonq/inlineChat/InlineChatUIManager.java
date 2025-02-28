@@ -39,7 +39,7 @@ public class InlineChatUIManager {
     private final String DECIDING_MESSAGE = "Accept (Tab) | Reject (Esc)";
 
     private InlineChatUIManager() {
-        //
+        // Prevent instantiation
     }
 
     public static InlineChatUIManager getInstance() {

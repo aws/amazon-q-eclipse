@@ -34,21 +34,21 @@ public class InlineChatDiffManager {
 
     // Batching variables
     private ScheduledExecutorService executor;
-    private static final int BATCH_DELAY_MS = 200;
+    private static final int BATCH_DELAY_MS = 100;
     private InlineChatTask task;
 
     private InlineChatDiffManager() {
         themeDetector = new ThemeDetector();
     }
 
-    public static InlineChatDiffManager getInstance() {
+    static InlineChatDiffManager getInstance() {
         if (instance == null) {
             instance = new InlineChatDiffManager();
         }
         return instance;
     }
 
-    public void initNewTask(final InlineChatTask task) {
+    void initNewTask(final InlineChatTask task) {
         this.task = task;
         this.currentDiffs = new ArrayList<>();
         this.executor = Executors.newSingleThreadScheduledExecutor();
@@ -184,7 +184,6 @@ public class InlineChatDiffManager {
         for (TextDiff diff : currentDiffs) {
             Position position = new Position(diff.offset(), diff.length());
             String annotationType = diff.isDeletion() ? ANNOTATION_DELETED : ANNOTATION_ADDED;
-            Activator.getLogger().info("ANNOTATING WITH: " + annotationType);
             String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
             annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
         }

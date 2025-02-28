@@ -178,7 +178,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
         try {
             commandParser.parseCommand(arguments)
-                    .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
+            .ifPresent(parsedCommand -> actionHandler.handleCommand(parsedCommand, browser));
         } catch (Exception e) {
             Activator.getLogger().error("Error processing message from Amazon Q chat", e);
         }
@@ -459,7 +459,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void dispose() {
-        chatCommunicationManager.removeListener();
+        chatCommunicationManager.removeListener(this);
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
         }

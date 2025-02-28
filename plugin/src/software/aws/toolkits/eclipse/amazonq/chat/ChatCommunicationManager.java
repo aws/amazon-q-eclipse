@@ -53,6 +53,8 @@ public final class ChatCommunicationManager {
     private final ChatPartialResultMap chatPartialResultMap;
     private final LspEncryptionManager lspEncryptionManager;
     private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
+    private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
+    private String inlineChatTabId;
 
     private ChatCommunicationManager(final Builder builder) {
         this.jsonHandler = builder.jsonHandler != null ? builder.jsonHandler : new JsonHandler();
@@ -63,6 +65,7 @@ public final class ChatCommunicationManager {
         this.lspEncryptionManager = builder.lspEncryptionManager != null ? builder.lspEncryptionManager
                 : DefaultLspEncryptionManager.getInstance();
         chatUiRequestListenerFuture = new CompletableFuture<>();
+        inlineChatListenerFuture = new CompletableFuture<>();
     }
 
     public static Builder builder() {
@@ -231,11 +234,30 @@ public final class ChatCommunicationManager {
     }
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
-        chatUiRequestListenerFuture.complete(listener);
+        if (listener != null) {
+            chatUiRequestListenerFuture.complete(listener);
+        }
     }
 
-    public void removeListener() {
-        chatUiRequestListenerFuture = new CompletableFuture<>();
+    public void setInlineChatRequestListener(final ChatUiRequestListener listener) {
+        if (listener != null) {
+            inlineChatListenerFuture.complete(listener);
+        }
+    }
+
+    public void updateInlineChatTabId(final String newTabId) {
+        if (newTabId != null) {
+            this.inlineChatTabId = newTabId;
+        }
+    }
+
+    public void removeListener(final ChatUiRequestListener listener) {
+        if (chatUiRequestListenerFuture.isDone() && listener == chatUiRequestListenerFuture.join()) {
+            chatUiRequestListenerFuture = new CompletableFuture<>();
+        } else if (inlineChatListenerFuture.isDone() && listener == inlineChatListenerFuture.join()) {
+            inlineChatListenerFuture = new CompletableFuture<>();
+            inlineChatTabId = null; // Don't forget to clear the tabId
+        }
     }
 
     /*
@@ -243,10 +265,18 @@ public final class ChatCommunicationManager {
      */
     public void sendMessageToChatUI(final ChatUIInboundCommand command) {
         String message = jsonHandler.serialize(command);
-        chatUiRequestListenerFuture.thenApply(listener -> {
-            listener.onSendToChatUi(message);
-            return listener;
-        });
+        String targetTabId = command.tabId();
+        if (targetTabId.equals(inlineChatTabId)) {
+            inlineChatListenerFuture.thenApply(listener -> {
+                listener.onSendToChatUi(message);
+                return listener;
+            });
+        } else {
+            chatUiRequestListenerFuture.thenApply(listener -> {
+                listener.onSendToChatUi(message);
+                return listener;
+            });
+        }
     }
 
     /*

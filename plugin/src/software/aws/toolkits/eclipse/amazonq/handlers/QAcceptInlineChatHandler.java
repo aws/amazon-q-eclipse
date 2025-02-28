@@ -6,7 +6,7 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.contexts.IContextService;
 
-import software.aws.toolkits.eclipse.amazonq.inlineChat.QInlineChatSession;
+import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatSession;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public class QAcceptInlineChatHandler extends AbstractHandler {
@@ -17,13 +17,13 @@ public class QAcceptInlineChatHandler extends AbstractHandler {
         IContextService contextService = PlatformUI.getWorkbench().getService(IContextService.class);
         var activeContexts = contextService.getActiveContextIds();
 
-        return activeContexts.contains(INLINE_CONTEXT_ID) && QInlineChatSession.getInstance().isDeciding();
+        return activeContexts.contains(INLINE_CONTEXT_ID) && InlineChatSession.getInstance().isDeciding();
     }
 
     @Override
     public final synchronized Object execute(final ExecutionEvent event) throws ExecutionException {
         try {
-            QInlineChatSession.getInstance().handleDecision(true);
+            InlineChatSession.getInstance().handleDecision(true);
         } catch (Exception e) {
             Activator.getLogger().error("Accepting inline chat results failed with: " + e.getMessage(), e);
         }

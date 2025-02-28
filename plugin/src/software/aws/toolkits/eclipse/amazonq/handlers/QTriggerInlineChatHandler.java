@@ -7,7 +7,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.swt.widgets.Display;
 
-import software.aws.toolkits.eclipse.amazonq.inlineChat.QInlineChatSession;
+import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatSession;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -26,8 +26,8 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
             return null;
         }
 
-        if (QInlineChatSession.getInstance().isSessionActive()) {
-            if (QInlineChatSession.getInstance().isDeciding() || QInlineChatSession.getInstance().isGenerating()) {
+        if (InlineChatSession.getInstance().isSessionActive()) {
+            if (InlineChatSession.getInstance().isDeciding() || InlineChatSession.getInstance().isGenerating()) {
                 showErrorNotification();
             }
             Activator.getLogger().info("Inline Chat triggered with existing session active. Returning.");
@@ -37,7 +37,7 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
         boolean newSession = false;
         try {
             Activator.getLogger().info("INLINE CHAT TRIGGERED!");
-            newSession = QInlineChatSession.getInstance().startSession(editor);
+            newSession = InlineChatSession.getInstance().startSession(editor);
         } catch (Exception e) {
             Activator.getLogger().error("Session start interrupted", e);
         }

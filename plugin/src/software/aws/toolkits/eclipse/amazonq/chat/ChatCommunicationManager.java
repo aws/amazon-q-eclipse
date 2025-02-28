@@ -266,7 +266,7 @@ public final class ChatCommunicationManager {
     public void sendMessageToChatUI(final ChatUIInboundCommand command) {
         String message = jsonHandler.serialize(command);
         String targetTabId = command.tabId();
-        if (targetTabId.equals(inlineChatTabId)) {
+        if (targetTabId != null && targetTabId.equals(inlineChatTabId)) {
             inlineChatListenerFuture.thenApply(listener -> {
                 listener.onSendToChatUi(message);
                 return listener;

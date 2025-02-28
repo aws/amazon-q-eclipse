@@ -15,7 +15,6 @@ import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
@@ -23,74 +22,66 @@ import com.github.difflib.patch.Patch;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
 public class InlineChatDiffManager {
 
-    private record TextDiff(int offset, int length, boolean isDeletion) {
-    }
-
-    // Diff generation and rendering variables
-    private String previousPartialResponse = null;
-    private final String originalCode;
-    private final int offset;
-    private int previousDisplayLength;
-    private final List<TextDiff> currentDiffs;
+    private static InlineChatDiffManager instance;
     private String ANNOTATION_ADDED;
     private String ANNOTATION_DELETED;
-    private final ITextEditor editor;
+    private final ThemeDetector themeDetector;
+    private List<TextDiff> currentDiffs;
 
     // Batching variables
-    private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> pendingUpdate;
+    private ScheduledExecutorService executor;
     private static final int BATCH_DELAY_MS = 200;
-    private volatile long lastUpdateTime;
+    private InlineChatTask task;
 
-    public InlineChatDiffManager(final InlineChatTask task, final boolean isDarkTheme) {
-        this.originalCode = task.getOriginalCode();
-        this.currentDiffs = new ArrayList<>();
-        this.previousDisplayLength = task.getOriginalCode().length();
-        this.offset = task.getOffset();
-        this.editor = task.getEditor();
-        this.executor = Executors.newSingleThreadScheduledExecutor();
-        setColorPalette(isDarkTheme);
+    private InlineChatDiffManager() {
+        themeDetector = new ThemeDetector();
     }
 
-    private void setColorPalette(final boolean isDark) {
-        this.ANNOTATION_ADDED = "diffAnnotation.added";
-        this.ANNOTATION_DELETED = "diffAnnotation.deleted";
-        if (isDark) {
-            this.ANNOTATION_ADDED += ".dark";
-            this.ANNOTATION_DELETED += ".dark";
+    public static InlineChatDiffManager getInstance() {
+        if (instance == null) {
+            instance = new InlineChatDiffManager();
         }
+        return instance;
     }
 
-    public CompletableFuture<Void> processDiff(final ChatResult chatResult, final boolean isPartialResult) throws Exception {
+    public void initNewTask(final InlineChatTask task) {
+        this.task = task;
+        this.currentDiffs = new ArrayList<>();
+        this.executor = Executors.newSingleThreadScheduledExecutor();
+        setColorPalette(themeDetector.isDarkTheme());
+    }
+
+    CompletableFuture<Void> processDiff(final ChatResult chatResult, final boolean isPartialResult) throws Exception {
         if (isPartialResult) {
             // Only process if content has changed
-            if (!chatResult.body().equals(previousPartialResponse)) {
-                if (pendingUpdate != null) {
-                    pendingUpdate.cancel(false);
+            if (!chatResult.body().equals(task.getPreviousPartialResponse())) {
+                if (task.getPendingUpdate() != null) {
+                    task.getPendingUpdate().cancel(false);
                 }
 
                 // Calculate remaining time since last UI update
                 long currentTime = System.currentTimeMillis();
-                long timeSinceUpdate = currentTime - lastUpdateTime;
+                long timeSinceUpdate = currentTime - task.getLastUpdateTime();
 
                 if (timeSinceUpdate >= BATCH_DELAY_MS) {
                     Activator.getLogger().info("Immediate update: " + timeSinceUpdate + "ms since last update");
                     // Push update immediately if enough time has passed
                     updateUI(chatResult);
-                    lastUpdateTime = currentTime;
+                    task.setLastUpdateTime(currentTime);
                 } else {
                     CompletableFuture<Void> future = new CompletableFuture<>();
                     // Calculate remaining batch delay and schedule update
                     long delayToUse = BATCH_DELAY_MS - timeSinceUpdate;
                     Activator.getLogger().info("Scheduled update: waiting " + delayToUse + "ms");
-                    pendingUpdate = executor.schedule(() -> {
+                    ScheduledFuture<?> pendingUpdate = executor.schedule(() -> {
                         try {
-                            Activator.getLogger().info("Executing scheduled update after " + (System.currentTimeMillis() - lastUpdateTime) + "ms delay");
+                            Activator.getLogger().info("Executing scheduled update after " + (System.currentTimeMillis() - task.getLastUpdateTime()) + "ms delay");
                             updateUI(chatResult);
-                            lastUpdateTime = System.currentTimeMillis();
+                            task.setLastUpdateTime(System.currentTimeMillis());
                             future.complete(null);
                         } catch (Exception e) {
                             future.completeExceptionally(e);
@@ -98,6 +89,7 @@ public class InlineChatDiffManager {
 
                     }, delayToUse, TimeUnit.MILLISECONDS);
 
+                    task.setPendingUpdate(pendingUpdate);
                     return future;
                 }
 
@@ -105,7 +97,7 @@ public class InlineChatDiffManager {
         } else {
             // Final result - always update UI state regardless of content
             updateUI(chatResult);
-            lastUpdateTime = System.currentTimeMillis();
+            task.setLastUpdateTime(System.currentTimeMillis());
         }
 
         return CompletableFuture.completedFuture(null);
@@ -122,20 +114,20 @@ public class InlineChatDiffManager {
         });
     }
 
-    public boolean computeDiffAndRenderOnEditor(final String newCode) throws Exception {
+    private boolean computeDiffAndRenderOnEditor(final String newCode) throws Exception {
 
         // Annotation model provides highlighting for the diff additions/deletions
-        IAnnotationModel annotationModel = editor.getDocumentProvider().getAnnotationModel(editor.getEditorInput());
-        var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());
+        var document = task.getEditor().getDocumentProvider().getDocument(task.getEditor().getEditorInput());
 
         // Clear existing diff annotations prior to starting new diff
         clearDiffAnnotations(annotationModel);
 
         // Restore document to original state -- may not be necessary anymore???
-        document.replace(offset, previousDisplayLength, originalCode);
+        document.replace(task.getOffset(), task.getPreviousDisplayLength(), task.getOriginalCode());
 
         // Split original and new code into lines for diff comparison
-        String[] originalLines = originalCode.lines().toArray(String[]::new);
+        String[] originalLines = task.getOriginalCode().lines().toArray(String[]::new);
         String[] newLines = newCode.lines().toArray(String[]::new);
 
         // Diff generation --> returns Patch object which contains deltas for each line
@@ -160,14 +152,14 @@ public class InlineChatDiffManager {
             // Handle deleted lines and mark position
             for (String line : originalChangedLines) {
                 resultText.append(line).append("\n");
-                currentDiffs.add(new TextDiff(offset + currentPos, line.length(), true));
+                currentDiffs.add(new TextDiff(task.getOffset() + currentPos, line.length(), true));
                 currentPos += line.length() + 1;
             }
 
             // Handle added lines and mark position
             for (String line : newChangedLines) {
                 resultText.append(line).append("\n");
-                currentDiffs.add(new TextDiff(offset + currentPos, line.length(), false));
+                currentDiffs.add(new TextDiff(task.getOffset() + currentPos, line.length(), false));
                 currentPos += line.length() + 1;
             }
 
@@ -183,40 +175,41 @@ public class InlineChatDiffManager {
         final String finalText = resultText.toString();
 
         // Clear existing annotations in the affected range
-        clearAnnotationsInRange(annotationModel, offset, offset + originalCode.length());
+        clearAnnotationsInRange(annotationModel, task.getOffset(), task.getOffset() + task.getOriginalCode().length());
 
         // Apply new diff text
-        document.replace(offset, originalCode.length(), finalText);
+        document.replace(task.getOffset(), task.getOriginalCode().length(), finalText);
 
         // Add all annotations after text modifications are complete
         for (TextDiff diff : currentDiffs) {
             Position position = new Position(diff.offset(), diff.length());
             String annotationType = diff.isDeletion() ? ANNOTATION_DELETED : ANNOTATION_ADDED;
+            Activator.getLogger().info("ANNOTATING WITH: " + annotationType);
             String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
             annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
         }
 
         // Store rendered text length for proper clearing next iteration
-        previousDisplayLength = finalText.length();
-        previousPartialResponse = newCode;
+        task.setPreviousDisplayLength(finalText.length());
+        task.setPreviousPartialResponse(newCode);
         return true;
     }
 
-    public CompletableFuture<Void> handleDecision(final boolean userAcceptedChanges) {
+    CompletableFuture<Void> handleDecision(final boolean userAcceptedChanges) {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
         Display.getDefault().syncExec(() -> {
             try {
-                var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-                final IAnnotationModel annotationModel = editor.getDocumentProvider().getAnnotationModel(editor.getEditorInput());
+                var document = task.getEditor().getDocumentProvider().getDocument(task.getEditor().getEditorInput());
+                final IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());
 
                 // Filter diffs based on user decision
-                List<TextDiff> diffsToRemove = currentDiffs.stream().filter(diff -> diff.isDeletion == userAcceptedChanges)
-                        .sorted((a, b) -> Integer.compare(b.offset, a.offset)) // Sort in reverse order
+                List<TextDiff> diffsToRemove = currentDiffs.stream().filter(diff -> diff.isDeletion() == userAcceptedChanges)
+                        .sorted((a, b) -> Integer.compare(b.offset(), a.offset())) // Sort in reverse order
                         .collect(Collectors.toList());
 
                 for (TextDiff diff : diffsToRemove) {
-                    int lineNumber = document.getLineOfOffset(diff.offset);
+                    int lineNumber = document.getLineOfOffset(diff.offset());
                     int lineStart = document.getLineOffset(lineNumber);
                     int lineLength = document.getLineLength(lineNumber);
 
@@ -236,6 +229,25 @@ public class InlineChatDiffManager {
         return future;
     }
 
+    void cleanupState() {
+        cancelBatchingOperations();
+        currentDiffs.clear();
+        task = null;
+    }
+
+    void restoreState() {
+        final IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());
+        clearDiffAnnotations(annotationModel);
+    }
+
+    private void setColorPalette(final boolean isDark) {
+        this.ANNOTATION_ADDED = "diffAnnotation.added";
+        this.ANNOTATION_DELETED = "diffAnnotation.deleted";
+        if (isDark) {
+            this.ANNOTATION_ADDED += ".dark";
+            this.ANNOTATION_DELETED += ".dark";
+        }
+    }
 
     private void clearDiffAnnotations(final IAnnotationModel annotationModel) {
         var annotations = annotationModel.getAnnotationIterator();
@@ -268,20 +280,10 @@ public class InlineChatDiffManager {
                 .replace("=&gt;", "=>").replace("&gt;=", ">=").replace("&nbsp;", " ").replace("&lsquo;", "'").replace("&rsquo;", "'").replace("&amp;", "&");
     }
 
-    void cleanupState() {
-        cancelBatchingOperations();
-        this.currentDiffs.clear();
-    }
-
-    void restoreState() {
-        final IAnnotationModel annotationModel = editor.getDocumentProvider().getAnnotationModel(editor.getEditorInput());
-        clearDiffAnnotations(annotationModel);
-    }
-
     private void cancelBatchingOperations() {
         try {
-            if (pendingUpdate != null) {
-                pendingUpdate.cancel(true);
+            if (task.getPendingUpdate() != null) {
+                task.getPendingUpdate().cancel(true);
             }
             if (executor != null && !executor.isShutdown()) {
                 executor.shutdownNow();

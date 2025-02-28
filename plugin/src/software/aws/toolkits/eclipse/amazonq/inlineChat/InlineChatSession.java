@@ -1,12 +1,10 @@
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.Arrays;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
@@ -24,7 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
+import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
@@ -35,14 +33,12 @@ public class InlineChatSession implements ChatUiRequestListener {
     private SessionState currentState = SessionState.INACTIVE;
     private final Object stateLock = new Object();
     private InlineChatTask task;
-    private String sessionTabId;
 
     // Dependencies
-    private InlineChatUIManager uiManager;
-    private InlineChatDiffManager diffManager;
+    private final InlineChatUIManager uiManager;
+    private final InlineChatDiffManager diffManager;
     private ChatRequestParams params;
     private final ChatCommunicationManager chatCommunicationManager;
-    private final ThemeDetector themeDetector;
 
     // Document-update batching variables
     private IDocumentUndoManager undoManager;
@@ -58,7 +54,8 @@ public class InlineChatSession implements ChatUiRequestListener {
     private InlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         chatCommunicationManager.setInlineChatRequestListener(this);
-        themeDetector = new ThemeDetector();
+        uiManager = InlineChatUIManager.getInstance();
+        diffManager = InlineChatDiffManager.getInstance();
         contextService = PlatformUI.getWorkbench().getService(IContextService.class);
     }
 
@@ -68,6 +65,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         }
         return instance;
     }
+
     public boolean startSession(final ITextEditor editor) {
         if (isSessionActive()) {
             return false;
@@ -81,27 +79,21 @@ public class InlineChatSession implements ChatUiRequestListener {
             // Get the context service and activate inline chat context used for button
             contextActivation = contextService.activateContext(CONTEXT_ID);
 
-            sessionTabId = UUID.randomUUID().toString();
-            chatCommunicationManager.updateInlineChatTabId(sessionTabId);
-
             // Set up undoManager to batch document edits together
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
             this.undoManager = DocumentUndoManagerRegistry.getDocumentUndoManager(this.document);
             initUndoManager(this.document);
 
-            // Create Inline task to pass context to managers
-            task = new InlineChatTask();
-            task.setEditor(editor);
-
+            // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                task.setOffset(selection.getOffset());
-                task.setOriginalCode(selection.getText());
+                task = new InlineChatTask(editor, selection.getText(), selection.getOffset());
             });
 
             // Set up necessary managers with the context they need
-            this.uiManager = new InlineChatUIManager(task);
-            this.diffManager = new InlineChatDiffManager(task, themeDetector.isDarkTheme());
+            this.uiManager.initNewTask(task);
+            this.diffManager.initNewTask(task);
+            chatCommunicationManager.updateInlineChatTabId(task.getTabId());
 
             CompletableFuture.runAsync(() -> {
                 try {
@@ -121,12 +113,9 @@ public class InlineChatSession implements ChatUiRequestListener {
 
     // Initiate process by opening user prompt and sending result to chat server
     private void start() {
-        uiManager.showUserInputPrompt().thenAccept(result -> {
-
-            // If result exists -> user submitted prompt
-            if (result != null) {
-                task = result;
-                sendInlineChatRequest(result);
+        uiManager.showUserInputPrompt().thenRun(() -> {
+            if (task.getPrompt() != null) {
+                sendInlineChatRequest();
                 uiManager.transitionToGeneratingPrompt();
                 setState(SessionState.GENERATING);
             } else {
@@ -140,12 +129,12 @@ public class InlineChatSession implements ChatUiRequestListener {
         });
     }
 
-    // Call back that handles response from chat server
+    // Chat server response handler
     @Override
     public void onSendToChatUi(final String message) {
         try {
             // Deserialize object
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = ObjectMapperFactory.getInstance();
             var rootNode = mapper.readTree(message);
             var paramsNode = rootNode.get("params");
 
@@ -158,6 +147,7 @@ public class InlineChatSession implements ChatUiRequestListener {
             var isPartialResult = rootNode.get("isPartialResult").asBoolean();
             var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
+            // Render diffs and move to deciding once we receive final result
             diffManager.processDiff(chatResult, isPartialResult).thenRun(() -> {
                 if (!isPartialResult) {
                     setState(SessionState.DECIDING);
@@ -187,11 +177,10 @@ public class InlineChatSession implements ChatUiRequestListener {
         });
     }
 
-    private void sendInlineChatRequest(final InlineChatTask task) {
+    private void sendInlineChatRequest() {
         var prompt = task.getPrompt();
         var chatPrompt = new ChatPrompt(prompt, prompt, "");
-        var filePath = "C:\\Users\\somerandomusername\\Desktop\\willBeReplaced.txt";
-        params = new ChatRequestParams(sessionTabId, chatPrompt, new TextDocumentIdentifier(filePath), Arrays.asList(task.getCursorState()));
+        params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
         chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
     }
 
@@ -200,6 +189,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         cleanupContext();
         diffManager.cleanupState();
         uiManager.cleanupState();
+        task.cleanup();
         cleanupSessionState();
 
         setState(SessionState.INACTIVE);
@@ -298,10 +288,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         this.document = null;
         this.undoManager = null;
         this.undoListener = null;
-        this.uiManager = null;
-        this.diffManager = null;
         this.task = null;
-        this.sessionTabId = null;
     }
 
     private void cleanupContext() {

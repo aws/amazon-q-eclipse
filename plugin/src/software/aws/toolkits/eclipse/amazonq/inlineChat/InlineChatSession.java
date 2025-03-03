@@ -237,7 +237,8 @@ public class InlineChatSession implements ChatUiRequestListener {
     private void restoreState() throws Exception {
         Display.getDefault().asyncExec(() -> {
             try {
-                cleanupDocumentState(true);
+                // If previous response exists --> we know we've made document changes
+                cleanupDocumentState(task.getPreviousPartialResponse() != null);
                 // Clear any remaining annotations
                 diffManager.restoreState();
             } catch (Exception e) {

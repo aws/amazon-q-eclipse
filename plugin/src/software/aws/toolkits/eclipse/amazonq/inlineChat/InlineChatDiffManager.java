@@ -9,7 +9,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
@@ -193,32 +192,48 @@ public class InlineChatDiffManager {
 
     CompletableFuture<Void> handleDecision(final boolean userAcceptedChanges) {
         CompletableFuture<Void> future = new CompletableFuture<>();
+        var typeToRemove = (userAcceptedChanges) ? ANNOTATION_DELETED : ANNOTATION_ADDED;
 
         Display.getDefault().syncExec(() -> {
             try {
                 var document = task.getEditor().getDocumentProvider().getDocument(task.getEditor().getEditorInput());
                 final IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());
 
-                // Filter diffs based on user decision
-                List<TextDiff> diffsToRemove = currentDiffs.stream().filter(diff -> diff.isDeletion() == userAcceptedChanges)
-                        .sorted((a, b) -> Integer.compare(b.offset(), a.offset())) // Sort in reverse order
-                        .collect(Collectors.toList());
+                // Collect lines to remove
+                List<Position> linesToRemove = new ArrayList<>();
+                Iterator<?> annotations = annotationModel.getAnnotationIterator();
 
-                for (TextDiff diff : diffsToRemove) {
-                    int lineNumber = document.getLineOfOffset(diff.offset());
+                // Iterate over annotations to guarantee editor changes don't cause incorrect
+                // code placement and deletions
+                while (annotations.hasNext()) {
+                    var obj = annotations.next();
+                    if (obj instanceof Annotation) {
+                        Annotation annotation = (Annotation) obj;
+                        Position position = annotationModel.getPosition(annotation);
+                        if (position != null && typeToRemove.equals(annotation.getType())) {
+                            linesToRemove.add(position);
+                        }
+                    }
+                }
+
+                // Sort in reverse order to maintain valid offsets when removing
+                linesToRemove.sort((a, b) -> Integer.compare(b.offset, a.offset));
+
+                // Remove the lines
+                for (Position pos : linesToRemove) {
+                    int lineNumber = document.getLineOfOffset(pos.offset);
                     int lineStart = document.getLineOffset(lineNumber);
                     int lineLength = document.getLineLength(lineNumber);
-
                     document.replace(lineStart, lineLength, "");
                 }
 
                 clearDiffAnnotations(annotationModel);
-                future.complete(null); // Complete the future when done
+                future.complete(null);
 
             } catch (final Exception e) {
                 String action = userAcceptedChanges ? "Accepting" : "Declining";
                 Activator.getLogger().error(action + " inline chat results failed with: " + e.getMessage(), e);
-                future.completeExceptionally(e); // Complete exceptionally if there's an error
+                future.completeExceptionally(e);
             }
         });
 

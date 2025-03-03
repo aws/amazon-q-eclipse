@@ -94,7 +94,8 @@ public class InlineChatSession implements ChatUiRequestListener {
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                task = new InlineChatTask(editor, selection.getText(), selection.getOffset());
+                var originalCode = selection.getText();
+                task = new InlineChatTask(editor, (originalCode.isBlank()) ? "" : originalCode, selection.getOffset());
             });
 
             // Set up necessary managers with the context they need
@@ -148,24 +149,25 @@ public class InlineChatSession implements ChatUiRequestListener {
             var rootNode = mapper.readTree(message);
             var paramsNode = rootNode.get("params");
 
+            Activator.getLogger().info("CHAT RESPONSE: " + message);
+
             // Check and pass through error message if server returns exception
-            if (rootNode.has("commandName") && "errorMessage".equals(rootNode.get("commandName").asText())) {
-                String errorMessage = (paramsNode != null && paramsNode.has("message")) ? paramsNode.get("message").asText() : "Unknown error occurred";
-                Activator.getLogger().error("Chat server responded with error: " + errorMessage);
+            if (rootNode.has("command") && "errorMessage".equals(rootNode.get("command").asText())) {
                 restoreAndEndSession();
                 return;
             }
-
-            var isPartialResult = rootNode.get("isPartialResult").asBoolean();
-            var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
             // TODO: validate JSON structure matches path to codeReferences used here
             var codeReferences = rootNode.get("codeReferences");
             if (codeReferences != null && codeReferences.isArray() && codeReferences.size() > 0) {
                 if (!this.referencesEnabled) {
                     restoreAndEndSession();
+                    return;
                 }
             }
+
+            var isPartialResult = rootNode.get("isPartialResult").asBoolean();
+            var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
             // Render diffs and move to deciding once we receive final result
             diffManager.processDiff(chatResult, isPartialResult).thenRun(() -> {
@@ -204,16 +206,18 @@ public class InlineChatSession implements ChatUiRequestListener {
         chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
     }
 
-    private void endSession() {
-        cleanupDocumentState(false);
-        cleanupContext();
-        diffManager.cleanupState();
-        uiManager.cleanupState();
-        task.cleanup();
-        cleanupSessionState();
-
-        setState(SessionState.INACTIVE);
-        Activator.getLogger().info("SESSION ENDED!");
+    private synchronized void endSession() {
+        try {
+            cleanupDocumentState(false);
+            cleanupContext();
+            diffManager.cleanupState();
+            uiManager.cleanupState();
+        } finally {
+            task.cleanup();
+            cleanupSessionState();
+            setState(SessionState.INACTIVE);
+            Activator.getLogger().info("SESSION ENDED!");
+        }
     }
 
     private synchronized void restoreAndEndSession() {
@@ -230,15 +234,10 @@ public class InlineChatSession implements ChatUiRequestListener {
         Display.getDefault().asyncExec(() -> {
             try {
                 cleanupDocumentState(true);
-
                 // Clear any remaining annotations
                 diffManager.restoreState();
-
-                endSession();
             } catch (Exception e) {
                 Activator.getLogger().error("Error restoring editor state: " + e.getMessage(), e);
-                // In case of failure during restore, at least try to clean up the session
-                endSession();
             }
         });
     }

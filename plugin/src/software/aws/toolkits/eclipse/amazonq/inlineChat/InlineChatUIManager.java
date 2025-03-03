@@ -22,7 +22,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
 public class InlineChatUIManager {
 
@@ -228,6 +230,22 @@ public class InlineChatUIManager {
         });
 
         return range.get().map(CursorState::new);
+    }
+
+    void showErrorNotification() {
+        Display.getDefault().asyncExec(() -> {
+            var notification = new ToolkitNotification(Display.getCurrent(), Constants.INLINE_CHAT_NOTIFICATION_TITLE,
+                    Constants.INLINE_CHAT_ERROR_NOTIFICATION_BODY);
+            notification.open();
+        });
+    }
+
+    void showCodeReferencesNotification() {
+        Display.getDefault().asyncExec(() -> {
+            var notification = new ToolkitNotification(Display.getCurrent(), Constants.INLINE_CHAT_NOTIFICATION_TITLE,
+                    Constants.INLINE_CHAT_CODEREF_NOTIFICATION_BODY);
+            notification.open();
+        });
     }
 
 }

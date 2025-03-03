@@ -26,7 +26,6 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
-import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 public class InlineChatSession implements ChatUiRequestListener {
 
@@ -94,8 +93,7 @@ public class InlineChatSession implements ChatUiRequestListener {
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                var originalCode = selection.getText();
-                task = new InlineChatTask(editor, (originalCode.isBlank()) ? "" : originalCode, selection.getOffset());
+                task = new InlineChatTask(editor, selection.getText(), selection.getOffset());
             });
 
             // Set up necessary managers with the context they need
@@ -151,8 +149,6 @@ public class InlineChatSession implements ChatUiRequestListener {
             ObjectMapper mapper = ObjectMapperFactory.getInstance();
             var rootNode = mapper.readTree(message);
             var paramsNode = rootNode.get("params");
-
-            Activator.getLogger().info("CHAT RESPONSE: " + message);
 
             // Check and pass through error message if server returns exception
             if (rootNode.has("command") && "errorMessage".equals(rootNode.get("command").asText())) {
@@ -211,7 +207,7 @@ public class InlineChatSession implements ChatUiRequestListener {
         var prompt = task.getPrompt();
         var chatPrompt = new ChatPrompt(prompt, prompt, "");
         params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
-        chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
+        chatCommunicationManager.sendInlineChatMessageToChatServer(task.hasActiveSelection(), params);
     }
 
     private synchronized void endSession() {
@@ -219,7 +215,7 @@ public class InlineChatSession implements ChatUiRequestListener {
             cleanupDocumentState(false);
             cleanupContext();
             diffManager.cleanupState();
-            uiManager.cleanupState();
+            uiManager.closePrompt();
         } finally {
             task.cleanup();
             cleanupSessionState();

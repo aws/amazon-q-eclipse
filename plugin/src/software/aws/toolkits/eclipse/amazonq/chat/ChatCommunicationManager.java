@@ -148,6 +148,26 @@ public final class ChatCommunicationManager {
         });
     }
 
+    public void sendInlineChatMessageToChatServer(final boolean activeSelection, final Object params) {
+        chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
+            try {
+                ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
+                if (activeSelection) {
+                    addEditorState(chatRequestParams);
+                }
+                sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
+                    String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
+
+                    EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(encryptedMessage, token);
+
+                    return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);
+                });
+            } catch (Exception e) {
+                throw new AmazonQPluginException("Error occurred when sending message to server", e);
+            }
+        });
+    }
+
     private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams) {
         // only include files that are accessible via lsp which have absolute paths
         getOpenFileUri().ifPresent(filePathUri -> {

@@ -2,6 +2,7 @@ package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,17 +20,20 @@ public class InlineChatTask {
     // Use atomics for thread-safe mutable states
     private final AtomicReference<String> prompt = new AtomicReference<>(null);
     private final AtomicReference<CursorState> cursorState = new AtomicReference<>(null);
-    private final AtomicReference<String> previousPartialResponse = new AtomicReference<>();
+    private final AtomicReference<String> previousPartialResponse = new AtomicReference<>(null);
+    private final AtomicBoolean hasActiveSelection = new AtomicBoolean(false);
     private final AtomicInteger previousDisplayLength;
     private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
     private final AtomicLong lastUpdateTime;
 
     public InlineChatTask(final ITextEditor editor, final String originalCode, final int offset) {
+        var hasActiveSelection = !originalCode.isBlank();
         this.editor = editor;
-        this.originalCode = originalCode;
+        this.originalCode = (hasActiveSelection) ? originalCode : "";
         this.offset = offset;
+        this.hasActiveSelection.set(hasActiveSelection);
         this.tabId = UUID.randomUUID().toString();
-        this.previousDisplayLength = new AtomicInteger(originalCode.length());
+        this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? originalCode.length() : 0);
         this.lastUpdateTime = new AtomicLong(System.currentTimeMillis());
     }
 
@@ -74,6 +78,10 @@ public class InlineChatTask {
 
     public void setPreviousDisplayLength(final int length) {
         previousDisplayLength.set(length);
+    }
+
+    public boolean hasActiveSelection() {
+        return hasActiveSelection.get();
     }
 
     public ITextEditor getEditor() {

@@ -123,11 +123,8 @@ public class InlineChatDiffManager {
         // Clear existing diff annotations prior to starting new diff
         clearDiffAnnotations(annotationModel);
 
-        // Restore document to original state -- may not be necessary anymore???
-        document.replace(task.getOffset(), task.getPreviousDisplayLength(), task.getOriginalCode());
-
         // Split original and new code into lines for diff comparison
-        String[] originalLines = task.getOriginalCode().lines().toArray(String[]::new);
+        String[] originalLines = (task.hasActiveSelection()) ? task.getOriginalCode().lines().toArray(String[]::new) : new String[0];
         String[] newLines = newCode.lines().toArray(String[]::new);
 
         // Diff generation --> returns Patch object which contains deltas for each line
@@ -178,7 +175,7 @@ public class InlineChatDiffManager {
         clearAnnotationsInRange(annotationModel, task.getOffset(), task.getOffset() + task.getOriginalCode().length());
 
         // Apply new diff text
-        document.replace(task.getOffset(), task.getOriginalCode().length(), finalText);
+        document.replace(task.getOffset(), task.getPreviousDisplayLength(), finalText);
 
         // Add all annotations after text modifications are complete
         for (TextDiff diff : currentDiffs) {
@@ -231,7 +228,6 @@ public class InlineChatDiffManager {
     void cleanupState() {
         cancelBatchingOperations();
         currentDiffs.clear();
-        task = null;
     }
 
     void restoreState() {

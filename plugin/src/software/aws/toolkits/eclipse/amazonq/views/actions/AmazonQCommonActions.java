@@ -9,8 +9,6 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-
 
 public final class AmazonQCommonActions {
 
@@ -24,10 +22,11 @@ public final class AmazonQCommonActions {
     private ViewLogsAction viewLogsAction;
     private ReportAnIssueAction reportAnIssueAction;
 
-    public AmazonQCommonActions(final AuthState authState, final IViewSite viewSite) {
+    private IMenuManager menuManager;
+
+    public AmazonQCommonActions(final IViewSite viewSite) {
         createActions(viewSite);
         contributeToActionBars(viewSite);
-        updateActionVisibility(authState, viewSite);
     }
 
     public SignoutAction getSignoutAction() {
@@ -60,11 +59,18 @@ public final class AmazonQCommonActions {
 
     private void contributeToActionBars(final IViewSite viewSite) {
         IActionBars bars = viewSite.getActionBars();
-        fillLocalPullDown(bars.getMenuManager());
-        fillLocalToolBar(bars.getToolBarManager());
+        menuManager = bars.getMenuManager();
+        IToolBarManager toolBarManager = bars.getToolBarManager();
+
+        menuManager.removeAll();
+        toolBarManager.removeAll();
+        bars.updateActionBars();
+
+        fillLocalPullDown();
+        fillLocalToolBar(toolBarManager);
     }
 
-    private void fillLocalPullDown(final IMenuManager manager) {
+    private void fillLocalPullDown() {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
         feedbackSubMenu.add(reportAnIssueAction);
         feedbackSubMenu.add(feedbackDialogContributionItem.getDialogContributionItem());
@@ -75,26 +81,31 @@ public final class AmazonQCommonActions {
         helpSubMenu.add(viewSourceAction);
         helpSubMenu.add(viewLogsAction);
 
-        manager.add(openCodeReferenceLogAction);
-        manager.add(new Separator());
-        manager.add(toggleAutoTriggerContributionItem);
-        manager.add(customizationDialogContributionItem);
-        manager.add(new Separator());
-        manager.add(feedbackSubMenu);
-        manager.add(helpSubMenu);
-        manager.add(new Separator());
-        manager.add(signoutAction);
+        menuManager.add(openCodeReferenceLogAction);
+        menuManager.add(new Separator());
+        menuManager.add(toggleAutoTriggerContributionItem);
+        menuManager.add(customizationDialogContributionItem);
+        menuManager.add(new Separator());
+        menuManager.add(feedbackSubMenu);
+        menuManager.add(helpSubMenu);
+        menuManager.add(new Separator());
+        menuManager.add(signoutAction);
     }
 
     private void fillLocalToolBar(final IToolBarManager manager) {
         // No actions added to the view toolbar at this time
     }
 
-    public void updateActionVisibility(final AuthState authState, final IViewSite viewSite) {
-        signoutAction.updateVisibility(authState);
-        feedbackDialogContributionItem.updateVisibility(authState);
-        customizationDialogContributionItem.updateVisibility(authState);
-        toggleAutoTriggerContributionItem.updateVisibility(authState);
+    public void dispose() {
+        if (toggleAutoTriggerContributionItem != null) {
+            toggleAutoTriggerContributionItem.dispose();
+            toggleAutoTriggerContributionItem = null;
+        }
+
+        if (menuManager != null) {
+            menuManager.dispose();
+            menuManager = null;
+        }
     }
 
 }

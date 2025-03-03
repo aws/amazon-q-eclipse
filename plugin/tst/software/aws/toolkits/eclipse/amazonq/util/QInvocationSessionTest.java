@@ -52,7 +52,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionReference
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionTriggerKind;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 
 public class QInvocationSessionTest {
 

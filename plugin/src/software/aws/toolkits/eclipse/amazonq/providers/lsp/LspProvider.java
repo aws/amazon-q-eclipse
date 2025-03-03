@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.providers;
+package software.aws.toolkits.eclipse.amazonq.providers.lsp;
 
 import org.eclipse.lsp4j.services.LanguageServer;
 import java.util.concurrent.CompletableFuture;

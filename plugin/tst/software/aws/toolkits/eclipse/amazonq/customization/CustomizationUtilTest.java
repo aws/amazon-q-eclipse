@@ -12,7 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.extensions.implementation.Activator
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 

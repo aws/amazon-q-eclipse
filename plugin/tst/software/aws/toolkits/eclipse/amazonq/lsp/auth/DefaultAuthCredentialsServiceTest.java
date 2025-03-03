@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 
 public class DefaultAuthCredentialsServiceTest {
     private static DefaultAuthCredentialsService authCredentialsService;

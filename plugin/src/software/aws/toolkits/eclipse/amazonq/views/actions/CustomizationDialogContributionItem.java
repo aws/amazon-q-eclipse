@@ -38,17 +38,13 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
     }
 
     // TODO: Need to update this method as the login condition has to be Pro login using IAM identity center
-    public void updateVisibility(final AuthState authState) {
+    @Override
+    public void onEvent(final AuthState authState) {
         this.setVisible(authState.isLoggedIn() && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
         });
-    }
-
-    @Override
-    public void onEvent(final AuthState authState) {
-        updateVisibility(authState);
     }
 
     @Override

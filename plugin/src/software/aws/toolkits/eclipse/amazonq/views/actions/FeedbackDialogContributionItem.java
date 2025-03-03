@@ -27,20 +27,16 @@ public final class FeedbackDialogContributionItem implements EventObserver<AuthS
         );
     }
 
-    public void updateVisibility(final AuthState authState) {
-        feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
-        Display.getDefault().asyncExec(() -> {
-            viewSite.getActionBars().getMenuManager().markDirty();
-            viewSite.getActionBars().getMenuManager().update(true);
-        });
-    }
-
     public DialogContributionItem getDialogContributionItem() {
         return feedbackDialogContributionItem;
     }
 
     @Override
     public void onEvent(final AuthState authState) {
-        updateVisibility(authState);
+        feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
+        Display.getDefault().asyncExec(() -> {
+            viewSite.getActionBars().getMenuManager().markDirty();
+            viewSite.getActionBars().getMenuManager().update(true);
+        });
     }
 }

@@ -211,11 +211,6 @@ public class InlineChatUIManager {
         }
     }
 
-    void cleanupState() {
-        closePrompt();
-        task = null;
-    }
-
     private boolean userInputIsValid(final String input) {
         return input != null && input.length() >= 2 && input.length() < MAX_INPUT_LENGTH;
     }

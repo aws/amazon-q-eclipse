@@ -28,7 +28,7 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
 
         if (InlineChatSession.getInstance().isSessionActive()) {
             if (InlineChatSession.getInstance().isDeciding() || InlineChatSession.getInstance().isGenerating()) {
-                showErrorNotification();
+                showMultipleTriggerNotification();
             }
             Activator.getLogger().info("Inline Chat triggered with existing session active. Returning.");
             return null;
@@ -49,10 +49,12 @@ public class QTriggerInlineChatHandler extends AbstractHandler {
 
         return null;
     }
-    private void showErrorNotification() {
-        var notification = new ToolkitNotification(Display.getCurrent(),
-                "Amazon Q",
-                Constants.INLINE_CHAT_MULTIPLE_TRIGGER_MESSAGE);
-        notification.open();
+
+    private void showMultipleTriggerNotification() {
+        Display.getDefault().asyncExec(() -> {
+            var notification = new ToolkitNotification(Display.getCurrent(), Constants.INLINE_CHAT_NOTIFICATION_TITLE,
+                    Constants.INLINE_CHAT_MULTIPLE_TRIGGER_BODY);
+            notification.open();
+        });
     }
 }

@@ -108,12 +108,14 @@ public class InlineChatSession implements ChatUiRequestListener {
                     start();
                 } catch (Exception e) {
                     Display.getDefault().asyncExec(() -> {
+                        uiManager.showErrorNotification();
                         endSession();
                     });
                 }
             });
             return true;
         } catch (Exception e) {
+            uiManager.showErrorNotification();
             endSession();
             return false;
         }
@@ -132,6 +134,7 @@ public class InlineChatSession implements ChatUiRequestListener {
             }
         }).exceptionally(throwable -> {
             Activator.getLogger().error("Failed to open user input prompt", throwable);
+            uiManager.showErrorNotification();
             endSession();
             return null;
         });
@@ -153,6 +156,7 @@ public class InlineChatSession implements ChatUiRequestListener {
 
             // Check and pass through error message if server returns exception
             if (rootNode.has("command") && "errorMessage".equals(rootNode.get("command").asText())) {
+                uiManager.showErrorNotification();
                 restoreAndEndSession();
                 return;
             }
@@ -161,6 +165,7 @@ public class InlineChatSession implements ChatUiRequestListener {
             var codeReferences = rootNode.get("codeReferences");
             if (codeReferences != null && codeReferences.isArray() && codeReferences.size() > 0) {
                 if (!this.referencesEnabled) {
+                    uiManager.showCodeReferencesNotification();
                     restoreAndEndSession();
                     return;
                 }
@@ -177,11 +182,13 @@ public class InlineChatSession implements ChatUiRequestListener {
                 }
             }).exceptionally(throwable -> {
                 Activator.getLogger().error("Failed to process diff", throwable);
+                uiManager.showErrorNotification();
                 restoreAndEndSession();
                 return null;
             });
 
         } catch (Exception e) {
+            uiManager.showErrorNotification();
             restoreAndEndSession();
         }
     }
@@ -194,6 +201,7 @@ public class InlineChatSession implements ChatUiRequestListener {
             endSession();
         }).exceptionally(throwable -> {
             Activator.getLogger().error("Failed to handle decision", throwable);
+            uiManager.showErrorNotification();
             restoreAndEndSession();
             return null;
         });

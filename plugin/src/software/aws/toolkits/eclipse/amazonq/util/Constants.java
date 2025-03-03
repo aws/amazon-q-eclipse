@@ -46,6 +46,8 @@ public final class Constants {
     public static final String IDE_SSL_HANDSHAKE_BODY = "The plugin encountered an SSL handshake error. If using a proxy, check the plugin preferences.";
     public static final String INVALID_PROXY_CONFIGURATION_TITLE = "Proxy Configuration Error";
     public static final String INVALID_PROXY_CONFIGURATION_BODY = "The provided proxy URL is invalid. Please check your plugin configuration.";
-    public static final String INLINE_CHAT_MULTIPLE_TRIGGER_MESSAGE = "Reject or Accept the current suggestions before creating a new one";
-
+    public static final String INLINE_CHAT_NOTIFICATION_TITLE = "Amazon Q Inline Chat";
+    public static final String INLINE_CHAT_MULTIPLE_TRIGGER_BODY = "Reject or Accept the current suggestions before creating a new one";
+    public static final String INLINE_CHAT_ERROR_NOTIFICATION_BODY = "Encountered an unexpected error when processing the request, please try again.";
+    public static final String INLINE_CHAT_CODEREF_NOTIFICATION_BODY = "Suggestion had code references; removed per plugin settings.";
 }

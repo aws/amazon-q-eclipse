@@ -374,6 +374,12 @@
             class="software.aws.toolkits.eclipse.amazonq.lsp.LspStartupActivity">
         </startup>
     </extension>
+    <extension point="org.eclipse.ui.editors.annotationTypes">
+	    <type name="diffAnnotation.added"/>
+	    <type name="diffAnnotation.deleted"/>
+	    <type name="diffAnnotation.added.dark"/>
+	    <type name="diffAnnotation.deleted.dark"/>
+	</extension>
    <extension point="org.eclipse.ui.editors.markerAnnotationSpecification">
     <!-- Added code annotation -->
 	    <specification
@@ -538,6 +544,10 @@
                 <command
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
                     label="Send To Prompt">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat"
+                    label="Inline Chat">
                 </command>
             </menu>
         </menuContribution>

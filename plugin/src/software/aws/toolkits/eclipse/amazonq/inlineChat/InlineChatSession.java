@@ -28,6 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 
 public class InlineChatSession implements ChatUiRequestListener, IPartListener2 {
@@ -45,6 +46,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     private final InlineChatDiffManager diffManager;
     private ChatRequestParams params;
     private final ChatCommunicationManager chatCommunicationManager;
+    private final ThemeDetector themeDetector;
 
     // Document-update batching variables
     private IDocumentUndoManager undoManager;
@@ -62,6 +64,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         chatCommunicationManager.setInlineChatRequestListener(this);
         uiManager = InlineChatUIManager.getInstance();
         diffManager = InlineChatDiffManager.getInstance();
+        themeDetector = new ThemeDetector();
         contextService = PlatformUI.getWorkbench().getService(IContextService.class);
     }
 
@@ -103,9 +106,10 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
                 task = new InlineChatTask(editor, selection);
             });
 
+            var isDarkTheme = themeDetector.isDarkTheme();
             // Set up necessary managers with the context they need
-            this.uiManager.initNewTask(task);
-            this.diffManager.initNewTask(task);
+            this.uiManager.initNewTask(task, isDarkTheme);
+            this.diffManager.initNewTask(task, isDarkTheme);
             chatCommunicationManager.updateInlineChatTabId(task.getTabId());
 
             CompletableFuture.runAsync(() -> {

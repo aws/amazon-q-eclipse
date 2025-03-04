@@ -23,7 +23,7 @@ public final class ToolkitLoginWebview extends AmazonQView {
     public ToolkitLoginWebview() {
         super();
         webViewAssetProvider = new ToolkitLoginWebViewAssetProvider();
-        webViewAssetProvider.getContent();
+        webViewAssetProvider.initialize();
     }
 
     @Override
@@ -62,7 +62,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void dispose() {
-        webViewAssetProvider.dispose();
         var browser = getBrowser();
         if (browser != null && !browser.isDisposed()) {
             browser.dispose();

@@ -3,16 +3,13 @@
 
 package software.aws.toolkits.eclipse.amazonq.providers.assets;
 
-import java.util.Optional;
-
 import org.eclipse.swt.browser.Browser;
 
 public abstract class WebViewAssetProvider {
 
     public abstract void injectAssets(Browser browser);
 
-    public abstract Optional<String> getContent();
-
+    public abstract void initialize();
     public abstract void dispose();
 
     protected final String getWaitFunction() {

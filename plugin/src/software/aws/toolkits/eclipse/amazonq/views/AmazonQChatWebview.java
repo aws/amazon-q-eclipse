@@ -31,7 +31,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         chatStateManager = ChatStateManager.getInstance();
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         webViewAssetProvider = new ChatWebViewAssetProvider();
-        webViewAssetProvider.getContent();
+        webViewAssetProvider.initialize();
     }
 
     @Override
@@ -105,7 +105,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         chatCommunicationManager.removeListener();
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
-            webViewAssetProvider.dispose();
         }
         super.dispose();
     }

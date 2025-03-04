@@ -6,8 +6,7 @@
 	      <variable name="is_logged_in" priorityLevel="workbench"/>
 	   </sourceProvider>
 	</extension>
-	    <extension
-        point="org.eclipse.ui.views">
+	    <extension point="org.eclipse.ui.views">
         <!-- Old View Ids registered necessary to migrate to ViewContainer -->
         <category
             name="Amazon Q"

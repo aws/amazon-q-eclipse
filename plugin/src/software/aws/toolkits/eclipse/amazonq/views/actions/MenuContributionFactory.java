@@ -12,7 +12,7 @@ import org.eclipse.ui.menus.AbstractContributionFactory;
 import org.eclipse.ui.menus.IContributionRoot;
 import org.eclipse.ui.services.IServiceLocator;
 
-public final class MenuContributionFactory extends AbstractContributionFactory {
+public class MenuContributionFactory extends AbstractContributionFactory {
 
     private List<IContributionItem> items = new ArrayList<>();
 

@@ -12,22 +12,22 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.menus.AbstractContributionFactory;
 import org.eclipse.ui.menus.IMenuService;
 
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+
 public final class AmazonQCommonActions {
     private final Actions actions;
     private AbstractContributionFactory factory;
-    private IMenuManager menuManager;
 
     private static class Actions {
-        private final SignoutAction signoutAction;
-        private final FeedbackDialogContributionItem feedbackDialogContributionItem;
-        private final CustomizationDialogContributionItem customizationDialogContributionItem;
-        private final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
-        private final OpenQChatAction openQChatAction;
-        private final OpenCodeReferenceLogAction openCodeReferenceLogAction;
-        private final OpenUserGuideAction openUserGuideAction;
-        private final ViewSourceAction viewSourceAction;
-        private final ViewLogsAction viewLogsAction;
-        private final ReportAnIssueAction reportAnIssueAction;
+        final SignoutAction signoutAction;
+        final FeedbackDialogContributionItem feedbackDialogContributionItem;
+        final CustomizationDialogContributionItem customizationDialogContributionItem;
+        final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
+        final OpenCodeReferenceLogAction openCodeReferenceLogAction;
+        final OpenUserGuideAction openUserGuideAction;
+        final ViewSourceAction viewSourceAction;
+        final ViewLogsAction viewLogsAction;
+        final ReportAnIssueAction reportAnIssueAction;
 
         Actions(final IViewSite viewSite) {
             signoutAction = new SignoutAction();
@@ -35,7 +35,6 @@ public final class AmazonQCommonActions {
             customizationDialogContributionItem = new CustomizationDialogContributionItem();
             toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem();
             openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
-            openQChatAction = new OpenQChatAction();
             openUserGuideAction = new OpenUserGuideAction();
             viewSourceAction = new ViewSourceAction();
             viewLogsAction = new ViewLogsAction();
@@ -43,9 +42,10 @@ public final class AmazonQCommonActions {
         }
     }
 
-    public AmazonQCommonActions(final IViewSite viewSite) {
-        createActions(viewSite);
-        contributeToActionBars(viewSite);
+    public AmazonQCommonActions(final AuthState authState, final IViewSite viewSite) {
+        actions = new Actions(viewSite);
+        fillLocalPullDown(viewSite.getActionBars().getMenuManager());
+        updateActionVisibility(authState, viewSite);
     }
 
     public SignoutAction getSignoutAction() {
@@ -68,20 +68,24 @@ public final class AmazonQCommonActions {
         addCommonMenuItems(manager);
     }
 
-    private void contributeToActionBars(final IViewSite viewSite) {
-        IActionBars bars = viewSite.getActionBars();
-        menuManager = bars.getMenuManager();
-        IToolBarManager toolBarManager = bars.getToolBarManager();
+    private void fillGlobalToolBar() {
+        final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
+        var contributionFactory = new MenuContributionFactory("software.aws.toolkits.eclipse.amazonq.toolbar.command");
 
-        menuManager.removeAll();
-        toolBarManager.removeAll();
-        bars.updateActionBars();
+        IMenuManager tempManager = new MenuManager();
+        addCommonMenuItems(tempManager);
 
-        fillLocalPullDown();
-        fillLocalToolBar(toolBarManager);
+        for (IContributionItem item : tempManager.getItems()) {
+            if (item.isVisible()) {
+                contributionFactory.addContributionItem(item);
+            }
+        }
+
+        menuService.addContributionFactory(contributionFactory);
+        this.factory = contributionFactory;
     }
 
-    private void fillLocalPullDown() {
+    private void addCommonMenuItems(final IMenuManager manager) {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
         feedbackSubMenu.add(actions.reportAnIssueAction);
         feedbackSubMenu.add(actions.feedbackDialogContributionItem.getDialogContributionItem());
@@ -92,30 +96,31 @@ public final class AmazonQCommonActions {
         helpSubMenu.add(actions.viewSourceAction);
         helpSubMenu.add(actions.viewLogsAction);
 
-        menuManager.add(openCodeReferenceLogAction);
-        menuManager.add(new Separator());
-        menuManager.add(toggleAutoTriggerContributionItem);
-        menuManager.add(customizationDialogContributionItem);
-        menuManager.add(new Separator());
-        menuManager.add(feedbackSubMenu);
-        menuManager.add(helpSubMenu);
-        menuManager.add(new Separator());
-        menuManager.add(signoutAction);
+        manager.add(actions.openCodeReferenceLogAction);
+        manager.add(new Separator());
+        manager.add(actions.toggleAutoTriggerContributionItem);
+        manager.add(actions.customizationDialogContributionItem);
+        manager.add(new Separator());
+        manager.add(feedbackSubMenu);
+        manager.add(helpSubMenu);
+        manager.add(new Separator());
+        manager.add(actions.signoutAction);
     }
 
-    private void fillLocalToolBar(final IToolBarManager manager) {
-        // No actions added to the view toolbar at this time
-    }
+    public void updateActionVisibility(final AuthState authState, final IViewSite viewSite) {
+        actions.signoutAction.updateVisibility(authState);
+        actions.feedbackDialogContributionItem.updateVisibility(authState);
+        actions.customizationDialogContributionItem.updateVisibility(authState);
+        actions.toggleAutoTriggerContributionItem.updateVisibility(authState);
+        Display.getDefault().asyncExec(() -> {
+            viewSite.getActionBars().getMenuManager().markDirty();
+            viewSite.getActionBars().getMenuManager().update(true);
 
-    public void dispose() {
-        if (toggleAutoTriggerContributionItem != null) {
-            toggleAutoTriggerContributionItem.dispose();
-            toggleAutoTriggerContributionItem = null;
-        }
-
-        if (menuManager != null) {
-            menuManager.dispose();
-            menuManager = null;
-        }
+            final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
+            if (factory != null) {
+                menuService.removeContributionFactory(factory);
+            }
+            fillGlobalToolBar();
+        });
     }
 }

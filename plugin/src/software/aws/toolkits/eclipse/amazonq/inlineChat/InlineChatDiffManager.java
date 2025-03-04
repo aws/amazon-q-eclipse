@@ -21,14 +21,12 @@ import com.github.difflib.patch.Patch;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
 public class InlineChatDiffManager {
 
     private static InlineChatDiffManager instance;
     private String ANNOTATION_ADDED;
     private String ANNOTATION_DELETED;
-    private final ThemeDetector themeDetector;
     private List<TextDiff> currentDiffs;
 
     // Batching variables
@@ -37,7 +35,7 @@ public class InlineChatDiffManager {
     private InlineChatTask task;
 
     private InlineChatDiffManager() {
-        themeDetector = new ThemeDetector();
+        // Prevent instantiation
     }
 
     static InlineChatDiffManager getInstance() {
@@ -47,11 +45,11 @@ public class InlineChatDiffManager {
         return instance;
     }
 
-    void initNewTask(final InlineChatTask task) {
+    void initNewTask(final InlineChatTask task, final boolean isDarkTheme) {
         this.task = task;
         this.currentDiffs = new ArrayList<>();
         this.executor = Executors.newSingleThreadScheduledExecutor();
-        setColorPalette(themeDetector.isDarkTheme());
+        setColorPalette(isDarkTheme);
     }
 
     CompletableFuture<Void> processDiff(final ChatResult chatResult, final boolean isPartialResult) throws Exception {

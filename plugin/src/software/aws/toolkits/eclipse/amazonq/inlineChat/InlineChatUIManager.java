@@ -10,18 +10,19 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -34,11 +35,12 @@ public class InlineChatUIManager {
 
     // UI elements
     private PopupDialog inputBox;
-    private Shell promptShell;
     private ITextViewer viewer;
     private final int MAX_INPUT_LENGTH = 128;
+    private PaintListener currentPaintListener;
     private final String GENERATING_MESSAGE = "Amazon Q is generating...";
     private final String DECIDING_MESSAGE = "Accept (Tab) | Reject (Esc)";
+    private boolean isDarkTheme;
 
     private InlineChatUIManager() {
         // Prevent instantiation
@@ -51,9 +53,10 @@ public class InlineChatUIManager {
         return instance;
     }
 
-    public void initNewTask(final InlineChatTask task) {
+    public void initNewTask(final InlineChatTask task, final boolean isDarkTheme) {
         this.task = task;
         this.viewer = task.getEditor().getAdapter(ITextViewer.class);
+        this.isDarkTheme = isDarkTheme;
     }
 
     public CompletableFuture<Void> showUserInputPrompt() {
@@ -155,24 +158,55 @@ public class InlineChatUIManager {
         Display.getDefault().asyncExec(() -> {
             var widget = viewer.getTextWidget();
 
-            promptShell = new Shell(Display.getDefault().getActiveShell(), SWT.TOOL | SWT.NO_TRIM);
-            promptShell.setLayout(new GridLayout(1, false));
+            currentPaintListener = new PaintListener() {
+                @Override
+                public void paintControl(final PaintEvent event) {
+                    try {
+                        Point location = widget.getLocationAtOffset(task.getOffset());
+                        Point textExtent = event.gc.textExtent(promptText);
 
-            Label promptLabel = new Label(promptShell, SWT.NONE);
-            promptLabel.setText(promptText);
-            promptLabel.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
-            promptLabel.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_INFO_FOREGROUND));
+                        // Check if selection is atop the editor
+                        Rectangle clientArea = widget.getClientArea();
+                        boolean hasSpaceAbove = (location.y - widget.getLineHeight() * 2) >= clientArea.y;
 
-            promptShell.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
-            promptShell.pack();
+                        // If space above, draw above. Otherwise draw over the selected line
+                        if (hasSpaceAbove) {
+                            location.y -= widget.getLineHeight() * 2;
+                        }
+                        // If no space above, keep location.y as is (over the selected line)
 
-            // Position the shell
-            Point location = widget.getLocationAtOffset(task.getOffset());
-            location.y -= widget.getLineHeight() * 2;
-            Point screenLocation = Display.getCurrent().map(widget, null, location);
-            promptShell.setLocation(screenLocation);
+                        Color backgroundColor;
+                        Color textColor;
 
-            promptShell.setVisible(true);
+                        // Toggle color based on editor theme
+                        if (isDarkTheme) {
+                            backgroundColor = new Color(Display.getCurrent(), 100, 100, 100);
+                            textColor = new Color(Display.getCurrent(), 255, 255, 255);
+                        } else {
+                            backgroundColor = new Color(Display.getCurrent(), 230, 230, 230);
+                            textColor = new Color(Display.getCurrent(), 0, 0, 0);
+                        }
+
+                        try {
+                            // Draw background
+                            event.gc.setBackground(backgroundColor);
+                            event.gc.fillRectangle(location.x, location.y, textExtent.x + 10, textExtent.y + 10);
+
+                            // Draw text
+                            event.gc.setForeground(textColor);
+                            event.gc.drawText(promptText, location.x + 5, location.y + 5, false);
+                        } finally {
+                            backgroundColor.dispose();
+                            textColor.dispose();
+                        }
+                    } catch (Exception e) {
+                        closePrompt();
+                    }
+                }
+            };
+
+            widget.addPaintListener(currentPaintListener);
+            widget.redraw();
         });
     }
 
@@ -185,17 +219,17 @@ public class InlineChatUIManager {
     }
 
     void closePrompt() {
-        try {
-            if (promptShell != null && !promptShell.isDisposed()) {
-                Display.getDefault().syncExec(() -> {
-                    promptShell.dispose();
-                    promptShell = null;
-                });
-            }
-        } catch (Exception e) {
-            Activator.getLogger().error("Failed to close prompt: " + e.getMessage(), e);
-        }
+        removeCurrentPaintListener();
+    }
 
+    private void removeCurrentPaintListener() {
+        if (viewer != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
+            Display.getDefault().syncExec(() -> {
+                viewer.getTextWidget().removePaintListener(currentPaintListener);
+                viewer.getTextWidget().redraw();
+                currentPaintListener = null;
+            });
+        }
     }
 
     private boolean userInputIsValid(final String input) {

@@ -106,14 +106,18 @@ public class InlineChatDiffManager {
         if (!task.isActive()) {
             return;
         }
+        final Exception[] ex = new Exception[1];
         Display.getDefault().syncExec(() -> {
             try {
                 var newCode = unescapeChatResult(chatResult.body());
                 computeDiffAndRenderOnEditor(newCode);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                ex[0] = e;
             }
         });
+        if (ex[0] != null) {
+            throw ex[0];
+        }
     }
 
     private boolean computeDiffAndRenderOnEditor(final String newCode) throws Exception {

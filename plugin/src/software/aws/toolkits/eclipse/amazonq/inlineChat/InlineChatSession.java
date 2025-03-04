@@ -218,6 +218,9 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     }
 
     private synchronized void endSession() {
+        if (!isSessionActive()) {
+            return;
+        }
         CompletableFuture<Void> uiThreadFuture = new CompletableFuture<>();
 
         task.cancelPendingUpdate();
@@ -244,6 +247,9 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     }
 
     private synchronized void restoreAndEndSession() {
+        if (!isSessionActive()) {
+            return;
+        }
         restoreState().whenComplete((res, ex) -> endSession());
     }
 

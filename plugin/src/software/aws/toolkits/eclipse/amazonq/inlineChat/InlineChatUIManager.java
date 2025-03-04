@@ -230,5 +230,11 @@ public class InlineChatUIManager {
         });
     }
 
+    void restoreSelection() {
+        if (task.getEditor() != null && task.hasActiveSelection()) {
+            task.getEditor().getSelectionProvider().setSelection(task.getSelection());
+        }
+    }
+
 }
 

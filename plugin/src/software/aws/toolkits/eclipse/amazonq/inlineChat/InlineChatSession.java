@@ -100,7 +100,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                task = new InlineChatTask(editor, selection.getText(), selection.getOffset());
+                task = new InlineChatTask(editor, selection);
             });
 
             // Set up necessary managers with the context they need
@@ -200,6 +200,9 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     public void handleDecision(final boolean userAcceptedChanges) throws Exception {
         uiManager.closePrompt();
         diffManager.handleDecision(userAcceptedChanges).thenRun(() -> {
+            if (!userAcceptedChanges) {
+                uiManager.restoreSelection();
+            }
             undoManager.endCompoundChange();
             endSession();
         }).exceptionally(throwable -> {

@@ -11,7 +11,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -91,15 +90,9 @@ public class InlineChatUIManager {
                     if (screenLocation == null) {
                         // Get the vertical position
                         Point location = widget.getLocationAtOffset(task.getOffset());
-                        location.y -= widget.getLineHeight() * 1.1;
 
-                        // Get editor bounds
-                        Rectangle editorBounds = widget.getBounds();
-
-                        // Center the popup horizontally within the editor
-                        location.x = (editorBounds.width / 2) - (initialSize.x / 2);
-
-                        // Convert the final position to screen coordinates
+                        // Move input bar up as to not block the selected code
+                        location.y -= widget.getLineHeight() * 2.5;
                         screenLocation = Display.getCurrent().map(widget, null, location);
                     }
                     return screenLocation;
@@ -110,16 +103,10 @@ public class InlineChatUIManager {
                     var composite = (Composite) super.createDialogArea(parent);
                     composite.setLayout(new GridLayout(1, false));
 
-                    var titleLabel = new Label(composite, SWT.CENTER);
-                    titleLabel.setText("Enter instructions for Amazon Q");
-                    GridData titleGridData = new GridData(GridData.FILL_HORIZONTAL);
-                    titleGridData.horizontalAlignment = GridData.CENTER;
-                    titleLabel.setLayoutData(titleGridData);
-
                     inputField = new Text(composite, SWT.BORDER | SWT.SINGLE);
+                    inputField.setMessage("Enter instructions for Amazon Q (Enter | Esc)");
                     GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
                     gridData.widthHint = 350;
-                    gridData.heightHint = 20;
                     inputField.setLayoutData(gridData);
 
                     // Enforce maximum character count that can be entered into the input
@@ -130,12 +117,6 @@ public class InlineChatUIManager {
                             e.doit = false; // Prevent the input
                         }
                     });
-
-                    var instructionsLabel = new Label(composite, SWT.CENTER);
-                    instructionsLabel.setText("Press Enter to confirm, Esc to cancel");
-                    GridData instructionsGridData = new GridData(GridData.FILL_HORIZONTAL);
-                    instructionsGridData.horizontalAlignment = GridData.CENTER;
-                    instructionsLabel.setLayoutData(instructionsGridData);
 
                     inputField.addKeyListener(new KeyAdapter() {
                         @Override

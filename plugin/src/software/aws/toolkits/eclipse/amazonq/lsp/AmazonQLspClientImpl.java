@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
@@ -28,6 +29,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.NotificationParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -37,6 +39,10 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import software.aws.toolkits.eclipse.amazonq.util.PersistentToolkitNotification;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -169,5 +175,42 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         } catch (IllegalArgumentException ex) {
             Activator.getLogger().error("Error processing " + kind + " ssoTokenChanged notification", ex);
         }
+    }
+    
+    @Override
+    public void showNotification(NotificationParams params) {
+        Display.getDefault().asyncExec(() -> {
+            String title = params.content().title() != null ? 
+                params.content().title() : "AWS Notification"; // Default title
+            String message = params.content().text();
+
+            // Option 1: Simple popup (non-persistent)
+            AbstractNotificationPopup notification = new ToolkitNotification(
+                Display.getCurrent(),
+                title,
+                message
+            );
+            notification.open();
+
+            // Option 2: Persistent notification with "Don't show again" checkbox
+            // showPersistentNotification(title, message); 
+        });
+    }
+    
+    
+    private void showPersistentNotification(String title, String message) {
+        AbstractNotificationPopup notification = new PersistentToolkitNotification(
+            Display.getCurrent(),
+            title,
+            message,
+            checked -> {
+                if (checked) {
+                    Activator.getPluginStore().put("notificationSkipFlag", "true");
+                } else {
+                    Activator.getPluginStore().remove("notificationSkipFlag");
+                }
+            }
+        );
+        notification.open();
     }
 }

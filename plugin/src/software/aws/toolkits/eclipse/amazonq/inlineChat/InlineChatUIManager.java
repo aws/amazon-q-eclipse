@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -203,12 +204,17 @@ public class InlineChatUIManager {
     }
 
     void closePrompt() {
-        if (promptShell != null && !promptShell.isDisposed()) {
-            Display.getDefault().syncExec(() -> {
-                promptShell.dispose();
-                promptShell = null;
-            });
+        try {
+            if (promptShell != null && !promptShell.isDisposed()) {
+                Display.getDefault().syncExec(() -> {
+                    promptShell.dispose();
+                    promptShell = null;
+                });
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to close prompt: " + e.getMessage(), e);
         }
+
     }
 
     private boolean userInputIsValid(final String input) {

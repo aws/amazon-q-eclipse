@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public class InlineChatTask {
     private final ITextEditor editor;
@@ -21,6 +22,7 @@ public class InlineChatTask {
     private final AtomicReference<String> prompt = new AtomicReference<>(null);
     private final AtomicReference<CursorState> cursorState = new AtomicReference<>(null);
     private final AtomicReference<String> previousPartialResponse = new AtomicReference<>(null);
+    private final AtomicReference<SessionState> taskState = new AtomicReference<>(null);
     private final AtomicBoolean hasActiveSelection = new AtomicBoolean(false);
     private final AtomicInteger previousDisplayLength;
     private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
@@ -31,6 +33,7 @@ public class InlineChatTask {
         this.editor = editor;
         this.originalCode = (hasActiveSelection) ? originalCode : "";
         this.offset = offset;
+        this.taskState.set(SessionState.ACTIVE);
         this.hasActiveSelection.set(hasActiveSelection);
         this.tabId = UUID.randomUUID().toString();
         this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? originalCode.length() : 0);
@@ -41,10 +44,26 @@ public class InlineChatTask {
         return pendingUpdate.get();
     }
 
+    public SessionState getTaskState() {
+        return taskState.get();
+    }
+
+    public boolean isActive() {
+        return taskState.get() != SessionState.INACTIVE;
+    }
+
+    public void setTaskState(final SessionState state) {
+        taskState.set(state);
+    }
+
     public boolean cancelPendingUpdate() {
         ScheduledFuture<?> update = pendingUpdate.get();
         if (update != null) {
-            return update.cancel(false);
+            try {
+                return update.cancel(false);
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to cancel update: " + e.getMessage(), e);
+            }
         }
         return false;
     }
@@ -115,20 +134,4 @@ public class InlineChatTask {
     public void setCursorState(final CursorState state) {
         this.cursorState.set(state);
     }
-
-    public void cleanup() {
-        // Cancel any pending scheduled updates
-        cancelPendingUpdate();
-
-        // Clear atomic references for GC
-        previousPartialResponse.set(null);
-        prompt.set(null);
-        cursorState.set(null);
-        pendingUpdate.set(null);
-
-        // Reset atomic values to initial state
-        previousDisplayLength.set(0);
-        lastUpdateTime.set(0);
-    }
-
 }

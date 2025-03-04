@@ -19,15 +19,16 @@ public final class AmazonQCommonActions {
     private AbstractContributionFactory factory;
 
     private static class Actions {
-        final SignoutAction signoutAction;
-        final FeedbackDialogContributionItem feedbackDialogContributionItem;
-        final CustomizationDialogContributionItem customizationDialogContributionItem;
-        final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
-        final OpenCodeReferenceLogAction openCodeReferenceLogAction;
-        final OpenUserGuideAction openUserGuideAction;
-        final ViewSourceAction viewSourceAction;
-        final ViewLogsAction viewLogsAction;
-        final ReportAnIssueAction reportAnIssueAction;
+        private final SignoutAction signoutAction;
+        private final FeedbackDialogContributionItem feedbackDialogContributionItem;
+        private final CustomizationDialogContributionItem customizationDialogContributionItem;
+        private final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
+        private final OpenQChatAction openQChatAction;
+        private final OpenCodeReferenceLogAction openCodeReferenceLogAction;
+        private final OpenUserGuideAction openUserGuideAction;
+        private final ViewSourceAction viewSourceAction;
+        private final ViewLogsAction viewLogsAction;
+        private final ReportAnIssueAction reportAnIssueAction;
 
         Actions(final IViewSite viewSite) {
             signoutAction = new SignoutAction();
@@ -35,6 +36,7 @@ public final class AmazonQCommonActions {
             customizationDialogContributionItem = new CustomizationDialogContributionItem();
             toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem();
             openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
+            openQChatAction = new OpenQChatAction();
             openUserGuideAction = new OpenUserGuideAction();
             viewSourceAction = new ViewSourceAction();
             viewLogsAction = new ViewLogsAction();
@@ -73,6 +75,7 @@ public final class AmazonQCommonActions {
         var contributionFactory = new MenuContributionFactory("software.aws.toolkits.eclipse.amazonq.toolbar.command");
 
         IMenuManager tempManager = new MenuManager();
+        tempManager.add(actions.openQChatAction);
         addCommonMenuItems(tempManager);
 
         for (IContributionItem item : tempManager.getItems()) {

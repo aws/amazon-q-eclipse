@@ -103,6 +103,9 @@ public class InlineChatDiffManager {
     }
 
     private void updateUI(final ChatResult chatResult) throws Exception {
+        if (!task.isActive()) {
+            return;
+        }
         Display.getDefault().syncExec(() -> {
             try {
                 var newCode = unescapeChatResult(chatResult.body());
@@ -247,8 +250,13 @@ public class InlineChatDiffManager {
     }
 
     void restoreState() {
-        final IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());
-        clearDiffAnnotations(annotationModel);
+        try {
+            final IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());
+            clearDiffAnnotations(annotationModel);
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to restore state in diff manager: " + e.getMessage(), e);
+        }
+
     }
 
     private void setColorPalette(final boolean isDark) {

@@ -10,6 +10,9 @@ import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
 import org.eclipse.text.undo.IDocumentUndoListener;
 import org.eclipse.text.undo.IDocumentUndoManager;
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
@@ -27,7 +30,7 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 
-public class InlineChatSession implements ChatUiRequestListener {
+public class InlineChatSession implements ChatUiRequestListener, IPartListener2 {
 
     // Session state variables
     private static InlineChatSession instance;
@@ -35,6 +38,7 @@ public class InlineChatSession implements ChatUiRequestListener {
     private final Object stateLock = new Object();
     private InlineChatTask task;
     boolean referencesEnabled;
+    private IWorkbenchPage workbenchPage;
 
     // Dependencies
     private final InlineChatUIManager uiManager;
@@ -77,6 +81,9 @@ public class InlineChatSession implements ChatUiRequestListener {
         }
         try {
             setState(SessionState.ACTIVE);
+
+            workbenchPage = editor.getSite().getPage();
+            workbenchPage.addPartListener(this);
 
             // Get the context service and activate inline chat context used for button
             contextActivation = contextService.activateContext(CONTEXT_ID);
@@ -211,40 +218,50 @@ public class InlineChatSession implements ChatUiRequestListener {
     }
 
     private synchronized void endSession() {
-        try {
-            cleanupDocumentState(false);
-            cleanupContext();
-            diffManager.cleanupState();
+        CompletableFuture<Void> uiThreadFuture = new CompletableFuture<>();
+
+        task.cancelPendingUpdate();
+        cleanupContext();
+
+        Display.getDefault().asyncExec(() -> {
+            try {
+                cleanupWorkbench();
+                cleanupDocumentState(false);
+                diffManager.cleanupState();
+                uiThreadFuture.complete(null);
+            } catch (Exception e) {
+                Activator.getLogger().error("Error in UI cleanup: " + e.getMessage(), e);
+                uiThreadFuture.completeExceptionally(e);
+            }
+        });
+
+        uiThreadFuture.whenComplete((result, ex) -> {
             uiManager.closePrompt();
-        } finally {
-            task.cleanup();
             cleanupSessionState();
             setState(SessionState.INACTIVE);
             Activator.getLogger().info("SESSION ENDED!");
-        }
+        });
     }
 
     private synchronized void restoreAndEndSession() {
-        try {
-            restoreState();
-        } catch (Exception e) {
-            Activator.getLogger().error("Failed to restore state: " + e.getMessage(), e);
-        } finally {
-            endSession();
-        }
+        restoreState().whenComplete((res, ex) -> endSession());
     }
 
-    private void restoreState() throws Exception {
+    private CompletableFuture<Void> restoreState() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
         Display.getDefault().asyncExec(() -> {
             try {
                 // If previous response exists --> we know we've made document changes
                 cleanupDocumentState(task.getPreviousPartialResponse() != null);
                 // Clear any remaining annotations
                 diffManager.restoreState();
+                future.complete(null);
             } catch (Exception e) {
                 Activator.getLogger().error("Error restoring editor state: " + e.getMessage(), e);
+                future.completeExceptionally(e);
             }
         });
+        return future;
     }
 
     private void initUndoManager(final IDocument document) {
@@ -300,6 +317,9 @@ public class InlineChatSession implements ChatUiRequestListener {
         synchronized (stateLock) {
             this.currentState = newState;
         }
+        if (task != null) {
+            task.setTaskState(newState);
+        }
     }
 
     public SessionState getCurrentState() {
@@ -312,7 +332,6 @@ public class InlineChatSession implements ChatUiRequestListener {
         this.document = null;
         this.undoManager = null;
         this.undoListener = null;
-        this.task = null;
     }
 
     private void cleanupContext() {
@@ -323,6 +342,17 @@ public class InlineChatSession implements ChatUiRequestListener {
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error cleaning up context: " + e.getMessage(), e);
+        }
+    }
+
+    private void cleanupWorkbench() {
+        try {
+            if (workbenchPage != null) {
+                workbenchPage.removePartListener(this);
+                workbenchPage = null;
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to clean up part listener: " + e.getMessage(), e);
         }
     }
 
@@ -343,6 +373,14 @@ public class InlineChatSession implements ChatUiRequestListener {
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error cleaning up document state: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void partDeactivated(final IWorkbenchPartReference partRef) {
+        if (isSessionActive() && partRef.getPart(false) == task.getEditor()) {
+            Activator.getLogger().info("Editor deactivated");
+            restoreAndEndSession();
         }
     }
 

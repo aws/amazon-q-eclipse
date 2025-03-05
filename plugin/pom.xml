@@ -121,7 +121,9 @@
 
     <build>
         <sourceDirectory>src</sourceDirectory>
+        <outputDirectory>target/classes</outputDirectory>
         <testSourceDirectory>tst</testSourceDirectory>
+        <testOutputDirectory>target/test-classes</testOutputDirectory>
         <plugins>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>

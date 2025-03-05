@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Maven Action
-      uses: s4u/setup-maven-action@v1.14.0
+      uses: s4u/setup-maven-action@v1.18.0
       with:
         checkout-fetch-depth: 0
         java-version: 17

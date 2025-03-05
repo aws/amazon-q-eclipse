@@ -2,27 +2,46 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.ui.IActionBars;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewSite;
-
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.menus.AbstractContributionFactory;
+import org.eclipse.ui.menus.IMenuService;
 
 public final class AmazonQCommonActions {
-
-    private SignoutAction signoutAction;
-    private FeedbackDialogContributionItem feedbackDialogContributionItem;
-    private CustomizationDialogContributionItem customizationDialogContributionItem;
-    private ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
-    private OpenCodeReferenceLogAction openCodeReferenceLogAction;
-    private OpenUserGuideAction openUserGuideAction;
-    private ViewSourceAction viewSourceAction;
-    private ViewLogsAction viewLogsAction;
-    private ReportAnIssueAction reportAnIssueAction;
-
+    private final Actions actions;
+    private AbstractContributionFactory factory;
     private IMenuManager menuManager;
+
+    private static class Actions {
+        private final SignoutAction signoutAction;
+        private final FeedbackDialogContributionItem feedbackDialogContributionItem;
+        private final CustomizationDialogContributionItem customizationDialogContributionItem;
+        private final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
+        private final OpenQChatAction openQChatAction;
+        private final OpenCodeReferenceLogAction openCodeReferenceLogAction;
+        private final OpenUserGuideAction openUserGuideAction;
+        private final ViewSourceAction viewSourceAction;
+        private final ViewLogsAction viewLogsAction;
+        private final ReportAnIssueAction reportAnIssueAction;
+
+        Actions(final IViewSite viewSite) {
+            signoutAction = new SignoutAction();
+            feedbackDialogContributionItem = new FeedbackDialogContributionItem();
+            customizationDialogContributionItem = new CustomizationDialogContributionItem();
+            toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem();
+            openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
+            openQChatAction = new OpenQChatAction();
+            openUserGuideAction = new OpenUserGuideAction();
+            viewSourceAction = new ViewSourceAction();
+            viewLogsAction = new ViewLogsAction();
+            reportAnIssueAction = new ReportAnIssueAction();
+        }
+    }
 
     public AmazonQCommonActions(final IViewSite viewSite) {
         createActions(viewSite);
@@ -30,31 +49,23 @@ public final class AmazonQCommonActions {
     }
 
     public SignoutAction getSignoutAction() {
-        return signoutAction;
+        return actions.signoutAction;
     }
 
     public FeedbackDialogContributionItem getFeedbackDialogContributionAction() {
-        return feedbackDialogContributionItem;
+        return actions.feedbackDialogContributionItem;
     }
 
     public CustomizationDialogContributionItem getCustomizationDialogContributionAction() {
-        return customizationDialogContributionItem;
+        return actions.customizationDialogContributionItem;
     }
 
     public ToggleAutoTriggerContributionItem getToggleAutoTriggerContributionAction() {
-        return toggleAutoTriggerContributionItem;
+        return actions.toggleAutoTriggerContributionItem;
     }
 
-    private void createActions(final IViewSite viewSite) {
-        signoutAction = new SignoutAction();
-        feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
-        customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
-        toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem(viewSite);
-        openUserGuideAction = new OpenUserGuideAction();
-        viewSourceAction = new ViewSourceAction();
-        viewLogsAction = new ViewLogsAction();
-        reportAnIssueAction = new ReportAnIssueAction();
-        openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
+    private void fillLocalPullDown(final IMenuManager manager) {
+        addCommonMenuItems(manager);
     }
 
     private void contributeToActionBars(final IViewSite viewSite) {
@@ -72,14 +83,14 @@ public final class AmazonQCommonActions {
 
     private void fillLocalPullDown() {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
-        feedbackSubMenu.add(reportAnIssueAction);
-        feedbackSubMenu.add(feedbackDialogContributionItem.getDialogContributionItem());
+        feedbackSubMenu.add(actions.reportAnIssueAction);
+        feedbackSubMenu.add(actions.feedbackDialogContributionItem.getDialogContributionItem());
 
         IMenuManager helpSubMenu = new MenuManager("Help");
-        helpSubMenu.add(openUserGuideAction);
+        helpSubMenu.add(actions.openUserGuideAction);
         helpSubMenu.add(new Separator());
-        helpSubMenu.add(viewSourceAction);
-        helpSubMenu.add(viewLogsAction);
+        helpSubMenu.add(actions.viewSourceAction);
+        helpSubMenu.add(actions.viewLogsAction);
 
         menuManager.add(openCodeReferenceLogAction);
         menuManager.add(new Separator());
@@ -107,5 +118,4 @@ public final class AmazonQCommonActions {
             menuManager = null;
         }
     }
-
 }

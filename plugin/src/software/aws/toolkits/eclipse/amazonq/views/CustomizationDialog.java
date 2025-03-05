@@ -183,11 +183,7 @@ public final class CustomizationDialog extends Dialog {
         for (int index = 0; index < customizations.size(); index++) {
             addFormattedOption(combo, customizations.get(index).getName(), customizations.get(index).getDescription());
             combo.setData(String.format("%s", index), customizations.get(index));
-            if (this.responseSelection.equals(ResponseSelection.CUSTOMIZATION)
-                    && Objects.nonNull(this.getSelectedCustomization())
-                    && this.getSelectedCustomization().getArn().equals(customizations.get(index).getArn())) {
-                defaultSelectedDropdownIndex = index;
-            }
+            defaultSelectedDropdownIndex = index;
         }
         combo.select(defaultSelectedDropdownIndex);
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT) || customizations.isEmpty()) {

@@ -10,7 +10,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.ui.IViewSite;
 
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
@@ -23,12 +22,10 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem im
     private static final String PAUSE_TEXT = "Pause Auto-Suggestions";
     private static final String RESUME_TEXT = "Resume Auto-Suggestions";
 
-    private IViewSite viewSite;
     private Image pause;
     private Image resume;
 
-    public ToggleAutoTriggerContributionItem(final IViewSite viewSite) {
-        this.viewSite = viewSite;
+    public ToggleAutoTriggerContributionItem() {
         var pauseImageDescriptor = Activator.imageDescriptorFromPlugin("org.eclipse.ui.navigator",
                 "icons/full/clcl16/pause.png");
         pause = pauseImageDescriptor.createImage(Display.getCurrent());
@@ -40,10 +37,6 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem im
     @Override
     public void onEvent(final AuthState authState) {
         this.setVisible(authState.isLoggedIn());
-        Display.getDefault().asyncExec(() -> {
-            viewSite.getActionBars().getMenuManager().markDirty();
-            viewSite.getActionBars().getMenuManager().update(true);
-        });
     }
 
     @Override

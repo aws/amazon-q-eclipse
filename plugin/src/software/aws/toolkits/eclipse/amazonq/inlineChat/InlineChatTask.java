@@ -31,10 +31,12 @@ class InlineChatTask {
     private final AtomicLong lastUpdateTime;
 
     InlineChatTask(final ITextEditor editor, final ITextSelection selection) {
-        var hasActiveSelection = !selection.getText().isBlank();
+        String originalCode = selection.getText();
+        boolean hasActiveSelection = !originalCode.isBlank();
+
         this.selection = selection;
         this.editor = editor;
-        this.originalCode = (hasActiveSelection) ? selection.getText() : "";
+        this.originalCode = (hasActiveSelection) ? originalCode : "";
         this.offset = selection.getOffset();
         this.taskState.set(SessionState.ACTIVE);
         this.hasActiveSelection.set(hasActiveSelection);

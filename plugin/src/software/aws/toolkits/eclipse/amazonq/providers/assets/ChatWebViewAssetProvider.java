@@ -46,12 +46,23 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
     private final ChatCommunicationManager chatCommunicationManager;
+    private Optional<String> content;
 
     public ChatWebViewAssetProvider() {
         chatTheme = new ChatTheme();
         commandParser = new LoginViewCommandParser();
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
+        content = Optional.empty();
+    }
+
+    @Override
+    public void initialize() {
+        if (content.isEmpty()) {
+            content = resolveContent();
+            Activator.getEventBroker().post(ChatWebViewAssetState.class,
+                    content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);
+        }
     }
 
     @Override
@@ -99,15 +110,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
             }
         });
 
-        browser.setText(getContent().get());
-    }
-
-    @Override
-    public Optional<String> getContent() {
-        Optional<String> content = resolveContent();
-        Activator.getEventBroker().post(ChatWebViewAssetState.class,
-                content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);
-        return content;
+        browser.setText(content.get());
     }
 
     private Optional<String> resolveContent() {

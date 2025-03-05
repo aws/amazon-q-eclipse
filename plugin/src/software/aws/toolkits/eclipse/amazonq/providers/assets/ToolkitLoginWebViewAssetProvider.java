@@ -33,9 +33,22 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     private final ViewCommandParser commandParser;
     private final ViewActionHandler actionHandler;
 
+    private Optional<String> content;
+
     public ToolkitLoginWebViewAssetProvider() {
-        this.commandParser = new LoginViewCommandParser();
-        this.actionHandler = new LoginViewActionHandler();
+        commandParser = new LoginViewCommandParser();
+        actionHandler = new LoginViewActionHandler();
+        content = Optional.empty();
+    }
+
+    @Override
+    public void initialize() {
+        if (content.isEmpty()) {
+            content = resolveContent();
+            Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
+                    content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
+                            : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
+        }
     }
 
     @Override
@@ -57,16 +70,7 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
             }
         };
 
-        browser.setText(getContent().get());
-    }
-
-    @Override
-    public Optional<String> getContent() {
-        Optional<String> content = resolveContent();
-        Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
-                content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
-                        : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
-        return content;
+        browser.setText(content.get());
     }
 
     private Optional<String> resolveContent() {

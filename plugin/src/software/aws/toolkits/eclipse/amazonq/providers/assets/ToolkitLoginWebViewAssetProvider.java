@@ -36,16 +36,19 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     private Optional<String> content;
 
     public ToolkitLoginWebViewAssetProvider() {
-        this.commandParser = new LoginViewCommandParser();
-        this.actionHandler = new LoginViewActionHandler();
+        commandParser = new LoginViewCommandParser();
+        actionHandler = new LoginViewActionHandler();
+        content = Optional.empty();
     }
 
     @Override
     public void initialize() {
-        content = resolveContent();
-        Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
-                content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
-                        : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
+        if (content.isEmpty()) {
+            content = resolveContent();
+            Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
+                    content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
+                            : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
+        }
     }
 
     @Override

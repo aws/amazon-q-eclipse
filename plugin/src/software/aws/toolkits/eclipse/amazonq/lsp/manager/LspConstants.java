@@ -32,7 +32,7 @@ public final class LspConstants {
 
     private static VersionRange createVersionRange() {
         try {
-            return VersionRange.createFromVersionSpec("[3.0.0, 3.0.10)");
+            return VersionRange.createFromVersionSpec("[3.1.2, 3.10.0)");
         } catch (InvalidVersionSpecificationException e) {
             throw new AmazonQPluginException("Failed to parse LSP supported version range", e);
         }

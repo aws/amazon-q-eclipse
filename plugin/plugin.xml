@@ -347,6 +347,7 @@
                 <command id="software.aws.toolkits.eclipse.amazonq.toolbar.command"
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.openAmazonQLoginView"
                     icon="icons/AmazonQ.png"
+                    style="pulldown"
                     tooltip="Amazon Q">
                     <visibleWhen checkEnabled="false">
                         <with variable="is_logged_in"> <!-- Provided by AuthSourceProvider  -->

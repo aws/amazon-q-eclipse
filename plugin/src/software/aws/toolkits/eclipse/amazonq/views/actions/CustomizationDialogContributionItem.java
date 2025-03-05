@@ -9,11 +9,9 @@ import org.eclipse.jface.action.ContributionItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IViewSite;
 
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
@@ -31,19 +29,10 @@ public final class CustomizationDialogContributionItem extends ContributionItem 
 
     @Inject
     private Shell shell;
-    private IViewSite viewSite;
-
-    public CustomizationDialogContributionItem(final IViewSite viewSite) {
-        this.viewSite = viewSite;
-    }
 
     // TODO: Need to update this method as the login condition has to be Pro login using IAM identity center
     public void updateVisibility(final AuthState authState) {
         this.setVisible(authState.isLoggedIn() && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
-        Display.getDefault().asyncExec(() -> {
-            viewSite.getActionBars().getMenuManager().markDirty();
-            viewSite.getActionBars().getMenuManager().update(true);
-        });
     }
 
     @Override

@@ -1,8 +1,6 @@
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IViewSite;
 
 import jakarta.inject.Inject;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
@@ -15,12 +13,10 @@ public final class FeedbackDialogContributionItem implements EventObserver<AuthS
 
     @Inject
     private Shell shell;
-    private IViewSite viewSite;
 
     private DialogContributionItem feedbackDialogContributionItem;
 
-    public FeedbackDialogContributionItem(final IViewSite viewSite) {
-        this.viewSite = viewSite;
+    public FeedbackDialogContributionItem() {
         feedbackDialogContributionItem = new DialogContributionItem(
                 new FeedbackDialog(shell),
                 SHARE_FEEDBACK_MENU_ITEM_TEXT
@@ -29,10 +25,6 @@ public final class FeedbackDialogContributionItem implements EventObserver<AuthS
 
     public void updateVisibility(final AuthState authState) {
         feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
-        Display.getDefault().asyncExec(() -> {
-            viewSite.getActionBars().getMenuManager().markDirty();
-            viewSite.getActionBars().getMenuManager().update(true);
-        });
     }
 
     public DialogContributionItem getDialogContributionItem() {

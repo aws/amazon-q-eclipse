@@ -40,6 +40,7 @@ public class InlineChatUIManager {
     private ITextViewer viewer;
     private final int MAX_INPUT_LENGTH = 128;
     private PaintListener currentPaintListener;
+    private final String INPUT_PROMPT_MESSAGE = "Enter instructions for Amazon Q (Enter | Esc)";
     private final String GENERATING_MESSAGE = "Amazon Q is generating...";
     private final String DECIDING_MESSAGE = "Accept (Tab) | Reject (Esc)";
     private boolean isDarkTheme;
@@ -93,8 +94,8 @@ public class InlineChatUIManager {
                 @Override
                 protected Point getInitialLocation(final Point initialSize) {
                     if (screenLocation == null) {
-                        // Get the vertical position
-                        Point location = widget.getLocationAtOffset(task.getOffset());
+                        int indentedOffset = calculateIndentOffset(widget, task.getOffset());
+                        Point location = widget.getLocationAtOffset(indentedOffset);
 
                         // Move input bar up as to not block the selected code
                         location.y -= widget.getLineHeight() * 2.5;
@@ -109,7 +110,7 @@ public class InlineChatUIManager {
                     composite.setLayout(new GridLayout(1, false));
 
                     inputField = new Text(composite, SWT.BORDER | SWT.SINGLE);
-                    inputField.setMessage("Enter instructions for Amazon Q (Enter | Esc)");
+                    inputField.setMessage(INPUT_PROMPT_MESSAGE);
                     GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
                     gridData.widthHint = 350;
                     inputField.setLayoutData(gridData);
@@ -173,7 +174,8 @@ public class InlineChatUIManager {
         return new PaintListener() {
             @Override
             public void paintControl(final PaintEvent event) {
-                Point location = widget.getLocationAtOffset(offset);
+                int indentedOffset = calculateIndentOffset(widget, offset);
+                Point location = widget.getLocationAtOffset(indentedOffset);
                 Point textExtent = event.gc.textExtent(promptText);
 
                 // Check if selection is atop the editor
@@ -184,7 +186,7 @@ public class InlineChatUIManager {
                 if (hasSpaceAbove) {
                     location.y -= widget.getLineHeight() * 2;
                 }
-                // If no space above, keep location.y as is (over the selected line)
+                // If no space above, keep location.y as is
 
                 Color backgroundColor;
                 Color textColor;
@@ -239,6 +241,18 @@ public class InlineChatUIManager {
         } catch (Exception e) {
             Activator.getLogger().error("Failed to remove paint listener: " + e.getMessage(), e);
         }
+    }
+
+    private int calculateIndentOffset(final StyledText widget, final int currentOffset) {
+        int lineIndex = widget.getLineAtOffset(currentOffset);
+        String line = widget.getLine(lineIndex);
+        int lineOffset = widget.getOffsetAtLine(lineIndex);
+        int linePosition = currentOffset - lineOffset;
+
+        while (linePosition < line.length() && Character.isWhitespace(line.charAt(linePosition))) {
+            linePosition++;
+        }
+        return lineOffset + linePosition;
     }
 
     private boolean userInputIsValid(final String input) {

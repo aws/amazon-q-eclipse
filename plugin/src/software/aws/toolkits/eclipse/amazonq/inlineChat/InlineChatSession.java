@@ -85,6 +85,8 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         try {
             setState(SessionState.ACTIVE);
 
+            InlineChatEditorListener.getInstance().closePrompt();
+
             workbenchPage = editor.getSite().getPage();
             workbenchPage.addPartListener(this);
 

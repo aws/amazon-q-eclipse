@@ -8,6 +8,7 @@ import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.PaintEvent;
@@ -23,6 +24,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Text;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
@@ -157,57 +159,60 @@ public class InlineChatUIManager {
         closePrompt();
         Display.getDefault().asyncExec(() -> {
             var widget = viewer.getTextWidget();
-
-            currentPaintListener = new PaintListener() {
-                @Override
-                public void paintControl(final PaintEvent event) {
-                    try {
-                        Point location = widget.getLocationAtOffset(task.getOffset());
-                        Point textExtent = event.gc.textExtent(promptText);
-
-                        // Check if selection is atop the editor
-                        Rectangle clientArea = widget.getClientArea();
-                        boolean hasSpaceAbove = (location.y - widget.getLineHeight() * 2) >= clientArea.y;
-
-                        // If space above, draw above. Otherwise draw over the selected line
-                        if (hasSpaceAbove) {
-                            location.y -= widget.getLineHeight() * 2;
-                        }
-                        // If no space above, keep location.y as is (over the selected line)
-
-                        Color backgroundColor;
-                        Color textColor;
-
-                        // Toggle color based on editor theme
-                        if (isDarkTheme) {
-                            backgroundColor = new Color(Display.getCurrent(), 100, 100, 100);
-                            textColor = new Color(Display.getCurrent(), 255, 255, 255);
-                        } else {
-                            backgroundColor = new Color(Display.getCurrent(), 230, 230, 230);
-                            textColor = new Color(Display.getCurrent(), 0, 0, 0);
-                        }
-
-                        try {
-                            // Draw background
-                            event.gc.setBackground(backgroundColor);
-                            event.gc.fillRectangle(location.x, location.y, textExtent.x + 10, textExtent.y + 10);
-
-                            // Draw text
-                            event.gc.setForeground(textColor);
-                            event.gc.drawText(promptText, location.x + 5, location.y + 5, false);
-                        } finally {
-                            backgroundColor.dispose();
-                            textColor.dispose();
-                        }
-                    } catch (Exception e) {
-                        closePrompt();
-                    }
-                }
-            };
-
-            widget.addPaintListener(currentPaintListener);
-            widget.redraw();
+            try {
+                currentPaintListener = createPaintListenerPrompt(widget, task.getOffset(), promptText, isDarkTheme);
+                widget.addPaintListener(currentPaintListener);
+                widget.redraw();
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to create paint listener: " + e.getMessage(), e);
+            }
         });
+    }
+
+    PaintListener createPaintListenerPrompt(final StyledText widget, final int offset, final String promptText, final boolean isDarkTheme) {
+        return new PaintListener() {
+            @Override
+            public void paintControl(final PaintEvent event) {
+                Point location = widget.getLocationAtOffset(offset);
+                Point textExtent = event.gc.textExtent(promptText);
+
+                // Check if selection is atop the editor
+                Rectangle clientArea = widget.getClientArea();
+                boolean hasSpaceAbove = (location.y - widget.getLineHeight() * 2) >= clientArea.y;
+
+                // If space above, draw above. Otherwise draw over the selected line
+                if (hasSpaceAbove) {
+                    location.y -= widget.getLineHeight() * 2;
+                }
+                // If no space above, keep location.y as is (over the selected line)
+
+                Color backgroundColor;
+                Color textColor;
+
+                // Toggle color based on editor theme
+                if (isDarkTheme) {
+                    backgroundColor = new Color(Display.getCurrent(), 100, 100, 100);
+                    textColor = new Color(Display.getCurrent(), 255, 255, 255);
+                } else {
+                    backgroundColor = new Color(Display.getCurrent(), 230, 230, 230);
+                    textColor = new Color(Display.getCurrent(), 0, 0, 0);
+                }
+
+                try {
+                    // Draw background
+                    event.gc.setBackground(backgroundColor);
+                    event.gc.fillRectangle(location.x, location.y, textExtent.x + 10, textExtent.y + 10);
+
+                    // Draw text
+                    event.gc.setForeground(textColor);
+                    event.gc.drawText(promptText, location.x + 5, location.y + 5, false);
+                } finally {
+                    backgroundColor.dispose();
+                    textColor.dispose();
+                }
+            }
+        };
+
     }
 
     void transitionToGeneratingPrompt() {
@@ -223,12 +228,16 @@ public class InlineChatUIManager {
     }
 
     private void removeCurrentPaintListener() {
-        if (viewer != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
-            Display.getDefault().syncExec(() -> {
-                viewer.getTextWidget().removePaintListener(currentPaintListener);
-                viewer.getTextWidget().redraw();
-                currentPaintListener = null;
-            });
+        try {
+            if (viewer != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
+                Display.getDefault().syncExec(() -> {
+                    viewer.getTextWidget().removePaintListener(currentPaintListener);
+                    viewer.getTextWidget().redraw();
+                    currentPaintListener = null;
+                });
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to remove paint listener: " + e.getMessage(), e);
         }
     }
 

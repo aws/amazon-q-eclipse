@@ -287,6 +287,7 @@ public class InlineChatUIManager {
         });
     }
 
+    // Method not in use, leaving in case reintroduced in future
     void restoreSelection() {
         if (task.getEditor() != null && task.hasActiveSelection()) {
             task.getEditor().getSelectionProvider().setSelection(task.getSelection());

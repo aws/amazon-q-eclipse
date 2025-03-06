@@ -54,7 +54,6 @@ public class Activator extends AbstractUIPlugin {
 
     @Override
     public final void stop(final BundleContext context) throws Exception {
-        editorListener.dispose();
         ChatStateManager.getInstance().dispose();
         super.stop(context);
         plugin = null;

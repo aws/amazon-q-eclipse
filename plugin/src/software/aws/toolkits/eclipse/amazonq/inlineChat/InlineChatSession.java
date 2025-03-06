@@ -58,6 +58,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     private final IContextService contextService;
     private IContextActivation contextActivation;
     private final String CONTEXT_ID = "org.eclipse.ui.inlineChatContext";
+    private final int ABOUT_TO_UNDO = 17; // 17 maps to this event type
 
     private InlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
@@ -297,7 +298,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             undoListener = new IDocumentUndoListener() {
                 @Override
                 public void documentUndoNotification(final DocumentUndoEvent event) {
-                    if (event.getEventType() == 17 && isSessionActive()) {
+                    if (event.getEventType() == ABOUT_TO_UNDO && isSessionActive()) {
                         Activator.getLogger().info("Undo request being processed!");
                         if (isGenerating() || isDeciding()) {
                             uiManager.closePrompt();

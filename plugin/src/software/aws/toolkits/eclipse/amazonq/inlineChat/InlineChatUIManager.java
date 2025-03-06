@@ -42,7 +42,7 @@ public class InlineChatUIManager {
     private PaintListener currentPaintListener;
     private final String INPUT_PROMPT_MESSAGE = "Enter instructions for Amazon Q (Enter | Esc)";
     private final String GENERATING_MESSAGE = "Amazon Q is generating...";
-    private final String DECIDING_MESSAGE = "Accept (Tab) | Reject (Esc)";
+    private final String DECIDING_MESSAGE = "Accept (Enter) | Reject (Esc)";
     private boolean isDarkTheme;
 
     private InlineChatUIManager() {

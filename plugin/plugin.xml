@@ -347,7 +347,7 @@
             commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat"
             contextId="org.eclipse.ui.inlineChatContext"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="TAB">
+            sequence="ENTER">
         </key>
         <key
             commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat"

@@ -20,12 +20,14 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.AwsTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public class AmazonQPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
     public static final String PREFERENCE_STORE_ID = "software.aws.toolkits.eclipse.preferences";
@@ -265,6 +267,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
                     changedDataSharingOptInChecked.toString());
             isQDataSharingOptInChecked = changedDataSharingOptInChecked;
         }
+        ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
     }
 
     @Override

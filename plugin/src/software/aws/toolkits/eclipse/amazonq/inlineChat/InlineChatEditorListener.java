@@ -13,17 +13,15 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
-public class InlineChatEditorListener implements IPartListener2, EventObserver<AuthState> {
+public class InlineChatEditorListener implements IPartListener2 {
     private static InlineChatEditorListener instance;
     private final InlineChatUIManager uiManager;
     private final ThemeDetector themeDetector;
-    private final Disposable authStateSubscription;
 
     private IWorkbenchWindow window;
     private Runnable pendingPromptUpdate;
@@ -31,9 +29,8 @@ public class InlineChatEditorListener implements IPartListener2, EventObserver<A
     private PaintListener currentPaintListener;
     private ITextViewer currentViewer;
     private final boolean isDarkTheme;
-    private boolean isLoggedIn = Activator.getLoginService().getAuthState().isLoggedIn();
 
-    private final String INLINE_CHAT_TIP_MESSAGE = "Amazon Q: ⌘ + I";
+    private final String INLINE_CHAT_TIP_MESSAGE;
     private static final int SELECTION_DELAY_MS = 500;
 
 
@@ -42,13 +39,8 @@ public class InlineChatEditorListener implements IPartListener2, EventObserver<A
         this.themeDetector = new ThemeDetector();
         this.isDarkTheme = themeDetector.isDarkTheme();
         this.uiManager = InlineChatUIManager.getInstance();
-        this.authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
+        this.INLINE_CHAT_TIP_MESSAGE = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌘ + I" : "Amazon Q: CTRL + I";
 
-    }
-
-    @Override
-    public void onEvent(final AuthState authState) {
-        isLoggedIn = authState.isLoggedIn();
     }
 
     public static InlineChatEditorListener getInstance() {
@@ -79,10 +71,6 @@ public class InlineChatEditorListener implements IPartListener2, EventObserver<A
 
     public void closePrompt() {
         removeCurrentPaintListener();
-    }
-
-    public void dispose() {
-        authStateSubscription.dispose();
     }
 
     @Override
@@ -143,7 +131,9 @@ public class InlineChatEditorListener implements IPartListener2, EventObserver<A
         }
 
         currentSelectionListener = event -> {
-            if (!isLoggedIn) {
+
+            //TODO: change to use eventBroker once code is in prod
+            if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
                 return;
             }
             // Cancel any pending prompt updates

@@ -264,10 +264,24 @@
             class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerSuggestionsHandler"
             commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerSuggestions">
         </handler>
-        <handler
-            class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerInlineChatHandler"
-            commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
-        </handler>
+		<handler
+		    class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerInlineChatHandler"
+		    commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+		    <activeWhen>
+		        <with variable="is_logged_in">
+		            <equals value="true"/>
+		        </with>
+		    </activeWhen>
+		</handler>
+		<handler
+		    class="software.aws.toolkits.eclipse.amazonq.handlers.QOpenLoginViewHandler"
+		    commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+		    <activeWhen>
+		        <with variable="is_logged_in">
+		            <equals value="false"/>
+		        </with>
+		    </activeWhen>
+		</handler>
 	    <handler
 	        commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"
 	        class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptSuggestionsHandler">

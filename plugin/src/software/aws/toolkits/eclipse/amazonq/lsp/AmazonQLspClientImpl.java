@@ -179,11 +179,20 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     
     @Override
     public void showNotification(NotificationParams params) {
-        Display.getDefault().asyncExec(() -> {
+    	Activator.getLogger().info("Received notification JSON: " + params.toString());
+    	Display.getDefault().asyncExec(() -> {
             String title = params.content().title() != null ? 
                 params.content().title() : "AWS Notification"; // Default title
             String message = params.content().text();
+            // Null check for actions
+            if (params.actions() != null) {
+                // Handle actions if present
+            }
 
+            // Null check for id
+            if (params.id() != null) {
+                // Handle id if present
+            }
             // Option 1: Simple popup (non-persistent)
             AbstractNotificationPopup notification = new ToolkitNotification(
                 Display.getCurrent(),

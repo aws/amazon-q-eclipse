@@ -36,7 +36,10 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
         List<String> commands = new ArrayList<>();
         commands.add(serverCommand.toString());
-        commands.add(lspInstallResult.getServerCommandArgs());
+        //commands.add(lspInstallResult.getServerCommandArgs());
+        commands.add("--inspect=6012");
+        commands.add("/Users/aseemxs/Language-servers/language-servers/app/aws-lsp-notification-runtimes/out/standalone.js");
+        commands.add("--nolazy");
         commands.add("--stdio");
         commands.add("--set-credentials-encryption-key");
         setCommands(commands);
@@ -55,6 +58,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         }
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
+        env.put("AWS_Q_ENDPOINT_URL", "https://rts.gamma-us-east-1.codewhisperer.ai.aws.dev/");
     }
 
     @Override

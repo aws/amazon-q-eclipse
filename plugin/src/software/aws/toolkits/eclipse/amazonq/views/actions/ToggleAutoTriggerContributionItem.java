@@ -11,7 +11,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
@@ -33,8 +32,9 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
         resume = resumeImageDescriptor.createImage(Display.getCurrent());
     }
 
-    public void updateVisibility(final AuthState authState) {
-        this.setVisible(authState.isLoggedIn());
+    @Override
+    public void setVisible(final boolean isVisible) {
+        super.setVisible(isVisible);
     }
 
     @Override
@@ -70,8 +70,16 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
 
     @Override
     public void dispose() {
-        pause.dispose();
-        resume.dispose();
+        if (pause != null) {
+            pause.dispose();
+            pause = null;
+        }
+
+        if (resume != null) {
+            resume.dispose();
+            resume = null;
+        }
+
         super.dispose();
     }
 }

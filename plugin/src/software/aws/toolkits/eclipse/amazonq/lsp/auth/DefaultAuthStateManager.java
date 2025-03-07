@@ -121,7 +121,7 @@ public final class DefaultAuthStateManager implements AuthStateManager {
          */
         AuthState newAuthState = getAuthState();
         if (previousAuthState == null || newAuthState.authStateType() != previousAuthState.authStateType()) {
-            Activator.getEventBroker().post(newAuthState);
+            Activator.getEventBroker().post(AuthState.class, newAuthState);
         }
         previousAuthState = newAuthState;
     }

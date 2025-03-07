@@ -30,7 +30,7 @@ public class InlineChatEditorListener implements IPartListener2 {
     private ITextViewer currentViewer;
     private final boolean isDarkTheme;
 
-    private final String INLINE_CHAT_TIP_MESSAGE;
+    private final String INLINE_CHAT_HINT;
     private static final int SELECTION_DELAY_MS = 500;
 
 
@@ -39,7 +39,7 @@ public class InlineChatEditorListener implements IPartListener2 {
         this.themeDetector = new ThemeDetector();
         this.isDarkTheme = themeDetector.isDarkTheme();
         this.uiManager = InlineChatUIManager.getInstance();
-        this.INLINE_CHAT_TIP_MESSAGE = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌘ + I" : "Amazon Q: CTRL + I";
+        this.INLINE_CHAT_HINT = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌘ + I" : "Amazon Q: CTRL + I";
 
     }
 
@@ -108,7 +108,7 @@ public class InlineChatEditorListener implements IPartListener2 {
                     if (currentSelection.equals(selection)) {
                         currentViewer = editor.getAdapter(ITextViewer.class);
                         var widget = currentViewer.getTextWidget();
-                        currentPaintListener = uiManager.createPaintListenerPrompt(widget, selection.getOffset(), INLINE_CHAT_TIP_MESSAGE, isDarkTheme);
+                        currentPaintListener = uiManager.createPaintListenerPrompt(widget, selection.getOffset(), INLINE_CHAT_HINT, isDarkTheme);
 
                         widget.addPaintListener(currentPaintListener);
                         widget.redraw();

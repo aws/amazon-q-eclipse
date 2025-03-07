@@ -18,6 +18,7 @@ import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -97,11 +98,12 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             // Set up undoManager to batch document edits together
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
             this.undoManager = DocumentUndoManagerRegistry.getDocumentUndoManager(this.document);
+            initUndoManager(this.document);
 
             // Check if user has code references enabled
-            this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
-                    && Activator.getLoginService().getAuthState().loginType().equals(LoginType.BUILDER_ID);
-            initUndoManager(this.document);
+            var currentLoginType = Activator.getLoginService().getAuthState().loginType();
+            this.referencesEnabled = !currentLoginType.equals(LoginType.BUILDER_ID)
+                    || Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN);
 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
@@ -163,26 +165,13 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             ObjectMapper mapper = ObjectMapperFactory.getInstance();
             var rootNode = mapper.readTree(message);
             var paramsNode = rootNode.get("params");
+            var isPartialResult = rootNode.get("isPartialResult").asBoolean();
+            var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
-            // Check and pass through error message if server returns exception
-            if (rootNode.has("command") && "errorMessage".equals(rootNode.get("command").asText())) {
-                uiManager.showErrorNotification();
+            if (!verifyChatResultParams(chatResult, paramsNode)) {
                 restoreAndEndSession();
                 return;
             }
-
-            // TODO: validate JSON structure matches path to codeReferences used here
-            var codeReferences = rootNode.get("codeReferences");
-            if (codeReferences != null && codeReferences.isArray() && codeReferences.size() > 0) {
-                if (!this.referencesEnabled) {
-                    uiManager.showCodeReferencesNotification();
-                    restoreAndEndSession();
-                    return;
-                }
-            }
-
-            var isPartialResult = rootNode.get("isPartialResult").asBoolean();
-            var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
             // Render diffs and move to deciding once we receive final result
             diffManager.processDiff(chatResult, isPartialResult).thenRun(() -> {
@@ -306,6 +295,29 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             };
             undoManager.addDocumentUndoListener(undoListener);
         }
+    }
+
+    private boolean verifyChatResultParams(final ChatResult chatResult, final JsonNode node) {
+        // End session if server returns exception
+        if (node.has("command") && "errorMessage".equals(node.get("command").asText())) {
+            uiManager.showErrorNotification();
+            return false;
+        }
+
+        // End session if server responds with no suggestions
+        if (chatResult.body() == null || chatResult.body().isBlank()) {
+            uiManager.showNoSuggestionsNotification();
+            return false;
+        }
+
+        // End session if response has code refs and user has setting disabled
+        if (chatResult.codeReference() != null && chatResult.codeReference().length > 0) {
+            if (!this.referencesEnabled) {
+                uiManager.showCodeReferencesNotification();
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isSessionActive() {

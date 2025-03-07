@@ -151,6 +151,11 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
         if (localActionsMenuManager != null) {
             localActionsMenuManager.dispose();
         }
+
+        final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
+        if (factory != null) {
+            menuService.removeContributionFactory(factory);
+        }
     }
 
 }

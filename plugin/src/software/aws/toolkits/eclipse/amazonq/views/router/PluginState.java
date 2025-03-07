@@ -3,11 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.router;
 
+import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspState;
-import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.BrowserCompatibilityState;
 
 public record PluginState(AuthState authState, LspState lspState, BrowserCompatibilityState browserCompatibilityState,
-        WebViewAssetState webViewAssetState) {
+        ChatWebViewAssetState chatWebViewAssetState, ToolkitLoginWebViewAssetState toolkitLoginWebViewAssetState) {
 }

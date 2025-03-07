@@ -71,7 +71,6 @@
                 relationship="right"
                 visible="false">
             </view>
-<<<<<<< HEAD
             <view
                 id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
                 relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
@@ -159,8 +158,6 @@
                 relationship="right"
                 visible="false">
             </view>
-=======
->>>>>>> 4c33324 (Integrate browser based views in ViewContainer (#359))
         </perspectiveExtension>
     </extension>
     <extension

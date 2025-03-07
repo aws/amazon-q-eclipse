@@ -13,8 +13,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewSite;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
@@ -26,11 +24,6 @@ public abstract class BaseAmazonQView {
 
     private AmazonQCommonActions amazonQCommonActions;
     private AmazonQStaticActions amazonQStaticActions;
-
-    private Disposable signOutActionAuthStateSubscription;
-    private Disposable feedbackDialogAuthStateSubscription;
-    private Disposable customizationDialogAuthStateSubscription;
-    private Disposable toggleAutoTriggerAuthStateSubscription;
 
     public abstract Composite setupView(Composite parentComposite);
 
@@ -45,7 +38,6 @@ public abstract class BaseAmazonQView {
         }
 
         amazonQCommonActions = new AmazonQCommonActions(viewSite);
-        setupCommonActionAuthListeners();
         viewSite.getActionBars().updateActionBars();
     }
 
@@ -89,17 +81,6 @@ public abstract class BaseAmazonQView {
         return magnifiedFont;
     }
 
-    private void setupCommonActionAuthListeners() {
-        signOutActionAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getSignoutAction());
-        feedbackDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getFeedbackDialogContributionAction());
-        customizationDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getCustomizationDialogContributionAction());
-        toggleAutoTriggerAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
-                amazonQCommonActions.getToggleAutoTriggerContributionAction());
-    }
-
     /**
      * Disposes of resources and cleans up subscriptions when the view is closed.
      * This method ensures proper cleanup of authentication state subscriptions to prevent memory leaks.
@@ -115,33 +96,13 @@ public abstract class BaseAmazonQView {
      */
     public void dispose() {
         if (amazonQCommonActions != null) {
+            amazonQCommonActions.dispose();
             amazonQCommonActions = null;
         }
 
         if (amazonQStaticActions != null) {
             amazonQStaticActions.dispose();
             amazonQStaticActions = null;
-        }
-
-        if (signOutActionAuthStateSubscription != null && !signOutActionAuthStateSubscription.isDisposed()) {
-            signOutActionAuthStateSubscription.dispose();
-            signOutActionAuthStateSubscription = null;
-        }
-
-        if (feedbackDialogAuthStateSubscription != null && !feedbackDialogAuthStateSubscription.isDisposed()) {
-            feedbackDialogAuthStateSubscription.dispose();
-            feedbackDialogAuthStateSubscription = null;
-        }
-
-        if (customizationDialogAuthStateSubscription != null
-                && !customizationDialogAuthStateSubscription.isDisposed()) {
-            customizationDialogAuthStateSubscription.dispose();
-            customizationDialogAuthStateSubscription = null;
-        }
-
-        if (toggleAutoTriggerAuthStateSubscription != null && !toggleAutoTriggerAuthStateSubscription.isDisposed()) {
-            toggleAutoTriggerAuthStateSubscription.dispose();
-            toggleAutoTriggerAuthStateSubscription = null;
         }
     }
 

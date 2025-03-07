@@ -12,10 +12,18 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.menus.AbstractContributionFactory;
 import org.eclipse.ui.menus.IMenuService;
 
-public final class AmazonQCommonActions {
+import io.reactivex.rxjava3.disposables.Disposable;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+
+public final class AmazonQCommonActions implements EventObserver<AuthState> {
     private final Actions actions;
     private AbstractContributionFactory factory;
-    private IMenuManager menuManager;
+    private final IViewSite viewSite;
+    private final Disposable authStateSubscription;
+    private IMenuManager localActionsMenuManager;
 
     private static class Actions {
         private final SignoutAction signoutAction;
@@ -44,10 +52,13 @@ public final class AmazonQCommonActions {
     }
 
     public AmazonQCommonActions(final IViewSite viewSite) {
+        this.viewSite = viewSite;
+        localActionsMenuManager = viewSite.getActionBars().getMenuManager();
+
         actions = new Actions(viewSite);
 
-        menuManager = viewSite.getActionBars().getMenuManager();
         fillLocalPullDown();
+        authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
     }
 
     public SignoutAction getSignoutAction() {
@@ -66,44 +77,19 @@ public final class AmazonQCommonActions {
         return actions.toggleAutoTriggerContributionItem;
     }
 
-    private void createActions(final IViewSite viewSite) {
-        signoutAction = new SignoutAction();
-        feedbackDialogContributionItem = new FeedbackDialogContributionItem(viewSite);
-        customizationDialogContributionItem = new CustomizationDialogContributionItem(viewSite);
-        toggleAutoTriggerContributionItem = new ToggleAutoTriggerContributionItem(viewSite);
-        openUserGuideAction = new OpenUserGuideAction();
-        viewSourceAction = new ViewSourceAction();
-        viewLogsAction = new ViewLogsAction();
-        reportAnIssueAction = new ReportAnIssueAction();
-        openCodeReferenceLogAction = new OpenCodeReferenceLogAction();
-    }
-
-    private void contributeToActionBars(final IViewSite viewSite) {
-        IActionBars bars = viewSite.getActionBars();
-        menuManager = bars.getMenuManager();
-        IToolBarManager toolBarManager = bars.getToolBarManager();
-
-        menuManager.removeAll();
-        toolBarManager.removeAll();
-        bars.updateActionBars();
-
-        fillLocalPullDown();
-        fillLocalToolBar(toolBarManager);
-    }
-
     private void fillLocalPullDown() {
-        addCommonMenuItems(menuManager);
+        addCommonMenuItems(localActionsMenuManager);
     }
 
     private void fillGlobalToolBar() {
         final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
         var contributionFactory = new MenuContributionFactory("software.aws.toolkits.eclipse.amazonq.toolbar.command");
 
-        IMenuManager tempManager = new MenuManager();
-        tempManager.add(actions.openQChatAction);
-        addCommonMenuItems(tempManager);
+        IMenuManager tempMenuManager = new MenuManager();
+        tempMenuManager.add(actions.openQChatAction);
+        addCommonMenuItems(tempMenuManager);
 
-        for (IContributionItem item : tempManager.getItems()) {
+        for (IContributionItem item : tempMenuManager.getItems()) {
             if (item.isVisible()) {
                 contributionFactory.addContributionItem(item);
             }
@@ -113,7 +99,7 @@ public final class AmazonQCommonActions {
         this.factory = contributionFactory;
     }
 
-    private void addCommonMenuItems() {
+    private void addCommonMenuItems(final IMenuManager menuManager) {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
         feedbackSubMenu.add(actions.reportAnIssueAction);
         feedbackSubMenu.add(actions.feedbackDialogContributionItem.getDialogContributionItem());
@@ -135,11 +121,17 @@ public final class AmazonQCommonActions {
         menuManager.add(actions.signoutAction);
     }
 
-    public void updateActionVisibility(final AuthState authState, final IViewSite viewSite) {
-        actions.signoutAction.updateVisibility(authState);
-        actions.feedbackDialogContributionItem.updateVisibility(authState);
-        actions.customizationDialogContributionItem.updateVisibility(authState);
-        actions.toggleAutoTriggerContributionItem.updateVisibility(authState);
+    @Override
+    public void onEvent(final AuthState authState) {
+        actions.signoutAction.setVisible(authState.isLoggedIn());
+        actions.feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
+        actions.toggleAutoTriggerContributionItem.setVisible(authState.isLoggedIn());
+
+        // TODO: Need to update this method as the login condition has to be Pro login
+        // using IAM identity center
+        actions.customizationDialogContributionItem.setVisible(authState.isLoggedIn()
+                && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
+
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
@@ -153,14 +145,12 @@ public final class AmazonQCommonActions {
     }
 
     public void dispose() {
-        if (actions.toggleAutoTriggerContributionItem != null) {
-            toggleAutoTriggerContributionItem.dispose();
-            toggleAutoTriggerContributionItem = null;
-        }
+        authStateSubscription.dispose();
+        actions.toggleAutoTriggerContributionItem.dispose();
 
-        if (menuManager != null) {
-            menuManager.dispose();
-            menuManager = null;
+        if (localActionsMenuManager != null) {
+            localActionsMenuManager.dispose();
         }
     }
+
 }

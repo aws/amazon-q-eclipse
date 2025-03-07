@@ -102,8 +102,8 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
 
             // Check if user has code references enabled
             var currentLoginType = Activator.getLoginService().getAuthState().loginType();
-            this.referencesEnabled = !currentLoginType.equals(LoginType.BUILDER_ID)
-                    || Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN);
+            this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
+                    && currentLoginType.equals(LoginType.BUILDER_ID);
 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {

@@ -152,14 +152,10 @@ public final class ChatCommunicationManager {
         chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
                 ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                if (activeSelection) {
-                    addEditorState(chatRequestParams);
-                }
                 sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
                     String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 
                     EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(encryptedMessage, token);
-
                     return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);
                 });
             } catch (Exception e) {

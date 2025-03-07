@@ -152,6 +152,7 @@ public final class ChatCommunicationManager {
         chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
                 ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
+                addEditorState(chatRequestParams);
                 sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
                     String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 

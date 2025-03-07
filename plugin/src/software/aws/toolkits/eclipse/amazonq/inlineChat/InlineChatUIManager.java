@@ -272,17 +272,22 @@ public class InlineChatUIManager {
     }
 
     void showErrorNotification() {
-        Display.getDefault().asyncExec(() -> {
-            var notification = new ToolkitNotification(Display.getCurrent(), Constants.INLINE_CHAT_NOTIFICATION_TITLE,
-                    Constants.INLINE_CHAT_ERROR_NOTIFICATION_BODY);
-            notification.open();
-        });
+        showNotification(Constants.INLINE_CHAT_ERROR_NOTIFICATION_BODY);
     }
 
     void showCodeReferencesNotification() {
+        showNotification(Constants.INLINE_CHAT_CODEREF_NOTIFICATION_BODY);
+    }
+
+    void showNoSuggestionsNotification() {
+        showNotification(Constants.INLINE_CHAT_NO_SUGGESTIONS_BODY);
+    }
+
+    private void showNotification(final String notificationBody) {
         Display.getDefault().asyncExec(() -> {
-            var notification = new ToolkitNotification(Display.getCurrent(), Constants.INLINE_CHAT_NOTIFICATION_TITLE,
-                    Constants.INLINE_CHAT_CODEREF_NOTIFICATION_BODY);
+            var notification = new ToolkitNotification(Display.getCurrent(),
+                    Constants.INLINE_CHAT_NOTIFICATION_TITLE,
+                    notificationBody);
             notification.open();
         });
     }

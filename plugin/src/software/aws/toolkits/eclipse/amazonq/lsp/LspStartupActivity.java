@@ -19,10 +19,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-<<<<<<< Updated upstream
 import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
-=======
->>>>>>> Stashed changes
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
@@ -32,10 +29,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.util.UpdateUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
-<<<<<<< Updated upstream
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
-=======
->>>>>>> Stashed changes
 import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 
 @SuppressWarnings("restriction")

@@ -93,6 +93,9 @@ public class InlineChatDiffManager {
             }
         } else {
             // Final result - always update UI state regardless of content
+            if (task.getPendingUpdate() != null) {
+                task.getPendingUpdate().cancel(false);
+            }
             updateUI(chatResult);
             task.setLastUpdateTime(System.currentTimeMillis());
         }

@@ -116,6 +116,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             this.uiManager.initNewTask(task, isDarkTheme);
             this.diffManager.initNewTask(task, isDarkTheme);
             chatCommunicationManager.updateInlineChatTabId(task.getTabId());
+            Activator.getLogger().info("TAB ID: " + task.getTabId());
 
             CompletableFuture.runAsync(() -> {
                 try {
@@ -197,6 +198,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         uiManager.closePrompt();
         diffManager.handleDecision(userAcceptedChanges).thenRun(() -> {
             undoManager.endCompoundChange();
+            task.setUserDecision(userAcceptedChanges);
             endSession();
         }).exceptionally(throwable -> {
             Activator.getLogger().error("Failed to handle decision", throwable);
@@ -221,6 +223,15 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
 
         task.cancelPendingUpdate();
         cleanupContext();
+
+        //        CompletableFuture.runAsync(() -> {
+        //            try {
+        //                var inlineChatResult = task.buildResultObject();
+        //                //TelemetryClient.emitInlineChatEvent(inlineChatResult);
+        //            } catch (Exception e) {
+        //                Activator.getLogger().error("Failed to emit inline chat event: " + e.getMessage(), e);
+        //            }
+        //        });
 
         Display.getDefault().asyncExec(() -> {
             try {

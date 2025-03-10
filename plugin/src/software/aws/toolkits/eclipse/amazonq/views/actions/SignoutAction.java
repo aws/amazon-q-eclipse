@@ -38,7 +38,7 @@ public final class SignoutAction extends Action {
     }
 
     public void setVisible(final boolean isVisible) {
-        this.setEnabled(isVisible);
+        super.setEnabled(isVisible);
     }
 
 }

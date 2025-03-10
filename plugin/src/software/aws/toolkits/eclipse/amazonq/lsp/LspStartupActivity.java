@@ -19,7 +19,10 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+<<<<<<< Updated upstream
 import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
+=======
+>>>>>>> Stashed changes
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
@@ -29,7 +32,10 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.util.UpdateUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
+<<<<<<< Updated upstream
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
+=======
+>>>>>>> Stashed changes
 import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 
 @SuppressWarnings("restriction")
@@ -51,6 +57,7 @@ public class LspStartupActivity implements IStartup {
                 return Status.OK_STATUS;
             }
         };
+        job.setSystem(true); // prevent user notification
         job.schedule();
         if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
             Activator.getLspProvider().getAmazonQServer();
@@ -60,6 +67,7 @@ public class LspStartupActivity implements IStartup {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
+                    Thread.sleep(1000);
                     UpdateUtils.getInstance().checkForUpdate();
                 } catch (Exception e) {
                     return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
@@ -69,6 +77,7 @@ public class LspStartupActivity implements IStartup {
         };
 
         updateCheckJob.setPriority(Job.DECORATE);
+        updateCheckJob.setSystem(true);
         updateCheckJob.schedule();
 
         new AmazonQBrowserProvider().publishBrowserCompatibilityState();

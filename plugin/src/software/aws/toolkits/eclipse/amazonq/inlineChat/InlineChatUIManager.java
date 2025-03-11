@@ -94,7 +94,7 @@ public class InlineChatUIManager {
                 @Override
                 protected Point getInitialLocation(final Point initialSize) {
                     if (screenLocation == null) {
-                        int indentedOffset = calculateIndentOffset(widget, task.getOffset());
+                        int indentedOffset = calculateIndentOffset(widget, widget.getCaretOffset());
                         Point location = widget.getLocationAtOffset(indentedOffset);
 
                         // Move input bar up as to not block the selected code
@@ -161,7 +161,7 @@ public class InlineChatUIManager {
         Display.getDefault().asyncExec(() -> {
             var widget = viewer.getTextWidget();
             try {
-                currentPaintListener = createPaintListenerPrompt(widget, task.getOffset(), promptText, isDarkTheme);
+                currentPaintListener = createPaintListenerPrompt(widget, promptText, isDarkTheme);
                 widget.addPaintListener(currentPaintListener);
                 widget.redraw();
             } catch (Exception e) {
@@ -170,11 +170,11 @@ public class InlineChatUIManager {
         });
     }
 
-    PaintListener createPaintListenerPrompt(final StyledText widget, final int offset, final String promptText, final boolean isDarkTheme) {
+    PaintListener createPaintListenerPrompt(final StyledText widget, final String promptText, final boolean isDarkTheme) {
         return new PaintListener() {
             @Override
             public void paintControl(final PaintEvent event) {
-                int indentedOffset = calculateIndentOffset(widget, offset);
+                int indentedOffset = calculateIndentOffset(widget, widget.getCaretOffset());
                 Point location = widget.getLocationAtOffset(indentedOffset);
                 Point textExtent = event.gc.textExtent(promptText);
 

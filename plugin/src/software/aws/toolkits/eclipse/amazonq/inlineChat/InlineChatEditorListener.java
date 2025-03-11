@@ -108,7 +108,7 @@ public class InlineChatEditorListener implements IPartListener2 {
                     if (currentSelection.equals(selection)) {
                         currentViewer = editor.getAdapter(ITextViewer.class);
                         var widget = currentViewer.getTextWidget();
-                        currentPaintListener = uiManager.createPaintListenerPrompt(widget, selection.getOffset(), INLINE_CHAT_HINT, isDarkTheme);
+                        currentPaintListener = uiManager.createPaintListenerPrompt(widget, INLINE_CHAT_HINT, isDarkTheme);
 
                         widget.addPaintListener(currentPaintListener);
                         widget.redraw();

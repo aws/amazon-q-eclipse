@@ -12,7 +12,8 @@ import org.mockito.Mockito;
 import software.aws.toolkits.eclipse.amazonq.extensions.api.StaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
+
 import static org.mockito.Mockito.mockStatic;
 
 import java.util.Map;

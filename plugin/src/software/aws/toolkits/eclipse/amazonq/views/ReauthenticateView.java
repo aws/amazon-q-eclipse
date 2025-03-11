@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -15,11 +14,8 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
-import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -28,7 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.actions.SignoutAction;
 
 
-public final class ReauthenticateView extends CallToActionView implements EventObserver<AuthState> {
+public final class ReauthenticateView extends CallToActionView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView";
 
     private static final String ICON_PATH = "icons/AmazonQ64.png";
@@ -36,12 +32,6 @@ public final class ReauthenticateView extends CallToActionView implements EventO
     private static final String DETAIL_MESSAGE = "Please re-authenticate to continue";
     private static final String BUTTON_LABEL = "Re-authenticate";
     private static final String LINK_LABEL = "Sign out";
-
-    public ReauthenticateView() {
-         // It is necessary for this view to be an `AuthStatusChangedListener` to switch the view back to Q Chat after the authentication
-         // flow is successful. Without this listener, the re-authentication will succeed but the view will remain present.
-         Activator.getEventBroker().subscribe(AuthState.class, this);
-    }
 
     @Override
     protected String getIconPath() {
@@ -97,15 +87,6 @@ public final class ReauthenticateView extends CallToActionView implements EventO
     }
 
     @Override
-    public void onEvent(final AuthState authState) {
-        Display.getDefault().asyncExec(() -> {
-            if (authState.isLoggedIn()) {
-                ViewVisibilityManager.showChatView("update");
-            }
-        });
-    }
-
-    @Override
     protected void updateButtonStyle(final Button button) {
         resizeButtonFont(button, 16);
 
@@ -133,21 +114,6 @@ public final class ReauthenticateView extends CallToActionView implements EventO
                 }
             }
         });
-    }
-
-    @Override
-    public void dispose() {
-        super.dispose();
-    }
-
-    @Override
-    protected CompletableFuture<Boolean> isViewDisplayable() {
-        return CompletableFuture.completedFuture(Activator.getLoginService().getAuthState().isExpired());
-    }
-
-    @Override
-    protected void showAlternateView() {
-        ViewVisibilityManager.showChatView("restart");
     }
 
     private void resizeButtonFont(final Button button, final int newFontSize) {

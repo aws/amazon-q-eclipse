@@ -12,34 +12,41 @@ import java.util.List;
 import java.util.Map;
 
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 
 public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
     public QLspConnectionProvider() throws IOException {
         super();
-        LanguageServerTelemetryProvider.setAllStartPoint(Instant.now());
-        LspManager lspManager = LspManagerProvider.getInstance();
-        var lspInstallResult = lspManager.getLspInstallation();
+        try {
+            LanguageServerTelemetryProvider.setAllStartPoint(Instant.now());
+            LspManager lspManager = LspManagerProvider.getInstance();
+            var lspInstallResult = lspManager.getLspInstallation();
 
-        setWorkingDirectory(lspInstallResult.getServerDirectory());
+            setWorkingDirectory(lspInstallResult.getServerDirectory());
 
-        var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
-        List<String> commands = new ArrayList<>();
-        commands.add(serverCommand.toString());
-        commands.add(lspInstallResult.getServerCommandArgs());
-        commands.add("--stdio");
-        commands.add("--set-credentials-encryption-key");
-        setCommands(commands);
+            var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
+            List<String> commands = new ArrayList<>();
+            commands.add(serverCommand.toString());
+            commands.add(lspInstallResult.getServerCommandArgs());
+            commands.add("--stdio");
+            commands.add("--set-credentials-encryption-key");
+            setCommands(commands);
+        } catch (Exception e) {
+            Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.FAILED);
+            throw(e);
+        }
+
     }
 
     @Override
@@ -71,10 +78,12 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
                 lspEncryption.initializeEncryptedCommunication(serverStdIn);
             } catch (Exception e) {
+                Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.FAILED);
                 emitInitFailure(ExceptionMetadata.scrubException(e));
                 Activator.getLogger().error("Error occured while initializing communication with Amazon Q Lsp Server", e);
             }
         } catch (Exception e) {
+            Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.FAILED);
             emitInitFailure(ExceptionMetadata.scrubException(e));
             throw e;
         }
@@ -88,4 +97,5 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         args.setReason(reason);
         LanguageServerTelemetryProvider.emitSetupInitialize(Result.FAILED, args);
     }
+
 }

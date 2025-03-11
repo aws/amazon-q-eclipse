@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspManagerProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 
 public final class ChatAssetProvider {
     private WebviewAssetServer webviewAssetServer;

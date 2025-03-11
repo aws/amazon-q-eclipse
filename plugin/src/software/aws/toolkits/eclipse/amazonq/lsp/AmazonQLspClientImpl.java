@@ -18,8 +18,11 @@ import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.lsp4j.MessageType;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -28,6 +31,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.NotificationParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -37,6 +41,10 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import software.aws.toolkits.eclipse.amazonq.util.PersistentToolkitNotification;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
+
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -168,6 +176,94 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             }
         } catch (IllegalArgumentException ex) {
             Activator.getLogger().error("Error processing " + kind + " ssoTokenChanged notification", ex);
+        }
+    }
+    public enum NotificationSeverity {
+        LOW, MEDIUM, HIGH
+    }
+
+    /**
+     * Shows a notification to the user with the specified content and severity.
+     * This method is designed to be overridden by subclasses that need to customize
+     * the notification behavior.
+     *
+     * @param params The notification parameters containing the message type and content
+     */
+    @Override
+    public final void showNotification(final NotificationParams params) {
+        Activator.getLogger().info("Received notification JSON: " + params.type().toString());
+        Display.getDefault().asyncExec(() -> {
+            String title = params.content().title() != null 
+                ? params.content().title() 
+                : "AWS Notification";
+            String message = params.content().text();
+            NotificationSeverity severity = determineNotificationSeverity(params.type());
+            handleNotification(severity, title, message);
+        });
+    }
+
+    private NotificationSeverity determineNotificationSeverity(final MessageType type) {
+        if (type == MessageType.Error) {
+            return NotificationSeverity.HIGH;
+        }
+        if (type == MessageType.Warning) {
+            return NotificationSeverity.MEDIUM;
+        }
+        if (type == MessageType.Info) {
+            return NotificationSeverity.LOW;
+        }
+        return null;
+    }
+
+    private void handleNotification(NotificationSeverity severity, final String title, final String message) {
+        if (severity == null) {
+            severity = NotificationSeverity.LOW; // Default to LOW if severity is null
+            Activator.getLogger().info("Null severity detected, defaulting to LOW");
+        }
+
+        switch (severity) {
+            case LOW:
+                AbstractNotificationPopup transientNotification = new ToolkitNotification(
+                    Display.getCurrent(), title, message
+                );
+                transientNotification.open();
+                break;
+
+            case MEDIUM:
+                AbstractNotificationPopup persistentNotification = new PersistentToolkitNotification(
+                    Display.getCurrent(),
+                    title,
+                    message,
+                    checked -> {
+                        if (checked) {
+                            Activator.getPluginStore().put("notificationSkipFlag", "true");
+                        } else {
+                            Activator.getPluginStore().remove("notificationSkipFlag");
+                        }
+                    }
+                );
+                persistentNotification.setDelayClose(60000);
+                persistentNotification.open();
+                break;
+
+            case HIGH:
+                Display.getDefault().syncExec(() -> {
+                    MessageDialog dialog = new MessageDialog(
+                        Display.getCurrent().getActiveShell(),
+                        title,
+                        null,
+                        message,
+                        MessageDialog.WARNING,
+                        new String[] {"Acknowledge"},
+                        0
+                    );
+                    dialog.open();
+                });
+                break;
+
+            default:
+                Activator.getLogger().warn("Unexpected severity level encountered");
+                break;
         }
     }
 }

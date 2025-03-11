@@ -26,7 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoSessionSettings;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileOptions;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 
 public final class DefaultAuthTokenService implements AuthTokenService {

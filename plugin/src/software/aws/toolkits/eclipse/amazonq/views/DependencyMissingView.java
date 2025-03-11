@@ -3,18 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
-import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -34,11 +30,9 @@ public final class DependencyMissingView extends CallToActionView {
 
 
     private PluginPlatform platform;
-    private AmazonQViewController viewController;
 
     public DependencyMissingView() {
         platform = PluginUtils.getPlatform();
-        viewController = new AmazonQViewController();
     }
 
     @Override
@@ -78,7 +72,6 @@ public final class DependencyMissingView extends CallToActionView {
 
     private String getInstallUrl() {
         return platform == PluginPlatform.WINDOWS ? EDGE_INSTALL : WEBKIT_INSTALL;
-
     }
 
     private String getLearnMoreUrl() {
@@ -102,26 +95,5 @@ public final class DependencyMissingView extends CallToActionView {
 
     private String getDependency() {
         return PluginUtils.getPlatform() == PluginPlatform.WINDOWS ? "WebView2" : "WebKit";
-    }
-
-    @Override
-    protected CompletableFuture<Boolean> isViewDisplayable() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                Display.getDefault().syncExec(() -> { // Must be executed synchronously to ensure the correct hasWebViewDependency() result
-                    viewController.setupBrowser(getParentComposite());
-                    viewController.getBrowser().dispose();
-                });
-                return !viewController.hasWebViewDependency();
-            } catch (Exception ex) {
-                Activator.getLogger().error("Failed to check webview dependency", ex);
-                return true; // Safer to display dependency missing view by default than give access
-            }
-        });
-    }
-
-    @Override
-    protected void showAlternateView() {
-        ViewVisibilityManager.showChatView("restart");
     }
 }

@@ -414,10 +414,11 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     }
 
     @Override
-    public void partDeactivated(final IWorkbenchPartReference partRef) {
+    public void partClosed(final IWorkbenchPartReference partRef) {
         if (isSessionActive() && partRef.getPart(false) == task.getEditor()) {
             Activator.getLogger().info("Editor deactivated");
-            restoreAndEndSession();
+            endSession();
         }
     }
+
 }

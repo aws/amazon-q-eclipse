@@ -247,8 +247,11 @@ public class InlineChatUIManager {
     }
 
     private void removeCurrentPaintListener() {
+        if (viewer == null) {
+            return;
+        }
         try {
-            if (viewer != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
+            if (viewer.getTextWidget() != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
                 Display.getDefault().syncExec(() -> {
                     viewer.getTextWidget().removePaintListener(currentPaintListener);
                     viewer.getTextWidget().redraw();

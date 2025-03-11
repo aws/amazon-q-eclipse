@@ -249,7 +249,6 @@ public class InlineChatDiffManager {
     }
 
     void cleanupState() {
-        restoreState();
         cancelBatchingOperations();
         currentDiffs.clear();
     }

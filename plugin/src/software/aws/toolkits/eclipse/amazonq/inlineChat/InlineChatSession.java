@@ -28,6 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
@@ -58,7 +59,6 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     // Context handler variables
     private final IContextService contextService;
     private IContextActivation contextActivation;
-    private final String CONTEXT_ID = "org.eclipse.ui.inlineChatContext";
     private final int ABOUT_TO_UNDO = 17; // 17 maps to this event type
 
     private InlineChatSession() {
@@ -93,7 +93,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             workbenchPage.addPartListener(this);
 
             // Get the context service and activate inline chat context used for button
-            contextActivation = contextService.activateContext(CONTEXT_ID);
+            contextActivation = contextService.activateContext(Constants.INLINE_CHAT_CONTEXT_ID);
 
             // Set up undoManager to batch document edits together
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
@@ -420,5 +420,4 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             restoreAndEndSession();
         }
     }
-
 }

@@ -47,13 +47,12 @@ public final class QInvocationSession extends QResource {
     private volatile QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
     private boolean suggestionAccepted = false;
-    private boolean isMacOS;
+    private final boolean isMacOS;
 
     private QSuggestionsContext suggestionsContext = null;
-    private ConcurrentHashMap<String, InlineCompletionStates> suggestionCompletionResults = new ConcurrentHashMap<String, InlineCompletionStates>();
+    private final ConcurrentHashMap<String, InlineCompletionStates> suggestionCompletionResults = new ConcurrentHashMap<String, InlineCompletionStates>();
     private IContextService contextService;
     private IContextActivation contextActivation;
-    private final String CONTEXT_ID = "org.eclipse.ui.suggestionsContext";
 
     private ITextEditor editor = null;
     private ITextViewer viewer = null;
@@ -65,16 +64,16 @@ public final class QInvocationSession extends QResource {
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
     private QInlineTerminationListener terminationListener = null;
-    private int[] headOffsetAtLine = new int[500];
-    private boolean isTabOnly = false;
+    private final int[] headOffsetAtLine = new int[500];
+    private final boolean isTabOnly = false;
     private Consumer<Integer> unsetVerticalIndent;
-    private ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
     private Runnable changeStatusToQuerying;
     private Runnable changeStatusToIdle;
     private Runnable changeStatusToPreviewing;
     private boolean hasSeenFirstSuggestion = false;
     private long firstSuggestionDisplayLatency;
-    private StopWatch suggestionDisplaySessionStopWatch = new StopWatch();
+    private final StopWatch suggestionDisplaySessionStopWatch = new StopWatch();
     private Optional<Integer> initialTypeaheadLength = Optional.empty();
 
     // Private constructor to prevent instantiation
@@ -101,13 +100,16 @@ public final class QInvocationSession extends QResource {
                 this.end();
                 return false;
             }
-            Activator.getLogger().info("Starting inline session");
-            transitionToInvokingState();
-            
-            // Get and activate the suggestions context
             contextService = PlatformUI.getWorkbench()
                     .getService(IContextService.class);
-            contextActivation = contextService.activateContext(CONTEXT_ID);
+            if (contextService.getActiveContextIds().contains(Constants.INLINE_CHAT_CONTEXT_ID)) {
+                Activator.getLogger().warn("Attempted to start inline session while inline chat is processing.");
+                this.end();
+                return false;
+            }
+            Activator.getLogger().info("Starting inline session");
+            transitionToInvokingState();
+            contextActivation = contextService.activateContext(Constants.INLINE_SUGGESTIONS_CONTEXT_ID);
 
             // Start session logic here
             this.editor = editor;
@@ -296,7 +298,7 @@ public final class QInvocationSession extends QResource {
      * @param filteredSuggestions
      */
     public void updateCompletionStates(final List<String> filteredSuggestions) {
-       // Mark all suggestions as unseen and discarded
+        // Mark all suggestions as unseen and discarded
         suggestionCompletionResults.values().forEach(item -> {
             item.setSeen(false);
             item.setDiscarded(true);
@@ -653,7 +655,7 @@ public final class QInvocationSession extends QResource {
             sendCompletionSessionResult(result);
         } catch (Exception e) {
             Activator.getLogger()
-                    .error("Error occurred when sending suggestion completion results to Amazon Q language server", e);
+            .error("Error occurred when sending suggestion completion results to Amazon Q language server", e);
         }
     }
 

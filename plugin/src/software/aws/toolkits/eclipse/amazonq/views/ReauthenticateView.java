@@ -33,9 +33,6 @@ public final class ReauthenticateView extends CallToActionView {
     private static final String BUTTON_LABEL = "Re-authenticate";
     private static final String LINK_LABEL = "Sign out";
 
-    public ReauthenticateView() {
-    }
-
     @Override
     protected String getIconPath() {
         return ICON_PATH;

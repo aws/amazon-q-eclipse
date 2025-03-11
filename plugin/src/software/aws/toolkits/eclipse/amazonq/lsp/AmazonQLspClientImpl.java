@@ -21,6 +21,8 @@ import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.lsp4j.MessageType;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -177,49 +179,79 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         }
     }
     
+    public enum NotificationSeverity {
+        LOW, MEDIUM, HIGH
+    }
+
     @Override
     public void showNotification(NotificationParams params) {
-    	Activator.getLogger().info("Received notification JSON: " + params.toString());
-    	Display.getDefault().asyncExec(() -> {
+    	
+    	Activator.getLogger().info("Received notification JSON: " + params.type().toString());
+        Display.getDefault().asyncExec(() -> {
             String title = params.content().title() != null ? 
-                params.content().title() : "AWS Notification"; // Default title
+                params.content().title() : "AWS Notification";
             String message = params.content().text();
-            // Null check for actions
-            if (params.actions() != null) {
-                // Handle actions if present
-            }
-
-            // Null check for id
-            if (params.id() != null) {
-                // Handle id if present
-            }
-            // Option 1: Simple popup (non-persistent)
-            AbstractNotificationPopup notification = new ToolkitNotification(
-                Display.getCurrent(),
-                title,
-                message
-            );
-            notification.open();
-
-            // Option 2: Persistent notification with "Don't show again" checkbox
-            // showPersistentNotification(title, message); 
+            NotificationSeverity severity = determineNotificationSeverity(params.type());
+            handleNotification(severity, title, message);
         });
     }
-    
-    
-    private void showPersistentNotification(String title, String message) {
-        AbstractNotificationPopup notification = new PersistentToolkitNotification(
-            Display.getCurrent(),
-            title,
-            message,
-            checked -> {
-                if (checked) {
-                    Activator.getPluginStore().put("notificationSkipFlag", "true");
-                } else {
-                    Activator.getPluginStore().remove("notificationSkipFlag");
-                }
-            }
-        );
-        notification.open();
+
+    private NotificationSeverity determineNotificationSeverity(MessageType type) {
+        if (type == MessageType.Error) return NotificationSeverity.HIGH;
+        if (type == MessageType.Warning) return NotificationSeverity.MEDIUM;
+        if (type == MessageType.Info) return NotificationSeverity.LOW;
+		return null;
+    }
+
+    private void handleNotification(NotificationSeverity severity, String title, String message) {
+        if (severity == null) {
+            severity = NotificationSeverity.LOW; // Default to LOW if severity is null
+            Activator.getLogger().info("Null severity detected, defaulting to LOW");
+        }
+
+        switch (severity) {
+            case LOW:
+                AbstractNotificationPopup transientNotification = new ToolkitNotification(
+                    Display.getCurrent(), title, message
+                );
+                transientNotification.open();
+                break;
+
+            case MEDIUM:
+                AbstractNotificationPopup persistentNotification = new PersistentToolkitNotification(
+                    Display.getCurrent(),
+                    title,
+                    message,
+                    checked -> {
+                        if (checked) {
+                            Activator.getPluginStore().put("notificationSkipFlag", "true");
+                        } else {
+                            Activator.getPluginStore().remove("notificationSkipFlag");
+                        }
+                    }
+                );
+                persistentNotification.setDelayClose(60000);
+                persistentNotification.open();
+                break;
+
+            case HIGH:
+                Display.getDefault().syncExec(() -> {
+                    MessageDialog dialog = new MessageDialog(
+                        Display.getCurrent().getActiveShell(),
+                        title,
+                        null,
+                        message,
+                        MessageDialog.WARNING,
+                        new String[] {"Acknowledge"},
+                        0
+                    );
+                    dialog.open();
+                });
+                break;
+
+            default:
+                Activator.getLogger().warn("Unexpected severity level encountered");
+                break;
+        }
     }
 }

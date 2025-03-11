@@ -94,12 +94,20 @@ public class InlineChatUIManager {
                 @Override
                 protected Point getInitialLocation(final Point initialSize) {
                     if (screenLocation == null) {
-                        int indentedOffset = calculateIndentOffset(widget, widget.getCaretOffset());
-                        Point location = widget.getLocationAtOffset(indentedOffset);
+                        try {
+                            int indentedOffset = calculateIndentOffset(widget, widget.getCaretOffset());
+                            Point location = widget.getLocationAtOffset(indentedOffset);
 
-                        // Move input bar up as to not block the selected code
-                        location.y -= widget.getLineHeight() * 2.5;
-                        screenLocation = Display.getCurrent().map(widget, null, location);
+                            // Move input bar up as to not block the selected code
+                            location.y -= widget.getLineHeight() * 2.5;
+                            screenLocation = Display.getCurrent().map(widget, null, location);
+                        } catch (Exception e) {
+                            if (widget != null) {
+                                Point location = widget.getLocationAtOffset(widget.getCaretOffset());
+                                location.y -= widget.getLineHeight() * 2.5;
+                                screenLocation = Display.getCurrent().map(widget, null, location);
+                            }
+                        }
                     }
                     return screenLocation;
                 }
@@ -174,43 +182,50 @@ public class InlineChatUIManager {
         return new PaintListener() {
             @Override
             public void paintControl(final PaintEvent event) {
-                int indentedOffset = calculateIndentOffset(widget, widget.getCaretOffset());
-                Point location = widget.getLocationAtOffset(indentedOffset);
-                Point textExtent = event.gc.textExtent(promptText);
-
-                // Check if selection is atop the editor
-                Rectangle clientArea = widget.getClientArea();
-                boolean hasSpaceAbove = (location.y - widget.getLineHeight() * 2) >= clientArea.y;
-
-                // If space above, draw above. Otherwise draw over the selected line
-                if (hasSpaceAbove) {
-                    location.y -= widget.getLineHeight() * 2;
-                }
-                // If no space above, keep location.y as is
-
-                Color backgroundColor;
-                Color textColor;
-
-                // Toggle color based on editor theme
-                if (isDarkTheme) {
-                    backgroundColor = new Color(Display.getCurrent(), 100, 100, 100);
-                    textColor = new Color(Display.getCurrent(), 255, 255, 255);
-                } else {
-                    backgroundColor = new Color(Display.getCurrent(), 230, 230, 230);
-                    textColor = new Color(Display.getCurrent(), 0, 0, 0);
-                }
-
                 try {
-                    // Draw background
-                    event.gc.setBackground(backgroundColor);
-                    event.gc.fillRectangle(location.x, location.y, textExtent.x + 10, textExtent.y + 10);
+                    int indentedOffset = calculateIndentOffset(widget, widget.getCaretOffset());
+                    Point location = widget.getLocationAtOffset(indentedOffset);
+                    Point textExtent = event.gc.textExtent(promptText);
 
-                    // Draw text
-                    event.gc.setForeground(textColor);
-                    event.gc.drawText(promptText, location.x + 5, location.y + 5, false);
-                } finally {
-                    backgroundColor.dispose();
-                    textColor.dispose();
+                    // Check if selection is atop the editor
+                    Rectangle clientArea = widget.getClientArea();
+                    boolean hasSpaceAbove = (location.y - widget.getLineHeight() * 2) >= clientArea.y;
+
+                    // If space above, draw above. Otherwise draw over the selected line
+                    if (hasSpaceAbove) {
+                        location.y -= widget.getLineHeight() * 2;
+                    }
+                    // If no space above, keep location.y as is
+
+                    Color backgroundColor;
+                    Color textColor;
+
+                    // Toggle color based on editor theme
+                    if (isDarkTheme) {
+                        backgroundColor = new Color(Display.getCurrent(), 100, 100, 100);
+                        textColor = new Color(Display.getCurrent(), 255, 255, 255);
+                    } else {
+                        backgroundColor = new Color(Display.getCurrent(), 230, 230, 230);
+                        textColor = new Color(Display.getCurrent(), 0, 0, 0);
+                    }
+
+                    try {
+                        // Draw background
+                        event.gc.setBackground(backgroundColor);
+                        event.gc.fillRectangle(location.x, location.y, textExtent.x + 10, textExtent.y + 10);
+
+                        // Draw text
+                        event.gc.setForeground(textColor);
+                        event.gc.drawText(promptText, location.x + 5, location.y + 5, false);
+                    } finally {
+                        backgroundColor.dispose();
+                        textColor.dispose();
+                    }
+                } catch (Exception e) {
+                    if (widget != null) {
+                        widget.removePaintListener(this);
+                        widget.redraw();
+                    }
                 }
             }
         };
@@ -253,6 +268,7 @@ public class InlineChatUIManager {
             linePosition++;
         }
         return lineOffset + linePosition;
+
     }
 
     private boolean userInputIsValid(final String input) {

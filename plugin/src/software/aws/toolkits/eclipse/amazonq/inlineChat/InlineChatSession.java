@@ -168,6 +168,8 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             var isPartialResult = rootNode.get("isPartialResult").asBoolean();
             var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
+            Activator.getLogger().info("RESPONSE: " + message);
+
             if (!verifyChatResultParams(chatResult, paramsNode)) {
                 restoreAndEndSession();
                 return;

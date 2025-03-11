@@ -116,6 +116,11 @@ public final class ReauthenticateView extends CallToActionView {
         });
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+    }
+
     private void resizeButtonFont(final Button button, final int newFontSize) {
         Font currentFont = button.getFont();
         FontData[] fontData = currentFont.getFontData();

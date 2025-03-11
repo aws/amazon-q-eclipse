@@ -39,7 +39,7 @@ public class InlineChatEditorListener implements IPartListener2 {
         this.themeDetector = new ThemeDetector();
         this.isDarkTheme = themeDetector.isDarkTheme();
         this.uiManager = InlineChatUIManager.getInstance();
-        this.INLINE_CHAT_HINT = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌘ + I" : "Amazon Q: CTRL + I";
+        this.INLINE_CHAT_HINT = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌥ + SHIFT + I" : "Amazon Q: ALT + SHIFT + I";
 
     }
 

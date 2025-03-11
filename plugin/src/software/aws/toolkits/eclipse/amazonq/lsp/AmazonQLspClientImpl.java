@@ -178,32 +178,44 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             Activator.getLogger().error("Error processing " + kind + " ssoTokenChanged notification", ex);
         }
     }
-    
     public enum NotificationSeverity {
         LOW, MEDIUM, HIGH
     }
 
+    /**
+     * Shows a notification to the user with the specified content and severity.
+     * This method is designed to be overridden by subclasses that need to customize
+     * the notification behavior.
+     *
+     * @param params The notification parameters containing the message type and content
+     */
     @Override
-    public void showNotification(NotificationParams params) {
-    	
-    	Activator.getLogger().info("Received notification JSON: " + params.type().toString());
+    public final void showNotification(final NotificationParams params) {
+        Activator.getLogger().info("Received notification JSON: " + params.type().toString());
         Display.getDefault().asyncExec(() -> {
-            String title = params.content().title() != null ? 
-                params.content().title() : "AWS Notification";
+            String title = params.content().title() != null 
+                ? params.content().title() 
+                : "AWS Notification";
             String message = params.content().text();
             NotificationSeverity severity = determineNotificationSeverity(params.type());
             handleNotification(severity, title, message);
         });
     }
 
-    private NotificationSeverity determineNotificationSeverity(MessageType type) {
-        if (type == MessageType.Error) return NotificationSeverity.HIGH;
-        if (type == MessageType.Warning) return NotificationSeverity.MEDIUM;
-        if (type == MessageType.Info) return NotificationSeverity.LOW;
-		return null;
+    private NotificationSeverity determineNotificationSeverity(final MessageType type) {
+        if (type == MessageType.Error) {
+            return NotificationSeverity.HIGH;
+        }
+        if (type == MessageType.Warning) {
+            return NotificationSeverity.MEDIUM;
+        }
+        if (type == MessageType.Info) {
+            return NotificationSeverity.LOW;
+        }
+        return null;
     }
 
-    private void handleNotification(NotificationSeverity severity, String title, String message) {
+    private void handleNotification(NotificationSeverity severity, final String title, final String message) {
         if (severity == null) {
             severity = NotificationSeverity.LOW; // Default to LOW if severity is null
             Activator.getLogger().info("Null severity detected, defaulting to LOW");

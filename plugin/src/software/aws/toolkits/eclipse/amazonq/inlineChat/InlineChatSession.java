@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
@@ -105,10 +106,19 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
                     && currentLoginType.equals(LoginType.BUILDER_ID);
 
+            var viewer = editor.getAdapter(ITextViewer.class);
+            if (viewer == null) {
+                return false;
+            }
+            var widget = viewer.getTextWidget();
+            if (widget == null) {
+                return false;
+            }
+
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                task = new InlineChatTask(editor, selection);
+                task = new InlineChatTask(editor, widget.getCaretOffset(), selection);
             });
 
             var isDarkTheme = themeDetector.isDarkTheme();

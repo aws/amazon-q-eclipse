@@ -18,7 +18,8 @@ class InlineChatTask {
     private final ITextEditor editor;
     private final String originalCode;
     private final String tabId;
-    private final int offset;
+    private final int selectionOffset;
+    private final int caretOffset;
 
     // Use atomics for thread-safe mutable states
     private final AtomicReference<String> prompt = new AtomicReference<>(null);
@@ -30,14 +31,15 @@ class InlineChatTask {
     private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
     private final AtomicLong lastUpdateTime;
 
-    InlineChatTask(final ITextEditor editor, final ITextSelection selection) {
+    InlineChatTask(final ITextEditor editor, final int caretOffset, final ITextSelection selection) {
         String originalCode = selection.getText();
         boolean hasActiveSelection = !originalCode.isBlank();
 
         this.selection = selection;
         this.editor = editor;
+        this.caretOffset = caretOffset;
         this.originalCode = (hasActiveSelection) ? originalCode : "";
-        this.offset = selection.getOffset();
+        this.selectionOffset = selection.getOffset();
         this.taskState.set(SessionState.ACTIVE);
         this.hasActiveSelection.set(hasActiveSelection);
         this.tabId = UUID.randomUUID().toString();
@@ -59,6 +61,10 @@ class InlineChatTask {
 
     ITextSelection getSelection() {
         return selection;
+    }
+
+    int getCaretOffset() {
+        return this.caretOffset;
     }
 
     boolean cancelPendingUpdate() {
@@ -120,8 +126,8 @@ class InlineChatTask {
         return tabId;
     }
 
-    int getOffset() {
-        return offset;
+    int getSelectionOffset() {
+        return selectionOffset;
     }
 
     String getPrompt() {

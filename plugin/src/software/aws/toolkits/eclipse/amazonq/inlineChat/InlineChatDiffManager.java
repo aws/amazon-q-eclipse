@@ -156,14 +156,14 @@ public class InlineChatDiffManager {
             // Handle deleted lines and mark position
             for (String line : originalChangedLines) {
                 resultText.append(line).append("\n");
-                currentDiffs.add(new TextDiff(task.getOffset() + currentPos, line.length(), true));
+                currentDiffs.add(new TextDiff(task.getSelectionOffset() + currentPos, line.length(), true));
                 currentPos += line.length() + 1;
             }
 
             // Handle added lines and mark position
             for (String line : newChangedLines) {
                 resultText.append(line).append("\n");
-                currentDiffs.add(new TextDiff(task.getOffset() + currentPos, line.length(), false));
+                currentDiffs.add(new TextDiff(task.getSelectionOffset() + currentPos, line.length(), false));
                 currentPos += line.length() + 1;
             }
 
@@ -179,10 +179,10 @@ public class InlineChatDiffManager {
         final String finalText = resultText.toString();
 
         // Clear existing annotations in the affected range
-        clearAnnotationsInRange(annotationModel, task.getOffset(), task.getOffset() + task.getOriginalCode().length());
+        clearAnnotationsInRange(annotationModel, task.getSelectionOffset(), task.getSelectionOffset() + task.getOriginalCode().length());
 
         // Apply new diff text
-        document.replace(task.getOffset(), task.getPreviousDisplayLength(), finalText);
+        document.replace(task.getSelectionOffset(), task.getPreviousDisplayLength(), finalText);
 
         // Add all annotations after text modifications are complete
         for (TextDiff diff : currentDiffs) {

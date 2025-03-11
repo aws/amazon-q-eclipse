@@ -125,7 +125,10 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
      */
     @Override
     public void dispose() {
-        authStateSubscription.dispose();
+        if (authStateSubscription != null) {
+            authStateSubscription.dispose();
+            authStateSubscription = null;
+        }
         super.dispose();
     }
 

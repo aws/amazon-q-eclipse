@@ -18,7 +18,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Link;
 
-import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -38,12 +37,10 @@ public final class ReauthenticateView extends CallToActionView implements EventO
     private static final String BUTTON_LABEL = "Re-authenticate";
     private static final String LINK_LABEL = "Sign out";
 
-    private Disposable authStateSubscription;
-
     public ReauthenticateView() {
          // It is necessary for this view to be an `AuthStatusChangedListener` to switch the view back to Q Chat after the authentication
          // flow is successful. Without this listener, the re-authentication will succeed but the view will remain present.
-         authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
+         Activator.getEventBroker().subscribe(AuthState.class, this);
     }
 
     @Override
@@ -140,7 +137,7 @@ public final class ReauthenticateView extends CallToActionView implements EventO
 
     @Override
     public void dispose() {
-        authStateSubscription.dispose();
+        super.dispose();
     }
 
     @Override

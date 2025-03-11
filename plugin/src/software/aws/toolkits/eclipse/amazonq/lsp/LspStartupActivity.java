@@ -44,7 +44,8 @@ public class LspStartupActivity implements IStartup {
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);
-                    Thread.sleep(1000);
+                    Class.forName("software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener");
+                    Thread.sleep(2000);
                     Display.getDefault().asyncExec(() -> attachAutoTriggerListenersIfApplicable());
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
@@ -63,6 +64,7 @@ public class LspStartupActivity implements IStartup {
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
                     Thread.sleep(1000);
+                    Class.forName("software.aws.toolkits.eclipse.amazonq.util.UpdateUtils");
                     Display.getDefault().asyncExec(() -> UpdateUtils.getInstance().checkForUpdate());
                 } catch (Exception e) {
                     return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);

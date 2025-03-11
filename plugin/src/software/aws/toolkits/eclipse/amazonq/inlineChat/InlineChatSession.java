@@ -19,7 +19,6 @@ import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -174,13 +173,19 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             // Deserialize object
             ObjectMapper mapper = ObjectMapperFactory.getInstance();
             var rootNode = mapper.readTree(message);
+            if (rootNode.has("command") && "errorMessage".equals(rootNode.get("command").asText())) {
+                uiManager.showErrorNotification();
+                restoreAndEndSession();
+                return;
+            }
+
             var paramsNode = rootNode.get("params");
             var isPartialResult = rootNode.get("isPartialResult").asBoolean();
             var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
 
             Activator.getLogger().info("RESPONSE: " + message);
 
-            if (!verifyChatResultParams(chatResult, paramsNode)) {
+            if (!verifyChatResultParams(chatResult)) {
                 restoreAndEndSession();
                 return;
             }
@@ -309,12 +314,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         }
     }
 
-    private boolean verifyChatResultParams(final ChatResult chatResult, final JsonNode node) {
-        // End session if server returns exception
-        if (node.has("command") && "errorMessage".equals(node.get("command").asText())) {
-            uiManager.showErrorNotification();
-            return false;
-        }
+    private boolean verifyChatResultParams(final ChatResult chatResult) {
 
         // End session if server responds with no suggestions
         if (chatResult.body() == null || chatResult.body().isBlank()) {

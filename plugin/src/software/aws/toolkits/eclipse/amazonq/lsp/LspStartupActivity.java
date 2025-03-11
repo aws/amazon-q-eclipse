@@ -17,6 +17,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerPartListener;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerTopLevelListener;
@@ -37,39 +38,41 @@ public class LspStartupActivity implements IStartup {
 
     @Override
     public final void earlyStartup() {
-        Job job = new Job("Start language servers") {
+        Job lspStartupJob = new Job("Start language servers") {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
                     var lsRegistry = LanguageServersRegistry.getInstance();
                     var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
                     LanguageServiceAccessor.startLanguageServer(qServerDefinition);
-                    Display.getDefault().asyncExec(() -> attachAutoTriggerListenersIfApplicable());
                 } catch (Exception e) {
                     return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
                 }
                 return Status.OK_STATUS;
             }
         };
-        job.schedule();
-        if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
-            Activator.getLspProvider().getAmazonQServer();
-            this.launchWebview();
-        }
-        Job updateCheckJob = new Job("Check for updates") {
-            @Override
-            protected IStatus run(final IProgressMonitor monitor) {
-                try {
-                    UpdateUtils.getInstance().checkForUpdate();
-                } catch (Exception e) {
-                    return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
-                }
-                return Status.OK_STATUS;
+        lspStartupJob.setPriority(Job.INTERACTIVE);
+        lspStartupJob.schedule();
+        Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(lsp -> {
+            if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
+                this.launchWebview();
             }
-        };
+            Display.getDefault().asyncExec(() -> attachAutoTriggerListenersIfApplicable());
+            Job updateCheckJob = new Job("Check for updates") {
+                @Override
+                protected IStatus run(final IProgressMonitor monitor) {
+                    try {
+                        UpdateUtils.getInstance().checkForUpdate();
+                    } catch (Exception e) {
+                        return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
+                    }
+                    return Status.OK_STATUS;
+                }
+            };
 
-        updateCheckJob.setPriority(Job.DECORATE);
-        updateCheckJob.schedule();
+            updateCheckJob.setPriority(Job.DECORATE);
+            updateCheckJob.schedule();
+        }, ThreadingUtils.getWorkerPool());
     }
 
     private void launchWebview() {

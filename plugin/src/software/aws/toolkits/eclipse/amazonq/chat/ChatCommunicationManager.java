@@ -34,6 +34,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.ChatCodeReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -142,7 +143,7 @@ public final class ChatCommunicationManager {
             } catch (Exception e) {
                 throw new AmazonQPluginException("Error occurred when sending message to server", e);
             }
-        });
+        }, ThreadingUtils.getWorkerPool());
     }
 
     private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams) {

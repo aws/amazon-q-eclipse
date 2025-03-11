@@ -99,7 +99,7 @@ public final class ChatCommunicationManagerTest {
             Consumer<? super ChatMessageProvider> consumer = invocation.getArgument(0);
             consumer.accept(chatMessageProvider);
             return CompletableFuture.completedFuture(null);
-        }).when(chatMessageProviderFuture).thenAcceptAsync(ArgumentMatchers.<Consumer<? super ChatMessageProvider>>any());
+        }).when(chatMessageProviderFuture).thenAcceptAsync(ArgumentMatchers.<Consumer<? super ChatMessageProvider>>any(), any());
 
         chatCommunicationManager = spy(ChatCommunicationManager.builder()
                 .withJsonHandler(jsonHandler)

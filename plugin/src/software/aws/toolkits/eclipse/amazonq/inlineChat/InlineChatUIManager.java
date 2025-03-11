@@ -26,6 +26,8 @@ import org.eclipse.swt.widgets.Text;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
@@ -119,7 +121,30 @@ public class InlineChatUIManager {
                     composite.setLayout(new GridLayout(1, false));
 
                     inputField = new Text(composite, SWT.BORDER | SWT.SINGLE);
-                    inputField.setMessage(INPUT_PROMPT_MESSAGE);
+                    if (PluginUtils.getPlatform() == PluginPlatform.WINDOWS) {
+                        inputField.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
+                        inputField.setText(INPUT_PROMPT_MESSAGE);
+
+                        inputField.addKeyListener(new KeyAdapter() {
+                            @Override
+                            public void keyPressed(final KeyEvent e) {
+                                // If this is the first character being typed
+                                if (inputField.getText().equals(INPUT_PROMPT_MESSAGE)) {
+                                    inputField.setForeground(isDarkTheme
+                                            ? Display.getCurrent().getSystemColor(SWT.COLOR_WHITE)
+                                            : Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
+                                    inputField.setText("");
+                                } else if ((e.keyCode == SWT.DEL || e.keyCode == SWT.BS)
+                                        && inputField.getText().length() == 1) {
+                                    inputField.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
+                                    inputField.setText(INPUT_PROMPT_MESSAGE);
+                                }
+                            }
+                        });
+                    } else {
+                        inputField.setMessage(INPUT_PROMPT_MESSAGE);
+                    }
+
                     GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
                     gridData.widthHint = 350;
                     inputField.setLayoutData(gridData);
@@ -155,6 +180,8 @@ public class InlineChatUIManager {
                             future.complete(null);
                         }
                     });
+
+                    composite.layout(true, true);
                     return composite;
                 }
             };

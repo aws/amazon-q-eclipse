@@ -24,4 +24,6 @@ public interface AmazonQLspClient extends LanguageClient {
     @JsonNotification("aws/window/showNotification")
     void showNotification(NotificationParams params);
 
+	void didChangeConfiguration(Object object);
+
 }

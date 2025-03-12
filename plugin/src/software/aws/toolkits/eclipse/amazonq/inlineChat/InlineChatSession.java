@@ -118,6 +118,9 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
+
+                /* Ensure visual offset begins at start of selection and
+                 * that selection always includes full line */
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
                 var selectionRange = widget.getSelectionRange();
                 int visualOffset = (selectionRange != null) ? selectionRange.x : widget.getCaretOffset();

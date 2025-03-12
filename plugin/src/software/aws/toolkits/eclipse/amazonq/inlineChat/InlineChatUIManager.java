@@ -122,7 +122,6 @@ public class InlineChatUIManager {
 
                     inputField = new Text(composite, SWT.BORDER | SWT.SINGLE);
                     if (PluginUtils.getPlatform() == PluginPlatform.WINDOWS) {
-                        inputField.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
                         inputField.setText(INPUT_PROMPT_MESSAGE);
 
                         inputField.addKeyListener(new KeyAdapter() {
@@ -130,13 +129,9 @@ public class InlineChatUIManager {
                             public void keyPressed(final KeyEvent e) {
                                 // If this is the first character being typed
                                 if (inputField.getText().equals(INPUT_PROMPT_MESSAGE)) {
-                                    inputField.setForeground(isDarkTheme
-                                            ? Display.getCurrent().getSystemColor(SWT.COLOR_WHITE)
-                                                    : Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
                                     inputField.setText("");
                                 } else if ((e.keyCode == SWT.DEL || e.keyCode == SWT.BS)
                                         && inputField.getText().length() == 1) {
-                                    inputField.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_GRAY));
                                     inputField.setText(INPUT_PROMPT_MESSAGE);
                                 }
                             }

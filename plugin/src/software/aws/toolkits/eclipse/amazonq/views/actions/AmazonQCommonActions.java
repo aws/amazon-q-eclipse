@@ -24,6 +24,7 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
     private final IViewSite viewSite;
     private final Disposable authStateSubscription;
     private IMenuManager localActionsMenuManager;
+    private IMenuManager globalActionsMenuManager;
 
     private static class Actions {
         private final SignoutAction signoutAction;
@@ -54,6 +55,7 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
     public AmazonQCommonActions(final IViewSite viewSite) {
         this.viewSite = viewSite;
         localActionsMenuManager = viewSite.getActionBars().getMenuManager();
+        globalActionsMenuManager = new MenuManager();
 
         actions = new Actions(viewSite);
 
@@ -81,15 +83,14 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
         addCommonMenuItems(localActionsMenuManager);
     }
 
-    private void fillGlobalToolBar() {
+    private void fillGlobalToolBar(final IMenuManager menuManager) {
         final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
         var contributionFactory = new MenuContributionFactory("software.aws.toolkits.eclipse.amazonq.toolbar.command");
 
-        IMenuManager tempMenuManager = new MenuManager();
-        tempMenuManager.add(actions.openQChatAction);
-        addCommonMenuItems(tempMenuManager);
+        menuManager.add(actions.openQChatAction);
+        addCommonMenuItems(menuManager);
 
-        for (IContributionItem item : tempMenuManager.getItems()) {
+        for (IContributionItem item : menuManager.getItems()) {
             if (item.isVisible()) {
                 contributionFactory.addContributionItem(item);
             }
@@ -123,7 +124,6 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
 
     @Override
     public void onEvent(final AuthState authState) {
-        actions.signoutAction.setVisible(authState.isLoggedIn());
         actions.feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
         actions.toggleAutoTriggerContributionItem.setVisible(authState.isLoggedIn());
 
@@ -139,8 +139,12 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
             final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
             if (factory != null) {
                 menuService.removeContributionFactory(factory);
+                globalActionsMenuManager = new MenuManager();
             }
-            fillGlobalToolBar();
+            fillGlobalToolBar(globalActionsMenuManager);
+
+            globalActionsMenuManager.markDirty();
+            globalActionsMenuManager.update(true);
         });
     }
 
@@ -152,9 +156,14 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
             localActionsMenuManager.dispose();
         }
 
-        final IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
+        IMenuService menuService = PlatformUI.getWorkbench().getService(IMenuService.class);
         if (factory != null) {
             menuService.removeContributionFactory(factory);
+        }
+
+        if (globalActionsMenuManager != null) {
+            globalActionsMenuManager.dispose();
+            globalActionsMenuManager = null;
         }
     }
 

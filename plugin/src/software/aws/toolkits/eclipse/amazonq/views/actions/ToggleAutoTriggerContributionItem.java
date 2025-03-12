@@ -11,10 +11,12 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
-public final class ToggleAutoTriggerContributionItem extends ContributionItem {
+public final class ToggleAutoTriggerContributionItem extends ContributionItem implements EventObserver<AuthState> {
 
     public static final String AUTO_TRIGGER_ENABLEMENT_KEY = "aws.q.autotrigger.eclipse";
     private static final String PAUSE_TEXT = "Pause Auto-Suggestions";
@@ -33,8 +35,8 @@ public final class ToggleAutoTriggerContributionItem extends ContributionItem {
     }
 
     @Override
-    public void setVisible(final boolean isVisible) {
-        super.setVisible(isVisible);
+    public void onEvent(final AuthState authState) {
+        this.setVisible(authState.isLoggedIn());
     }
 
     @Override

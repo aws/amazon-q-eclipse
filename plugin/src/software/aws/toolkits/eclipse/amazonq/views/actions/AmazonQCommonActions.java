@@ -15,7 +15,6 @@ import org.eclipse.ui.menus.IMenuService;
 import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class AmazonQCommonActions implements EventObserver<AuthState> {
@@ -38,6 +37,11 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
         private final ViewLogsAction viewLogsAction;
         private final ReportAnIssueAction reportAnIssueAction;
 
+        Disposable signoutActionAuthStateSubscription;
+        Disposable toggleAutoTriggerAuthStateSubscription;
+        Disposable feedbackDialogAuthStateSubscription;
+        Disposable customizationDialogAuthStateSubscription;
+
         Actions(final IViewSite viewSite) {
             signoutAction = new SignoutAction();
             feedbackDialogContributionItem = new FeedbackDialogContributionItem();
@@ -49,6 +53,44 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
             viewSourceAction = new ViewSourceAction();
             viewLogsAction = new ViewLogsAction();
             reportAnIssueAction = new ReportAnIssueAction();
+
+            setupAuthStateSubscriptions();
+        }
+
+        public void setupAuthStateSubscriptions() {
+            signoutActionAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                    signoutAction);
+
+            toggleAutoTriggerAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                    toggleAutoTriggerContributionItem);
+
+            feedbackDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                    feedbackDialogContributionItem);
+
+            customizationDialogAuthStateSubscription = Activator.getEventBroker().subscribe(AuthState.class,
+                    customizationDialogContributionItem);
+        }
+
+        public void dispose() {
+            if (signoutActionAuthStateSubscription != null) {
+                signoutActionAuthStateSubscription.dispose();
+                signoutActionAuthStateSubscription = null;
+            }
+
+            if (toggleAutoTriggerAuthStateSubscription != null) {
+                toggleAutoTriggerAuthStateSubscription.dispose();
+                toggleAutoTriggerAuthStateSubscription = null;
+            }
+
+            if (feedbackDialogAuthStateSubscription != null) {
+                feedbackDialogAuthStateSubscription.dispose();
+                feedbackDialogAuthStateSubscription = null;
+            }
+
+            if (customizationDialogAuthStateSubscription != null) {
+                customizationDialogAuthStateSubscription.dispose();
+                customizationDialogAuthStateSubscription = null;
+            }
         }
     }
 
@@ -124,14 +166,6 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
 
     @Override
     public void onEvent(final AuthState authState) {
-        actions.feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
-        actions.toggleAutoTriggerContributionItem.setVisible(authState.isLoggedIn());
-
-        // TODO: Need to update this method as the login condition has to be Pro login
-        // using IAM identity center
-        actions.customizationDialogContributionItem.setVisible(authState.isLoggedIn()
-                && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
-
         Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
@@ -149,8 +183,13 @@ public final class AmazonQCommonActions implements EventObserver<AuthState> {
     }
 
     public void dispose() {
-        authStateSubscription.dispose();
-        actions.toggleAutoTriggerContributionItem.dispose();
+        if (authStateSubscription != null) {
+            authStateSubscription.dispose();
+        }
+
+        if (actions != null) {
+            actions.dispose();
+        }
 
         if (localActionsMenuManager != null) {
             localActionsMenuManager.dispose();

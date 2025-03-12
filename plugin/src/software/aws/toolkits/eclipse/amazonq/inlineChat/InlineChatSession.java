@@ -4,8 +4,10 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.Region;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
@@ -117,7 +119,15 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                task = new InlineChatTask(editor, widget.getCaretOffset(), selection);
+                try {
+                    final var region = expandSelectionToFullLines(document, selection);
+                    final String selectionText = document.get(region.getOffset(), region.getLength());
+                    task = new InlineChatTask(editor, selectionText, widget.getCaretOffset(), region);
+                } catch (Exception e) {
+                    Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
+                    var region = new Region(selection.getOffset(), selection.getLength());
+                    task = new InlineChatTask(editor, selection.getText(), widget.getCaretOffset(), region);
+                }
             });
 
             var isDarkTheme = themeDetector.isDarkTheme();
@@ -410,6 +420,23 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error cleaning up document state: " + e.getMessage(), e);
+        }
+    }
+
+    // Expand selection to include full line if user partially selects start or end line
+    private IRegion expandSelectionToFullLines(final IDocument document, final ITextSelection selection) throws Exception {
+        try {
+            if (selection.getText().isBlank()) {
+                return new Region(selection.getOffset(), 0);
+            }
+            var startRegion = document.getLineInformation(selection.getStartLine());
+            var endRegion = document.getLineInformation(selection.getEndLine());
+            int selectionLength = (endRegion.getOffset() + endRegion.getLength()) - startRegion.getOffset();
+
+            return new Region(startRegion.getOffset(), selectionLength);
+        } catch (Exception e) {
+            Activator.getLogger().info("Could not calculate line information: " + e.getMessage(), e);
+            return new Region(selection.getOffset(), selection.getLength());
         }
     }
 

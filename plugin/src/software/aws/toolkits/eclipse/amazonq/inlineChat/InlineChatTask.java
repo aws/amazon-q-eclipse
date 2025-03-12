@@ -7,14 +7,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 class InlineChatTask {
-    private final ITextSelection selection;
     private final ITextEditor editor;
     private final String originalCode;
     private final String tabId;
@@ -31,19 +30,17 @@ class InlineChatTask {
     private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
     private final AtomicLong lastUpdateTime;
 
-    InlineChatTask(final ITextEditor editor, final int caretOffset, final ITextSelection selection) {
-        String originalCode = selection.getText();
-        boolean hasActiveSelection = !originalCode.isBlank();
+    InlineChatTask(final ITextEditor editor, final String selectionText, final int caretOffset, final IRegion region) {
+        boolean hasActiveSelection = !selectionText.isBlank();
 
-        this.selection = selection;
         this.editor = editor;
         this.caretOffset = caretOffset;
-        this.originalCode = (hasActiveSelection) ? originalCode : "";
-        this.selectionOffset = selection.getOffset();
+        this.originalCode = (hasActiveSelection) ? selectionText : "";
+        this.selectionOffset = region.getOffset();
         this.taskState.set(SessionState.ACTIVE);
         this.hasActiveSelection.set(hasActiveSelection);
         this.tabId = UUID.randomUUID().toString();
-        this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? originalCode.length() : 0);
+        this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? selectionText.length() : 0);
         this.lastUpdateTime = new AtomicLong(System.currentTimeMillis());
     }
 
@@ -57,10 +54,6 @@ class InlineChatTask {
 
     void setTaskState(final SessionState state) {
         taskState.set(state);
-    }
-
-    ITextSelection getSelection() {
-        return selection;
     }
 
     int getCaretOffset() {

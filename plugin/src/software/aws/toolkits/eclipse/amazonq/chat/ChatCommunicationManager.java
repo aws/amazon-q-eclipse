@@ -86,7 +86,7 @@ public final class ChatCommunicationManager {
                 switch (command) {
                 case CHAT_SEND_PROMPT:
                     ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                    addEditorState(chatRequestParams);
+                    addEditorState(chatRequestParams, true);
                     sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
                         String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 
@@ -153,7 +153,7 @@ public final class ChatCommunicationManager {
         chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
                 ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                addEditorState(chatRequestParams);
+                addEditorState(chatRequestParams, false);
                 sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
                     String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 
@@ -166,11 +166,13 @@ public final class ChatCommunicationManager {
         });
     }
 
-    private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams) {
+    private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams, final boolean addCursorState) {
         // only include files that are accessible via lsp which have absolute paths
         getOpenFileUri().ifPresent(filePathUri -> {
             chatRequestParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
-            getSelectionRangeCursorState().ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+            if (addCursorState) {
+                getSelectionRangeCursorState().ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+            }
         });
         return chatRequestParams;
     }

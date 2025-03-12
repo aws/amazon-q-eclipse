@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
@@ -28,7 +29,6 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
 public class InlineChatUIManager {
@@ -132,7 +132,7 @@ public class InlineChatUIManager {
                                 if (inputField.getText().equals(INPUT_PROMPT_MESSAGE)) {
                                     inputField.setForeground(isDarkTheme
                                             ? Display.getCurrent().getSystemColor(SWT.COLOR_WHITE)
-                                            : Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
+                                                    : Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
                                     inputField.setText("");
                                 } else if ((e.keyCode == SWT.DEL || e.keyCode == SWT.BS)
                                         && inputField.getText().length() == 1) {
@@ -307,16 +307,43 @@ public class InlineChatUIManager {
         return input != null && input.length() >= 2 && input.length() < MAX_INPUT_LENGTH;
     }
 
-    Optional<CursorState> getSelectionRangeCursorState() {
+    /**
+     * Custom implementation of cursor state is needed to adjust selection range to include full lines,
+     * as inline chat should not allow for partially highlighted lines to be processed. The cursor
+     * position methods in QEclipseEditorUtils use the selection range from the editor.
+     *
+     * @see InlineChatSession#expandSelectionToFullLine
+     */
+    private Optional<CursorState> getSelectionRangeCursorState() {
         AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();
         Display.getDefault().syncExec(new Runnable() {
             @Override
             public void run() {
-                range.set(QEclipseEditorUtils.getActiveSelectionRange());
+                range.set(getSelectionRange());
             }
         });
 
         return range.get().map(CursorState::new);
+    }
+
+    private Optional<Range> getSelectionRange() {
+        var document = task.getEditor().getDocumentProvider().getDocument(task.getEditor().getEditorInput());
+        try {
+            int startOffset = task.getSelectionOffset();
+            int startLine = document.getLineOfOffset(startOffset);
+            int startColumn = startOffset - document.getLineOffset(startLine);
+
+            int endOffset = startOffset + task.getOriginalCode().length();
+            int endLine = document.getLineOfOffset(endOffset);
+            int endColumn = endOffset - document.getLineOffset(endLine);
+
+            var start = new Position(startLine, startColumn);
+            var end = new Position(endLine, endColumn);
+            return Optional.of(new Range(start, end));
+        } catch (Exception e) {
+            Activator.getLogger().error("Error occurred while attempting to determine selected text position in editor", e);
+        }
+        return Optional.empty();
     }
 
     void showErrorNotification() {
@@ -339,13 +366,5 @@ public class InlineChatUIManager {
             notification.open();
         });
     }
-
-    // Method not in use, leaving in case reintroduced in future
-    void restoreSelection() {
-        if (task.getEditor() != null && task.hasActiveSelection()) {
-            task.getEditor().getSelectionProvider().setSelection(task.getSelection());
-        }
-    }
-
 }
 

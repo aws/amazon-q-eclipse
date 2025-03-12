@@ -119,14 +119,16 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
+                var selectionRange = widget.getSelectionRange();
+                int visualOffset = (selectionRange != null) ? selectionRange.x : widget.getCaretOffset();
                 try {
                     final var region = expandSelectionToFullLines(document, selection);
                     final String selectionText = document.get(region.getOffset(), region.getLength());
-                    task = new InlineChatTask(editor, selectionText, widget.getCaretOffset(), region);
+                    task = new InlineChatTask(editor, selectionText, visualOffset, region);
                 } catch (Exception e) {
                     Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
                     var region = new Region(selection.getOffset(), selection.getLength());
-                    task = new InlineChatTask(editor, selection.getText(), widget.getCaretOffset(), region);
+                    task = new InlineChatTask(editor, selection.getText(), visualOffset, region);
                 }
             });
 

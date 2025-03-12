@@ -17,8 +17,11 @@ class InlineChatTask {
     private final ITextEditor editor;
     private final String originalCode;
     private final String tabId;
+
+    // Selection offset -> accounts for every character in the document, regardless of collapsing
+    // Visual offset -> only cares about position on screen, not characters in doc
     private final int selectionOffset;
-    private final int caretOffset;
+    private final int visualOffset;
 
     // Use atomics for thread-safe mutable states
     private final AtomicReference<String> prompt = new AtomicReference<>(null);
@@ -30,11 +33,11 @@ class InlineChatTask {
     private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
     private final AtomicLong lastUpdateTime;
 
-    InlineChatTask(final ITextEditor editor, final String selectionText, final int caretOffset, final IRegion region) {
+    InlineChatTask(final ITextEditor editor, final String selectionText, final int visualOffset, final IRegion region) {
         boolean hasActiveSelection = !selectionText.isBlank();
 
         this.editor = editor;
-        this.caretOffset = caretOffset;
+        this.visualOffset = visualOffset;
         this.originalCode = (hasActiveSelection) ? selectionText : "";
         this.selectionOffset = region.getOffset();
         this.taskState.set(SessionState.ACTIVE);
@@ -56,8 +59,8 @@ class InlineChatTask {
         taskState.set(state);
     }
 
-    int getCaretOffset() {
-        return this.caretOffset;
+    int getVisualOffset() {
+        return this.visualOffset;
     }
 
     boolean cancelPendingUpdate() {

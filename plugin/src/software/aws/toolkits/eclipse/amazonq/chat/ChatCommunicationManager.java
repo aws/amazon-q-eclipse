@@ -149,7 +149,7 @@ public final class ChatCommunicationManager {
         }, ThreadingUtils.getWorkerPool());
     }
 
-    public void sendInlineChatMessageToChatServer(final boolean activeSelection, final Object params) {
+    public void sendInlineChatMessageToChatServer(final Object params) {
         chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
                 ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);

@@ -237,7 +237,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         var prompt = task.getPrompt();
         var chatPrompt = new ChatPrompt(prompt, prompt, "");
         params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
-        chatCommunicationManager.sendInlineChatMessageToChatServer(task.hasActiveSelection(), params);
+        chatCommunicationManager.sendInlineChatMessageToChatServer(params);
     }
 
     private synchronized void endSession() {

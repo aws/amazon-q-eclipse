@@ -67,7 +67,8 @@ public abstract class AmazonQAbstractCommonActions {
 
     protected abstract void fillPulldown();
 
-    protected final void addCommonMenuItems(final IMenuManager menuManager, final Actions action) {
+    protected final void addCommonMenuItems(final IMenuManager menuManager, final Actions action,
+            final boolean includeToggleAutoTriggerContributionItem) {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
         feedbackSubMenu.add(action.reportAnIssueAction);
         feedbackSubMenu.add(action.feedbackDialogContributionItem.getDialogContributionItem());
@@ -80,7 +81,11 @@ public abstract class AmazonQAbstractCommonActions {
 
         menuManager.add(action.openCodeReferenceLogAction);
         menuManager.add(new Separator());
-        menuManager.add(action.toggleAutoTriggerContributionItem);
+
+        if (includeToggleAutoTriggerContributionItem) {
+            menuManager.add(action.toggleAutoTriggerContributionItem);
+        }
+
         menuManager.add(new ContributionItem(action.customizationDialogContributionItem.getId()) {
             @Override
             public boolean isVisible() {

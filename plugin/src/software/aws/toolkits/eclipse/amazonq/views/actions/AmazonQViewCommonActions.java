@@ -29,7 +29,7 @@ public final class AmazonQViewCommonActions extends AmazonQAbstractCommonActions
 
     @Override
     protected void fillPulldown() {
-        addCommonMenuItems(menuManager, actions);
+        addCommonMenuItems(menuManager, actions, true);
     }
 
     @Override

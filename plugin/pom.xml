@@ -168,7 +168,21 @@
                             <includeScope>runtime</includeScope>
                             <stripVersion>true</stripVersion>
                             <outputDirectory>${project.build.directory}/dependency</outputDirectory>
-                            <includeGroupIds>io.reactivex,software.amazon.awssdk,com.fasterxml.jackson,com.nimbusds,jakarta.inject,commons-codec,org.apache.httpcomponents,org.reactivestreams,org.apache.maven,org.bidib.com.github.markusbernhardt</includeGroupIds>
+                           <includeGroupIds>
+                                 io.reactivex,
+                                 software.amazon.awssdk,
+                                 com.fasterxml.jackson,
+                                 com.nimbusds,jakarta.inject,
+                                 commons-codec,
+                                 org.apache.httpcomponents,
+                                 org.reactivestreams,
+                                 org.apache.maven,
+                                 org.bidib.com.github.markusbernhardt,
+                                 net.java.dev.jna,
+                                 org.ini4j,
+                                 org.javadelight,
+                                 org.slf4j
+                             </includeGroupIds>
                         </configuration>
                     </execution>
                     <execution>

@@ -5,9 +5,13 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IAction;
+import org.eclipse.core.expressions.EvaluationResult;
+import org.eclipse.core.expressions.Expression;
+import org.eclipse.core.expressions.ExpressionInfo;
+import org.eclipse.core.expressions.IEvaluationContext;
 import org.eclipse.jface.action.IContributionItem;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.ui.ISources;
 import org.eclipse.ui.menus.AbstractContributionFactory;
 import org.eclipse.ui.menus.IContributionRoot;
 import org.eclipse.ui.services.IServiceLocator;
@@ -20,18 +24,31 @@ public final class MenuContributionFactory extends AbstractContributionFactory {
         super("menu:" + location, null);
     }
 
-    public void addContributionItem(final IContributionItem item) {
-        items.add(item);
-    }
+    public void addContributionItemsFromMenu(final IMenuManager menuManager) {
+        if (!items.isEmpty()) {
+            return;
+        }
 
-    public void addAction(final IAction action) {
-        items.add(new ActionContributionItem(action));
+        for (IContributionItem item : menuManager.getItems()) {
+            items.add(item);
+        }
     }
 
     @Override
     public void createContributionItems(final IServiceLocator serviceLocator, final IContributionRoot additions) {
         for (IContributionItem item : items) {
-            additions.addContributionItem(item, null);
+            additions.addContributionItem(item, new Expression() {
+                @Override
+                public void collectExpressionInfo(final ExpressionInfo info) {
+                    info.markDefaultVariableAccessed();
+                    info.addVariableNameAccess(ISources.ACTIVE_MENU_NAME);
+                }
+
+                @Override
+                public EvaluationResult evaluate(final IEvaluationContext context) {
+                    return EvaluationResult.valueOf(item.isVisible());
+                }
+            });
         }
     }
 

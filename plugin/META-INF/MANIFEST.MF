@@ -4,7 +4,7 @@ Bundle-Name: Amazon Q for Eclipse
 Bundle-Provider: Amazon Web Services
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-SymbolicName: amazon-q-eclipse;singleton:=true
-Bundle-Version: 1.0.4.qualifier
+Bundle-Version: 1.0.5.qualifier
 Automatic-Module-Name: amazon.q.eclipse
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: software.aws.toolkits.eclipse.amazonq.plugin.Activator
@@ -39,7 +39,6 @@ Bundle-Classpath: .,
  target/dependency/checksums.jar,
  target/dependency/cognitoidentity.jar,
  target/dependency/commons-codec.jar,
- target/dependency/delight-rhino-sandbox.jar,
  target/dependency/endpoints-spi.jar,
  target/dependency/http-auth-aws-eventstream.jar,
  target/dependency/http-auth-aws.jar,
@@ -53,9 +52,6 @@ Bundle-Classpath: .,
  target/dependency/jackson-core.jar,
  target/dependency/jackson-databind.jar,
  target/dependency/jakarta.inject-api.jar,
- target/dependency/java-diff-utils.jar,
- target/dependency/jna-platform.jar,
- target/dependency/jna.jar,
  target/dependency/json-utils.jar,
  target/dependency/maven-artifact.jar,
  target/dependency/metrics-spi.jar,
@@ -70,6 +66,5 @@ Bundle-Classpath: .,
  target/dependency/retries.jar,
  target/dependency/rxjava.jar,
  target/dependency/sdk-core.jar,
- target/dependency/slf4j-api.jar,
  target/dependency/third-party-jackson-core.jar,
  target/dependency/utils.jar

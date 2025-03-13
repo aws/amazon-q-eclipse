@@ -54,6 +54,8 @@ public final class ChatCommunicationManager {
     private final ChatPartialResultMap chatPartialResultMap;
     private final LspEncryptionManager lspEncryptionManager;
     private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
+    private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
+    private String inlineChatTabId;
 
     private ChatCommunicationManager(final Builder builder) {
         this.jsonHandler = builder.jsonHandler != null ? builder.jsonHandler : new JsonHandler();
@@ -64,6 +66,7 @@ public final class ChatCommunicationManager {
         this.lspEncryptionManager = builder.lspEncryptionManager != null ? builder.lspEncryptionManager
                 : DefaultLspEncryptionManager.getInstance();
         chatUiRequestListenerFuture = new CompletableFuture<>();
+        inlineChatListenerFuture = new CompletableFuture<>();
     }
 
     public static Builder builder() {
@@ -83,7 +86,7 @@ public final class ChatCommunicationManager {
                 switch (command) {
                 case CHAT_SEND_PROMPT:
                     ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
-                    addEditorState(chatRequestParams);
+                    addEditorState(chatRequestParams, true);
                     sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
                         String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 
@@ -146,11 +149,30 @@ public final class ChatCommunicationManager {
         }, ThreadingUtils.getWorkerPool());
     }
 
-    private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams) {
+    public void sendInlineChatMessageToChatServer(final Object params) {
+        chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
+            try {
+                ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
+                addEditorState(chatRequestParams, false);
+                sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
+                    String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
+
+                    EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(encryptedMessage, token);
+                    return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);
+                });
+            } catch (Exception e) {
+                throw new AmazonQPluginException("Error occurred when sending message to server", e);
+            }
+        });
+    }
+
+    private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams, final boolean addCursorState) {
         // only include files that are accessible via lsp which have absolute paths
         getOpenFileUri().ifPresent(filePathUri -> {
             chatRequestParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
-            getSelectionRangeCursorState().ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+            if (addCursorState) {
+                getSelectionRangeCursorState().ifPresent(cursorState -> chatRequestParams.setCursorState(Arrays.asList(cursorState)));
+            }
         });
         return chatRequestParams;
     }
@@ -232,11 +254,30 @@ public final class ChatCommunicationManager {
     }
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
-        chatUiRequestListenerFuture.complete(listener);
+        if (listener != null) {
+            chatUiRequestListenerFuture.complete(listener);
+        }
     }
 
-    public void removeListener() {
-        chatUiRequestListenerFuture = new CompletableFuture<>();
+    public void setInlineChatRequestListener(final ChatUiRequestListener listener) {
+        if (listener != null) {
+            inlineChatListenerFuture.complete(listener);
+        }
+    }
+
+    public void updateInlineChatTabId(final String newTabId) {
+        if (newTabId != null) {
+            this.inlineChatTabId = newTabId;
+        }
+    }
+
+    public void removeListener(final ChatUiRequestListener listener) {
+        if (chatUiRequestListenerFuture.isDone() && listener == chatUiRequestListenerFuture.join()) {
+            chatUiRequestListenerFuture = new CompletableFuture<>();
+        } else if (inlineChatListenerFuture.isDone() && listener == inlineChatListenerFuture.join()) {
+            inlineChatListenerFuture = new CompletableFuture<>();
+            inlineChatTabId = null; // Don't forget to clear the tabId
+        }
     }
 
     /*
@@ -244,10 +285,18 @@ public final class ChatCommunicationManager {
      */
     public void sendMessageToChatUI(final ChatUIInboundCommand command) {
         String message = jsonHandler.serialize(command);
-        chatUiRequestListenerFuture.thenApply(listener -> {
-            listener.onSendToChatUi(message);
-            return listener;
-        });
+        String targetTabId = command.tabId();
+        if (targetTabId != null && targetTabId.equals(inlineChatTabId)) {
+            inlineChatListenerFuture.thenApply(listener -> {
+                listener.onSendToChatUi(message);
+                return listener;
+            });
+        } else {
+            chatUiRequestListenerFuture.thenApply(listener -> {
+                listener.onSendToChatUi(message);
+                return listener;
+            });
+        }
     }
 
     /*

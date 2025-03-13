@@ -10,6 +10,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatEditorListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
@@ -33,6 +34,7 @@ public class Activator extends AbstractUIPlugin {
     private static CodeReferenceLoggingService codeReferenceLoggingService;
     private static PluginStore pluginStore;
     private static EventBroker eventBroker = new EventBroker();
+    private final InlineChatEditorListener editorListener;
 
     private static ViewRouter viewRouter = ViewRouter.builder().build();
 
@@ -49,6 +51,8 @@ public class Activator extends AbstractUIPlugin {
                 .initializeOnStartUp()
                 .build();
         codeReferenceLoggingService = DefaultCodeReferenceLoggingService.getInstance();
+        editorListener = InlineChatEditorListener.getInstance();
+        editorListener.initialize();
     }
 
     @Override

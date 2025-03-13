@@ -12,7 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public class AmazonQGlobalCommonActions extends AmazonQAbstractCommonActions implements EventObserver<AuthState> {
+public final class AmazonQGlobalCommonActions extends AmazonQAbstractCommonActions implements EventObserver<AuthState> {
 
     private static final AmazonQGlobalCommonActions INSTANCE;
     private Actions actions;
@@ -40,7 +40,7 @@ public class AmazonQGlobalCommonActions extends AmazonQAbstractCommonActions imp
                     "software.aws.toolkits.eclipse.amazonq.toolbar.command");
 
             IMenuManager menuManager = new MenuManager();
-            menuManager.add(actions.openQChatAction);
+            menuManager.add(actions.getOpenQChatAction());
             addCommonMenuItems(menuManager, actions);
             contributionFactory.addContributionItemsFromMenu(menuManager);
 

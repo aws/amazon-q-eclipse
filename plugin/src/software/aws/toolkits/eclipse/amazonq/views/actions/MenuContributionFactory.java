@@ -46,8 +46,7 @@ public final class MenuContributionFactory extends AbstractContributionFactory {
 
                 @Override
                 public EvaluationResult evaluate(final IEvaluationContext context) {
-                    Object menuId = context.getVariable(ISources.ACTIVE_MENU_NAME);
-                    return EvaluationResult.valueOf(item.isVisible() == true);
+                    return EvaluationResult.valueOf(item.isVisible());
                 }
             });
         }

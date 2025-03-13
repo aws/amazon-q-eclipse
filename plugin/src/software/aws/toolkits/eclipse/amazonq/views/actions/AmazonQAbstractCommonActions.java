@@ -15,17 +15,17 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 
 public abstract class AmazonQAbstractCommonActions {
 
-    protected static class Actions {
-        protected final SignoutAction signoutAction;
-        protected final FeedbackDialogContributionItem feedbackDialogContributionItem;
-        protected final CustomizationDialogContributionItem customizationDialogContributionItem;
-        protected final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
-        protected final OpenQChatAction openQChatAction;
-        protected final OpenCodeReferenceLogAction openCodeReferenceLogAction;
-        protected final OpenUserGuideAction openUserGuideAction;
-        protected final ViewSourceAction viewSourceAction;
-        protected final ViewLogsAction viewLogsAction;
-        protected final ReportAnIssueAction reportAnIssueAction;
+    protected static final class Actions {
+        private final SignoutAction signoutAction;
+        private final FeedbackDialogContributionItem feedbackDialogContributionItem;
+        private final CustomizationDialogContributionItem customizationDialogContributionItem;
+        private final ToggleAutoTriggerContributionItem toggleAutoTriggerContributionItem;
+        private final OpenQChatAction openQChatAction;
+        private final OpenCodeReferenceLogAction openCodeReferenceLogAction;
+        private final OpenUserGuideAction openUserGuideAction;
+        private final ViewSourceAction viewSourceAction;
+        private final ViewLogsAction viewLogsAction;
+        private final ReportAnIssueAction reportAnIssueAction;
 
         Actions() {
             signoutAction = new SignoutAction();
@@ -38,6 +38,10 @@ public abstract class AmazonQAbstractCommonActions {
             viewSourceAction = new ViewSourceAction();
             viewLogsAction = new ViewLogsAction();
             reportAnIssueAction = new ReportAnIssueAction();
+        }
+
+        public OpenQChatAction getOpenQChatAction() {
+            return openQChatAction;
         }
 
         public void setVisibility(final AuthState authState) {
@@ -60,7 +64,7 @@ public abstract class AmazonQAbstractCommonActions {
 
     protected abstract void fillPulldown();
 
-    protected void addCommonMenuItems(final IMenuManager menuManager, final Actions action) {
+    protected final void addCommonMenuItems(final IMenuManager menuManager, final Actions action) {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
         feedbackSubMenu.add(action.reportAnIssueAction);
         feedbackSubMenu.add(action.feedbackDialogContributionItem.getDialogContributionItem());

@@ -1,7 +1,6 @@
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.UUID;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,7 +10,6 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 class InlineChatTask {
     private final ITextEditor editor;
@@ -30,8 +28,12 @@ class InlineChatTask {
     private final AtomicReference<SessionState> taskState = new AtomicReference<>(null);
     private final AtomicBoolean hasActiveSelection = new AtomicBoolean(false);
     private final AtomicInteger previousDisplayLength;
-    private final AtomicReference<ScheduledFuture<?>> pendingUpdate = new AtomicReference<>();
+
+    // Latency variables
     private final AtomicLong lastUpdateTime;
+    private final AtomicLong requestTime;
+    private final AtomicLong firstTokenTime;
+    private final AtomicLong lastTokenTime;
 
     InlineChatTask(final ITextEditor editor, final String selectionText, final int visualOffset, final IRegion region) {
         boolean hasActiveSelection = !selectionText.isBlank();
@@ -44,11 +46,10 @@ class InlineChatTask {
         this.hasActiveSelection.set(hasActiveSelection);
         this.tabId = UUID.randomUUID().toString();
         this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? selectionText.length() : 0);
-        this.lastUpdateTime = new AtomicLong(System.currentTimeMillis());
-    }
-
-    ScheduledFuture<?> getPendingUpdate() {
-        return pendingUpdate.get();
+        this.lastUpdateTime = new AtomicLong(0);
+        this.requestTime = new AtomicLong(0);
+        this.firstTokenTime = new AtomicLong(-1);
+        this.lastTokenTime = new AtomicLong(0);
     }
 
     boolean isActive() {
@@ -61,25 +62,6 @@ class InlineChatTask {
 
     int getVisualOffset() {
         return this.visualOffset;
-    }
-
-    boolean cancelPendingUpdate() {
-        ScheduledFuture<?> update = pendingUpdate.get();
-        if (update != null) {
-            try {
-                return update.cancel(false);
-            } catch (Exception e) {
-                Activator.getLogger().error("Failed to cancel update: " + e.getMessage(), e);
-            }
-        }
-        return false;
-    }
-
-    void setPendingUpdate(final ScheduledFuture<?> update) {
-        ScheduledFuture<?> oldUpdate = pendingUpdate.getAndSet(update);
-        if (oldUpdate != null) {
-            oldUpdate.cancel(false);
-        }
     }
 
     long getLastUpdateTime() {
@@ -141,4 +123,29 @@ class InlineChatTask {
     void setCursorState(final CursorState state) {
         this.cursorState.set(state);
     }
+
+    long getRequestTime() {
+        return requestTime.get();
+    }
+
+    void setRequestTime(final long newValue) {
+        requestTime.set(newValue);
+    }
+
+    long getFirstTokenTime() {
+        return firstTokenTime.get();
+    }
+
+    void setFirstTokenTime(final long newValue) {
+        firstTokenTime.set(newValue);
+    }
+
+    long getLastTokenTime() {
+        return lastTokenTime.get();
+    }
+
+    void setLastTokenTime(final long newValue) {
+        lastTokenTime.set(newValue);
+    }
+
 }

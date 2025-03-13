@@ -2,7 +2,6 @@ package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
@@ -184,6 +183,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         if (!isSessionActive()) {
             return;
         }
+
         try {
             // Deserialize object
             ObjectMapper mapper = ObjectMapperFactory.getInstance();
@@ -243,6 +243,10 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         var chatPrompt = new ChatPrompt(prompt, prompt, "");
         params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
         chatCommunicationManager.sendInlineChatMessageToChatServer(params);
+
+        task.setRequestTime(System.currentTimeMillis());
+        task.setLastUpdateTime(System.currentTimeMillis());
+        Activator.getLogger().info("Sending inline chat request!");
     }
 
     private synchronized void endSession() {
@@ -250,8 +254,6 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             return;
         }
         CompletableFuture<Void> uiThreadFuture = new CompletableFuture<>();
-
-        task.cancelPendingUpdate();
         cleanupContext();
 
         Display.getDefault().asyncExec(() -> {

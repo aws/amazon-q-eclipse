@@ -5,11 +5,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
@@ -28,10 +23,6 @@ public class InlineChatDiffManager {
     private String ANNOTATION_ADDED;
     private String ANNOTATION_DELETED;
     private List<TextDiff> currentDiffs;
-
-    // Batching variables
-    private ScheduledExecutorService executor;
-    private static final int BATCH_DELAY_MS = 100;
     private InlineChatTask task;
 
     private InlineChatDiffManager() {
@@ -48,77 +39,58 @@ public class InlineChatDiffManager {
     void initNewTask(final InlineChatTask task, final boolean isDarkTheme) {
         this.task = task;
         this.currentDiffs = new ArrayList<>();
-        this.executor = Executors.newSingleThreadScheduledExecutor();
         setColorPalette(isDarkTheme);
     }
+    synchronized CompletableFuture<Void> processDiff(final ChatResult chatResult, final boolean isPartialResult) throws Exception {
+        if (!task.isActive()) {
+            return CompletableFuture.completedFuture(null);
+        }
 
-    CompletableFuture<Void> processDiff(final ChatResult chatResult, final boolean isPartialResult) throws Exception {
+        long currentTime = System.currentTimeMillis();
+        long timeSinceUpdate = currentTime - task.getLastUpdateTime();
+        CompletableFuture<Void> diffFuture;
         if (isPartialResult) {
             // Only process if content has changed
             if (!chatResult.body().equals(task.getPreviousPartialResponse())) {
-                if (task.getPendingUpdate() != null) {
-                    task.getPendingUpdate().cancel(false);
-                }
-
-                // Calculate remaining time since last UI update
-                long currentTime = System.currentTimeMillis();
-                long timeSinceUpdate = currentTime - task.getLastUpdateTime();
-
-                if (timeSinceUpdate >= BATCH_DELAY_MS) {
-                    Activator.getLogger().info("Immediate update: " + timeSinceUpdate + "ms since last update");
-                    // Push update immediately if enough time has passed
-                    updateUI(chatResult);
-                    task.setLastUpdateTime(currentTime);
-                } else {
-                    CompletableFuture<Void> future = new CompletableFuture<>();
-                    // Calculate remaining batch delay and schedule update
-                    long delayToUse = BATCH_DELAY_MS - timeSinceUpdate;
-                    Activator.getLogger().info("Scheduled update: waiting " + delayToUse + "ms");
-                    ScheduledFuture<?> pendingUpdate = executor.schedule(() -> {
-                        try {
-                            Activator.getLogger().info("Executing scheduled update after " + (System.currentTimeMillis() - task.getLastUpdateTime()) + "ms delay");
-                            updateUI(chatResult);
-                            task.setLastUpdateTime(System.currentTimeMillis());
-                            future.complete(null);
-                        } catch (Exception e) {
-                            future.completeExceptionally(e);
-                        }
-
-                    }, delayToUse, TimeUnit.MILLISECONDS);
-
-                    task.setPendingUpdate(pendingUpdate);
-                    return future;
-                }
-
+                Activator.getLogger().info("Updating UI: " + timeSinceUpdate + "ms since last update");
+                diffFuture = updateUI(chatResult);
+                diffFuture.thenRun(() -> {
+                    if (task.getFirstTokenTime() == -1) {
+                        task.setFirstTokenTime(System.currentTimeMillis());
+                        Activator.getLogger().info(String.format("response start latency: %d", System.currentTimeMillis() - task.getRequestTime()));
+                    }
+                });
+            } else {
+                diffFuture = CompletableFuture.completedFuture(null);
             }
         } else {
             // Final result - always update UI state regardless of content
-            if (task.getPendingUpdate() != null) {
-                task.getPendingUpdate().cancel(false);
-            }
-            updateUI(chatResult);
-            task.setLastUpdateTime(System.currentTimeMillis());
+            Activator.getLogger().info("Updating UI: " + timeSinceUpdate + "ms since last update");
+            diffFuture = updateUI(chatResult);
+            diffFuture.thenRun(() -> {
+                task.setLastTokenTime(System.currentTimeMillis());
+                Activator.getLogger().info(String.format("response end latency: %d", System.currentTimeMillis() - task.getRequestTime()));
+            });
         }
-
-        return CompletableFuture.completedFuture(null);
+        task.setLastUpdateTime(System.currentTimeMillis());
+        return diffFuture;
     }
 
-    private void updateUI(final ChatResult chatResult) throws Exception {
+    private CompletableFuture<Void> updateUI(final ChatResult chatResult) throws Exception {
         if (!task.isActive()) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
-        final Exception[] ex = new Exception[1];
+        CompletableFuture<Void> future = new CompletableFuture<>();
         Display.getDefault().syncExec(() -> {
             try {
                 var newCode = unescapeChatResult(chatResult.body());
                 computeDiffAndRenderOnEditor(newCode);
+                future.complete(null);
             } catch (Exception e) {
-                ex[0] = e;
+                future.completeExceptionally(e);
             }
         });
-        if (ex[0] != null) {
-            throw ex[0];
-        }
+        return future;
     }
 
     private boolean computeDiffAndRenderOnEditor(final String newCode) throws Exception {
@@ -249,7 +221,6 @@ public class InlineChatDiffManager {
     }
 
     void cleanupState() {
-        cancelBatchingOperations();
         currentDiffs.clear();
     }
 
@@ -301,18 +272,5 @@ public class InlineChatDiffManager {
 
         return s.replace("&quot;", "\"").replace("&#39;", "'").replace("&lt;", "<").replace("=&lt;", "=<").replace("&lt;=", "<=").replace("&gt;", ">")
                 .replace("=&gt;", "=>").replace("&gt;=", ">=").replace("&nbsp;", " ").replace("&lsquo;", "'").replace("&rsquo;", "'").replace("&amp;", "&");
-    }
-
-    private void cancelBatchingOperations() {
-        try {
-            if (task.getPendingUpdate() != null) {
-                task.getPendingUpdate().cancel(true);
-            }
-            if (executor != null && !executor.isShutdown()) {
-                executor.shutdownNow();
-            }
-        } catch (Exception e) {
-            Activator.getLogger().error("Error cancelling async operations: " + e.getMessage(), e);
-        }
     }
 }

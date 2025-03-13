@@ -218,6 +218,4 @@ public class InlineChatEditorListener implements IPartListener2, IAnnotationMode
             projectionModel = null;
         }
     }
-
-
 }

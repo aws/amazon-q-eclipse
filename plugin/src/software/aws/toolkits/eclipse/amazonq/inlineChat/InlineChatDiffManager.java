@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
+import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
@@ -71,6 +72,7 @@ public class InlineChatDiffManager {
                 task.setLastTokenTime(System.currentTimeMillis());
                 Activator.getLogger().info(String.format("response end latency: %d", System.currentTimeMillis() - task.getRequestTime()));
             });
+            task.setTextDiffs(currentDiffs);
         }
         task.setLastUpdateTime(System.currentTimeMillis());
         return diffFuture;
@@ -113,8 +115,19 @@ public class InlineChatDiffManager {
         currentDiffs.clear(); // Clear previous diffs
         int currentPos = 0;
         int currentLine = 0;
+        int deletedLines = 0;
+        int insertedLines = 0;
 
         for (AbstractDelta<String> delta : patch.getDeltas()) {
+
+            // Count deletion and addition lines for telemetry
+            if (delta.getType() == DeltaType.DELETE || delta.getType() == DeltaType.CHANGE) {
+                deletedLines += delta.getSource().getLines().size();
+            }
+            if (delta.getType() == DeltaType.INSERT || delta.getType() == DeltaType.CHANGE) {
+                insertedLines += delta.getTarget().getLines().size();
+            }
+
             // Continuously copy unchanged lines until we hit a diff
             while (currentLine < delta.getSource().getPosition()) {
                 resultText.append(originalLines[currentLine]).append("\n");
@@ -167,6 +180,8 @@ public class InlineChatDiffManager {
         // Store rendered text length for proper clearing next iteration
         task.setPreviousDisplayLength(finalText.length());
         task.setPreviousPartialResponse(newCode);
+        task.setNumDeletedLines(deletedLines);
+        task.setNumAddedLines(insertedLines);
         return true;
     }
 

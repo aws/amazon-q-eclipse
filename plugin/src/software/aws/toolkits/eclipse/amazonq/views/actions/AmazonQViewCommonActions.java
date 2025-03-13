@@ -11,13 +11,13 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public final class AmazonQLocalCommonActions extends AmazonQAbstractCommonActions implements EventObserver<AuthState> {
+public final class AmazonQViewCommonActions extends AmazonQAbstractCommonActions implements EventObserver<AuthState> {
     private final Actions actions;
     private final IViewSite viewSite;
     private final Disposable authStateSubscription;
     private IMenuManager menuManager;
 
-    public AmazonQLocalCommonActions(final IViewSite viewSite) {
+    public AmazonQViewCommonActions(final IViewSite viewSite) {
         this.viewSite = viewSite;
 
         menuManager = viewSite.getActionBars().getMenuManager();

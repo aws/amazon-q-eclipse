@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.IMenuManager;
@@ -12,22 +15,22 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public final class AmazonQGlobalCommonActions extends AmazonQAbstractCommonActions implements EventObserver<AuthState> {
+public final class AmazonQToolbarActions extends AmazonQAbstractCommonActions implements EventObserver<AuthState> {
 
-    private static final AmazonQGlobalCommonActions INSTANCE;
+    private static final AmazonQToolbarActions INSTANCE;
     private Actions actions;
 
     static {
-        INSTANCE = new AmazonQGlobalCommonActions();
+        INSTANCE = new AmazonQToolbarActions();
     }
 
-    private AmazonQGlobalCommonActions() {
+    private AmazonQToolbarActions() {
         actions = new Actions();
         fillPulldown();
         Activator.getEventBroker().subscribe(AuthState.class, this);
     }
 
-    public static AmazonQGlobalCommonActions getInstance() {
+    public static AmazonQToolbarActions getInstance() {
         return INSTANCE;
     }
 

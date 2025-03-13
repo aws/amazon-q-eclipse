@@ -14,9 +14,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import jakarta.inject.Inject;
-import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -24,20 +21,15 @@ import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog;
 import software.aws.toolkits.eclipse.amazonq.views.CustomizationDialog.ResponseSelection;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
-public final class CustomizationDialogContributionItem extends ContributionItem implements EventObserver<AuthState> {
+public final class CustomizationDialogContributionItem extends ContributionItem {
     private static final String CUSTOMIZATION_MENU_ITEM_TEXT = "Select Customization";
 
     @Inject
     private Shell shell;
 
-    // TODO: Need to update this method as the login condition has to be Pro login using IAM identity center
-    public void updateVisibility(final AuthState authState) {
-        this.setVisible(authState.isLoggedIn() && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
-    }
-
     @Override
-    public void onEvent(final AuthState authState) {
-        updateVisibility(authState);
+    public void setVisible(final boolean isVisible) {
+        super.setVisible(isVisible);
     }
 
     @Override

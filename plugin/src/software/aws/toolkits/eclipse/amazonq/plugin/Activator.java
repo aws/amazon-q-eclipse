@@ -13,14 +13,15 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatEditorListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProvider;
-import software.aws.toolkits.eclipse.amazonq.providers.LspProviderImpl;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.TelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultCodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.views.router.ViewRouter;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -33,6 +34,7 @@ public class Activator extends AbstractUIPlugin {
     private static CodeReferenceLoggingService codeReferenceLoggingService;
     private static PluginStore pluginStore;
     private static EventBroker eventBroker = new EventBroker();
+    private static ViewRouter viewRouter = ViewRouter.builder().build();
     private final InlineChatEditorListener editorListener;
 
     public Activator() {

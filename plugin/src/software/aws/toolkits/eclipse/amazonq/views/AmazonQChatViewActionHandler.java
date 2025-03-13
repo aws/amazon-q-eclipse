@@ -9,27 +9,26 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
-import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
-import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.ui.PlatformUI;
-
 import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpClickedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpType;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -195,9 +194,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         try {
             if (incomingType.equals(fullAuth) || incomingType.equals(useSupportedAuth)) {
                 Activator.getLoginService().logout();
-                Display.getDefault().asyncExec(() -> {
-                    ViewVisibilityManager.showLoginView("update");
-                });
                 return;
             }
         } catch (Exception ex) {

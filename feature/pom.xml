@@ -6,7 +6,7 @@
   <parent>
     <groupId>software.aws.toolkits.eclipse</groupId>
     <artifactId>amazon-q-eclipse-group</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.5-SNAPSHOT</version>
     <relativePath>../</relativePath>
   </parent>
 

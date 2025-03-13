@@ -34,9 +34,9 @@ public final class AmazonQLocalCommonActions extends AmazonQAbstractCommonAction
 
     @Override
     public void onEvent(final AuthState authState) {
-        Display.getDefault().asyncExec(() -> {
-            actions.setVisibility(authState);
+        actions.setVisibility(authState);
 
+        Display.getDefault().asyncExec(() -> {
             viewSite.getActionBars().getMenuManager().markDirty();
             viewSite.getActionBars().getMenuManager().update(true);
         });

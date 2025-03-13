@@ -1,54 +1,33 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.providers.browser;
+package software.aws.toolkits.eclipse.amazonq.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mockStatic;
 
 import java.util.stream.Stream;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
 
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
-public final class AmazonQBrowserProviderTest {
-    private AmazonQBrowserProvider browserProvider;
-
-    @Mock
-    private Display mockDisplay;
+public final class AmazonQViewControllerTest {
+    private AmazonQViewController viewController;
 
     @RegisterExtension
     private static ActivatorStaticMockExtension activatorExtension = new ActivatorStaticMockExtension();
 
-    @BeforeEach
-    void setupBeforeEach() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @ParameterizedTest
     @MethodSource("provideBrowserStyleData")
     public void getBrowserStyle(final PluginPlatform platform, final int expectedStyle) {
-        try (MockedStatic<Display> staticDisplay = mockStatic(Display.class)) {
-            staticDisplay.when(Display::getDefault).thenReturn(mockDisplay);
-            doNothing().when(mockDisplay).asyncExec(any(Runnable.class));
-
-            browserProvider = new AmazonQBrowserProvider(platform);
-            assertEquals(expectedStyle, browserProvider.getBrowserStyle());
-        }
+        viewController = new AmazonQViewController(platform);
+        assertEquals(expectedStyle, viewController.getBrowserStyle());
     }
 
     private static Stream<Arguments> provideBrowserStyleData() {
@@ -60,17 +39,12 @@ public final class AmazonQBrowserProviderTest {
     @ParameterizedTest
     @MethodSource("provideCompatibilityData")
     void checkWebViewCompatibility(final PluginPlatform platform, final String browserType, final boolean expectedResult) {
-        try (MockedStatic<Display> staticDisplay = mockStatic(Display.class)) {
-            staticDisplay.when(Display::getDefault).thenReturn(mockDisplay);
-            doNothing().when(mockDisplay).asyncExec(any(Runnable.class));
+        viewController = new AmazonQViewController(platform);
 
-            browserProvider = new AmazonQBrowserProvider(platform);
+        assertFalse(viewController.hasWebViewDependency());
+        viewController.checkWebViewCompatibility(browserType);
 
-            assertFalse(browserProvider.hasWebViewDependency());
-            browserProvider.checkWebViewCompatibility(browserType);
-
-            assertEquals(expectedResult, browserProvider.hasWebViewDependency());
-        }
+        assertEquals(expectedResult, viewController.hasWebViewDependency());
     }
 
     private static Stream<Arguments> provideCompatibilityData() {

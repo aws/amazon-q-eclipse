@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.providers.lsp;
+package software.aws.toolkits.eclipse.amazonq.providers;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.DefaultLspManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspConstants;

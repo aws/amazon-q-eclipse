@@ -15,8 +15,6 @@ public final class AmazonQStaticActions {
     private ViewLogsAction viewLogsAction;
     private ReportAnIssueAction reportAnIssueAction;
 
-    private IMenuManager menuManager;
-
     public AmazonQStaticActions(final IViewSite viewSite) {
         createActions(viewSite);
         contributeToActionBars(viewSite);
@@ -31,11 +29,10 @@ public final class AmazonQStaticActions {
 
     private void contributeToActionBars(final IViewSite viewSite) {
         IActionBars bars = viewSite.getActionBars();
-        menuManager = bars.getMenuManager();
-        fillLocalPullDown();
+        fillLocalPullDown(bars.getMenuManager());
     }
 
-    private void fillLocalPullDown() {
+    private void fillLocalPullDown(final IMenuManager manager) {
         IMenuManager feedbackSubMenu = new MenuManager("Feedback");
         feedbackSubMenu.add(reportAnIssueAction);
 
@@ -45,15 +42,8 @@ public final class AmazonQStaticActions {
         helpSubMenu.add(viewSourceAction);
         helpSubMenu.add(viewLogsAction);
 
-        menuManager.add(feedbackSubMenu);
-        menuManager.add(helpSubMenu);
-    }
-
-    public void dispose() {
-        if (menuManager != null) {
-            menuManager.dispose();
-            menuManager = null;
-        }
+        manager.add(feedbackSubMenu);
+        manager.add(helpSubMenu);
     }
 
 }

@@ -6,8 +6,11 @@
 	      <variable name="is_logged_in" priorityLevel="workbench"/>
 	   </sourceProvider>
 	</extension>
-	    <extension point="org.eclipse.ui.views">
-        <!-- Old View Ids registered necessary to migrate to ViewContainer -->
+    <extension
+        point="org.eclipse.ui.views">
+        <!-- If adding a new view: -->
+        <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
+        <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
         <category
             name="Amazon Q"
             id="amazonq">
@@ -16,25 +19,25 @@
             id="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
+            class="software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
         </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
+            class="software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
         </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
+            class="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
         </view>
         <view
             id="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+            class="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
             category="amazonq"
             inject="true">
         </view>
@@ -42,22 +45,54 @@
             id="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
             name="Amazon Q"
             icon="icons/AmazonQ.png"
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
+            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview"
             inject="true">
         </view>
-   </extension>
+        <view
+              class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+              icon="icons/AmazonQ.png"
+              id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
+              name="Amazon Q Code Reference"
+              restorable="true">
+        </view>
+    </extension>
     <extension point="org.eclipse.ui.activities">  
       <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
       <!-- ToolkitLoginWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview" name="Amazon Q Chat">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView" name="Amazon Q Code Reference">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView" name="Amazon Q Dependency Missing">
+	  </activity>
+	  <activity id="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView" name="Amazon Q Reauthenticate">
+	  </activity>
+      <activity id="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView" name="Amazon Q Chat Missing">
+	  </activity>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQChatWebview"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview">
+	  </activityPatternBinding>
 	  <activityPatternBinding
 	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
 	     isEqualityPattern="true"
 	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
 	  </activityPatternBinding>
 	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQViewContainer"
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.DependencyMissingView"
 	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.DependencyMissingView">
+	  </activityPatternBinding>
+	  <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ReauthenticateView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ReauthenticateView">
+	  </activityPatternBinding>
+        <activityPatternBinding
+	     activityId="software.aws.toolkits.eclipse.amazonq.activity.ChatAssetMissingView"
+	     isEqualityPattern="true"
+	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView">
 	  </activityPatternBinding>
 	 </extension>
     <extension
@@ -105,57 +140,6 @@
                 id="software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView"
                 relative="software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview"
                 relationship="stack"
-                visible="false">
-            </view>
-        </perspectiveExtension>
-    </extension>
-	
-    <extension
-        point="org.eclipse.ui.views">
-        <!-- If adding a new view: -->
-        <!-- 1. Include the view in the activities extension point to hide it from the Show View menu -->
-        <!-- 2. Include the view in the perspectiveExtensions extension point to display it in the appropriate part of the layout -->
-        <category
-            name="Amazon Q"
-            id="amazonq">
-        </category>
-        <view
-            class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-            id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-            name="Amazon Q"
-            icon="icons/AmazonQ.png">
-        </view>
-        <view
-              class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-              icon="icons/AmazonQ.png"
-              id="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"
-              name="Amazon Q Code Reference"
-              restorable="true">
-        </view>
-    </extension>
-    <extension point="org.eclipse.ui.activities">  
-      <!-- These activities and activityPatternBindings prevent the view from showing up in the Show View menu. Logic exists that will filter these views out. -->
-      <!-- ToolkitLoginWebview is intentionally excluded here as this should be the only view that should show in the menu. -->
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQCodeReferenceView"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView">
-	  </activityPatternBinding>
-	  <activityPatternBinding
-	     activityId="software.aws.toolkits.eclipse.amazonq.activity.AmazonQViewContainer"
-	     isEqualityPattern="true"
-	     pattern="amazon-q-eclipse/software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer">
-	  </activityPatternBinding>
-	 </extension>
-    <extension
-        point="org.eclipse.ui.perspectiveExtensions">
-        <!-- These perspectiveExtensions ensure that the view is display in the appropriate portion of the layout. In most cases, it should stack the ToolkitLoginWebview. -->
-        <perspectiveExtension
-            targetID="*">
-            <view
-                id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-                relative="org.eclipse.ui.editorss"
-                relationship="right"
                 visible="false">
             </view>
         </perspectiveExtension>
@@ -550,7 +534,7 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
-		                        <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>                       
+                                <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview" />
                             </or>
                         </with>
                     </and>

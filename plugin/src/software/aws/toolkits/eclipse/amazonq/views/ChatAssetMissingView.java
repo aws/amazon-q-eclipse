@@ -3,67 +3,60 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-public final class ChatAssetMissingView extends BaseAmazonQView {
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.ChatAssetProvider;
+
+public final class ChatAssetMissingView extends BaseView {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ChatAssetMissingView";
 
     private static final String ICON_PATH = "icons/AmazonQ64.png";
     private static final String HEADER_LABEL = "Error loading Q chat.";
     private static final String DETAIL_MESSAGE = "Restart Eclipse or review error logs for troubleshooting";
-    private Image icon;
-    private Composite container;
+    private ChatAssetProvider chatAssetProvider;
+
+    public ChatAssetMissingView() {
+        this.chatAssetProvider = new ChatAssetProvider();
+    }
 
     @Override
-    public Composite setupView(final Composite parent) {
-        container = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout(1, false);
-        layout.marginWidth = 20;
-        layout.marginHeight = 10;
-        container.setLayout(layout);
+    protected String getIconPath() {
+        return ICON_PATH;
+    }
 
-        Label iconLabel = new Label(container, SWT.NONE);
-        icon = loadImage(ICON_PATH);
-        if (icon != null) {
-            iconLabel.setImage(icon);
-            iconLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+    @Override
+    protected String getHeaderLabel() {
+        return HEADER_LABEL;
+    }
 
-            iconLabel.addDisposeListener(e -> {
-                if (icon != null && !icon.isDisposed()) {
-                    icon.dispose();
-                }
-            });
-        }
+    @Override
+    protected String getDetailMessage() {
+        return DETAIL_MESSAGE;
+    }
 
-        Label headerLabel = new Label(container, SWT.CENTER | SWT.WRAP);
-        headerLabel.setText(HEADER_LABEL);
-        headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        var font = magnifyFontSize(parent, parent.getFont(), 18);
-        headerLabel.setFont(font);
-
-        headerLabel.addDisposeListener(e -> {
-            if (font != null && !font.isDisposed()) {
-                font.dispose();
+    @Override
+    protected CompletableFuture<Boolean> isViewDisplayable() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Optional<String> chatAsset = chatAssetProvider.get();
+                return !chatAsset.isPresent();
+            } catch (Exception ex) {
+                Activator.getLogger().error("Failed to verify Amazon Q chat content is retrievable", ex);
+                return true; // Safer to display chat asset missing view by default than give access
             }
         });
+    }
 
-        Label detailLabel = new Label(container, SWT.CENTER | SWT.WRAP);
-        detailLabel.setText(DETAIL_MESSAGE);
-        detailLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-        setupAmazonQStaticActions();
-
-        return container;
+    @Override
+    protected void showAlternateView() {
+        ViewVisibilityManager.showChatView("restart");
     }
 
     @Override
     public void dispose() {
-        container.dispose();
+        chatAssetProvider.dispose();
         super.dispose();
     }
 }

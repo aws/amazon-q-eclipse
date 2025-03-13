@@ -3,6 +3,26 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.DefaultLspEncryptionManagerStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspManagerProviderStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtilsStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
+import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
+import org.eclipse.lsp4e.server.ProcessStreamConnectionProvider;
+import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
+import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,27 +31,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.eclipse.lsp4e.server.ProcessStreamConnectionProvider;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-
-import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
-import software.aws.toolkits.eclipse.amazonq.extensions.implementation.DefaultLspEncryptionManagerStaticMockExtension;
-import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspManagerProviderStaticMockExtension;
-import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtilsStaticMockExtension;
-import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
-import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
-import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
-import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 public final class QLspConnectionProviderTest {
 
@@ -48,7 +47,6 @@ public final class QLspConnectionProviderTest {
 
     @RegisterExtension
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();
-
 
     private static final class TestProcessConnectionProvider extends ProcessStreamConnectionProvider {
 
@@ -91,7 +89,7 @@ public final class QLspConnectionProviderTest {
                 "/test/dir"
         );
 
-        assertTrue(testProcessConnectionProvider.equals(provider));
+        assertTrue(((ProcessStreamConnectionProvider) testProcessConnectionProvider).equals(provider));
     }
 
     @Test

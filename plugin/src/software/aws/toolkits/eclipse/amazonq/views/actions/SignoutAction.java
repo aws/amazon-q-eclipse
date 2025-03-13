@@ -2,6 +2,7 @@ package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
 
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -10,8 +11,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
-public final class SignoutAction extends Action {
-
+public final class SignoutAction extends Action implements EventObserver<AuthState> {
     public SignoutAction() {
         setText("Sign out");
     }
@@ -37,8 +37,12 @@ public final class SignoutAction extends Action {
         });
     }
 
-    public void setVisible(final boolean isVisible) {
-        super.setEnabled(isVisible);
+    public void updateVisibility(final AuthState authState) {
+        this.setEnabled(authState.isLoggedIn());
     }
 
+    @Override
+    public void onEvent(final AuthState authState) {
+        updateVisibility(authState);
+    }
 }

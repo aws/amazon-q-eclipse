@@ -17,7 +17,7 @@ public class OpenQChatAction extends Action {
     @Override
     public final void run() {
         UiTelemetryProvider.emitClickEventMetric("ellipses_openQChat");
-        ViewVisibilityManager.showDefaultView("ellipsesMenu");
+        ViewVisibilityManager.showChatView("ellipsesMenu");
     }
 
 }

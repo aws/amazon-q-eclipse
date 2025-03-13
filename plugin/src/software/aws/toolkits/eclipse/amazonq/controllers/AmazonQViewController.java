@@ -1,31 +1,27 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.providers.browser;
+package software.aws.toolkits.eclipse.amazonq.controllers;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 
-import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
-public class AmazonQBrowserProvider {
+public class AmazonQViewController {
     private boolean hasWebViewDependency = false;
     private PluginPlatform pluginPlatform;
     private Browser browser;
 
-    public AmazonQBrowserProvider() {
+    public AmazonQViewController() {
         this(PluginUtils.getPlatform());
     }
     // Test constructor that accepts a platform
-    public AmazonQBrowserProvider(final PluginPlatform platform) {
-        this.pluginPlatform = platform;
+    public AmazonQViewController(final PluginPlatform platform) {
+      this.pluginPlatform = platform;
     }
 
     /*
@@ -45,11 +41,6 @@ public class AmazonQBrowserProvider {
             Activator.getLogger()
                     .info("Browser detected:" + browserType + " is not of expected type: " + expectedType);
         }
-
-        Activator.getEventBroker().post(BrowserCompatibilityState.class,
-                hasWebViewDependency ? BrowserCompatibilityState.COMPATIBLE
-                        : BrowserCompatibilityState.DEPENDENCY_MISSING);
-
         return this.hasWebViewDependency;
     }
 
@@ -64,10 +55,6 @@ public class AmazonQBrowserProvider {
      */
     public final boolean setupBrowser(final Composite parent) {
         var browser = new Browser(parent, getBrowserStyle());
-
-        GridData layoutData = new GridData(GridData.FILL_BOTH);
-        browser.setLayoutData(layoutData);
-
         checkWebViewCompatibility(browser.getBrowserType());
         // only set the browser if compatible webview browser can be found for the
         // platform
@@ -93,21 +80,4 @@ public class AmazonQBrowserProvider {
     public final void updateBrowser(final Browser browser) {
         this.browser = browser;
     }
-
-    public final void publishBrowserCompatibilityState() {
-        Display.getDefault().asyncExec(() -> {
-            Display display = Display.getDefault();
-            Shell shell = display.getActiveShell();
-            if (shell == null) {
-                shell = new Shell(display);
-            }
-
-            Composite parent = new Composite(shell, SWT.NONE);
-            parent.setVisible(false);
-
-            setupBrowser(parent);
-            parent.dispose();
-        });
-    }
-
 }

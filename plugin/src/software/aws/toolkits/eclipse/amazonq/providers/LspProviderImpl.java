@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.providers.lsp;
+package software.aws.toolkits.eclipse.amazonq.providers;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -10,10 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.lsp4j.services.LanguageServer;
 
-import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
@@ -54,7 +52,6 @@ public final class LspProviderImpl implements LspProvider {
                 future.complete(server);
             }
             emitInitializeMetric();
-            Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.ACTIVE);
         }
     }
 

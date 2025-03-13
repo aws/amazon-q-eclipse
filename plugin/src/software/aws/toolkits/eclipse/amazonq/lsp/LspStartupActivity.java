@@ -30,6 +30,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.util.UpdateUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.views.ViewVisibilityManager;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQGlobalCommonActions;
 import software.aws.toolkits.eclipse.amazonq.views.actions.ToggleAutoTriggerContributionItem;
 
 @SuppressWarnings("restriction")
@@ -52,6 +53,7 @@ public class LspStartupActivity implements IStartup {
         };
         lspStartupJob.setPriority(Job.INTERACTIVE);
         lspStartupJob.schedule();
+        AmazonQGlobalCommonActions.getInstance();
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(lsp -> {
             if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
                 this.launchWebview();

@@ -2,6 +2,9 @@ package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.source.IAnnotationModel;
+import org.eclipse.jface.text.source.IAnnotationModelListener;
+import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.swt.events.PaintListener;
@@ -18,7 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
-public class InlineChatEditorListener implements IPartListener2 {
+public class InlineChatEditorListener implements IPartListener2, IAnnotationModelListener {
     private static InlineChatEditorListener instance;
     private final InlineChatUIManager uiManager;
     private final ThemeDetector themeDetector;
@@ -29,6 +32,7 @@ public class InlineChatEditorListener implements IPartListener2 {
     private PaintListener currentPaintListener;
     private ITextViewer currentViewer;
     private final boolean isDarkTheme;
+    private ProjectionAnnotationModel projectionModel;
 
     private final String INLINE_CHAT_HINT;
     private static final int SELECTION_DELAY_MS = 500;
@@ -78,6 +82,7 @@ public class InlineChatEditorListener implements IPartListener2 {
         if (partRef.getPart(false) instanceof ITextEditor) {
             ITextEditor editor = (ITextEditor) partRef.getPart(false);
             try {
+                attachFoldingListener(editor);
                 attachSelectionListener(editor);
             } catch (Exception e) {
                 Activator.getLogger().error("Failed in process of attaching selection listener: " + e.getMessage(), e);
@@ -91,11 +96,11 @@ public class InlineChatEditorListener implements IPartListener2 {
         if (partRef.getPart(false) instanceof ITextEditor) {
             ITextEditor editor = (ITextEditor) partRef.getPart(false);
             removeSelectionListener(editor);
+            removeFoldingListener();
         }
     }
 
     private void showPrompt(final ITextEditor editor, final ITextSelection selection) {
-        // Always close existing prompt first
         closePrompt();
 
         Display.getDefault().asyncExec(() -> {
@@ -132,7 +137,7 @@ public class InlineChatEditorListener implements IPartListener2 {
         }
 
         currentSelectionListener = event -> {
-
+            closePrompt();
             //TODO: change to use eventBroker once code is in prod
             if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
                 return;
@@ -170,6 +175,7 @@ public class InlineChatEditorListener implements IPartListener2 {
         selectionProvider.addSelectionChangedListener(currentSelectionListener);
     }
 
+
     private void removeCurrentPaintListener() {
         try {
             if (currentViewer != null && !currentViewer.getTextWidget().isDisposed() && currentPaintListener != null) {
@@ -191,4 +197,27 @@ public class InlineChatEditorListener implements IPartListener2 {
             currentSelectionListener = null;
         }
     }
+
+    @Override
+    public void modelChanged(final IAnnotationModel model) {
+        if (model instanceof ProjectionAnnotationModel) {
+            closePrompt();
+        }
+    }
+
+    public void attachFoldingListener(final ITextEditor editor) {
+        projectionModel = editor.getAdapter(ProjectionAnnotationModel.class);
+        if (projectionModel != null) {
+            projectionModel.addAnnotationModelListener(this);
+        }
+    }
+
+    public void removeFoldingListener() {
+        if (projectionModel != null) {
+            projectionModel.removeAnnotationModelListener(this);
+            projectionModel = null;
+        }
+    }
+
+
 }

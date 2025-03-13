@@ -4,37 +4,29 @@ package software.aws.toolkits.eclipse.amazonq.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.IViewSite;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
-import software.aws.toolkits.eclipse.amazonq.controllers.AmazonQViewController;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
 
-public abstract class AmazonQView extends ViewPart implements EventObserver<AuthState> {
+public abstract class AmazonQView extends BaseAmazonQView {
 
-    private AmazonQViewController viewController;
-    private AmazonQCommonActions amazonQCommonActions;
+    private AmazonQBrowserProvider browserProvider;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
 
-    private Disposable authStateSubscription;
+    private IViewSite viewSite;
 
     protected AmazonQView() {
-        this.viewController = new AmazonQViewController();
+        this.browserProvider = new AmazonQBrowserProvider();
     }
 
     public final Browser getBrowser() {
-        return viewController.getBrowser();
-    }
-
-    public final AmazonQCommonActions getAmazonQCommonActions() {
-        return amazonQCommonActions;
+        return browserProvider.getBrowser();
     }
 
     protected final void setupParentBackground(final Composite parent) {
@@ -45,22 +37,35 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
     }
 
     protected final boolean setupBrowser(final Composite parent) {
-        return viewController.setupBrowser(parent);
+        return browserProvider.setupBrowser(parent);
     }
 
     protected final void updateBrowser(final Browser browser) {
-        viewController.updateBrowser(browser);
+        browserProvider.updateBrowser(browser);
     }
 
-    protected final void setupAmazonQView(final Composite parent, final AuthState authState) {
-        setupBrowserBackground(parent);
-        setupActions(authState);
-        setupAuthStatusListeners();
-        disableBrowserContextMenu();
-    }
+    /**
+     * Sets up the view's browser component and initializes necessary configurations.
+     * This method is called during view creation to establish the browser environment.
+     *
+     * The setup process includes:
+     * - Setting up the browser's background color to match the parent
+     * - Initializing common actions for the view
+     * - Setting up authentication status listeners
+     * - Disabling the browser's default context menu
+     *
+     * @param parent The parent composite where the view will be created
+     * @return The configured parent composite containing the view
+     */
+    @Override
+    public Composite setupView(final Composite parent) {
+        Browser browser = getBrowser();
 
-    protected final void disableBrowserContextMenu() {
-        getBrowser().execute("document.oncontextmenu = e => e.preventDefault();");
+        if (browser != null && !browser.isDisposed()) {
+            setupBrowserBackground(parent);
+        }
+
+        return parent;
     }
 
     private void setupBrowserBackground(final Composite parent) {
@@ -68,53 +73,20 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
         getBrowser().setBackground(bgColor);
     }
 
-    protected final void showDependencyMissingView(final String source) {
-        Display.getCurrent().asyncExec(() -> {
-            try {
-                ViewVisibilityManager.showDependencyMissingView(source);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error occured while attempting to show missing webview dependencies view", e);
+    public final void addFocusListener(final Composite parent, final Browser browser) {
+        parent.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(final FocusEvent event) {
+                if (!browser.isDisposed()) {
+                    browser.setFocus();
+                }
+            }
+
+            @Override
+            public void focusLost(final FocusEvent event) {
+                return;
             }
         });
-    }
-
-    private void setupActions(final AuthState authState) {
-        amazonQCommonActions = new AmazonQCommonActions(authState, getViewSite());
-    }
-
-    private void setupAuthStatusListeners() {
-        authStateSubscription = Activator.getEventBroker().subscribe(AuthState.class, this);
-        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getSignoutAction());
-        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getFeedbackDialogContributionAction());
-        Activator.getEventBroker().subscribe(AuthState.class, amazonQCommonActions.getCustomizationDialogContributionAction());
-    }
-
-    @Override
-    public final void setFocus() {
-        if (!viewController.hasWebViewDependency()) {
-            return;
-        }
-        getBrowser().setFocus();
-    }
-
-    protected final String getWaitFunction() {
-        return """
-                function waitForFunction(functionName, timeout = 30000) {
-                    return new Promise((resolve, reject) => {
-                        const startTime = Date.now();
-                        const checkFunction = () => {
-                            if (typeof window[functionName] === 'function') {
-                                resolve(window[functionName]);
-                            } else if (Date.now() - startTime > timeout) {
-                                reject(new Error(`Timeout waiting for ${functionName}`));
-                            } else {
-                                setTimeout(checkFunction, 100);
-                            }
-                        };
-                        checkFunction();
-                    });
-                }
-                """;
     }
 
     /**
@@ -125,10 +97,6 @@ public abstract class AmazonQView extends ViewPart implements EventObserver<Auth
      */
     @Override
     public void dispose() {
-        if (authStateSubscription != null) {
-            authStateSubscription.dispose();
-            authStateSubscription = null;
-        }
         super.dispose();
     }
 

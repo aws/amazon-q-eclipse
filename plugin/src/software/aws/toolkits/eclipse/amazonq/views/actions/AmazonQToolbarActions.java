@@ -44,7 +44,7 @@ public final class AmazonQToolbarActions extends AmazonQAbstractCommonActions im
 
             IMenuManager menuManager = new MenuManager();
             menuManager.add(actions.getOpenQChatAction());
-            addCommonMenuItems(menuManager, actions);
+            addCommonMenuItems(menuManager, actions, false);
             contributionFactory.addContributionItemsFromMenu(menuManager);
 
             menuService.addContributionFactory(contributionFactory);

@@ -10,13 +10,13 @@ import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ToolkitLoginWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQLocalCommonActions;
 
 public final class ToolkitLoginWebview extends AmazonQView {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.ToolkitLoginWebview";
 
-    private AmazonQCommonActions amazonQCommonActions;
+    private AmazonQLocalCommonActions amazonQCommonActions;
 
     private final WebViewAssetProvider webViewAssetProvider;
 

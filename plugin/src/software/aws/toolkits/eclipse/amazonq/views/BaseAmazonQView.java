@@ -15,14 +15,14 @@ import org.eclipse.ui.IViewSite;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQLocalCommonActions;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQStaticActions;
 
 public abstract class BaseAmazonQView {
 
     private IViewSite viewSite;
 
-    private AmazonQCommonActions amazonQCommonActions;
+    private AmazonQLocalCommonActions amazonQCommonActions;
     private AmazonQStaticActions amazonQStaticActions;
 
     public abstract Composite setupView(Composite parentComposite);
@@ -37,7 +37,7 @@ public abstract class BaseAmazonQView {
             return;
         }
 
-        amazonQCommonActions = new AmazonQCommonActions(viewSite);
+        amazonQCommonActions = new AmazonQLocalCommonActions(viewSite);
         viewSite.getActionBars().updateActionBars();
     }
 
@@ -51,7 +51,7 @@ public abstract class BaseAmazonQView {
         viewSite.getActionBars().updateActionBars();
     }
 
-    protected final AmazonQCommonActions getAmazonQCommonActions() {
+    protected final AmazonQLocalCommonActions getAmazonQCommonActions() {
         return amazonQCommonActions;
     }
 

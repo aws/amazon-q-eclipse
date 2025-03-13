@@ -13,13 +13,13 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
-import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQCommonActions;
+import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQLocalCommonActions;
 
 public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestListener {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
-    private AmazonQCommonActions amazonQCommonActions;
+    private AmazonQLocalCommonActions amazonQCommonActions;
     private final ChatStateManager chatStateManager;
     private final ChatCommunicationManager chatCommunicationManager;
     private Browser browser;

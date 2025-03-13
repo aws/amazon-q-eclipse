@@ -46,7 +46,7 @@ public final class MenuContributionFactory extends AbstractContributionFactory {
 
                 @Override
                 public EvaluationResult evaluate(final IEvaluationContext context) {
-                    return EvaluationResult.valueOf(item.isVisible());
+                    return EvaluationResult.valueOf(Boolean.TRUE.equals(item.isVisible()));
                 }
             });
         }

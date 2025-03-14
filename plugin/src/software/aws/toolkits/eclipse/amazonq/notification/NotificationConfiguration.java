@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.notification;
 
 import java.util.ArrayList;
@@ -10,7 +13,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspClient;
@@ -30,7 +32,7 @@ public class NotificationConfiguration{
 	
 	private final List<String> contexts = new ArrayList<>();
 	
-	private final Map<String, String> clientStates = new HashMap<>();
+	private final Map<String, List<String>> clientStates = new HashMap<>();
 	
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private final AtomicBoolean pendingUpdate = new AtomicBoolean(false);
@@ -63,7 +65,7 @@ public class NotificationConfiguration{
      * Initialize static client states that won't change during the Eclipse session.
      */
 	private void initializeStaticClientStates() {
-		clientStates.put("IDE/VERSION", getEclipseVersion());
+		clientStates.put("IDE/VERSION", Collections.singletonList(getEclipseVersion()));
 		
         // Add other static values as needed
         // clientStates.put("ANOTHER_STATIC_VALUE", getSomeOtherStaticValue());
@@ -104,7 +106,7 @@ public class NotificationConfiguration{
      * @param scopes The list of SSO scopes
      */
 	public synchronized void setSsoScopes(List<String> scopes) {
-		String scopesCopy = new ArrayList<>(scopes);
+		List<String> scopesCopy = new ArrayList<>(scopes);
 		clientStates.put("SSO_SCOPES", scopesCopy);
 		notifyConfigurationChanged();
 	}

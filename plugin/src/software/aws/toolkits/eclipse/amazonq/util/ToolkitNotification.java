@@ -17,7 +17,9 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public class ToolkitNotification extends AbstractNotificationPopup {
 
@@ -118,5 +120,46 @@ public class ToolkitNotification extends AbstractNotificationPopup {
             this.infoIcon.dispose();
         }
         return super.close();
+    }
+    
+    public static void showBlockingNotification(String title, String message) {
+        Display.getDefault().syncExec(() -> {
+            MessageDialog dialog = new MessageDialog(
+                Display.getCurrent().getActiveShell(),
+                title,
+                null,
+                message,
+                MessageDialog.WARNING,
+                new String[] {"Acknowledge"},
+                0
+            );
+            dialog.open();
+        });
+    }
+
+    public static void showPersistentNotification(String title, String message) {
+    	AbstractNotificationPopup notification = new PersistentToolkitNotification(
+                Display.getCurrent(),
+                title,
+                message,
+                checked -> {
+                    if (checked) {
+                        Activator.getPluginStore().put("notificationSkipFlag", "true");
+                    } else {
+                        Activator.getPluginStore().remove("notificationSkipFlag");
+                    }
+                }
+            );
+       notification.setDelayClose(-1);
+       notification.open();
+    }
+
+    public static void showTransientNotification(String title, String message) {
+        AbstractNotificationPopup notification = new ToolkitNotification(
+            Display.getCurrent(),
+            title,
+            message
+        );
+        notification.open();
     }
 }

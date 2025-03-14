@@ -21,8 +21,6 @@ import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.lsp4j.MessageType;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -41,8 +39,6 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
-import software.aws.toolkits.eclipse.amazonq.util.PersistentToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
 
@@ -156,6 +152,20 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             }
         });
     }
+    
+    @Override
+    public void didChangeConfiguration(Object object) {
+        ThreadingUtils.executeAsyncTask(() -> {
+            try {
+                Activator.getLogger().info("Configuration changed");
+                if (object != null) {
+                }
+            } catch (Exception e) {
+                Activator.getLogger().error("Error processing configuration change", e);
+            }
+        });
+    }
+
 
     @Override
     public final void ssoTokenChanged(final SsoTokenChangedParams params) {
@@ -178,92 +188,42 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             Activator.getLogger().error("Error processing " + kind + " ssoTokenChanged notification", ex);
         }
     }
-    public enum NotificationSeverity {
-        LOW, MEDIUM, HIGH
-    }
-
-    /**
-     * Shows a notification to the user with the specified content and severity.
-     * This method is designed to be overridden by subclasses that need to customize
-     * the notification behavior.
-     *
-     * @param params The notification parameters containing the message type and content
-     */
+   
     @Override
     public final void showNotification(final NotificationParams params) {
-        Activator.getLogger().info("Received notification JSON: " + params.type().toString());
         Display.getDefault().asyncExec(() -> {
             String title = params.content().title() != null 
                 ? params.content().title() 
-                : "AWS Notification";
+                : "Notification";
             String message = params.content().text();
-            NotificationSeverity severity = determineNotificationSeverity(params.type());
-            handleNotification(severity, title, message);
+            
+            // Business logic using MessageType directly
+            switch(params.type()) {
+                case Error:
+                    showHighPriorityNotification(title, message);
+                    break;
+                case Warning:
+                    showMediumPriorityNotification(title, message);
+                    break;
+                case Info:
+                    showLowPriorityNotification(title, message);
+                    break;
+                default:
+                    showLowPriorityNotification(title, message);
+                    break;
+            }
         });
     }
 
-    private NotificationSeverity determineNotificationSeverity(final MessageType type) {
-        if (type == MessageType.Error) {
-            return NotificationSeverity.HIGH;
-        }
-        if (type == MessageType.Warning) {
-            return NotificationSeverity.MEDIUM;
-        }
-        if (type == MessageType.Info) {
-            return NotificationSeverity.LOW;
-        }
-        return null;
+    private void showHighPriorityNotification(String title, String message) {
+        ToolkitNotification.showBlockingNotification(title, message);
     }
 
-    private void handleNotification(NotificationSeverity severity, final String title, final String message) {
-        if (severity == null) {
-            severity = NotificationSeverity.LOW; // Default to LOW if severity is null
-            Activator.getLogger().info("Null severity detected, defaulting to LOW");
-        }
+    private void showMediumPriorityNotification(String title, String message) {
+        ToolkitNotification.showPersistentNotification(title, message);
+    }
 
-        switch (severity) {
-            case LOW:
-                AbstractNotificationPopup transientNotification = new ToolkitNotification(
-                    Display.getCurrent(), title, message
-                );
-                transientNotification.open();
-                break;
-
-            case MEDIUM:
-                AbstractNotificationPopup persistentNotification = new PersistentToolkitNotification(
-                    Display.getCurrent(),
-                    title,
-                    message,
-                    checked -> {
-                        if (checked) {
-                            Activator.getPluginStore().put("notificationSkipFlag", "true");
-                        } else {
-                            Activator.getPluginStore().remove("notificationSkipFlag");
-                        }
-                    }
-                );
-                persistentNotification.setDelayClose(60000);
-                persistentNotification.open();
-                break;
-
-            case HIGH:
-                Display.getDefault().syncExec(() -> {
-                    MessageDialog dialog = new MessageDialog(
-                        Display.getCurrent().getActiveShell(),
-                        title,
-                        null,
-                        message,
-                        MessageDialog.WARNING,
-                        new String[] {"Acknowledge"},
-                        0
-                    );
-                    dialog.open();
-                });
-                break;
-
-            default:
-                Activator.getLogger().warn("Unexpected severity level encountered");
-                break;
-        }
+    private void showLowPriorityNotification(String title, String message) {
+        ToolkitNotification.showTransientNotification(title, message);
     }
 }

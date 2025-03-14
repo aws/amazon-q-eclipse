@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
@@ -94,14 +93,6 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
         try {
             InlineChatEditorListener.getInstance().closePrompt();
 
-            var viewer = editor.getAdapter(ITextViewer.class);
-            if (viewer == null) {
-                return false;
-            }
-            var widget = viewer.getTextWidget();
-            if (widget == null) {
-                return false;
-            }
             this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
             if (this.document == null) {
                 return false;
@@ -126,40 +117,14 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
             this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
                     && currentLoginType.equals(LoginType.BUILDER_ID);
 
-            // Create InlineChatTask to unify context between managers
-            Display.getDefault().syncExec(() -> {
-
-                /* Ensure visual offset begins at start of selection and
-                 * that selection always includes full line */
-                final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                int selectedLines = selection.getEndLine() - selection.getStartLine() + 1;
-                try {
-                    final var region = expandSelectionToFullLines(document, selection);
-                    final String selectionText = document.get(region.getOffset(), region.getLength());
-                    task = new InlineChatTask(editor, selectionText, region, selectedLines);
-                } catch (Exception e) {
-                    Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
-                    var region = new Region(selection.getOffset(), selection.getLength());
-                    task = new InlineChatTask(editor, selection.getText(), region, selectedLines);
-                }
-            });
-
+            createInlineChatTask(editor);
             var isDarkTheme = themeDetector.isDarkTheme();
             // Set up necessary managers with the context they need
             this.uiManager.initNewTask(task, isDarkTheme);
             this.diffManager.initNewTask(task, isDarkTheme);
             chatCommunicationManager.updateInlineChatTabId(task.getTabId());
 
-            CompletableFuture.runAsync(() -> {
-                try {
-                    start();
-                } catch (Exception e) {
-                    Display.getDefault().asyncExec(() -> {
-                        uiManager.showErrorNotification();
-                        endSession();
-                    });
-                }
-            });
+            CompletableFuture.runAsync(() -> start());
             return true;
         } catch (Exception e) {
             uiManager.showErrorNotification();
@@ -250,14 +215,19 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
     }
 
     private void sendInlineChatRequest() {
-        var prompt = task.getPrompt();
-        var chatPrompt = new ChatPrompt(prompt, prompt, "");
-        params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
-        chatCommunicationManager.sendInlineChatMessageToChatServer(params);
+        try {
+            var prompt = task.getPrompt();
+            var chatPrompt = new ChatPrompt(prompt, prompt, "");
+            params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
+            chatCommunicationManager.sendInlineChatMessageToChatServer(params);
 
-        task.setRequestTime(System.currentTimeMillis());
-        task.setLastUpdateTime(System.currentTimeMillis());
-        Activator.getLogger().info("Sending inline chat request!");
+            task.setRequestTime(System.currentTimeMillis());
+            task.setLastUpdateTime(System.currentTimeMillis());
+            Activator.getLogger().info("Sending inline chat request!");
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to send message to chat server: " + e.getMessage(), e);
+            endSession();
+        }
     }
 
     private synchronized void endSession() {
@@ -379,7 +349,7 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
         }
     }
 
-    void setState(final SessionState newState) {
+    private void setState(final SessionState newState) {
         synchronized (stateLock) {
             this.currentState = newState;
         }
@@ -440,6 +410,30 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
         } catch (Exception e) {
             Activator.getLogger().error("Error cleaning up document state: " + e.getMessage(), e);
         }
+    }
+
+    // Create InlineChatTask to unify context between managers
+    private void createInlineChatTask(final ITextEditor editor) {
+        Display.getDefault().syncExec(() -> {
+            /* Ensure visual offset begins at start of selection and
+             * that selection always includes full line */
+            final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
+            if (selection == null) {
+                uiManager.showErrorNotification();
+                endSession();
+                return;
+            }
+            int selectedLines = selection.getEndLine() - selection.getStartLine() + 1;
+            try {
+                final var region = expandSelectionToFullLines(document, selection);
+                final String selectionText = document.get(region.getOffset(), region.getLength());
+                task = new InlineChatTask(editor, selectionText, region, selectedLines);
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
+                var region = new Region(selection.getOffset(), selection.getLength());
+                task = new InlineChatTask(editor, selection.getText(), region, selectedLines);
+            }
+        });
     }
 
     // Expand selection to include full line if user partially selects start or end line

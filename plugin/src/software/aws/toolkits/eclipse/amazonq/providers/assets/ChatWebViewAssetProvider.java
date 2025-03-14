@@ -180,10 +180,24 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     textarea:placeholder-shown {
                         line-height: 1.5rem;
                     }
+                    .mynah-ui-spinner-container {
+                        contain: layout !important;
+                    }
+                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part {
+                        position: static !important;
+                        will-change: transform !important;
+                    }
+                    .mynah-ui-spinner-container,
+                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part,
                     .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
-                        mask-size: 161% !important;
-                        width: 90% !important;
-                        height: 95% !important;
+                        border: 0 !important;
+                        outline: none !important;
+                        box-shadow: none !important;
+                        border-radius: 0 !important;
+                    }
+                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
+                        will-change: transform !important;
+                        transform: translateZ(0) !important;
                     }
                 </style>
                 """;

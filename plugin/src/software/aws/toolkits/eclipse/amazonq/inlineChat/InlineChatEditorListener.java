@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.inlineChat;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.IAnnotationModel;
-import org.eclipse.jface.text.source.IAnnotationModelListener;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
@@ -24,7 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
-public class InlineChatEditorListener implements IPartListener2, IAnnotationModelListener {
+public class InlineChatEditorListener extends FoldingListener implements IPartListener2 {
     private static InlineChatEditorListener instance;
     private final InlineChatUIManager uiManager;
     private final ThemeDetector themeDetector;
@@ -85,7 +84,7 @@ public class InlineChatEditorListener implements IPartListener2, IAnnotationMode
         if (partRef.getPart(false) instanceof ITextEditor) {
             ITextEditor editor = (ITextEditor) partRef.getPart(false);
             try {
-                attachFoldingListener(editor);
+                projectionModel = attachFoldingListener(editor);
                 attachSelectionListener(editor);
             } catch (Exception e) {
                 Activator.getLogger().error("Failed in process of attaching selection listener: " + e.getMessage(), e);
@@ -99,7 +98,7 @@ public class InlineChatEditorListener implements IPartListener2, IAnnotationMode
         if (partRef.getPart(false) instanceof ITextEditor) {
             ITextEditor editor = (ITextEditor) partRef.getPart(false);
             removeSelectionListener(editor);
-            removeFoldingListener();
+            removeFoldingListener(projectionModel);
         }
     }
 
@@ -143,6 +142,9 @@ public class InlineChatEditorListener implements IPartListener2, IAnnotationMode
             closePrompt();
             //TODO: change to use eventBroker once code is in prod
             if (!Activator.getLoginService().getAuthState().isLoggedIn()) {
+                return;
+            }
+            if (InlineChatSession.getInstance().isSessionActive()) {
                 return;
             }
             // Cancel any pending prompt updates
@@ -205,20 +207,6 @@ public class InlineChatEditorListener implements IPartListener2, IAnnotationMode
     public void modelChanged(final IAnnotationModel model) {
         if (model instanceof ProjectionAnnotationModel) {
             closePrompt();
-        }
-    }
-
-    public void attachFoldingListener(final ITextEditor editor) {
-        projectionModel = editor.getAdapter(ProjectionAnnotationModel.class);
-        if (projectionModel != null) {
-            projectionModel.addAnnotationModelListener(this);
-        }
-    }
-
-    public void removeFoldingListener() {
-        if (projectionModel != null) {
-            projectionModel.removeAnnotationModelListener(this);
-            projectionModel = null;
         }
     }
 }

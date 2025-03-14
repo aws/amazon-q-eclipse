@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.SWT;
@@ -49,6 +50,7 @@ public class InlineChatUIManager {
     private final String GENERATING_MESSAGE = "Amazon Q is generating...";
     private final String DECIDING_MESSAGE = "Accept (Enter) | Reject (Esc)";
     private boolean isDarkTheme;
+    private int latestOffset;
 
     private InlineChatUIManager() {
         // Prevent instantiation
@@ -65,6 +67,7 @@ public class InlineChatUIManager {
         this.task = task;
         this.viewer = task.getEditor().getAdapter(ITextViewer.class);
         this.isDarkTheme = isDarkTheme;
+        this.latestOffset = 0;
     }
 
     public CompletableFuture<Void> showUserInputPrompt() {
@@ -100,7 +103,8 @@ public class InlineChatUIManager {
                 protected Point getInitialLocation(final Point initialSize) {
                     if (screenLocation == null) {
                         try {
-                            int indentedOffset = calculateIndentOffset(widget, task.getVisualOffset());
+                            int visualOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                            int indentedOffset = calculateIndentOffset(widget, visualOffset);
                             Point location = widget.getLocationAtOffset(indentedOffset);
 
                             // Move input bar up as to not block the selected code
@@ -191,17 +195,36 @@ public class InlineChatUIManager {
     }
 
     private void showPrompt(final String promptText) {
-        closePrompt();
         Display.getDefault().asyncExec(() -> {
+            removeCurrentPaintListener();
             var widget = viewer.getTextWidget();
             try {
-                currentPaintListener = createPaintListenerPrompt(widget, task.getVisualOffset(), promptText, isDarkTheme);
+                latestOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                currentPaintListener = createPaintListenerPrompt(widget, latestOffset, promptText, isDarkTheme);
                 widget.addPaintListener(currentPaintListener);
                 widget.redraw();
             } catch (Exception e) {
                 Activator.getLogger().error("Failed to create paint listener: " + e.getMessage(), e);
             }
         });
+    }
+
+    public void updatePromptPosition(final SessionState state) {
+        try {
+            int offset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+            if (offset != latestOffset) {
+                closePrompt();
+                if (state == SessionState.GENERATING) {
+                    transitionToGeneratingPrompt();
+                } else {
+                    transitionToDecidingPrompt();
+                }
+            }
+        } catch (Exception e) {
+            Activator.getLogger().info("Error updating prompt location");
+            closePrompt();
+        }
+
     }
 
     PaintListener createPaintListenerPrompt(final StyledText widget, final int offset, final String promptText, final boolean isDarkTheme) {
@@ -268,7 +291,9 @@ public class InlineChatUIManager {
     }
 
     void closePrompt() {
-        removeCurrentPaintListener();
+        Display.getDefault().syncExec(() -> {
+            removeCurrentPaintListener();
+        });
     }
 
     private void removeCurrentPaintListener() {
@@ -277,11 +302,9 @@ public class InlineChatUIManager {
         }
         try {
             if (viewer.getTextWidget() != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
-                Display.getDefault().syncExec(() -> {
-                    viewer.getTextWidget().removePaintListener(currentPaintListener);
-                    viewer.getTextWidget().redraw();
-                    currentPaintListener = null;
-                });
+                viewer.getTextWidget().removePaintListener(currentPaintListener);
+                viewer.getTextWidget().redraw();
+                currentPaintListener = null;
             }
         } catch (Exception e) {
             Activator.getLogger().error("Failed to remove paint listener: " + e.getMessage(), e);

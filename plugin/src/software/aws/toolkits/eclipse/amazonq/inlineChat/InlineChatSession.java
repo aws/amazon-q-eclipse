@@ -10,6 +10,8 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.source.IAnnotationModel;
+import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
@@ -37,7 +39,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 
-public class InlineChatSession implements ChatUiRequestListener, IPartListener2 {
+public class InlineChatSession extends FoldingListener implements ChatUiRequestListener, IPartListener2 {
 
     // Session state variables
     private static InlineChatSession instance;
@@ -46,6 +48,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
     private InlineChatTask task;
     boolean referencesEnabled;
     private IWorkbenchPage workbenchPage;
+    private ProjectionAnnotationModel projectionModel;
 
     // Dependencies
     private final InlineChatUIManager uiManager;
@@ -89,25 +92,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             return false;
         }
         try {
-            setState(SessionState.ACTIVE);
-
             InlineChatEditorListener.getInstance().closePrompt();
-
-            workbenchPage = editor.getSite().getPage();
-            workbenchPage.addPartListener(this);
-
-            // Get the context service and activate inline chat context used for button
-            contextActivation = contextService.activateContext(Constants.INLINE_CHAT_CONTEXT_ID);
-
-            // Set up undoManager to batch document edits together
-            this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
-            this.undoManager = DocumentUndoManagerRegistry.getDocumentUndoManager(this.document);
-            initUndoManager(this.document);
-
-            // Check if user has code references enabled
-            var currentLoginType = Activator.getLoginService().getAuthState().loginType();
-            this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
-                    && currentLoginType.equals(LoginType.BUILDER_ID);
 
             var viewer = editor.getAdapter(ITextViewer.class);
             if (viewer == null) {
@@ -117,6 +102,29 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
             if (widget == null) {
                 return false;
             }
+            this.document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+            if (this.document == null) {
+                return false;
+            }
+            setState(SessionState.ACTIVE);
+            // Get the context service and activate inline chat context used for button
+            contextActivation = contextService.activateContext(Constants.INLINE_CHAT_CONTEXT_ID);
+
+            workbenchPage = editor.getSite().getPage();
+            workbenchPage.addPartListener(this);
+
+            // Set up undoManager to batch document edits together
+            this.undoManager = DocumentUndoManagerRegistry.getDocumentUndoManager(this.document);
+            initUndoManager(this.document);
+
+            Display.getDefault().asyncExec(() -> {
+                projectionModel = attachFoldingListener(editor);
+            });
+
+            // Check if user has code references enabled
+            var currentLoginType = Activator.getLoginService().getAuthState().loginType();
+            this.referencesEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN)
+                    && currentLoginType.equals(LoginType.BUILDER_ID);
 
             // Create InlineChatTask to unify context between managers
             Display.getDefault().syncExec(() -> {
@@ -125,16 +133,14 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
                  * that selection always includes full line */
                 final var selection = (ITextSelection) editor.getSelectionProvider().getSelection();
                 int selectedLines = selection.getEndLine() - selection.getStartLine() + 1;
-                var selectionRange = widget.getSelectionRange();
-                int visualOffset = (selectionRange != null) ? selectionRange.x : widget.getCaretOffset();
                 try {
                     final var region = expandSelectionToFullLines(document, selection);
                     final String selectionText = document.get(region.getOffset(), region.getLength());
-                    task = new InlineChatTask(editor, selectionText, visualOffset, region, selectedLines);
+                    task = new InlineChatTask(editor, selectionText, region, selectedLines);
                 } catch (Exception e) {
                     Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
                     var region = new Region(selection.getOffset(), selection.getLength());
-                    task = new InlineChatTask(editor, selection.getText(), visualOffset, region, selectedLines);
+                    task = new InlineChatTask(editor, selection.getText(), region, selectedLines);
                 }
             });
 
@@ -266,6 +272,7 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
                 cleanupWorkbench();
                 cleanupDocumentState(false);
                 diffManager.cleanupState();
+                removeFoldingListener(projectionModel);
                 uiThreadFuture.complete(null);
             } catch (Exception e) {
                 Activator.getLogger().error("Error in UI cleanup: " + e.getMessage(), e);
@@ -452,11 +459,22 @@ public class InlineChatSession implements ChatUiRequestListener, IPartListener2 
         }
     }
 
+    // End session when editor is closed
     @Override
     public void partClosed(final IWorkbenchPartReference partRef) {
         if (isSessionActive() && partRef.getPart(false) == task.getEditor()) {
-            Activator.getLogger().info("Editor deactivated");
+            Activator.getLogger().info("Editor closed. Ending inline chat session");
             endSession();
+        }
+    }
+
+    // Ensure UI prompts update position when selection offset changes
+    @Override
+    public void modelChanged(final IAnnotationModel model) {
+        if (model instanceof ProjectionAnnotationModel) {
+            if (isGenerating() || isDeciding()) {
+                InlineChatUIManager.getInstance().updatePromptPosition(getCurrentState());
+            }
         }
     }
 

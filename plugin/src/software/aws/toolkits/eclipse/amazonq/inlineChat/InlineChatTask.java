@@ -19,17 +19,15 @@ class InlineChatTask {
 
     // Task state variables
     private final ITextEditor editor;
-    private final String originalCode;
     private final String tabId;
     private final AtomicReference<String> prompt = new AtomicReference<>(null);
     private final AtomicReference<CursorState> cursorState = new AtomicReference<>(null);
     private final AtomicReference<SessionState> taskState = new AtomicReference<>(null);
-    private final AtomicBoolean hasActiveSelection = new AtomicBoolean(false);
 
-    // Selection offset -> accounts for every character in the document, regardless of collapsing
-    // Visual offset -> only cares about position on screen, not characters in doc
+    // Selection variables
     private final int selectionOffset;
-    private final int visualOffset;
+    private final String originalCode;
+    private final AtomicBoolean hasActiveSelection = new AtomicBoolean(false);
 
     // Diff tracking variables
     private final AtomicReference<String> previousPartialResponse = new AtomicReference<>(null);
@@ -48,7 +46,7 @@ class InlineChatTask {
     private final AtomicLong firstTokenTime;
     private final AtomicLong lastTokenTime;
 
-    InlineChatTask(final ITextEditor editor, final String selectionText, final int visualOffset,
+    InlineChatTask(final ITextEditor editor, final String selectionText,
             final IRegion region, final int numSelectedLines) {
 
         boolean hasActiveSelection = !selectionText.isBlank();
@@ -58,7 +56,6 @@ class InlineChatTask {
         this.tabId = UUID.randomUUID().toString();
         this.hasActiveSelection.set(hasActiveSelection);
 
-        this.visualOffset = visualOffset;
         this.selectionOffset = region.getOffset();
         this.originalCode = (hasActiveSelection) ? selectionText : "";
         this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? selectionText.length() : 0);
@@ -79,10 +76,6 @@ class InlineChatTask {
 
     void setTaskState(final SessionState state) {
         taskState.set(state);
-    }
-
-    int getVisualOffset() {
-        return this.visualOffset;
     }
 
     long getLastUpdateTime() {

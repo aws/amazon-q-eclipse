@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import software.amazon.awssdk.regions.Region;
@@ -73,6 +76,7 @@ public final class AwsRegion {
         }
     }
 
+    @Override
     public String toString() {
         return "{\"id\":\"" + id + "\",\"name\":\"" + name + "\",\"partitionId\":\"" + partitionId
                 + "\",\"category\":\"" + category + "\",\"displayName\":\"" + displayName + "\"}";

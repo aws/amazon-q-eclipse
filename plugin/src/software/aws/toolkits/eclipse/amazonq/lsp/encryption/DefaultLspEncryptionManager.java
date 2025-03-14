@@ -1,4 +1,5 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.lsp.encryption;
 
@@ -31,10 +32,12 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
         return instance;
     }
 
+    @Override
     public String encrypt(final Object data) {
         return LspJsonWebToken.encrypt(lspEncryptionKey.getKey(), data);
     }
 
+    @Override
     public String decrypt(final String jwt) {
         return LspJsonWebToken.decrypt(lspEncryptionKey.getKey(), jwt);
     }
@@ -46,6 +49,7 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
      * has been initiated, it waits for an encryption key to be sent over stdin before initiating the LSP protocol.
      * The server saves the provided encryption key and will use the key for future requests (such as Q Chat Requests)
      */
+    @Override
     public void initializeEncryptedCommunication(final OutputStream serverStdin) {
         // Ensure the message does not contain any newline characters. The server will
         // process characters up to the first newline.

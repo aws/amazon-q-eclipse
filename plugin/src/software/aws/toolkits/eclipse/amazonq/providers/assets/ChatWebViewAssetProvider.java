@@ -181,7 +181,9 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         line-height: 1.5rem;
                     }
                     .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
-                        mask-size: 159% !important;
+                        mask-size: 161% !important;
+                        width: 90% !important;
+                        height: 95% !important;
                     }
                 </style>
                 """;

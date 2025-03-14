@@ -1,6 +1,9 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.util;
+
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
@@ -8,8 +11,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.texteditor.ITextEditor;
-
-import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
 public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTriggerListener>
         implements IPartListener2, IAutoTriggerListener {

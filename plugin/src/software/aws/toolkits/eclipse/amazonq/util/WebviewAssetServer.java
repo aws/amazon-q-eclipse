@@ -1,9 +1,13 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.util.resource.ResourceFactory;
+
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class WebviewAssetServer {

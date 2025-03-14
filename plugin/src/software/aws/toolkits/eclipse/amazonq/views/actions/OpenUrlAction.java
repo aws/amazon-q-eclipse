@@ -1,10 +1,13 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
 
+import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.ExternalLink;
-import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 
 public class OpenUrlAction extends Action {
     private String url;

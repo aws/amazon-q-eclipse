@@ -1,9 +1,14 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.eclipse.lsp4j.ProgressParams;
+
+import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspClientImpl;
 
 
 /**

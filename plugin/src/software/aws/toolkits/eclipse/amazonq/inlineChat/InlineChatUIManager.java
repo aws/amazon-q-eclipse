@@ -176,8 +176,19 @@ public class InlineChatUIManager {
                             }
                         }
                     });
+
+                    // Close prompt if user scrolls away
+                    widget.getDisplay().addFilter(SWT.MouseVerticalWheel, event -> {
+                        close();
+                        if (!future.isDone()) {
+                            future.complete(null);
+                        }
+                    });
+
                     // Disposal before future completes indicates user hit ESC to cancel
-                    getShell().addListener(SWT.Dispose, e -> {
+                    getShell().addDisposeListener(e -> {
+                        widget.getDisplay().removeFilter(SWT.MouseVerticalWheel, event -> {
+                        });
                         if (!future.isDone()) {
                             future.complete(null);
                         }

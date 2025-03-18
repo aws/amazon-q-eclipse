@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
@@ -164,6 +165,12 @@ public class InlineChatDiffManager {
             currentLine++;
         }
 
+        var originalEndsInNewLine = task.getOriginalCode().endsWith("\n");
+        var diffEndsInNewLine = resultText.length() > 0 && resultText.charAt(resultText.length() - 1) == '\n';
+
+        if (!originalEndsInNewLine && diffEndsInNewLine) {
+            resultText.setLength(resultText.length() - 1);
+        }
         final String finalText = resultText.toString();
 
         // Clear existing annotations in the affected range

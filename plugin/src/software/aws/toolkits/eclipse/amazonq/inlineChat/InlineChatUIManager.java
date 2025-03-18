@@ -127,19 +127,29 @@ public class InlineChatUIManager {
                     var composite = (Composite) super.createDialogArea(parent);
                     composite.setLayout(new GridLayout(1, false));
 
-                    inputField = new Text(composite, SWT.BORDER | SWT.SINGLE);
+                    inputField = new Text(composite, SWT.SEARCH | SWT.BORDER | SWT.SINGLE);
                     if (PluginUtils.getPlatform() == PluginPlatform.WINDOWS) {
-                        inputField.setText(INPUT_PROMPT_MESSAGE);
+                        Display.getDefault().asyncExec(() -> {
+                            inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
+                            inputField.setText(INPUT_PROMPT_MESSAGE);
+                        });
 
                         inputField.addKeyListener(new KeyAdapter() {
                             @Override
                             public void keyPressed(final KeyEvent e) {
                                 // If this is the first character being typed
+                                boolean backspace = (e.keyCode == SWT.DEL || e.keyCode == SWT.BS);
                                 if (inputField.getText().equals(INPUT_PROMPT_MESSAGE)) {
-                                    inputField.setText("");
-                                } else if ((e.keyCode == SWT.DEL || e.keyCode == SWT.BS)
-                                        && inputField.getText().length() == 1) {
+                                    if (!backspace) {
+                                        inputField.setText("");
+                                        inputField.setForeground(isDarkTheme
+                                                ? Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+                                                        : Display.getDefault().getSystemColor(SWT.COLOR_BLACK));
+                                    }
+                                    e.doit = !backspace;
+                                } else if (backspace && inputField.getText().length() <= 1) {
                                     inputField.setText(INPUT_PROMPT_MESSAGE);
+                                    inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
                                 }
                             }
                         });

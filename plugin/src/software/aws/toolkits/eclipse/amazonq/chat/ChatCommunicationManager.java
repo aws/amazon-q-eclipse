@@ -284,7 +284,6 @@ public final class ChatCommunicationManager {
      * Sends message to Chat UI to show in webview
      */
     public void sendMessageToChatUI(final ChatUIInboundCommand command) {
-        Activator.getLogger().info("Chat comm manager received message!");
         String message = jsonHandler.serialize(command);
         String targetTabId = command.tabId();
         if (targetTabId != null && targetTabId.equals(inlineChatTabId)) {

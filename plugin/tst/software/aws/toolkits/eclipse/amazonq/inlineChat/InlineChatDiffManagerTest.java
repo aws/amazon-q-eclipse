@@ -119,8 +119,8 @@ public class InlineChatDiffManagerTest {
     @ParameterizedTest
     @MethodSource("processDiffTestCaseProvider")
     public void testProcessDiffWithChanges(final String originalCode, final String newCode, final int numAddedLines,
-            final int numDeletedLines, final boolean isPartialResult, final boolean isFirstToken)
-            throws Exception {
+        final int numDeletedLines, final boolean isPartialResult, final boolean isFirstToken)
+        throws Exception {
 
         when(mockTask.isActive()).thenReturn(true);
         when(mockTask.hasActiveSelection()).thenReturn(true);
@@ -138,11 +138,11 @@ public class InlineChatDiffManagerTest {
         verify(loggingServiceMock, times(1)).info(argThat(message -> message.startsWith("Updating UI: ") && message.endsWith("ms since last update")));
         verify(mockDocument).replace(eq(0), anyInt(), anyString());
         verify(mockAnnotationModel, times(numAddedLines)).addAnnotation(
-                argThat(annotation -> annotation.getType().contains("diffAnnotation.added")),
-                any(Position.class));
+            argThat(annotation -> annotation.getType().contains("diffAnnotation.added")),
+            any(Position.class));
         verify(mockAnnotationModel, times(numDeletedLines)).addAnnotation(
-                argThat(annotation -> annotation.getType().contains("diffAnnotation.deleted")),
-                any(Position.class));
+            argThat(annotation -> annotation.getType().contains("diffAnnotation.deleted")),
+            any(Position.class));
 
         verify(mockTask).setPreviousDisplayLength(anyInt());
         verify(mockTask).setPreviousPartialResponse(eq(newCode));
@@ -202,6 +202,9 @@ public class InlineChatDiffManagerTest {
     @Test
     public void testHandleDecisionDecline() throws Exception {
 
+        // Test dark mode
+        diffManager.initNewTask(mockTask, true);
+
         // Setup annotations
         Annotation addedAnnotation = mock(Annotation.class);
         Annotation deletedAnnotation = mock(Annotation.class);
@@ -214,8 +217,8 @@ public class InlineChatDiffManagerTest {
         when(annotationIterator.next()).thenReturn(addedAnnotation, deletedAnnotation, deletedAnnotation);
         when(mockAnnotationModel.getAnnotationIterator()).thenReturn(annotationIterator);
 
-        when(addedAnnotation.getType()).thenReturn("diffAnnotation.added");
-        when(deletedAnnotation.getType()).thenReturn("diffAnnotation.deleted");
+        when(addedAnnotation.getType()).thenReturn("diffAnnotation.added.dark");
+        when(deletedAnnotation.getType()).thenReturn("diffAnnotation.deleted.dark");
         when(mockAnnotationModel.getPosition(addedAnnotation)).thenReturn(addedPosition);
         when(mockAnnotationModel.getPosition(deletedAnnotation)).thenReturn(deletedPosition);
 
@@ -269,30 +272,30 @@ public class InlineChatDiffManagerTest {
 
         LoggingService loggingServiceMock = activatorExtension.getMock(LoggingService.class);
         verify(loggingServiceMock).error(
-                argThat(message -> message.contains("Failed to restore state in diff manager")),
-                any(Throwable.class));
+            argThat(message -> message.contains("Failed to restore state in diff manager")),
+            any(Throwable.class));
     }
 
     private static Stream<Arguments> processDiffTestCaseProvider() {
         return Stream.of(
-                // Case 1: One line modified (1 add, 1 delete), final result, not first token
-                Arguments.of("line1\nline2\n", "line1\nline2 modified\n", 1, 1, false, false),
-                // Case 2: One line added, no deletions, final result, first token (no-op)
-                Arguments.of("hello\nworld\n", "hello\nworld\nnew line\n", 1, 0, false, true),
-                // Case 3: One line deleted, no additions, final result, not first token
-                Arguments.of("one\ntwo\nthree\n", "one\nthree\n", 0, 1, false, false),
-                // Case 4: Multiple lines added and deleted, partial result, first token
-                Arguments.of("first\nsecond\nthird\n", "first\nnew line\nmodified line\n", 2, 2, true, true),
-                // Case 5: All lines changed, partial result, not first token
-                Arguments.of("delete me\nand me\n", "totally\nnew\ntext\n", 3, 2, true, false),
-                // Case 6: Multiple adds only, partial result, not first token
-                Arguments.of("start\n", "start\nmiddle\nend\n", 2, 0, true, false),
-                // Case 7: Multiple deletes only, final result, first token
-                Arguments.of("one\ntwo\nthree\nfour\n", "one\nfour\n", 0, 2, false, true),
-                // Case 8: Equal adds and deletes, partial result, first token
-                Arguments.of("a\nb\nc\n", "x\ny\nz\n", 3, 3, true, true),
-                // Case 9: Single line to multiple lines, final result, not first token
-                Arguments.of("single line\n", "first line\nsecond line\nthird line\n", 3, 1, false, false));
+            // Case 1: One line modified (1 add, 1 delete), final result, not first token
+            Arguments.of("line1\nline2\n", "line1\nline2 modified\n", 1, 1, false, false),
+            // Case 2: One line added, no deletions, final result, first token (no-op)
+            Arguments.of("hello\nworld\n", "hello\nworld\nnew line\n", 1, 0, false, true),
+            // Case 3: One line deleted, no additions, final result, not first token
+            Arguments.of("one\ntwo\nthree\n", "one\nthree\n", 0, 1, false, false),
+            // Case 4: Multiple lines added and deleted, partial result, first token
+            Arguments.of("first\nsecond\nthird", "first\nnew line\nmodified line", 2, 2, true, true),
+            // Case 5: All lines changed, partial result, not first token
+            Arguments.of("delete me\nand me\n", "totally\nnew\ntext\n", 3, 2, true, false),
+            // Case 6: Multiple adds only, partial result, not first token
+            Arguments.of("start\n", "start\nmiddle\nend\n", 2, 0, true, false),
+            // Case 7: Multiple deletes only, final result, first token
+            Arguments.of("one\ntwo\nthree\nfour\n", "one\nfour\n", 0, 2, false, true),
+            // Case 8: Equal adds and deletes, partial result, first token
+            Arguments.of("a\nb\nc\n", "x\ny\nz\n", 3, 3, true, true),
+            // Case 9: Single line to multiple lines, final result, not first token
+            Arguments.of("single line\n", "first line\nsecond line\nthird line\n", 3, 1, false, false));
     }
 
 }

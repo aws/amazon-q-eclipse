@@ -1,5 +1,7 @@
-package software.aws.toolkits.eclipse.amazonq.views;
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
+package software.aws.toolkits.eclipse.amazonq.views;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;

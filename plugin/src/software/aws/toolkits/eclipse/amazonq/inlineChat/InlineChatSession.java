@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
@@ -38,14 +39,14 @@ import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 
-public class InlineChatSession extends FoldingListener implements ChatUiRequestListener, IPartListener2 {
+public final class InlineChatSession extends FoldingListener implements ChatUiRequestListener, IPartListener2 {
 
     // Session state variables
     private static InlineChatSession instance;
     private SessionState currentState = SessionState.INACTIVE;
     private final Object stateLock = new Object();
     private InlineChatTask task;
-    boolean referencesEnabled;
+    private boolean referencesEnabled;
     private IWorkbenchPage workbenchPage;
     private ProjectionAnnotationModel projectionModel;
 
@@ -65,7 +66,7 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
     // Context handler variables
     private final IContextService contextService;
     private IContextActivation contextActivation;
-    private final int ABOUT_TO_UNDO = 17; // 17 maps to this event type
+    private final int aboutToUndo = 17; // 17 maps to this event type
 
     private InlineChatSession() {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
@@ -300,7 +301,7 @@ public class InlineChatSession extends FoldingListener implements ChatUiRequestL
             undoListener = new IDocumentUndoListener() {
                 @Override
                 public void documentUndoNotification(final DocumentUndoEvent event) {
-                    if (event.getEventType() == ABOUT_TO_UNDO && isSessionActive()) {
+                    if (event.getEventType() == aboutToUndo && isSessionActive()) {
                         Activator.getLogger().info("Undo request being processed!");
                         if (isGenerating() || isDeciding()) {
                             uiManager.closePrompt();

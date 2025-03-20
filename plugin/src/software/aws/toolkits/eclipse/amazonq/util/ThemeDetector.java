@@ -41,7 +41,7 @@ public final class ThemeDetector {
         Boolean isDarkTheme = theme.contains("dark");
         return Optional.ofNullable(isDarkTheme);
     }
-    
+
     public boolean themeUsingDarkColors() throws Exception {
         ITheme currentTheme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
         Color backgroundColor = currentTheme.getColorRegistry().get(ACTIVE_TAB_BG_KEY);

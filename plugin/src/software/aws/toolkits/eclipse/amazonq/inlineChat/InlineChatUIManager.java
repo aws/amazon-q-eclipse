@@ -35,7 +35,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
-public class InlineChatUIManager {
+public final class InlineChatUIManager {
 
     // State variables
     private static InlineChatUIManager instance;
@@ -44,11 +44,11 @@ public class InlineChatUIManager {
     // UI elements
     private PopupDialog inputBox;
     private ITextViewer viewer;
-    private final int MAX_INPUT_LENGTH = 128;
+    private final int maxInputLength = 128;
     private PaintListener currentPaintListener;
-    private final String INPUT_PROMPT_MESSAGE = "Enter instructions for Amazon Q (Enter | Esc)";
-    private final String GENERATING_MESSAGE = "Amazon Q is generating...";
-    private final String DECIDING_MESSAGE = "Accept (Enter) | Reject (Esc)";
+    private final String inputPromptMessage = "Enter instructions for Amazon Q (Enter | Esc)";
+    private final String generatingMessage = "Amazon Q is generating...";
+    private final String decidingMessage = "Accept (Enter) | Reject (Esc)";
     private boolean isDarkTheme;
     private int latestOffset;
 
@@ -131,7 +131,7 @@ public class InlineChatUIManager {
                     if (PluginUtils.getPlatform() == PluginPlatform.WINDOWS) {
                         Display.getDefault().asyncExec(() -> {
                             inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
-                            inputField.setText(INPUT_PROMPT_MESSAGE);
+                            inputField.setText(inputPromptMessage);
                         });
 
                         inputField.addKeyListener(new KeyAdapter() {
@@ -139,7 +139,7 @@ public class InlineChatUIManager {
                             public void keyPressed(final KeyEvent e) {
                                 // If this is the first character being typed
                                 boolean backspace = (e.keyCode == SWT.DEL || e.keyCode == SWT.BS);
-                                if (inputField.getText().equals(INPUT_PROMPT_MESSAGE)) {
+                                if (inputField.getText().equals(inputPromptMessage)) {
                                     if (!backspace) {
                                         inputField.setText("");
                                         inputField.setForeground(isDarkTheme
@@ -148,13 +148,13 @@ public class InlineChatUIManager {
                                     }
                                     e.doit = !backspace;
                                 } else if (backspace && inputField.getText().length() <= 1) {
-                                    inputField.setText(INPUT_PROMPT_MESSAGE);
+                                    inputField.setText(inputPromptMessage);
                                     inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
                                 }
                             }
                         });
                     } else {
-                        inputField.setMessage(INPUT_PROMPT_MESSAGE);
+                        inputField.setMessage(inputPromptMessage);
                     }
 
                     GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
@@ -165,7 +165,7 @@ public class InlineChatUIManager {
                     inputField.addVerifyListener(e -> {
                         String currentText = inputField.getText();
                         String newText = currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
-                        if (newText.length() > MAX_INPUT_LENGTH) {
+                        if (newText.length() > maxInputLength) {
                             e.doit = false; // Prevent the input
                         }
                     });
@@ -304,11 +304,11 @@ public class InlineChatUIManager {
     }
 
     void transitionToGeneratingPrompt() {
-        showPrompt(GENERATING_MESSAGE);
+        showPrompt(generatingMessage);
     }
 
     void transitionToDecidingPrompt() {
-        showPrompt(DECIDING_MESSAGE);
+        showPrompt(decidingMessage);
     }
 
     void closePrompt() {
@@ -346,7 +346,7 @@ public class InlineChatUIManager {
     }
 
     private boolean userInputIsValid(final String input) {
-        return input != null && input.length() >= 2 && input.length() < MAX_INPUT_LENGTH;
+        return input != null && input.length() >= 2 && input.length() < maxInputLength;
     }
 
     /**

@@ -18,13 +18,12 @@ abstract class FoldingListener implements IAnnotationModelListener {
         return model;
     }
 
-    void removeFoldingListener(ProjectionAnnotationModel model) {
+    void removeFoldingListener(final ProjectionAnnotationModel model) {
         if (model != null) {
             model.removeAnnotationModelListener(this);
-            model = null;
         }
     }
 
     @Override
-    public abstract void modelChanged(final IAnnotationModel model);
+    public abstract void modelChanged(IAnnotationModel model);
 }

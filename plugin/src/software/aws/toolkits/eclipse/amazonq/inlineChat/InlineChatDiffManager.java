@@ -22,11 +22,11 @@ import com.github.difflib.patch.Patch;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
-public class InlineChatDiffManager {
+public final class InlineChatDiffManager {
 
     private static InlineChatDiffManager instance;
-    private String ANNOTATION_ADDED;
-    private String ANNOTATION_DELETED;
+    private String annotationAdded;
+    private String annotationDeleted;
     private List<TextDiff> currentDiffs;
     private InlineChatTask task;
 
@@ -182,7 +182,7 @@ public class InlineChatDiffManager {
         // Add all annotations after text modifications are complete
         for (TextDiff diff : currentDiffs) {
             Position position = new Position(diff.offset(), diff.length());
-            String annotationType = diff.isDeletion() ? ANNOTATION_DELETED : ANNOTATION_ADDED;
+            String annotationType = diff.isDeletion() ? annotationDeleted : annotationAdded;
             String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
             annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
         }
@@ -197,7 +197,7 @@ public class InlineChatDiffManager {
 
     CompletableFuture<Void> handleDecision(final boolean userAcceptedChanges) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        var typeToRemove = (userAcceptedChanges) ? ANNOTATION_DELETED : ANNOTATION_ADDED;
+        var typeToRemove = (userAcceptedChanges) ? annotationDeleted : annotationAdded;
 
         Display.getDefault().syncExec(() -> {
             try {
@@ -260,11 +260,11 @@ public class InlineChatDiffManager {
     }
 
     private void setColorPalette(final boolean isDark) {
-        this.ANNOTATION_ADDED = "diffAnnotation.added";
-        this.ANNOTATION_DELETED = "diffAnnotation.deleted";
+        this.annotationAdded = "diffAnnotation.added";
+        this.annotationDeleted = "diffAnnotation.deleted";
         if (isDark) {
-            this.ANNOTATION_ADDED += ".dark";
-            this.ANNOTATION_DELETED += ".dark";
+            this.annotationAdded += ".dark";
+            this.annotationDeleted += ".dark";
         }
     }
 

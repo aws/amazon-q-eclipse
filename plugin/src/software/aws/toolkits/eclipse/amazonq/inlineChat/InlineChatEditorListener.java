@@ -23,7 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
-public class InlineChatEditorListener extends FoldingListener implements IPartListener2 {
+public final class InlineChatEditorListener extends FoldingListener implements IPartListener2 {
     private static InlineChatEditorListener instance;
     private final InlineChatUIManager uiManager;
     private final ThemeDetector themeDetector;
@@ -36,7 +36,7 @@ public class InlineChatEditorListener extends FoldingListener implements IPartLi
     private final boolean isDarkTheme;
     private ProjectionAnnotationModel projectionModel;
 
-    private final String INLINE_CHAT_HINT;
+    private final String inlineChatHint;
     private static final int SELECTION_DELAY_MS = 500;
 
 
@@ -45,7 +45,7 @@ public class InlineChatEditorListener extends FoldingListener implements IPartLi
         this.themeDetector = new ThemeDetector();
         this.isDarkTheme = themeDetector.isDarkTheme();
         this.uiManager = InlineChatUIManager.getInstance();
-        this.INLINE_CHAT_HINT = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌥ + SHIFT + I" : "Amazon Q: ALT + SHIFT + I";
+        this.inlineChatHint = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌥ + SHIFT + I" : "Amazon Q: ALT + SHIFT + I";
 
     }
 
@@ -116,7 +116,7 @@ public class InlineChatEditorListener extends FoldingListener implements IPartLi
                         currentViewer = editor.getAdapter(ITextViewer.class);
                         var widget = currentViewer.getTextWidget();
                         int visualOffset = widget.getSelectionRange().x;
-                        currentPaintListener = uiManager.createPaintListenerPrompt(widget, visualOffset, INLINE_CHAT_HINT, isDarkTheme);
+                        currentPaintListener = uiManager.createPaintListenerPrompt(widget, visualOffset, inlineChatHint, isDarkTheme);
 
                         widget.addPaintListener(currentPaintListener);
                         widget.redraw();

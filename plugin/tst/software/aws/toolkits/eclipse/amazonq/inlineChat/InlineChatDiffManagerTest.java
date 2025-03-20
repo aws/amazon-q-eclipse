@@ -44,7 +44,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
-public class InlineChatDiffManagerTest {
+public final class InlineChatDiffManagerTest {
     private InlineChatDiffManager diffManager;
     private InlineChatTask mockTask;
     private ITextEditor mockEditor;

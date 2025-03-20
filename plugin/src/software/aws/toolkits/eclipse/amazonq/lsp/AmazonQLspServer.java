@@ -90,5 +90,5 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<Void> updateProfile(UpdateProfileParams params);
 
     @JsonRequest("aws/updateConfiguration")
-    CompletableFuture<Void> UpdateConfigurationParams(UpdateConfigurationParams params);
+    CompletableFuture<Void> updateConfigurationParams(UpdateConfigurationParams params);
 }

@@ -3,9 +3,10 @@
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.concurrent.CompletableFuture;
+
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
@@ -25,6 +26,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LogInlineCompletionSessionResultsParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+import software.aws.toolkits.eclipse.amazonq.views.model.Configuration;
+import software.aws.toolkits.eclipse.amazonq.views.model.UpdateConfigurationParams;
 
 public interface AmazonQLspServer extends LanguageServer {
 
@@ -68,7 +71,8 @@ public interface AmazonQLspServer extends LanguageServer {
     void deleteTokenCredentials();
 
     @JsonRequest("aws/getConfigurationFromServer")
-    CompletableFuture<LspServerConfigurations> getConfigurationFromServer(GetConfigurationFromServerParams params);
+    <T extends Configuration> CompletableFuture<LspServerConfigurations<T>> getConfigurationFromServer(
+            GetConfigurationFromServerParams params);
 
     @JsonNotification("telemetry/event")
     void sendTelemetryEvent(Object params);
@@ -84,4 +88,7 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/identity/updateProfile")
     CompletableFuture<Void> updateProfile(UpdateProfileParams params);
+
+    @JsonRequest("aws/updateConfiguration")
+    CompletableFuture<Void> UpdateConfigurationParams(UpdateConfigurationParams params);
 }

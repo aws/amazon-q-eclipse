@@ -35,14 +35,16 @@ public final class CustomizationUtil {
     }
 
     public static CompletableFuture<List<Customization>> listCustomizations() {
-        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
+        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams("aws.q.customizations");
         params.setSection("aws.q");
         return Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> server.getConfigurationFromServer(params))
                 .thenApply(configurations -> Optional.ofNullable(configurations)
-                        .map(config -> config.getCustomizations().stream()
-                            .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
-                            .collect(Collectors.toList()))
+                        .map(config -> config.getConfigurations().stream()
+                                .map(item -> (Customization) item)
+                                .filter(customization -> customization != null
+                                        && StringUtils.isNotBlank(customization.getName()))
+                                .collect(Collectors.toList()))
                         .orElse(Collections.emptyList()))
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Error occurred while fetching the list of customizations", throwable);

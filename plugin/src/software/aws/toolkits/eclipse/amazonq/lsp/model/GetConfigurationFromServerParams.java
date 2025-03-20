@@ -6,6 +6,10 @@ package software.aws.toolkits.eclipse.amazonq.lsp.model;
 public class GetConfigurationFromServerParams {
     private String section;
 
+    public GetConfigurationFromServerParams(final String section) {
+        this.section = section;
+    }
+
     public final String getSection() {
         return this.section;
     }

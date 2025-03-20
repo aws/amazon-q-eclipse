@@ -4,8 +4,8 @@
 package software.aws.toolkits.eclipse.amazonq.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
-import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.jface.resource.JFaceResources;
@@ -74,7 +74,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         createHttpsProxyField();
         createCaCertField();
 
-        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
+        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams("aws.q.customizations");
         params.setSection("aws.q");
         Activator.getLspProvider().getAmazonQServer().thenCompose(server -> server.getConfigurationFromServer(params));
     }

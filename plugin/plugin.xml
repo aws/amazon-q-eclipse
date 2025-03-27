@@ -359,7 +359,7 @@
             commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat"
             contextId="org.eclipse.ui.textEditorScope"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M3+SHIFT+I">
+            sequence="M1+SHIFT+I">
         </key>
         <key
             commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"

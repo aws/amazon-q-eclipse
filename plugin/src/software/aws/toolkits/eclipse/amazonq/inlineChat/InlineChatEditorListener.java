@@ -45,7 +45,7 @@ public final class InlineChatEditorListener extends FoldingListener implements I
         this.themeDetector = new ThemeDetector();
         this.isDarkTheme = themeDetector.isDarkTheme();
         this.uiManager = InlineChatUIManager.getInstance();
-        this.inlineChatHint = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌥ + SHIFT + I" : "Amazon Q: ALT + SHIFT + I";
+        this.inlineChatHint = (PluginUtils.getPlatform() == PluginPlatform.MAC) ? "Amazon Q: ⌘ + SHIFT + I" : "Amazon Q: CTRL + SHIFT + I";
 
     }
 

@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jface.text.IDocument;
@@ -35,7 +36,9 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.LanguageUtil;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 
@@ -221,6 +224,12 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             var chatPrompt = new ChatPrompt(prompt, prompt, "");
             params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
             chatCommunicationManager.sendInlineChatMessageToChatServer(params);
+
+            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri();
+            if (fileUri.isPresent()) {
+                String language = LanguageUtil.extractLanguageFromFileUri(fileUri.get());
+                task.setLanguage(language);
+            }
 
             task.setRequestTime(System.currentTimeMillis());
             task.setLastUpdateTime(System.currentTimeMillis());

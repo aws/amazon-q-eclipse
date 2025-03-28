@@ -52,6 +52,7 @@ public final class InlineChatTaskTest {
         task.setRequestTime(1000L);
         task.setFirstTokenTime(1100L);
         task.setLastTokenTime(1200L);
+        task.setLanguage("java");
 
         TextDiff addDiff = new TextDiff(0, 10, false);
         TextDiff delDiff = new TextDiff(20, 20, true);
@@ -63,6 +64,7 @@ public final class InlineChatTaskTest {
         InlineChatResultParams result = task.buildResultObject();
 
         var decision = (userAccepted) ? UserDecision.ACCEPT : UserDecision.REJECT;
+        assertEquals("java", result.language());
         assertEquals(11, result.inputLength());
         assertEquals(3, result.numSelectedLines());
         assertEquals(10, result.numSuggestionAddChars());

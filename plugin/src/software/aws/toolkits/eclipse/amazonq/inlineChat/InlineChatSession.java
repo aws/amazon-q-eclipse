@@ -315,6 +315,19 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     }
 
     private boolean verifyChatResultParams(final ChatResult chatResult) {
+    	
+    	var options = (chatResult.followUp() != null)
+    			? chatResult.followUp().options()
+				: null;
+    	String type = (options != null)
+    			? options[0].type()
+				: null;
+    	
+    	// End session if user auth status needs refreshing
+    	if (type == "full-auth" || type == "re-auth") {
+    		uiManager.showAuthExpiredNotification();
+    		return false;
+    	}
 
         // End session if server responds with no suggestions
         if (chatResult.body() == null || chatResult.body().isBlank()) {

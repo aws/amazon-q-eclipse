@@ -34,8 +34,6 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         activeViewType = AmazonQViewType.CHAT_VIEW;
         containerLock = new ReentrantLock(true);
 
-        Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
-
         views = Map.of(
                 AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
                 AmazonQViewType.DEPENDENCY_MISSING_VIEW, new DependencyMissingView(),
@@ -44,6 +42,8 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                 AmazonQViewType.CHAT_VIEW, new AmazonQChatWebview(),
                 AmazonQViewType.TOOLKIT_LOGIN_VIEW, new ToolkitLoginWebview()
         );
+
+        Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
     }
 
     @Override
@@ -107,7 +107,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
       activeViewType = newViewType;
       containerLock.unlock();
 
-      if (!parentComposite.isDisposed()) {
+      if (parentComposite != null && !parentComposite.isDisposed()) {
           updateChildView();
       }
     }

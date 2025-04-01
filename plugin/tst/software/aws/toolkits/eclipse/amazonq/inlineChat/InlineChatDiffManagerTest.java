@@ -40,7 +40,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 
@@ -52,7 +52,7 @@ public final class InlineChatDiffManagerTest {
     private IAnnotationModel mockAnnotationModel;
     private IEditorInput mockEditorInput;
     private Display mockDisplay;
-    private ChatResult mockChatResult;
+    private InlineChatResult mockChatResult;
     private MockedStatic<Display> staticDisplay;
 
     @RegisterExtension
@@ -67,7 +67,7 @@ public final class InlineChatDiffManagerTest {
         mockAnnotationModel = mock(IAnnotationModel.class);
         mockEditorInput = mock(IEditorInput.class);
         mockDisplay = mock(Display.class);
-        mockChatResult = mock(ChatResult.class);
+        mockChatResult = mock(InlineChatResult.class);
         IDocumentProvider mockDocumentProvider = mock(IDocumentProvider.class);
         staticDisplay = mockStatic(Display.class);
 

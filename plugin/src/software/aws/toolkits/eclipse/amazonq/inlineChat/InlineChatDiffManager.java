@@ -19,7 +19,7 @@ import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.DeltaType;
 import com.github.difflib.patch.Patch;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class InlineChatDiffManager {
@@ -46,7 +46,7 @@ public final class InlineChatDiffManager {
         this.currentDiffs = new ArrayList<>();
         setColorPalette(isDarkTheme);
     }
-    synchronized CompletableFuture<Void> processDiff(final ChatResult chatResult, final boolean isPartialResult) throws Exception {
+    synchronized CompletableFuture<Void> processDiff(final InlineChatResult chatResult, final boolean isPartialResult) throws Exception {
         if (!task.isActive()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -70,7 +70,7 @@ public final class InlineChatDiffManager {
             }
         } else {
             // Final result - always update UI state regardless of content
-            Activator.getLogger().info("Updating UI: " + timeSinceUpdate + "ms since last update");
+            Activator.getLogger().info("Final UI update: " + timeSinceUpdate + "ms since last update");
             diffFuture = updateUI(chatResult);
             diffFuture.thenRun(() -> {
                 task.setLastTokenTime(System.currentTimeMillis());
@@ -82,7 +82,7 @@ public final class InlineChatDiffManager {
         return diffFuture;
     }
 
-    private CompletableFuture<Void> updateUI(final ChatResult chatResult) throws Exception {
+    private CompletableFuture<Void> updateUI(final InlineChatResult chatResult) throws Exception {
         if (!task.isActive()) {
             return CompletableFuture.completedFuture(null);
         }

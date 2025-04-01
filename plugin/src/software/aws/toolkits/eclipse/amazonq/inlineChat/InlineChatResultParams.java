@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 public record InlineChatResultParams(
+        String requestId,
         String language,
         int inputLength,
         int numSelectedLines,

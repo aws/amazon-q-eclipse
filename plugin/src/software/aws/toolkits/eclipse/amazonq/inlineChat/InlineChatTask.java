@@ -24,6 +24,7 @@ class InlineChatTask {
     private final AtomicReference<CursorState> cursorState = new AtomicReference<>(null);
     private final AtomicReference<SessionState> taskState = new AtomicReference<>(null);
     private String language = null;
+    private String requestId = null;
 
     // Selection variables
     private final int selectionOffset;
@@ -179,7 +180,10 @@ class InlineChatTask {
         this.textDiffs = textDiffs;
     }
     void setLanguage(final String language) {
-    	this.language = language;
+        this.language = language;
+    }
+    void setRequestId(final String requestId) {
+        this.requestId = requestId;
     }
 
     InlineChatResultParams buildResultObject() {
@@ -206,6 +210,7 @@ class InlineChatTask {
         int numSuggestionAddLines = this.numAddedLines.get();
 
         return new InlineChatResultParams(
+                requestId,
                 language,
                 inputLength,
                 numSelectedLines,

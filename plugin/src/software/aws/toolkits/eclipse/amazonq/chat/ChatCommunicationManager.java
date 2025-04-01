@@ -16,6 +16,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.widgets.Display;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.BaseChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
@@ -27,6 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ErrorParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
@@ -56,7 +58,7 @@ public final class ChatCommunicationManager {
     private final LspEncryptionManager lspEncryptionManager;
     private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
     private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
-    private String inlineChatTabId;
+    private final String inlineChatTabId = "123456789";
 
     private ChatCommunicationManager(final Builder builder) {
         this.jsonHandler = builder.jsonHandler != null ? builder.jsonHandler : new JsonHandler();
@@ -153,13 +155,13 @@ public final class ChatCommunicationManager {
     public void sendInlineChatMessageToChatServer(final Object params) {
         chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
             try {
-                ChatRequestParams chatRequestParams = jsonHandler.convertObject(params, ChatRequestParams.class);
+                InlineChatRequestParams chatRequestParams = jsonHandler.convertObject(params, InlineChatRequestParams.class);
                 addEditorState(chatRequestParams, false);
-                sendEncryptedChatMessage(chatRequestParams.getTabId(), token -> {
+                sendEncryptedChatMessage(inlineChatTabId, token -> {
                     String encryptedMessage = lspEncryptionManager.encrypt(chatRequestParams);
 
                     EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(encryptedMessage, token);
-                    return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(), encryptedChatRequestParams);
+                    return chatMessageProvider.sendInlineChatPrompt(encryptedChatRequestParams);
                 });
             } catch (Exception e) {
                 throw new AmazonQPluginException("Error occurred when sending message to server", e);
@@ -167,7 +169,7 @@ public final class ChatCommunicationManager {
         });
     }
 
-    private ChatRequestParams addEditorState(final ChatRequestParams chatRequestParams, final boolean addCursorState) {
+    private BaseChatRequestParams addEditorState(final BaseChatRequestParams chatRequestParams, final boolean addCursorState) {
         // only include files that are accessible via lsp which have absolute paths
         getOpenFileUri().ifPresent(filePathUri -> {
             chatRequestParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
@@ -231,8 +233,11 @@ public final class ChatCommunicationManager {
                     }
 
                     // show chat response in Chat UI
+                    String command = (inlineChatTabId.equals(tabId))
+                        ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                        : ChatUIInboundCommandName.ChatPrompt.getValue();
                     ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                            ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, result, false);
+                            command, tabId, result, false);
                     sendMessageToChatUI(chatUIInboundCommand);
                     return result;
                 } catch (Exception e) {
@@ -266,18 +271,11 @@ public final class ChatCommunicationManager {
         }
     }
 
-    public void updateInlineChatTabId(final String newTabId) {
-        if (newTabId != null) {
-            this.inlineChatTabId = newTabId;
-        }
-    }
-
     public void removeListener(final ChatUiRequestListener listener) {
         if (chatUiRequestListenerFuture.isDone() && listener == chatUiRequestListenerFuture.join()) {
             chatUiRequestListenerFuture = new CompletableFuture<>();
         } else if (inlineChatListenerFuture.isDone() && listener == inlineChatListenerFuture.join()) {
             inlineChatListenerFuture = new CompletableFuture<>();
-            inlineChatTabId = null; // Don't forget to clear the tabId
         }
     }
 
@@ -286,8 +284,8 @@ public final class ChatCommunicationManager {
      */
     public void sendMessageToChatUI(final ChatUIInboundCommand command) {
         String message = jsonHandler.serialize(command);
-        String targetTabId = command.tabId();
-        if (targetTabId != null && targetTabId.equals(inlineChatTabId)) {
+        String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
+        if (inlineChatCommand.equals(command.command())) {
             inlineChatListenerFuture.thenApply(listener -> {
                 listener.onSendToChatUi(message);
                 return listener;
@@ -330,8 +328,12 @@ public final class ChatCommunicationManager {
             return;
         }
 
+        String command = (inlineChatTabId.equals(tabId))
+            ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+            : ChatUIInboundCommandName.ChatPrompt.getValue();
+
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                ChatUIInboundCommandName.ChatPrompt.getValue(), tabId, partialChatResult, true);
+                command, tabId, partialChatResult, true);
 
         sendMessageToChatUI(chatUIInboundCommand);
     }

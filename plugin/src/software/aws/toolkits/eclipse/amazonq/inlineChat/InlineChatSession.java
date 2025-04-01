@@ -30,8 +30,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -56,7 +56,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     // Dependencies
     private final InlineChatUIManager uiManager;
     private final InlineChatDiffManager diffManager;
-    private ChatRequestParams params;
+    private InlineChatRequestParams params;
     private final ChatCommunicationManager chatCommunicationManager;
     private final ThemeDetector themeDetector;
 
@@ -126,7 +126,6 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             // Set up necessary managers with the context they need
             this.uiManager.initNewTask(task, isDarkTheme);
             this.diffManager.initNewTask(task, isDarkTheme);
-            chatCommunicationManager.updateInlineChatTabId(task.getTabId());
 
             CompletableFuture.runAsync(() -> start());
             return true;
@@ -175,7 +174,11 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
 
             var paramsNode = rootNode.get("params");
             var isPartialResult = rootNode.get("isPartialResult").asBoolean();
-            var chatResult = mapper.treeToValue(paramsNode, ChatResult.class);
+            var chatResult = mapper.treeToValue(paramsNode, InlineChatResult.class);
+
+            if (chatResult != null && chatResult.messageId() != null) {
+                task.setRequestId(chatResult.messageId());
+            }
 
             Activator.getLogger().info("RESPONSE: " + message);
 
@@ -222,7 +225,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         try {
             var prompt = task.getPrompt();
             var chatPrompt = new ChatPrompt(prompt, prompt, "");
-            params = new ChatRequestParams(task.getTabId(), chatPrompt, null, Arrays.asList(task.getCursorState()));
+            params = new InlineChatRequestParams(chatPrompt, null, Arrays.asList(task.getCursorState()));
             chatCommunicationManager.sendInlineChatMessageToChatServer(params);
 
             Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri();
@@ -323,20 +326,23 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         }
     }
 
-    private boolean verifyChatResultParams(final ChatResult chatResult) {
-    	
-    	var options = (chatResult.followUp() != null)
-    			? chatResult.followUp().options()
-				: null;
-    	String type = (options != null)
-    			? options[0].type()
-				: null;
-    	
-    	// End session if user auth status needs refreshing
-    	if (type == "full-auth" || type == "re-auth") {
-    		uiManager.showAuthExpiredNotification();
-    		return false;
-    	}
+    private boolean verifyChatResultParams(final InlineChatResult chatResult) {
+        if (chatResult == null) {
+            return false;
+        }
+
+        var options = (chatResult.followUp() != null)
+            ? chatResult.followUp().options()
+            : null;
+        String type = (options != null)
+            ? options[0].type()
+            : null;
+
+        // End session if user auth status needs refreshing
+        if (type == "full-auth" || type == "re-auth") {
+            uiManager.showAuthExpiredNotification();
+            return false;
+        }
 
         // End session if server responds with no suggestions
         if (chatResult.body() == null || chatResult.body().isBlank()) {

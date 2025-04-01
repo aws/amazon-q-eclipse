@@ -399,9 +399,9 @@ public final class InlineChatUIManager {
     void showNoSuggestionsNotification() {
         showNotification(Constants.INLINE_CHAT_NO_SUGGESTIONS_BODY);
     }
-    
+
     void showAuthExpiredNotification() {
-    	showNotification(Constants.INLINE_CHAT_EXPIRED_AUTH_BODY);
+        showNotification(Constants.INLINE_CHAT_EXPIRED_AUTH_BODY);
     }
 
     private void showNotification(final String notificationBody) {

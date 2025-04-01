@@ -42,6 +42,11 @@ public final class ChatMessageProvider {
         return handleChatResponse(tabId, response);
     }
 
+    public CompletableFuture<String> sendInlineChatPrompt(final EncryptedChatParams encryptedChatRequestParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.sendInlineChatPrompt(encryptedChatRequestParams);
+    }
+
     public CompletableFuture<String> sendQuickAction(final String tabId, final EncryptedQuickActionParams encryptedQuickActionParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
 

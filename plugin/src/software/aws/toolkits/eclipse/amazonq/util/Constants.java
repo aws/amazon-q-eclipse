@@ -51,7 +51,7 @@ public final class Constants {
     public static final String INLINE_CHAT_ERROR_NOTIFICATION_BODY = "Encountered an unexpected error when processing the request, please try again.";
     public static final String INLINE_CHAT_CODEREF_NOTIFICATION_BODY = "Suggestion had code references; removed per settings.";
     public static final String INLINE_CHAT_NO_SUGGESTIONS_BODY = "No suggestions from Q; please try a different instruction.";
-    public static final String INLINE_CHAT_EXPIRED_AUTH_BODY = "Plugin needs to reauthenticate. Please open main chat window";
+    public static final String INLINE_CHAT_EXPIRED_AUTH_BODY = "Login status expired; please open Q plugin window to reauthenticate.";
     public static final String INLINE_CHAT_CONTEXT_ID = "org.eclipse.ui.inlineChatContext";
     public static final String INLINE_SUGGESTIONS_CONTEXT_ID = "org.eclipse.ui.suggestionsContext";
 }

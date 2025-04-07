@@ -24,7 +24,7 @@ class InlineChatTask {
     private final AtomicReference<CursorState> cursorState = new AtomicReference<>(null);
     private final AtomicReference<SessionState> taskState = new AtomicReference<>(null);
     private String language = null;
-    private String requestId = null;
+    private String requestId = "-1";
 
     // Selection variables
     private final int selectionOffset;

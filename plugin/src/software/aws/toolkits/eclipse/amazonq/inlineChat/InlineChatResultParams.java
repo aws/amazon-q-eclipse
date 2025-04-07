@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
+import software.aws.toolkits.telemetry.TelemetryDefinitions.UserDecision;
+
 public record InlineChatResultParams(
         String requestId,
         String language,

@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import software.aws.toolkits.telemetry.TelemetryDefinitions.UserDecision;
 
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.ui.texteditor.ITextEditor;

@@ -247,6 +247,11 @@
             ]
         },
         {
+            "name": "codeIntent",
+            "type": "boolean",
+            "description": "Whether the user input expressed a code or non-code intent"        
+        },
+        {
             "name": "codeScanServiceInvocationsDuration",
             "type": "int",
             "description": "Time taken to invoke code scan service APIs in milliseconds"
@@ -1319,6 +1324,11 @@
             "description": "Time from starting the feature until ready-to-use."
         },
         {
+        	"name": "inputLength",
+        	"type": "int",
+        	"description": "Length of user input"
+        },
+        {
             "name": "inputPolicyType",
             "type": "string",
             "allowedValues": [
@@ -1463,6 +1473,31 @@
             "description": "Number of generations before the user accepted or rejected"
         },
         {
+            "name": "numSelectedLines",
+            "type": "int",
+            "description": "The number of lines selected in the editor at the time inline chat was invoked"
+        },
+        {
+            "name": "numSuggestionAddChars",
+            "type": "int",
+            "description": "The number of net new characters that would be added by the suggestion"
+        },
+        {
+            "name": "numSuggestionAddLines",
+            "type": "int",
+            "description": "The number of net new lines of code that would be added by the suggestion"
+        },
+        {
+            "name": "numSuggestionDelChars",
+            "type": "int",
+            "description": "The number of existing characters that would be deleted by the suggestion"
+        },
+        {
+            "name": "numSuggestionDelLines",
+            "type": "int",
+            "description": "The number of existing lines of code that would be deleted by the suggestion"
+        },
+        {
             "name": "oldVersion",
             "type": "string",
             "description": "The old version of something. Useful when updating dependent resources."
@@ -1486,6 +1521,11 @@
             "name": "presigned",
             "type": "boolean",
             "description": "Whether or not it was a presigned request"
+        },
+        {
+            "name": "programmingLanguage",
+            "type": "string",
+            "description": "The programming language of the code within the suggestion"
         },
         {
             "name": "reason",
@@ -1531,6 +1571,16 @@
             "name": "resourceType",
             "type": "string",
             "description": "The dynamic resource type being interacted with. See also `component` for UI components, `featureId` for specific feature names, or `module` for low-level modules."
+        },
+        {
+            "name": "responseEndLatency",
+            "type": "double",
+            "description": "Time in milliseconds between the user submitting an input and seeing the last token on screen."
+        },
+        {
+            "name": "responseStartLatency",
+            "type": "double",
+            "description": "Time in milliseconds between the user submitting an input and seeing the first token on screen."
         },
         {
             "name": "result",
@@ -1716,6 +1766,16 @@
             "name": "userChoice",
             "type": "string",
             "description": "User selection from a predefined menu (not user-provided input)"
+        },
+        {
+            "name": "userDecision",
+            "type": "string",
+            "description": "User accept or reject suggestion, or cancels before submitting anything",
+            "allowedValues": [
+                "accept",
+                "reject",
+                "dismiss"
+            ]
         },
         {
             "name": "userId",
@@ -5109,6 +5169,49 @@
                 }
             ]
         },
+        {
+		    "name": "codewhisperer_inlineChatEvent",
+		    "description": "Metrics and metadata for CodeWhisperer inline chat interactions",
+		    "metadata": [
+		        {
+		            "type": "requestId",
+		            "required": true
+		        },
+		        {
+		            "type": "inputLength"
+		        },
+		        {
+		            "type": "numSelectedLines"
+		        },
+		        {
+		            "type": "numSuggestionAddChars"
+		        },
+		        {
+		            "type": "numSuggestionAddLines"
+		        },
+		        {
+		            "type": "numSuggestionDelChars"
+		        },
+		        {
+		            "type": "numSuggestionDelLines"
+		        },
+		        {
+		            "type": "codeIntent"
+		        },
+		        {
+		            "type": "userDecision"
+		        },
+		        {
+		            "type": "responseStartLatency"
+		        },
+		        {
+		            "type": "responseEndLatency"
+		        },
+		        {
+		            "type": "programmingLanguage"
+		        }
+		    ]
+		},       
         {
             "name": "deeplink_open",
             "description": "User requested that a resource be opened in the browser using the deeplink service",

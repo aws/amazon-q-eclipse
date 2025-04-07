@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import software.aws.toolkits.telemetry.TelemetryDefinitions.UserDecision;
+
 public final class InlineChatTaskTest {
     private InlineChatTask task;
     private ITextEditor mockEditor;

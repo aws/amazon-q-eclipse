@@ -35,6 +35,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
+import software.aws.toolkits.eclipse.amazonq.telemetry.CodeWhispererTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.LanguageUtil;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
@@ -264,6 +265,8 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         });
 
         uiThreadFuture.whenComplete((result, ex) -> {
+            var inlineChatSessionResult = task.buildResultObject();
+            emitInlineChatEventMetric(inlineChatSessionResult);
             uiManager.closePrompt();
             cleanupSessionState();
             setState(SessionState.INACTIVE);
@@ -480,6 +483,10 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             Activator.getLogger().info("Could not calculate line information: " + e.getMessage(), e);
             return new Region(selection.getOffset(), selection.getLength());
         }
+    }
+
+    private void emitInlineChatEventMetric(final InlineChatResultParams params) {
+        CodeWhispererTelemetryProvider.emitInlineChatEventMetric(params);
     }
 
     // End session when editor is closed

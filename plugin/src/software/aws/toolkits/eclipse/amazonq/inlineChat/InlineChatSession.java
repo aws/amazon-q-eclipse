@@ -323,6 +323,9 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 public void documentUndoNotification(final DocumentUndoEvent event) {
                     if (event.getEventType() == aboutToUndo && isSessionActive()) {
                         if (isGenerating() || isDeciding()) {
+                            if (isDeciding()) {
+                                task.setUserDecision(false);
+                            }
                             uiManager.closePrompt();
                             endSession();
                         }

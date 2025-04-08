@@ -51,18 +51,14 @@ public final class InlineChatDiffManager {
             return CompletableFuture.completedFuture(null);
         }
 
-        long currentTime = System.currentTimeMillis();
-        long timeSinceUpdate = currentTime - task.getLastUpdateTime();
         CompletableFuture<Void> diffFuture;
         if (isPartialResult) {
             // Only process if content has changed
             if (!chatResult.body().equals(task.getPreviousPartialResponse())) {
-                Activator.getLogger().info("Updating UI: " + timeSinceUpdate + "ms since last update");
                 diffFuture = updateUI(chatResult);
                 diffFuture.thenRun(() -> {
                     if (task.getFirstTokenTime() == -1) {
                         task.setFirstTokenTime(System.currentTimeMillis());
-                        Activator.getLogger().info(String.format("response start latency: %d", System.currentTimeMillis() - task.getRequestTime()));
                     }
                 });
             } else {
@@ -70,15 +66,12 @@ public final class InlineChatDiffManager {
             }
         } else {
             // Final result - always update UI state regardless of content
-            Activator.getLogger().info("Final UI update: " + timeSinceUpdate + "ms since last update");
             diffFuture = updateUI(chatResult);
             diffFuture.thenRun(() -> {
                 task.setLastTokenTime(System.currentTimeMillis());
-                Activator.getLogger().info(String.format("response end latency: %d", System.currentTimeMillis() - task.getRequestTime()));
             });
             task.setTextDiffs(currentDiffs);
         }
-        task.setLastUpdateTime(System.currentTimeMillis());
         return diffFuture;
     }
 

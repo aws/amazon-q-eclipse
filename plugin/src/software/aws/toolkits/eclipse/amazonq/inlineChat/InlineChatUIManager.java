@@ -242,7 +242,7 @@ public final class InlineChatUIManager {
                 }
             }
         } catch (Exception e) {
-            Activator.getLogger().info("Error updating prompt location");
+            Activator.getLogger().error("Error updating prompt location", e);
             closePrompt();
         }
 

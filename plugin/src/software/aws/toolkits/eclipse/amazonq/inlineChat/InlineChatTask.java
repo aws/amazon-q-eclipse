@@ -44,7 +44,6 @@ class InlineChatTask {
     private final AtomicReference<UserDecision> userDecision = new AtomicReference<>(UserDecision.DISMISS);
 
     // Latency variables
-    private final AtomicLong lastUpdateTime;
     private final AtomicLong requestTime;
     private final AtomicLong firstTokenTime;
     private final AtomicLong lastTokenTime;
@@ -63,7 +62,6 @@ class InlineChatTask {
         this.originalCode = (hasActiveSelection) ? selectionText : "";
         this.previousDisplayLength = new AtomicInteger((hasActiveSelection) ? selectionText.length() : 0);
 
-        this.lastUpdateTime = new AtomicLong(0);
         this.requestTime = new AtomicLong(0);
         this.firstTokenTime = new AtomicLong(-1);
         this.lastTokenTime = new AtomicLong(0);
@@ -79,14 +77,6 @@ class InlineChatTask {
 
     void setTaskState(final SessionState state) {
         taskState.set(state);
-    }
-
-    long getLastUpdateTime() {
-        return lastUpdateTime.get();
-    }
-
-    void setLastUpdateTime(final long time) {
-        lastUpdateTime.set(time);
     }
 
     String getPreviousPartialResponse() {
@@ -141,10 +131,6 @@ class InlineChatTask {
         this.cursorState.set(state);
     }
 
-    long getRequestTime() {
-        return requestTime.get();
-    }
-
     void setRequestTime(final long newValue) {
         requestTime.set(newValue);
     }
@@ -155,10 +141,6 @@ class InlineChatTask {
 
     void setFirstTokenTime(final long newValue) {
         firstTokenTime.set(newValue);
-    }
-
-    long getLastTokenTime() {
-        return lastTokenTime.get();
     }
 
     void setLastTokenTime(final long newValue) {
@@ -195,8 +177,8 @@ class InlineChatTask {
 
         if (userDecision != UserDecision.DISMISS) {
             inputLength = getPrompt().length();
-            startLatency = getFirstTokenTime() - getRequestTime();
-            endLatency = getLastTokenTime() - getRequestTime();
+            startLatency = getFirstTokenTime() - requestTime.get();
+            endLatency = lastTokenTime.get() - requestTime.get();
         }
 
         int numSuggestionAddChars = textDiffs.stream()

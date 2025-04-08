@@ -146,7 +146,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 setState(SessionState.GENERATING);
             } else {
                 endSession();
-                Activator.getLogger().info("TASK NOT SUBMITTED");
+                Activator.getLogger().info("Inline chat not submitted. Ending session.");
             }
         }).exceptionally(throwable -> {
             Activator.getLogger().error("Failed to open user input prompt", throwable);
@@ -180,8 +180,6 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             if (chatResult != null && chatResult.messageId() != null) {
                 task.setRequestId(chatResult.messageId());
             }
-
-            Activator.getLogger().info("RESPONSE: " + message);
 
             if (!verifyChatResultParams(chatResult)) {
                 restoreAndEndSession();
@@ -236,8 +234,6 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             }
 
             task.setRequestTime(System.currentTimeMillis());
-            task.setLastUpdateTime(System.currentTimeMillis());
-            Activator.getLogger().info("Sending inline chat request!");
         } catch (Exception e) {
             Activator.getLogger().error("Failed to send message to chat server: " + e.getMessage(), e);
             endSession();
@@ -269,7 +265,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             uiManager.closePrompt();
             cleanupSessionState();
             setState(SessionState.INACTIVE);
-            Activator.getLogger().info("SESSION ENDED!");
+            Activator.getLogger().info("Inline chat session ended.");
         });
     }
 
@@ -316,7 +312,6 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 @Override
                 public void documentUndoNotification(final DocumentUndoEvent event) {
                     if (event.getEventType() == aboutToUndo && isSessionActive()) {
-                        Activator.getLogger().info("Undo request being processed!");
                         if (isGenerating() || isDeciding()) {
                             uiManager.closePrompt();
                             endSession();
@@ -479,7 +474,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
 
             return new Region(startRegion.getOffset(), selectionLength);
         } catch (Exception e) {
-            Activator.getLogger().info("Could not calculate line information: " + e.getMessage(), e);
+            Activator.getLogger().error("Could not calculate line information: " + e.getMessage(), e);
             return new Region(selection.getOffset(), selection.getLength());
         }
     }
@@ -492,7 +487,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     @Override
     public void partClosed(final IWorkbenchPartReference partRef) {
         if (isSessionActive() && partRef.getPart(false) == task.getEditor()) {
-            Activator.getLogger().info("Editor closed. Ending inline chat session");
+            Activator.getLogger().info("Editor closed. Ending inline chat session.");
             endSession();
         }
     }

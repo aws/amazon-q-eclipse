@@ -14,7 +14,6 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.source.IAnnotationModel;
-import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.widgets.Display;

@@ -255,7 +255,6 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             try {
                 cleanupWorkbench();
                 cleanupDocumentState(false);
-                diffManager.cleanupState();
                 removeFoldingListener(projectionModel);
                 uiThreadFuture.complete(null);
             } catch (Exception e) {

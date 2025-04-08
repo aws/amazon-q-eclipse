@@ -245,10 +245,6 @@ public final class InlineChatDiffManager {
         return future;
     }
 
-    void cleanupState() {
-        currentDiffs.clear();
-    }
-
     void restoreState() {
         try {
             final IAnnotationModel annotationModel = task.getEditor().getDocumentProvider().getAnnotationModel(task.getEditor().getEditorInput());

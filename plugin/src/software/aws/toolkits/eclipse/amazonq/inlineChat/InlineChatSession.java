@@ -266,8 +266,12 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         });
 
         uiThreadFuture.whenComplete((result, ex) -> {
-            var inlineChatSessionResult = task.buildResultObject();
-            emitInlineChatEventMetric(inlineChatSessionResult);
+            try {
+                var inlineChatSessionResult = task.buildResultObject();
+                emitInlineChatEventMetric(inlineChatSessionResult);
+            } catch (Exception e) {
+                Activator.getLogger().error("FAILURE ON EMISSION:", e);
+            }
             uiManager.closePrompt();
             cleanupSessionState();
             setState(SessionState.INACTIVE);

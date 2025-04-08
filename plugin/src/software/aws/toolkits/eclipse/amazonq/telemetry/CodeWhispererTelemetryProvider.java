@@ -25,6 +25,7 @@ public final class CodeWhispererTelemetryProvider {
                 .userDecision(params.userDecision())
                 .responseStartLatency(params.startLatency())
                 .responseEndLatency(params.endLatency())
+                .codeIntent(true)
                 .passive(false)
                 .createTime(Instant.now())
                 .value(1.0)

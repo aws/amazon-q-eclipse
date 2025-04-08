@@ -174,21 +174,25 @@ class InlineChatTask {
         int inputLength = -1;
         double startLatency = -1;
         double endLatency = -1;
+        int numSuggestionAddChars = 0;
+        int numSuggestionDelChars = 0;
 
         if (userDecision != UserDecision.DISMISS) {
             inputLength = getPrompt().length();
             startLatency = getFirstTokenTime() - requestTime.get();
             endLatency = lastTokenTime.get() - requestTime.get();
         }
+        if (textDiffs != null) {
+            numSuggestionAddChars = textDiffs.stream()
+                    .filter(diff -> !diff.isDeletion())
+                    .mapToInt(TextDiff::length)
+                    .sum();
+            numSuggestionDelChars = textDiffs.stream()
+                    .filter(TextDiff::isDeletion)
+                    .mapToInt(TextDiff::length)
+                    .sum();
+        }
 
-        int numSuggestionAddChars = textDiffs.stream()
-                .filter(diff -> !diff.isDeletion())
-                .mapToInt(TextDiff::length)
-                .sum();
-        int numSuggestionDelChars = textDiffs.stream()
-                .filter(TextDiff::isDeletion)
-                .mapToInt(TextDiff::length)
-                .sum();
         int numSuggestionDelLines = this.numDeletedLines.get();
         int numSuggestionAddLines = this.numAddedLines.get();
 

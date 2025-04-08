@@ -99,7 +99,7 @@ public final class InlineChatDiffManagerTest {
         when(mockTask.isActive()).thenReturn(false);
         CompletableFuture<Void> result = diffManager.processDiff(mockChatResult, true);
         assertTrue(result.isDone());
-        verify(mockTask, never()).getLastUpdateTime();
+        verify(mockTask, never()).getFirstTokenTime();
     }
 
     @Test
@@ -111,9 +111,8 @@ public final class InlineChatDiffManagerTest {
         CompletableFuture<Void> result = diffManager.processDiff(mockChatResult, true);
 
         assertTrue(result.isDone());
-        verify(mockTask).getLastUpdateTime();
+        verify(mockTask, never()).getFirstTokenTime();
         verify(mockTask).getPreviousPartialResponse();
-        verify(mockTask).setLastUpdateTime(anyLong());
     }
 
     @ParameterizedTest
@@ -133,9 +132,7 @@ public final class InlineChatDiffManagerTest {
         CompletableFuture<Void> result = diffManager.processDiff(mockChatResult, isPartialResult);
 
         assertTrue(result.isDone());
-        LoggingService loggingServiceMock = activatorExtension.getMock(LoggingService.class);
 
-        verify(loggingServiceMock, times(1)).info(argThat(message -> message.startsWith("Updating UI: ") && message.endsWith("ms since last update")));
         verify(mockDocument).replace(eq(0), anyInt(), anyString());
         verify(mockAnnotationModel, times(numAddedLines)).addAnnotation(
             argThat(annotation -> annotation.getType().contains("diffAnnotation.added")),
@@ -148,18 +145,15 @@ public final class InlineChatDiffManagerTest {
         verify(mockTask).setPreviousPartialResponse(eq(newCode));
         verify(mockTask).setNumDeletedLines(numDeletedLines);
         verify(mockTask).setNumAddedLines(numAddedLines);
-        verify(mockTask).setLastUpdateTime(anyLong());
 
         //verify calls that only happen on first token
         var timesFirstTokenCalled = (isFirstToken && isPartialResult) ? times(1) : never();
         verify(mockTask, timesFirstTokenCalled).setFirstTokenTime(anyLong());
-        verify(loggingServiceMock, timesFirstTokenCalled).info(argThat(message -> message.startsWith("response start latency: ")));
 
         // verify calls that only happen on final result
         var timesPartialResultCalled = (isPartialResult) ? never() : times(1);
         verify(mockTask, timesPartialResultCalled).setLastTokenTime(anyLong());
         verify(mockTask, timesPartialResultCalled).setTextDiffs(any());
-        verify(loggingServiceMock, timesPartialResultCalled).info(argThat(message -> message.startsWith("response end latency: ")));
     }
 
     @Test

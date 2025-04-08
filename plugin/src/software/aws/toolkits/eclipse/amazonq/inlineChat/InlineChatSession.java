@@ -10,9 +10,13 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.source.IAnnotationModel;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.projection.ProjectionAnnotationModel;
+import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.text.undo.DocumentUndoEvent;
 import org.eclipse.text.undo.DocumentUndoManagerRegistry;
@@ -66,6 +70,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     private IDocumentUndoListener undoListener;
     private IDocument document;
     private boolean isCompoundChange;
+    private VerifyKeyListener verifyKeyListener;
 
     // Context handler variables
     private final IContextService contextService;
@@ -144,6 +149,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 sendInlineChatRequest();
                 uiManager.transitionToGeneratingPrompt();
                 setState(SessionState.GENERATING);
+                blockUserInput(true);
             } else {
                 endSession();
                 Activator.getLogger().info("Inline chat not submitted. Ending session.");
@@ -191,6 +197,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 if (!isPartialResult) {
                     setState(SessionState.DECIDING);
                     uiManager.transitionToDecidingPrompt();
+                    blockUserInput(false);
                 }
             }).exceptionally(throwable -> {
                 Activator.getLogger().error("Failed to process diff", throwable);
@@ -394,6 +401,15 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         this.document = null;
         this.undoManager = null;
         this.undoListener = null;
+        if (verifyKeyListener != null) {
+            try {
+                var viewer = task.getEditor().getAdapter(ITextViewer.class);
+                ((ITextViewerExtension) viewer).removeVerifyKeyListener(verifyKeyListener);
+                verifyKeyListener = null;
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to remove verify key listener", e);
+            }
+        }
     }
 
     private void cleanupContext() {
@@ -458,6 +474,22 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
                 var region = new Region(selection.getOffset(), selection.getLength());
                 task = new InlineChatTask(editor, selection.getText(), region, selectedLines);
+            }
+        });
+    }
+
+    private void blockUserInput(final boolean blockInput) {
+        Display.getDefault().asyncExec(() -> {
+            ITextEditor editor = task.getEditor();
+            ITextViewer viewer = editor.getAdapter(ITextViewer.class);
+            if (viewer != null) {
+                if (blockInput) {
+                    verifyKeyListener = event -> event.doit = false;
+                    ((ITextViewerExtension) viewer).prependVerifyKeyListener(verifyKeyListener);
+                } else {
+                    ((ITextViewerExtension) viewer).removeVerifyKeyListener(verifyKeyListener);
+                    verifyKeyListener = null;
+                }
             }
         });
     }

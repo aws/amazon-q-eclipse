@@ -210,6 +210,11 @@
         </command>
         <command
             categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Trigger Inline Chat"
+            id="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+        </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
             name="Accept Suggestions"
             id="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions">
         </command>
@@ -217,6 +222,16 @@
             categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
             name="Reject Suggestions"
             id="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
+        </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Accept Inline Chat"
+            id="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat">
+        </command>
+        <command
+            categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
+            name="Reject Inline Chat"
+            id="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat">
         </command>
         <command
               categoryId="software.aws.toolkits.eclipse.amazonq.commands.category"
@@ -265,13 +280,39 @@
             class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerSuggestionsHandler"
             commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerSuggestions">
         </handler>
-        <handler
-            class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptSuggestionsHandler"
-            commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions">
-        </handler>
+		<handler
+		    class="software.aws.toolkits.eclipse.amazonq.handlers.QTriggerInlineChatHandler"
+		    commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+		    <activeWhen>
+		        <with variable="is_logged_in">
+		            <equals value="true"/>
+		        </with>
+		    </activeWhen>
+		</handler>
+		<handler
+		    class="software.aws.toolkits.eclipse.amazonq.handlers.QOpenLoginViewHandler"
+		    commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat">
+		    <activeWhen>
+		        <with variable="is_logged_in">
+		            <equals value="false"/>
+		        </with>
+		    </activeWhen>
+		</handler>
+	    <handler
+	        commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"
+	        class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptSuggestionsHandler">
+	    </handler>
         <handler
                 class="software.aws.toolkits.eclipse.amazonq.handlers.QRejectSuggestionsHandler"
                 commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions">
+        </handler>
+	    <handler
+	        commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat"
+	        class="software.aws.toolkits.eclipse.amazonq.handlers.QAcceptInlineChatHandler">
+	    </handler>
+        <handler
+                class="software.aws.toolkits.eclipse.amazonq.handlers.QRejectInlineChatHandler"
+                commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat">
         </handler>
         <handler
               class="software.aws.toolkits.eclipse.amazonq.handlers.QToggleSuggestionsForwardHandler"
@@ -315,14 +356,32 @@
             sequence="M3+C">
         </key>
         <key
-            commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat"
             contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+SHIFT+I">
+        </key>
+        <key
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptSuggestions"
+            contextId="org.eclipse.ui.suggestionsContext"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="TAB">
         </key>
         <key
             commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectSuggestions"
-            contextId="org.eclipse.ui.textEditorScope"
+            contextId="org.eclipse.ui.suggestionsContext"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="ESC">
+        </key>
+        <key
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.acceptInlineChat"
+            contextId="org.eclipse.ui.inlineChatContext"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="ENTER">
+        </key>
+        <key
+            commandId="software.aws.toolkits.eclipse.amazonq.commands.rejectInlineChat"
+            contextId="org.eclipse.ui.inlineChatContext"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="ESC">
         </key>
@@ -345,6 +404,93 @@
             class="software.aws.toolkits.eclipse.amazonq.lsp.LspStartupActivity">
         </startup>
     </extension>
+    <extension point="org.eclipse.ui.editors.annotationTypes">
+	    <type name="diffAnnotation.added"/>
+	    <type name="diffAnnotation.deleted"/>
+	    <type name="diffAnnotation.added.dark"/>
+	    <type name="diffAnnotation.deleted.dark"/>
+	</extension>
+   <extension point="org.eclipse.ui.editors.markerAnnotationSpecification">
+    <!-- Added code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.added"
+	        colorPreferenceKey="diffAnnotation.added.color"
+	        colorPreferenceValue="230,255,230"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.added.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Added Code"
+	        overviewRulerPreferenceKey="diffAnnotation.added.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.added.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.added.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	
+	    <!-- Deleted code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.deleted"
+	        colorPreferenceKey="diffAnnotation.deleted.color"
+	        colorPreferenceValue="255,230,230"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.deleted.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Deleted Code"
+	        overviewRulerPreferenceKey="diffAnnotation.deleted.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.deleted.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.deleted.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	        <!-- Dark mode - Added code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.added.dark"
+	        colorPreferenceKey="diffAnnotation.added.dark.color"
+	        colorPreferenceValue="0,70,0"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.added.dark.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Added Code (Dark Theme)"
+	        overviewRulerPreferenceKey="diffAnnotation.added.dark.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.added.dark.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.added.dark.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+	
+	    <!-- Dark mode - Deleted code annotation -->
+	    <specification
+	        annotationType="diffAnnotation.deleted.dark"
+	        colorPreferenceKey="diffAnnotation.deleted.dark.color"
+	        colorPreferenceValue="70,0,0"
+	        contributesToHeader="false"
+	        highlightPreferenceKey="diffAnnotation.deleted.dark.highlight"
+	        highlightPreferenceValue="true"
+	        includeOnPreferencePage="true"
+	        label="Deleted Code (Dark Theme)"
+	        overviewRulerPreferenceKey="diffAnnotation.deleted.dark.overview"
+	        overviewRulerPreferenceValue="true"
+	        presentationLayer="0"
+	        textPreferenceKey="diffAnnotation.deleted.dark.text"
+	        textPreferenceValue="true"
+	        textStylePreferenceValue="BACKGROUND"
+	        verticalRulerPreferenceKey="diffAnnotation.deleted.dark.ruler"
+	        verticalRulerPreferenceValue="true">
+	    </specification>
+
+	</extension>
     <extension point="org.eclipse.ui.preferencePages">
          <page
              class="software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"
@@ -428,6 +574,10 @@
                 <command
                     commandId="software.aws.toolkits.eclipse.amazonq.commands.sendToPrompt"
                     label="Send To Prompt">
+                </command>
+                <command
+                    commandId="software.aws.toolkits.eclipse.amazonq.commands.triggerInlineChat"
+                    label="Inline Chat">
                 </command>
             </menu>
         </menuContribution>

@@ -39,16 +39,17 @@ public class ChatRequestParamsTest {
     private final Range range = new Range(startPosition, endPosition);
     private final CursorState cursorState = new CursorState(range);
     private final List<CursorState> cursorStateList = List.of(cursorState);
-
     @Test
     void testSettersGetters() {
         ChatRequestParams chatRequestParams = new ChatRequestParams(tabId, chatPrompt,
-                new TextDocumentIdentifier("newDocumentUri"), new CursorState(new Range(startPosition, endPosition)));
+                new TextDocumentIdentifier("newDocumentUri"),
+                List.of(new CursorState(
+                        new Range(startPosition, endPosition))));
 
         assertEquals(tabId, chatRequestParams.getTabId());
         assertEquals(chatPrompt, chatRequestParams.getPrompt());
-//        assertNotNull(chatRequestParams.getTextDocument());
-//        assertNotNull(chatRequestParams.getCursorState());
+        assertNotNull(chatRequestParams.getTextDocument());
+        assertNotNull(chatRequestParams.getCursorState());
 
         chatRequestParams.setPartialResultToken(partialResultToken);
         chatRequestParams.setCursorState(cursorStateList);
@@ -72,27 +73,29 @@ public class ChatRequestParamsTest {
                     "textDocument": {
                         "uri": "test/file.txt"
                     },
-                    "cursorState": {
-                        "range": {
-                            "start": {
-                                "line": 0,
-                                "character": 0
-                            },
-                            "end": {
-                                "line": 100,
-                                "character": 100
+                    "cursorState": [
+                        {
+                            "range": {
+                                "start": {
+                                    "line": 0,
+                                    "character": 0
+                                },
+                                "end": {
+                                    "line": 100,
+                                    "character": 100
+                                }
                             }
                         }
-                    }
+                    ]
                 }""";
 
         ChatRequestParams params = assertDoesNotThrow(() -> objectMapper.readValue(json, ChatRequestParams.class));
 
         assertEquals(tabId, params.getTabId());
         assertNotNull(params.getPrompt());
-//        assertEquals(textDocumentUri, params.getTextDocument().getUri());
-//        assertEquals(1, params.getCursorState().size());
-//        assertNotNull(params.getCursorState().get(0));
+        assertEquals(textDocumentUri, params.getTextDocument().getUri());
+        assertEquals(1, params.getCursorState().size());
+        assertNotNull(params.getCursorState().get(0));
     }
 
     @Test
@@ -101,5 +104,4 @@ public class ChatRequestParamsTest {
 
         assertThrows(JsonParseException.class, () -> objectMapper.readValue(json, ChatRequestParams.class));
     }
-
 }

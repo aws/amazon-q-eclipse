@@ -7,3 +7,9 @@ packageInfo
 **.DS_Store**
 .idea/
 plugin/.idea
+.project
+feature/.project
+telemetry/bin
+bin
+package-lock.json
+telemetry/

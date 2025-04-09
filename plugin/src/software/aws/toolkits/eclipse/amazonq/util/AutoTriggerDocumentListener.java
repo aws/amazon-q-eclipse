@@ -9,6 +9,7 @@ import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
+import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatSession;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
@@ -18,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 public final class AutoTriggerDocumentListener implements IDocumentListener, IAutoTriggerListener {
     private static final String UNDO_COMMAND_ID = "org.eclipse.ui.edit.undo";
 
-    private ThreadLocal<Boolean> isChangeInducedByUndo = ThreadLocal.withInitial(() -> false);
+    private final ThreadLocal<Boolean> isChangeInducedByUndo = ThreadLocal.withInitial(() -> false);
     private IExecutionListener commandListener;
 
     public AutoTriggerDocumentListener() {
@@ -32,6 +33,9 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
     @Override
     public synchronized void documentChanged(final DocumentEvent e) {
         var qSes = QInvocationSession.getInstance();
+        if (InlineChatSession.getInstance().isSessionActive()) {
+            return;
+        }
         if (!shouldSendQuery(e, qSes)) {
             return;
         }

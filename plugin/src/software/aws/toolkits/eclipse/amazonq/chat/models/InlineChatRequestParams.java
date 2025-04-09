@@ -9,21 +9,14 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public final class ChatRequestParams extends BaseChatRequestParams {
-    private final String tabId;
+public final class InlineChatRequestParams extends BaseChatRequestParams {
 
-    public ChatRequestParams(
-        @JsonProperty("tabId") final String tabId,
+    public InlineChatRequestParams(
         @JsonProperty("prompt") final ChatPrompt prompt,
         @JsonProperty("textDocument") final TextDocumentIdentifier textDocument,
         @JsonProperty("cursorState") final List<CursorState> cursorState
     ) {
         super(prompt, textDocument, cursorState);
-        this.tabId = tabId;
-    }
-
-    public String getTabId() {
-        return tabId;
     }
 }
 

@@ -9,7 +9,11 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.contexts.IContextService;
+
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
@@ -17,7 +21,10 @@ public class QAcceptSuggestionsHandler extends AbstractHandler {
 
     @Override
     public final boolean isEnabled() {
-        return QInvocationSession.getInstance().isPreviewingSuggestions();
+        IContextService contextService = PlatformUI.getWorkbench()
+                .getService(IContextService.class);
+        var activeContexts = contextService.getActiveContextIds();
+        return activeContexts.contains(Constants.INLINE_SUGGESTIONS_CONTEXT_ID) && QInvocationSession.getInstance().isPreviewingSuggestions();
     }
 
     @Override

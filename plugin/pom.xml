@@ -122,6 +122,11 @@
             <version>5.14.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+		    <groupId>io.github.java-diff-utils</groupId>
+		    <artifactId>java-diff-utils</artifactId>
+		    <version>4.15</version>
+		</dependency>
     </dependencies>
 
     <build>
@@ -173,22 +178,23 @@
                             <includeScope>runtime</includeScope>
                             <stripVersion>true</stripVersion>
                             <outputDirectory>${project.build.directory}/dependency</outputDirectory>
-                           <includeGroupIds>
-                                 io.reactivex,
-                                 software.amazon.awssdk,
-                                 com.fasterxml.jackson,
-                                 com.nimbusds,jakarta.inject,
-                                 commons-codec,
-                                 org.apache.httpcomponents,
-                                 org.reactivestreams,
-                                 org.apache.maven,
-                                 org.bidib.com.github.markusbernhardt,
-                                 net.java.dev.jna,
-                                 org.ini4j,
-                                 org.javadelight,
-                                 org.slf4j,
-                                 org.mozilla
-                             </includeGroupIds>
+                            <includeGroupIds>
+                                io.reactivex,
+                                software.amazon.awssdk,
+                                com.fasterxml.jackson,
+                                com.nimbusds,jakarta.inject,
+                                commons-codec,
+                                org.apache.httpcomponents,
+                                org.reactivestreams,
+                                org.apache.maven,
+                                org.bidib.com.github.markusbernhardt,
+                                net.java.dev.jna,
+                                org.ini4j,
+                                org.javadelight,
+                                org.slf4j,
+                                org.mozilla,
+                                io.github.java-diff-utils
+                            </includeGroupIds>
                         </configuration>
                     </execution>
                     <execution>

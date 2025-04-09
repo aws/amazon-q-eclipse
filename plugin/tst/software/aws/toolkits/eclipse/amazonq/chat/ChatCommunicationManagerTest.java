@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -125,7 +126,7 @@ public final class ChatCommunicationManagerTest {
             "tabId",
             new ChatPrompt("prompt", "escaped prompt", "command"),
             new TextDocumentIdentifier("textDocument"),
-            cursorState
+            Arrays.asList(cursorState)
         );
 
         private final ChatItemAction chatItemAction = new ChatItemAction(

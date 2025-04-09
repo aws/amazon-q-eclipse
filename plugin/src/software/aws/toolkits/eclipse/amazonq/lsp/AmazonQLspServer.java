@@ -37,6 +37,9 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonRequest("aws/chat/sendChatPrompt")
     CompletableFuture<String> sendChatPrompt(EncryptedChatParams encryptedChatRequestParams);
 
+    @JsonRequest("aws/chat/sendInlineChatPrompt")
+    CompletableFuture<String> sendInlineChatPrompt(EncryptedChatParams encryptedChatRequestParams);
+
     @JsonRequest("aws/chat/sendChatQuickAction")
     CompletableFuture<String> sendQuickAction(EncryptedQuickActionParams encryptedQuickActionParams);
 

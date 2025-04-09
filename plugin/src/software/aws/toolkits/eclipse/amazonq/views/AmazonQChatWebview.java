@@ -102,7 +102,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void dispose() {
-        chatCommunicationManager.removeListener();
+        chatCommunicationManager.removeListener(this);
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
         }

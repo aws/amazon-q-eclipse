@@ -6,13 +6,20 @@ package software.aws.toolkits.eclipse.amazonq.handlers;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.contexts.IContextService;
+
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
 
 public class QRejectSuggestionsHandler extends AbstractHandler {
 
     @Override
     public final boolean isEnabled() {
-        return QInvocationSession.getInstance().isActive();
+        IContextService contextService = PlatformUI.getWorkbench()
+                .getService(IContextService.class);
+        var activeContexts = contextService.getActiveContextIds();
+        return activeContexts.contains(Constants.INLINE_SUGGESTIONS_CONTEXT_ID) && QInvocationSession.getInstance().isActive();
     }
 
     @Override

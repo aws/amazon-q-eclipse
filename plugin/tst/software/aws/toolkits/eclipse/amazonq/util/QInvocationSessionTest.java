@@ -5,6 +5,8 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -29,11 +32,13 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -59,6 +64,8 @@ public class QInvocationSessionTest {
     private static final ITextEditor MOCK_EDITOR = mock(ITextEditor.class);
     private static final InlineCompletionParams POTENT_PARAM = mock(InlineCompletionParams.class, RETURNS_DEEP_STUBS);
     private static final InlineCompletionParams IMPOTENT_PARAM = mock(InlineCompletionParams.class, RETURNS_DEEP_STUBS);
+    private static IContextService mockContextService;
+    private static IContextActivation mockContextActivation;
 
     private static InlineCompletionResponse potentResponse;
     private static InlineCompletionResponse impotentResponse;
@@ -84,6 +91,15 @@ public class QInvocationSessionTest {
         platformUIMockStatic.when(PlatformUI::getWorkbench).thenReturn(wbMock);
 
         editorUtilsMock = mockQEclipseEditorUtils();
+
+        mockContextService = mock(IContextService.class);
+        mockContextActivation = mock(IContextActivation.class);
+        when(wbMock.getService(IContextService.class)).thenReturn(mockContextService);
+        when(mockContextService.activateContext(anyString())).thenReturn(mockContextActivation);
+        doNothing().when(mockContextService).deactivateContext(mockContextActivation);
+
+        Set<String> activeContexts = Set.of();
+        when(mockContextService.getActiveContextIds()).thenReturn(activeContexts);
 
         activatorMockStatic = mockStatic(Activator.class);
         DefaultLoginService loginSerivceMock = mock(DefaultLoginService.class, RETURNS_DEEP_STUBS);
@@ -147,6 +163,20 @@ public class QInvocationSessionTest {
         assertTrue(isFirstStart);
         isFirstStart = session.start(MOCK_EDITOR);
         assertTrue(!isFirstStart);
+    }
+
+    @Test
+    void testSessionStartWhileInlineChatIsActive() throws ExecutionException {
+        Set<String> activeContexts = Set.of(Constants.INLINE_CHAT_CONTEXT_ID);
+        when(mockContextService.getActiveContextIds()).thenReturn(activeContexts);
+        LoggingService loggingServiceMock = mock(LoggingService.class);
+        activatorMockStatic.when(Activator::getLogger).thenReturn(loggingServiceMock);
+
+        QInvocationSession session = QInvocationSession.getInstance();
+
+        boolean result = session.start(MOCK_EDITOR);
+        assertFalse(result);
+        verify(loggingServiceMock).warn("Attempted to start inline session while inline chat is processing.");
     }
 
     @Test

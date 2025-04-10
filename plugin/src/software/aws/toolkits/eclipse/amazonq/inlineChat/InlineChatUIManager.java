@@ -106,7 +106,7 @@ public final class InlineChatUIManager {
                             int visualOffset;
                             if (viewer instanceof ITextViewerExtension5) {
                                 visualOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
-                            } else if (viewer instanceof ProjectionViewer){
+                            } else if (viewer instanceof ProjectionViewer) {
                                 visualOffset = ((ProjectionViewer) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
                             } else {
                                 visualOffset = task.getSelectionOffset();
@@ -220,7 +220,7 @@ public final class InlineChatUIManager {
             try {
                 if (viewer instanceof ITextViewerExtension5) {
                     latestOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
-                } else if (viewer instanceof ProjectionViewer){
+                } else if (viewer instanceof ProjectionViewer) {
                     latestOffset = ((ProjectionViewer) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
                 } else {
                     latestOffset = task.getSelectionOffset();

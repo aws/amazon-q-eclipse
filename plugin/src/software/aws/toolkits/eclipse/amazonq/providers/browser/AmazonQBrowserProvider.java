@@ -20,16 +20,12 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 
 public final class AmazonQBrowserProvider {
-    public static final AmazonQBrowserProvider INSTANCE;
+    private static AmazonQBrowserProvider instance;
 
     private boolean hasWebViewDependency = false;
     private PluginPlatform pluginPlatform;
     private Map<String, Browser> browserById;
     private Map<String, Composite> compositeById;
-
-    static {
-        INSTANCE = AmazonQBrowserProvider.builder().build();
-    }
 
     // Test constructor that accepts a platform
     private AmazonQBrowserProvider(final Builder builder) {
@@ -42,8 +38,11 @@ public final class AmazonQBrowserProvider {
         return new Builder();
     }
 
-    public static AmazonQBrowserProvider getInstance() {
-        return INSTANCE;
+    public static synchronized AmazonQBrowserProvider getInstance() {
+        if (instance == null) {
+            instance = AmazonQBrowserProvider.builder().build();
+        }
+        return instance;
     }
 
     /*

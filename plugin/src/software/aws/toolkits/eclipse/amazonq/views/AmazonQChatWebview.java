@@ -10,7 +10,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
-import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.views.actions.AmazonQViewCommonActions;
@@ -20,15 +19,12 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
     private AmazonQViewCommonActions amazonQCommonActions;
-    private final ChatStateManager chatStateManager;
     private final ChatCommunicationManager chatCommunicationManager;
     private Browser browser;
-    private volatile boolean canDisposeState = false;
     private WebViewAssetProvider webViewAssetProvider;
 
     public AmazonQChatWebview() {
         super();
-        chatStateManager = ChatStateManager.getInstance();
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         webViewAssetProvider = new ChatWebViewAssetProvider();
         webViewAssetProvider.initialize();
@@ -37,11 +33,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     @Override
     public final Composite setupView(final Composite parent) {
         setupParentBackground(parent);
-        browser = chatStateManager.getBrowser(parent);
+        browser = getBrowser(parent);
         // attempt to use existing browser with chat history if present, else create a
         // new one
         if (browser == null || browser.isDisposed()) {
-            canDisposeState = false;
             var result = setupBrowser(parent);
             // if setup of amazon q view fails due to missing webview dependency, switch to
             // that view and don't setup rest of the content
@@ -49,8 +44,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                 return parent;
             }
 
-            browser = getAndUpdateStateManager();
-
+            browser = getBrowser();
             browser.setVisible(false);
             browser.addProgressListener(new ProgressAdapter() {
                 @Override
@@ -64,13 +58,11 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             });
 
             webViewAssetProvider.injectAssets(browser);
-        } else {
-            updateBrowser(browser);
         }
 
         super.setupView(parent);
 
-        parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
+        parent.addDisposeListener(e -> this.preserveBrowser());
         amazonQCommonActions = getAmazonQCommonActions();
 
         chatCommunicationManager.setChatUiRequestListener(this);
@@ -82,12 +74,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         return parent;
     }
 
-    private Browser getAndUpdateStateManager() {
-        var browser = getBrowser();
-        chatStateManager.updateBrowser(browser);
-        return browser;
-    }
-
     @Override
     public final void onSendToChatUi(final String message) {
         String script = "window.postMessage(" + message + ");";
@@ -96,16 +82,9 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         });
     }
 
-    public final void disposeBrowserState() {
-        canDisposeState = true;
-    }
-
     @Override
     public final void dispose() {
-        chatCommunicationManager.removeListener(this);
-        if (canDisposeState) {
-            ChatStateManager.getInstance().dispose();
-        }
+        chatCommunicationManager.removeListener();
         super.dispose();
     }
 }

@@ -8,7 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
-import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
+import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
+import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
@@ -50,7 +51,9 @@ public final class DefaultLoginService implements LoginService {
             AuthState authState = authStateManager.getAuthState();
             if (!authState.isLoggedOut()) {
                 boolean loginOnInvalidToken = false;
-                reAuthenticate(loginOnInvalidToken);
+                reAuthenticate(loginOnInvalidToken).thenRun(() -> {
+                    QDeveloperProfileUtil.getInstance().initialize();
+                });
             }
         }
     }
@@ -94,6 +97,7 @@ public final class DefaultLoginService implements LoginService {
         Activator.getLogger().info("Attempting to log out...");
 
         InvalidateSsoTokenParams params = new InvalidateSsoTokenParams(authState.ssoTokenId());
+        QDeveloperProfileUtil.getInstance().clearSelectedProfile();
 
         return authTokenService.invalidateSsoToken(params)
                 .thenRun(() -> {
@@ -113,7 +117,7 @@ public final class DefaultLoginService implements LoginService {
     public CompletableFuture<Void> expire() {
         Activator.getLogger().info("Attempting to expire credentials...");
 
-        return authCredentialsService.updateTokenCredentials(new UpdateCredentialsPayload(null, false))
+        return authCredentialsService.updateTokenCredentials(new UpdateCredentialsPayload(null, null, false))
                 .thenRun(() -> {
                     authStateManager.toExpired();
                     Activator.getLogger().info("Successfully expired credentials");
@@ -156,19 +160,23 @@ public final class DefaultLoginService implements LoginService {
         return authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)
                 .thenApply(ssoToken -> {
                     ssoTokenId.set(ssoToken.ssoToken().id());
+                    Activator.getLogger().info(ssoToken.updateCredentialsParams().toString());
                     return ssoToken;
                 })
                 .thenAccept(ssoToken -> {
-                    authCredentialsService.updateTokenCredentials(ssoToken.updateCredentialsParams());
+                    authCredentialsService.updateTokenCredentials(loginType == LoginType.IAM_IDENTITY_CENTER
+                            ? ssoToken.getdUpdateCredentialsPayloadHydratedWithStartUrl(
+                                    loginParams.getLoginIdcParams().getUrl())
+                            : ssoToken.updateCredentialsParams());
                 })
                 .thenRun(() -> {
                     authStateManager.toLoggedIn(loginType, loginParams, ssoTokenId.get());
                     Activator.getLogger().info("Successfully logged in");
+                }).thenRun(() -> {
                     CustomizationUtil.triggerChangeConfigurationNotification();
-              })
-              .exceptionally(throwable -> {
-                  throw new AmazonQPluginException("Failed to process log in", throwable);
-              });
+                }).exceptionally(throwable -> {
+                    throw new AmazonQPluginException("Failed to process log in", throwable);
+                });
     }
 
     public static class Builder {

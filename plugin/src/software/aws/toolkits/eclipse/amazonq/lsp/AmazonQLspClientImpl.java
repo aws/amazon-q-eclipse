@@ -35,8 +35,8 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
-import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -72,6 +72,12 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 qConfig.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, Objects.nonNull(storedCustomization) ? storedCustomization.getArn() : null);
                 qConfig.put(Constants.LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY, false);
                 qConfig.put(Constants.LSP_OPT_OUT_TELEMETRY_CONFIGURATION_KEY, !DefaultTelemetryService.telemetryEnabled());
+                Map<String, Object> projectContextConfig = new HashMap<>();
+                projectContextConfig.put("enableLocalIndexing", true);
+                Map<String, Object> localIndexing = new HashMap<>();
+                localIndexing.put("ignoreFilePatterns", List.of("src"));
+                projectContextConfig.put("localIndexing", localIndexing);
+                qConfig.put("projectContext", projectContextConfig);
                 output.add(qConfig);
             } else if (item.getSection().equals(Constants.LSP_CW_CONFIGURATION_KEY)) {
                 Map<String, Boolean> cwConfig = new HashMap<>();

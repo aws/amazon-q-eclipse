@@ -213,7 +213,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     const init = () => {
                         waitForFunction('ideCommand')
                             .then(() => {
-                                amazonQChat.createChat({
+                                    amazonQChat.createChat({
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
@@ -222,8 +222,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
                                 });
-                            })
-                            .catch(error => console.error('Error initializing chat:', error));
+                            });
                     }
 
                     window.addEventListener('load', init);

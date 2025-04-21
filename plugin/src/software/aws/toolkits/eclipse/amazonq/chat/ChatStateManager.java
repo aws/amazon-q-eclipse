@@ -33,16 +33,6 @@ public final class ChatStateManager {
         return browser;
     }
 
-    public synchronized void updateBrowser(final Browser browser) {
-        // resetting browser indicates that no state is preserved
-        hasPreservedState = false;
-        this.browser = browser;
-    }
-
-    public synchronized boolean hasPreservedState() {
-        return hasPreservedState;
-    }
-
     public void preserveBrowser() {
         if (browser != null && !browser.isDisposed()) {
             if (dummyParent == null || dummyParent.isDisposed()) {

@@ -4,8 +4,7 @@
 <!-- This Vue File is the login webview of AWS Toolkit and Amazon Q.-->
 <template>
     <div v-bind:class="[disabled ? 'disabled-form' : '']" class="auth-container centered-with-max-width">
-        <button v-if="(stage !== 'START' || cancellable) && stage !== 'AUTHENTICATING'" class="back-button" @click="handleBackButtonClick" tabindex="-1">
-            <svg width="24" height="24" viewBox="0 -3 13 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button v-if="!['START', 'AUTHENTICATING', 'PROFILE_SELECT'].includes(stage) || cancellable" class="back-button" @click="handleBackButtonClick" tabindex="-1">            <svg width="24" height="24" viewBox="0 -3 13 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M4.98667 0.0933332L5.73333 0.786666L1.57333 4.94667H12.0267V5.96H1.57333L5.73333 10.0667L4.98667 10.8133L0.0266666 5.8V5.10667L4.98667 0.0933332Z"
                     fill="#21A2FF"
@@ -17,6 +16,7 @@
         <SsoLoginForm :app="app" v-if="stage === 'SSO_FORM'" @backToMenu="handleBackButtonClick" @stageChanged="mutateStage" @login="login"/>
         <AwsProfileForm v-if="stage === 'AWS_PROFILE'" @backToMenu="handleBackButtonClick" @stageChanged="mutateStage" @login="login"/>
         <Authenticating v-if="stage === 'AUTHENTICATING'" :selected-login-option="this.selectedLoginOption" @cancel="handleCancelButton"/>
+        <ProfileSelection v-if="stage === 'PROFILE_SELECT' && app === 'AMAZONQ'" @stageChanged="mutateStage"/>
 
         <template v-if="stage === 'CONNECTED'"></template>
     </div>
@@ -27,7 +27,23 @@ import SsoLoginForm from "./ssoLoginForm.vue";
 import LoginOptions from "./loginOptions.vue";
 import AwsProfileForm from "./awsProfileForm.vue";
 import Authenticating from "./authenticating.vue";
-import {BuilderId, ExistConnection, Feature, IdC, LoginOption, LongLivedIAM, Stage} from "../../model";
+import {BuilderId, ExistConnection, Feature, IdC, LoginIdentifier, LoginOption, LongLivedIAM, Stage} from "../../model";
+import ProfileSelection from "@/q-ui/components/profileSelection.vue";
+
+const authUiClickOptionMap = {
+    [LoginIdentifier.BUILDER_ID]: 'auth_builderIdOption',
+    [LoginIdentifier.ENTERPRISE_SSO]: 'auth_idcOption',
+    [LoginIdentifier.IAM_CREDENTIAL]: 'auth_credentialsOption',
+    [LoginIdentifier.EXISTING_LOGINS]: 'auth_existingAuthOption',
+    [LoginIdentifier.NONE]: "Unknown"
+}
+
+function getUiClickEvent(loginIdentifier: LoginIdentifier) {
+    if(!Object.keys(authUiClickOptionMap).includes(loginIdentifier)) {
+        return "Unknown"
+    }
+    return (authUiClickOptionMap)[loginIdentifier]
+}
 
 export default defineComponent({
     name: 'Login',
@@ -35,7 +51,8 @@ export default defineComponent({
         SsoLoginForm,
         LoginOptions,
         AwsProfileForm,
-        Authenticating
+        Authenticating,
+        ProfileSelection
     },
     props: {
         disabled: {
@@ -74,11 +91,9 @@ export default defineComponent({
             if (this.cancellable) {
                 window.ideApi.postMessage({command: 'toggleBrowser'})
             }
-            window.telemetryApi.postClickEvent("backButton")
             this.mutateStage('START')
         },
         handleCancelButton() {
-            window.telemetryApi.postClickEvent("cancelButton")
             window.ideClient.cancelLogin()
             this.mutateStage('START')
         },
@@ -88,12 +103,12 @@ export default defineComponent({
             if (type instanceof IdC) {
                 window.ideApi.postMessage({
                     command: 'loginIdC',
-                    params: {
-                        url: type.url,
-                        region: type.region,
-                        feature: this.feature
-                    }
-                })
+					params: {
+	                    url: type.url,
+	                    region: type.region,
+	                    feature: this.feature
+                	}
+				})
             } else if (type instanceof BuilderId) {
                 window.ideApi.postMessage({command: 'loginBuilderId'})
             } else if (type instanceof LongLivedIAM) {

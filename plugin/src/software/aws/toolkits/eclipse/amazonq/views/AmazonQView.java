@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.UUID;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.events.FocusEvent;
@@ -10,7 +12,6 @@ import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IViewSite;
 
 import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
@@ -19,15 +20,18 @@ public abstract class AmazonQView extends BaseAmazonQView {
 
     private AmazonQBrowserProvider browserProvider;
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
-
-    private IViewSite viewSite;
+    private final String componentId = UUID.randomUUID().toString();
 
     protected AmazonQView() {
-        this.browserProvider = new AmazonQBrowserProvider();
+        this.browserProvider = AmazonQBrowserProvider.getInstance();
     }
 
     public final Browser getBrowser() {
-        return browserProvider.getBrowser();
+        return browserProvider.getBrowser(componentId);
+    }
+
+    public final Browser getBrowser(final Composite parent) {
+        return browserProvider.getBrowser(parent, componentId);
     }
 
     protected final void setupParentBackground(final Composite parent) {
@@ -38,11 +42,16 @@ public abstract class AmazonQView extends BaseAmazonQView {
     }
 
     protected final boolean setupBrowser(final Composite parent) {
-        return browserProvider.setupBrowser(parent);
+        return browserProvider.setupBrowser(parent, componentId, false);
     }
 
-    protected final void updateBrowser(final Browser browser) {
-        browserProvider.updateBrowser(browser);
+
+    protected final void preserveBrowser() {
+        browserProvider.preserveBrowser(componentId);
+    }
+
+    public final void disposeBrowser() {
+        browserProvider.disposeState(componentId);
     }
 
     /**
@@ -63,15 +72,11 @@ public abstract class AmazonQView extends BaseAmazonQView {
         Browser browser = getBrowser();
 
         if (browser != null && !browser.isDisposed()) {
-            setupBrowserBackground(parent);
+            var bgColor = parent.getBackground();
+            browser.setBackground(bgColor);
         }
 
         return parent;
-    }
-
-    private void setupBrowserBackground(final Composite parent) {
-        var bgColor = parent.getBackground();
-        getBrowser().setBackground(bgColor);
     }
 
     public final void addFocusListener(final Composite parent, final Browser browser) {

@@ -3,23 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.model;
 
-public class Customization {
-    private final String arn;
-    private final String name;
+public class Customization extends Configuration {
     private final String description;
 
     public Customization(final String arn, final String name, final String description) {
-        this.arn = arn;
-        this.name = name;
+        super(arn, name);
         this.description = description;
-    }
-
-    public final String getArn() {
-        return this.arn;
-    }
-
-    public final String getName() {
-        return this.name;
     }
 
     public final String getDescription() {

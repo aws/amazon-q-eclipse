@@ -15,7 +15,7 @@ public final class LspConstants {
         // Prevent instantiation
     }
 
-    public static final String CW_MANIFEST_URL = "https://aws-toolkit-language-servers.amazonaws.com/codewhisperer/0/manifest.json";
+    public static final String CW_MANIFEST_URL = "https://aws-language-servers-gamma.amazonaws.com/codewhisperer/0/manifest.json";
     public static final int MANIFEST_MAJOR_VERSION = 0;
 
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
@@ -32,7 +32,7 @@ public final class LspConstants {
 
     private static VersionRange createVersionRange() {
         try {
-            return VersionRange.createFromVersionSpec("[3.1.2, 3.10.0)");
+            return VersionRange.createFromVersionSpec("[3.1.100, 3.3.0)");
         } catch (InvalidVersionSpecificationException e) {
             throw new AmazonQPluginException("Failed to parse LSP supported version range", e);
         }

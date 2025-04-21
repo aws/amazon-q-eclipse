@@ -1,7 +1,7 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package software.aws.toolkits.eclipse.amazonq.customization;
+package software.aws.toolkits.eclipse.amazonq.configuration.customization;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +14,8 @@ import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
@@ -25,9 +27,11 @@ public final class CustomizationUtil {
 
     public static void triggerChangeConfigurationNotification() {
         try {
-            Activator.getLogger().info("Triggering configuration pull from Amazon Q LSP server");
+            Activator.getLogger().info("Triggering configuration pull from Amazon Q LSP server"); // Todo: Update
             Activator.getLspProvider().getAmazonQServer()
-            .thenAccept(server -> server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams()));
+                    .thenAccept(server -> server.getWorkspaceService()
+                            .didChangeConfiguration(new DidChangeConfigurationParams()))
+                    .get();
         } catch (Exception e) {
             Activator.getLogger().error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
             throw new AmazonQPluginException(e);
@@ -35,12 +39,16 @@ public final class CustomizationUtil {
     }
 
     public static CompletableFuture<List<Customization>> listCustomizations() {
-        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
-        params.setSection("aws.q");
+        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams(
+                ExpectedResponseType.CUSTOMIZATION);
         return Activator.getLspProvider().getAmazonQServer()
-                .thenCompose(server -> server.getConfigurationFromServer(params))
+                .thenCompose(server -> {
+                    CompletableFuture<LspServerConfigurations<Customization>> config = server
+                            .getConfigurationFromServer(params);
+                    return config;
+                })
                 .thenApply(configurations -> Optional.ofNullable(configurations)
-                        .map(config -> config.getCustomizations().stream()
+                        .map(config -> config.getConfigurations().stream()
                             .filter(customization -> customization != null && StringUtils.isNotBlank(customization.getName()))
                             .collect(Collectors.toList()))
                         .orElse(Collections.emptyList()))

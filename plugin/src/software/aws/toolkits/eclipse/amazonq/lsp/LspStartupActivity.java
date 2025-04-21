@@ -46,6 +46,9 @@ public class LspStartupActivity implements IStartup {
                     startLspServer();
                     Display.getDefault().asyncExec(() -> {
                         AmazonQToolbarActions.getInstance();
+                        AmazonQBrowserProvider.getInstance().publishBrowserCompatibilityState();
+                        Activator.getEventBroker().post(QDeveloperProfileState.class,
+                                QDeveloperProfileState.NOT_APPLICABLE);
                     });
                     AmazonQBrowserProvider.getInstance().publishBrowserCompatibilityState();
                     Activator.getEventBroker().post(QDeveloperProfileState.class, QDeveloperProfileState.NOT_APPLICABLE);

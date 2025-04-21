@@ -20,10 +20,8 @@ public final class QConstants {
     public static final int Q_INLINE_HINT_TEXT_STYLE = SWT.ITALIC;
 
     public static final List<String> Q_SCOPES = new ArrayList<>(Arrays.asList(
-            "codewhisperer:conversations",
-            "codewhisperer:transformations",
-            "codewhisperer:taskassist",
-            "codewhisperer:completions",
-            "codewhisperer:analysis"
+            "codewhisperer_internal:conversations", "codewhisperer_internal:transformations",
+            "codewhisperer_internal:taskassist", "codewhisperer_internal:completions",
+            "codewhisperer_internal:analysis"
         ));
 }

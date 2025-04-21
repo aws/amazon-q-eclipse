@@ -191,7 +191,6 @@ public final class QDeveloperProfileUtil {
         Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> server.updateConfiguration(new UpdateConfigurationParams(section, settings)))
                 .thenRun(() -> {
-                    Activator.getLogger().info("Developer profile set");
                     showNotification(selectedDeveloperProfile.getName());
                     Activator.getEventBroker().post(QDeveloperProfileState.class, QDeveloperProfileState.SELECTED);
                     if (profileSelectionTask != null) {

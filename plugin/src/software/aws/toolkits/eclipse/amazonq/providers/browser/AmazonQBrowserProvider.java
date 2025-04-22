@@ -146,7 +146,7 @@ public final class AmazonQBrowserProvider {
         }
     }
 
-    public synchronized void disposeState(final String componentId) {
+    public synchronized void disposeBrowser(final String componentId) {
         var browser = getBrowser(componentId);
 
         if (browser != null && !browser.isDisposed()) {
@@ -178,6 +178,16 @@ public final class AmazonQBrowserProvider {
 
             setupBrowser(parent, "initBrowser", true);
             parent.dispose();
+        });
+    }
+
+    public void dispose() {
+        browserById.forEach((key, value) -> {
+            disposeBrowser(key);
+        });
+
+        compositeById.forEach((key, value) -> {
+            disposeDummyParent(key);
         });
     }
 

@@ -51,7 +51,7 @@ public abstract class AmazonQView extends BaseAmazonQView {
     }
 
     public final void disposeBrowser() {
-        browserProvider.disposeState(componentId);
+        browserProvider.disposeBrowser(componentId);
     }
 
     /**

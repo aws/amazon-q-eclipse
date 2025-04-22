@@ -88,7 +88,6 @@ public final class QDeveloperProfileUtil {
     public synchronized List<QDeveloperProfile> queryForDeveloperProfiles(final boolean tryApplyCachedProfile) {
         CompletableFuture<List<QDeveloperProfile>> profilesFuture = Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> {
-                    Activator.getLogger().info("Querying profiles");
                     GetConfigurationFromServerParams params = new GetConfigurationFromServerParams(
                             ExpectedResponseType.Q_DEVELOPER_PROFILE);
                     CompletableFuture<LspServerConfigurations<QDeveloperProfile>> response = server
@@ -124,7 +123,6 @@ public final class QDeveloperProfileUtil {
 
     private List<QDeveloperProfile> handleSelectedProfile(final List<QDeveloperProfile> profiles,
             final boolean tryApplyCachedProfile) {
-        Activator.getLogger().info("Handling profiles");
         boolean isProfileSet = false;
         if (profiles.size() <= 1) {
             isProfileSet = handleSingleOrNoProfile(profiles, tryApplyCachedProfile);
@@ -141,7 +139,6 @@ public final class QDeveloperProfileUtil {
     private boolean handleSingleOrNoProfile(final List<QDeveloperProfile> profiles,
             final boolean tryApplyCachedProfile) {
         if (!profiles.isEmpty() && tryApplyCachedProfile) {
-            Activator.getLogger().info("Setting developer profile");
             setDeveloperProfile(profiles.get(0));
             return true;
         }
@@ -164,7 +161,6 @@ public final class QDeveloperProfileUtil {
 
     private List<QDeveloperProfile> processConfigurations(
             final LspServerConfigurations<QDeveloperProfile> configurations) {
-        Activator.getLogger().info("Processing configurations");
         return Optional.ofNullable(configurations).map(
                 config -> config.getConfigurations().stream().filter(this::isValidProfile).collect(Collectors.toList()))
                 .orElse(Collections.emptyList());

@@ -327,6 +327,30 @@ public final class DefaultLoginServiceTest {
     }
 
     @Test
+    void processLoginBuilderIdWithLoginOnInvalidTokenSuccess() throws Exception {
+        LoginType loginType = LoginType.BUILDER_ID;
+        LoginIdcParams idcParams = createLoginIdcParams("test-region", "test-url");
+        LoginParams loginParams = createLoginParams(idcParams);
+        AuthState authState = createAuthState(AuthStateType.LOGGED_IN, LoginType.BUILDER_ID, loginParams,
+                Constants.AWS_BUILDER_ID_URL, "test-sso-token-id");
+
+        boolean loginOnInvalidToken = false;
+
+        when(mockedAuthTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken))
+                .thenReturn(CompletableFuture.completedFuture(expectedSsoToken));
+        when(mockedAuthCredentialsService.updateTokenCredentials(expectedSsoToken.updateCredentialsParams()))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        invokeProcessLogin(loginType, loginParams, loginOnInvalidToken);
+
+        mockedAuthUtil.verify(() -> AuthUtil.validateLoginParameters(loginType, loginParams));
+        verify(mockedAuthTokenService).getSsoToken(loginType, loginParams, loginOnInvalidToken);
+        verify(mockedAuthCredentialsService).updateTokenCredentials(expectedSsoToken.updateCredentialsParams());
+        verify(mockAuthStateManager).toLoggedIn(loginType, loginParams, expectedSsoToken.ssoToken().id());
+        verify(mockLoggingService).info("Successfully logged in");
+    }
+
+    @Test
     void processLoginBuilderIdNoLoginOnInvalidTokenSuccess() throws Exception {
         LoginType loginType = LoginType.BUILDER_ID;
         LoginIdcParams idcParams = createLoginIdcParams("test-region", "test-url");

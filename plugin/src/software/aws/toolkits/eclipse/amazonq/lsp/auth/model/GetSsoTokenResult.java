@@ -9,7 +9,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 
 public record GetSsoTokenResult(SsoToken ssoToken, UpdateCredentialsPayload updateCredentialsParams) {
 
-    public UpdateCredentialsPayload getdUpdateCredentialsPayloadHydratedWithStartUrl(final String startUrl) {
+    public UpdateCredentialsPayload getUpdateCredentialsPayloadHydratedWithStartUrl(final String startUrl) {
         SsoProfileData ssoProfileData = new SsoProfileData();
         ssoProfileData.setStartUrl(startUrl);
         ConnectionMetadata metadata = new ConnectionMetadata();

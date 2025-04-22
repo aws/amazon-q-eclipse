@@ -165,7 +165,7 @@ public final class DefaultLoginService implements LoginService {
                 })
                 .thenAccept(ssoToken -> {
                     authCredentialsService.updateTokenCredentials(loginType == LoginType.IAM_IDENTITY_CENTER
-                            ? ssoToken.getdUpdateCredentialsPayloadHydratedWithStartUrl(
+                            ? ssoToken.getUpdateCredentialsPayloadHydratedWithStartUrl(
                                     loginParams.getLoginIdcParams().getUrl())
                             : ssoToken.updateCredentialsParams());
                 })

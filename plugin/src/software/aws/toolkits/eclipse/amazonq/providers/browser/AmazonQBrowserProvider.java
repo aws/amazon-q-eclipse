@@ -90,6 +90,7 @@ public final class AmazonQBrowserProvider {
 
         GridData layoutData = new GridData(GridData.FILL_BOTH);
         browser.setLayoutData(layoutData);
+
         checkWebViewCompatibility(browser.getBrowserType(), publishUnconditionally);
 
         // only set the browser if compatible webview browser can be found for the
@@ -108,7 +109,7 @@ public final class AmazonQBrowserProvider {
         return compositeById.get(componentId);
     }
 
-    public synchronized Browser getBrowser(final Composite parent, final String componentId) {
+    public synchronized Browser attachBrowser(final Composite parent, final String componentId) {
         var browser = getBrowser(componentId);
 
         // if browser is null or disposed, return null

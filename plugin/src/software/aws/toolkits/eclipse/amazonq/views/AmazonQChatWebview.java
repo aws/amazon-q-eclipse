@@ -33,7 +33,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     @Override
     public final Composite setupView(final Composite parent) {
         setupParentBackground(parent);
-        browser = getBrowser(parent);
+        browser = attachBrowser(parent);
         // attempt to use existing browser with chat history if present, else create a
         // new one
         if (browser == null || browser.isDisposed()) {

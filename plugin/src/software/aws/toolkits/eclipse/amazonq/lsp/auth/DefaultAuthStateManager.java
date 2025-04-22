@@ -69,7 +69,6 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         }
 
         updateState(AuthStateType.LOGGED_IN, loginType, loginParams, ssoTokenId);
-
     }
 
     @Override

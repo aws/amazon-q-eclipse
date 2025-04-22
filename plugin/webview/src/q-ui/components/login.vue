@@ -91,9 +91,11 @@ export default defineComponent({
             if (this.cancellable) {
                 window.ideApi.postMessage({command: 'toggleBrowser'})
             }
+			window.telemetryApi.postClickEvent("backButton")
             this.mutateStage('START')
         },
         handleCancelButton() {
+			window.telemetryApi.postClickEvent("cancelButton")
             window.ideClient.cancelLogin()
             this.mutateStage('START')
         },

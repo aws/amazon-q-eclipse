@@ -160,7 +160,6 @@ public final class DefaultLoginService implements LoginService {
         return authTokenService.getSsoToken(loginType, loginParams, loginOnInvalidToken)
                 .thenApply(ssoToken -> {
                     ssoTokenId.set(ssoToken.ssoToken().id());
-                    Activator.getLogger().info(ssoToken.updateCredentialsParams().toString());
                     return ssoToken;
                 })
                 .thenAccept(ssoToken -> {

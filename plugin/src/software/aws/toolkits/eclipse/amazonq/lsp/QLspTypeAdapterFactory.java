@@ -22,7 +22,6 @@ import com.google.gson.stream.JsonWriter;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.views.model.Configuration;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.views.model.QDeveloperProfile;
@@ -44,7 +43,6 @@ public class QLspTypeAdapterFactory implements TypeAdapterFactory {
                 @Override
                 public LspServerConfigurations<Configuration> read(final JsonReader in) throws IOException {
                     JsonElement rootElement = JsonParser.parseReader(in);
-                    Activator.getLogger().info("Raw LSP message: " + rootElement);
 
                     List<Configuration> customizations = new ArrayList<>();
 

@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.FileRename;
 import org.eclipse.lsp4j.RenameFilesParams;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+<<<<<<< HEAD
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
@@ -34,18 +35,36 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
                     instance = new WorkspaceChangeListener();
                 }
             }
+=======
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+
+public class WorkspaceChangeListener implements IResourceChangeListener {
+
+    private static WorkspaceChangeListener instance;
+
+    private WorkspaceChangeListener() { }
+
+    public static synchronized WorkspaceChangeListener getInstance() {
+        if (instance == null) {
+            instance = new WorkspaceChangeListener();
+>>>>>>> 3a8acfb (PoC changes for chat context)
         }
         return instance;
     }
 
     public void start() {
         ResourcesPlugin.getWorkspace().addResourceChangeListener(
+<<<<<<< HEAD
             this,
+=======
+            this, 
+>>>>>>> 3a8acfb (PoC changes for chat context)
             IResourceChangeEvent.POST_CHANGE
         );
     }
 
     @Override
+<<<<<<< HEAD
     public void resourceChanged(final IResourceChangeEvent event) {
         ThreadingUtils.executeAsyncTask(() -> {
             boolean indexingEnabled = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.WORKSPACE_INDEX);
@@ -91,6 +110,45 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
                 Activator.getLogger().error("Invalid resource path", e);
             }
 
+=======
+    public void resourceChanged(IResourceChangeEvent event) {
+        IResourceDelta delta = event.getDelta();
+
+        List<FileCreate> createdFiles = new ArrayList<>();
+        List<FileDelete> deletedFiles = new ArrayList<>();
+        List<FileRename> renamedFiles = new ArrayList<>();
+
+        try {
+            delta.accept(delta1 -> {
+                if (delta1.getResource().getType() != IResource.FILE) {
+                    return true;
+                }
+
+                URI uri = delta1.getResource().getLocationURI();
+                String uriString = uri.toString();
+
+                switch (delta1.getKind()) {
+                    case IResourceDelta.ADDED:
+                        createdFiles.add(new FileCreate(uriString));
+                        break;
+                    case IResourceDelta.REMOVED:
+                        deletedFiles.add(new FileDelete(uriString));
+                        break;
+                    case IResourceDelta.CHANGED:
+                        if ((delta1.getFlags() & IResourceDelta.MOVED_FROM) != 0) {
+                            URI oldUri = delta1.getMovedFromPath().toFile().toURI();
+                            renamedFiles.add(new FileRename(oldUri.toString(), uriString));
+                        }
+                        break;
+                }
+                return true;
+            });
+        } catch (CoreException e) {
+            Activator.getLogger().error("Unable to process file change events: " + e.getMessage());
+        }
+
+        ThreadingUtils.executeAsyncTask(() -> {
+>>>>>>> 3a8acfb (PoC changes for chat context)
             try {
                 if (!createdFiles.isEmpty()) {
                     CreateFilesParams createParams = new CreateFilesParams(createdFiles);
@@ -116,4 +174,8 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
         ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 3a8acfb (PoC changes for chat context)

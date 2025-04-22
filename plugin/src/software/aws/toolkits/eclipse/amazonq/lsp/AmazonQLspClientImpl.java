@@ -28,6 +28,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ContextCommandParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -179,4 +180,12 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         }
     }
 
+<<<<<<< HEAD
+=======
+    @Override
+    public void sendContextCommands(final ContextCommandParams params) {
+        System.out.println("foo");
+        
+    }
+>>>>>>> 3a8acfb (final PoC changes for chat context)
 }

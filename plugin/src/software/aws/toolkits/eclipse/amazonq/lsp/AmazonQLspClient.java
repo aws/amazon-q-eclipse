@@ -11,6 +11,7 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ContextCommandParams;
 
 public interface AmazonQLspClient extends LanguageClient {
 
@@ -19,5 +20,8 @@ public interface AmazonQLspClient extends LanguageClient {
 
     @JsonNotification("aws/identity/ssoTokenChanged")
     void ssoTokenChanged(SsoTokenChangedParams params);
+    
+    @JsonNotification("aws/chat/sendContextCommands")
+    void sendContextCommands(ContextCommandParams params);
 
 }

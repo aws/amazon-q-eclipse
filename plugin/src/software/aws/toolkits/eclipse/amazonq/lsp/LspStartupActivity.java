@@ -14,7 +14,6 @@ import org.eclipse.lsp4e.LanguageServiceAccessor;
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IStartup;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
@@ -38,66 +37,79 @@ public class LspStartupActivity implements IStartup {
 
     @Override
     public final void earlyStartup() {
-        Job lspStartupJob = new Job("Start language servers") {
+        Job startupJob = new Job("Amazon Q Startup") {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
-                    var lsRegistry = LanguageServersRegistry.getInstance();
-                    var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
-                    LanguageServiceAccessor.startLanguageServer(qServerDefinition);
+                    startLspServer();
+                    Display.getDefault().asyncExec(() -> {
+                        AmazonQToolbarActions.getInstance();
+                    });
+                    Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(server -> {
+                        try {
+                            schedulePostStartupJobs();
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Failed to execute post-startup activities", e);
+                        }
+                    }, ThreadingUtils.getWorkerPool());
+                    return Status.OK_STATUS;
                 } catch (Exception e) {
-                    return new Status(IStatus.ERROR, "amazonq", "Failed to start language server", e);
+                    return new Status(IStatus.ERROR, "amazonq", "Failed to complete startup activities", e);
+                }
+            }
+        };
+
+        startupJob.setPriority(Job.DECORATE);
+        startupJob.schedule();
+    }
+
+    private void startLspServer() {
+        var lsRegistry = LanguageServersRegistry.getInstance();
+        var qServerDefinition = lsRegistry.getDefinition("software.aws.toolkits.eclipse.amazonq.qlanguageserver");
+        LanguageServiceAccessor.startLanguageServer(qServerDefinition);
+    }
+
+    private void schedulePostStartupJobs() {
+        ThreadingUtils.executeAsyncTask(() -> {
+            if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
+                Display.getDefault().asyncExec(() -> launchWebview());
+            }
+            Display.getDefault().asyncExec(() -> attachAutoTriggerListenersIfApplicable());
+            checkForUpdates();
+        });
+    }
+
+    private void checkForUpdates() {
+        Job updateCheckJob = new Job("Check for updates") {
+            @Override
+            protected IStatus run(final IProgressMonitor monitor) {
+                try {
+                    UpdateUtils.getInstance().checkForUpdate();
+                } catch (Exception e) {
+                    return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
                 }
                 return Status.OK_STATUS;
             }
         };
-        lspStartupJob.setPriority(Job.INTERACTIVE);
-        lspStartupJob.schedule();
-        AmazonQToolbarActions.getInstance();
-        Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(lsp -> {
-            if (Activator.getPluginStore().get(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY) == null) {
-                this.launchWebview();
-            }
-            Display.getDefault().asyncExec(() -> attachAutoTriggerListenersIfApplicable());
-            Job updateCheckJob = new Job("Check for updates") {
-                @Override
-                protected IStatus run(final IProgressMonitor monitor) {
-                    try {
-                        UpdateUtils.getInstance().checkForUpdate();
-                    } catch (Exception e) {
-                        return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
-                    }
-                    return Status.OK_STATUS;
-                }
-            };
-
-            updateCheckJob.setPriority(Job.DECORATE);
-            updateCheckJob.schedule();
-        }, ThreadingUtils.getWorkerPool());
+        updateCheckJob.setPriority(Job.DECORATE);
+        updateCheckJob.schedule();
     }
 
     private void launchWebview() {
         String viewId = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
-
-        IWorkbench workbench = PlatformUI.getWorkbench();
-        workbench.getDisplay().asyncExec(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    showTelemetryNotification();
-                    IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-                    if (window != null) {
-                        ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", "none");
-                        Activator.getPluginStore().put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
-                    }
-                    ViewVisibilityManager.showDefaultView("launch");
-                } catch (Exception e) {
-                    Activator.getLogger().warn("Error occurred during auto loading of plugin", e);
-                    ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp",
-                            ExceptionMetadata.scrubException("Plugin load error", e));
-                }
+        try {
+            showTelemetryNotification();
+            IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+            if (window != null) {
+                ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp", "none");
+                Activator.getPluginStore().put(ViewConstants.PREFERENCE_STORE_PLUGIN_FIRST_STARTUP_KEY, "true");
             }
-        });
+            ViewVisibilityManager.showDefaultView("launch");
+        } catch (Exception e) {
+            Activator.getLogger().warn("Error occurred during auto loading of plugin", e);
+            ToolkitTelemetryProvider.emitOpenModuleEventMetric(viewId, "firstStartUp",
+                    ExceptionMetadata.scrubException("Plugin load error", e));
+        }
     }
 
     private void attachAutoTriggerListenersIfApplicable() {
@@ -130,7 +142,6 @@ public class LspStartupActivity implements IStartup {
                         autoTriggerTopLevelListener.onStart();
                     });
                 } else {
-                    // Note to future maintainers: this has to be called from the UI thread or it would not do anything
                     Display.getDefault().asyncExec(() -> {
                         autoTriggerTopLevelListener.onShutdown();
                     });
@@ -146,5 +157,4 @@ public class LspStartupActivity implements IStartup {
                 Constants.TELEMETRY_NOTIFICATION_BODY);
         notification.open();
     }
-
 }

@@ -221,8 +221,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                 {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
-                                });
-                            });
+                                })
+                            }).catch(error => console.error('Error initializing chat:', error));
                     }
 
                     window.addEventListener('load', init);

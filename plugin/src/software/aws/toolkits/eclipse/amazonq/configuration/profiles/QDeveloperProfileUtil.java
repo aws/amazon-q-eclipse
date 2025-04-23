@@ -26,6 +26,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServe
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
 import software.aws.toolkits.eclipse.amazonq.views.model.QDeveloperProfile;
@@ -38,7 +39,7 @@ public final class QDeveloperProfileUtil {
     private QDeveloperProfile savedDeveloperProfile;
     private QDeveloperProfile selectedDeveloperProfile;
     private CompletableFuture<Void> profileSelectionTask;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
 
     static {
         INSTANCE = new QDeveloperProfileUtil();
@@ -52,7 +53,15 @@ public final class QDeveloperProfileUtil {
         try {
             savedDeveloperProfile = Optional
                     .ofNullable(Activator.getPluginStore().get(ViewConstants.Q_DEVELOPER_PROFILE_SELECTION_KEY))
-                    .map(json -> deserializeProfile(json)).orElse(null);
+                    .map(json -> {
+                        try {
+                            return deserializeProfile(json);
+                        } catch (final JsonProcessingException e) {
+                            Activator.getLogger().error("Failed to process cached profile", e);
+                            return null;
+                        }
+                    }).orElse(null);
+
         } catch (Exception e) {
             Activator.getLogger().error("Failed to deserialize developer profile", e);
         }
@@ -60,23 +69,12 @@ public final class QDeveloperProfileUtil {
         profiles = new ArrayList<QDeveloperProfile>();
     }
 
-    private QDeveloperProfile deserializeProfile(final String json) {
-        try {
+    private QDeveloperProfile deserializeProfile(final String json) throws JsonProcessingException {
             return OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
-        } catch (JsonProcessingException e) {
-            Activator.getLogger().error("Error deserializing profile", e);
-            return null;
-        }
     }
 
-    private String serializeProfile(final QDeveloperProfile developerProfile) {
-        try {
-            return OBJECT_MAPPER.writeValueAsString(developerProfile);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    private String serializeProfile(final QDeveloperProfile developerProfile) throws JsonProcessingException {
+        return OBJECT_MAPPER.writeValueAsString(developerProfile);
     }
 
     public void initialize() {
@@ -215,10 +213,15 @@ public final class QDeveloperProfileUtil {
     }
 
     private void saveSelectedProfile() {
-        String serializedSelectedProfile = serializeProfile(selectedDeveloperProfile);
-        if (serializedSelectedProfile != null) {
-            Activator.getPluginStore().put(ViewConstants.Q_DEVELOPER_PROFILE_SELECTION_KEY,
-                    serializedSelectedProfile);
+        try {
+            String serializedSelectedProfile = serializeProfile(selectedDeveloperProfile);
+
+            if (serializedSelectedProfile != null) {
+                Activator.getPluginStore().put(ViewConstants.Q_DEVELOPER_PROFILE_SELECTION_KEY,
+                        serializedSelectedProfile);
+            }
+        } catch (final JsonProcessingException e) {
+            Activator.getLogger().error("Failed to cache Q developer profile");
         }
     }
 

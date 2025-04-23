@@ -27,7 +27,7 @@ public final class CustomizationUtil {
 
     public static void triggerChangeConfigurationNotification() {
         try {
-            Activator.getLogger().info("Triggering configuration pull from Amazon Q LSP server"); // Todo: Update
+            Activator.getLogger().info("Triggering configuration pull from Amazon Q LSP server");
             Activator.getLspProvider().getAmazonQServer()
                     .thenAccept(server -> server.getWorkspaceService()
                             .didChangeConfiguration(new DidChangeConfigurationParams()))

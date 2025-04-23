@@ -30,8 +30,8 @@ public abstract class AmazonQView extends BaseAmazonQView {
         return browserProvider.getBrowser(componentId);
     }
 
-    public final Browser attachBrowser(final Composite parent) {
-        return browserProvider.attachBrowser(parent, componentId);
+    public final Browser getAndAttachBrowser(final Composite parent) {
+        return browserProvider.getAndAttachBrowser(parent, componentId);
     }
 
     protected final void setupParentBackground(final Composite parent) {

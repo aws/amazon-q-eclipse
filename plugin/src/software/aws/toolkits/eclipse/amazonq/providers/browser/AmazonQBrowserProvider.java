@@ -109,7 +109,7 @@ public final class AmazonQBrowserProvider {
         return compositeById.get(componentId);
     }
 
-    public synchronized Browser attachBrowser(final Composite parent, final String componentId) {
+    public synchronized Browser getAndAttachBrowser(final Composite parent, final String componentId) {
         var browser = getBrowser(componentId);
 
         // if browser is null or disposed, return null

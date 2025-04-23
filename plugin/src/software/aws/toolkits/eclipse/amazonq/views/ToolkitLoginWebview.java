@@ -69,10 +69,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
     @Override
     public void dispose() {
-        var browser = getBrowser();
-        if (browser != null && !browser.isDisposed()) {
-            browser.dispose();
-        }
         super.dispose();
     }
 }

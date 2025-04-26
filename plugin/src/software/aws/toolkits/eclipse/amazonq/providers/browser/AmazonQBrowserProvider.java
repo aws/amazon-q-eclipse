@@ -101,7 +101,7 @@ public final class AmazonQBrowserProvider {
         return null;
     }
 
-    private synchronized Browser getBrowser(final String componentId) {
+    public synchronized Browser getBrowser(final String componentId) {
         return browserById.get(componentId);
     }
 

@@ -112,11 +112,34 @@ public final class ChangeProfileDialog extends Dialog {
             accountIdLabel.setLayoutData(accountIdData);
 
             addDisposeListener(e -> {
-                if (accountIdFont != null && !accountIdFont.isDisposed()) {
-                    accountIdFont.dispose();
-                }
                 if (profileNameFont != null && !profileNameFont.isDisposed()) {
                     profileNameFont.dispose();
+                    profileNameFont = null;
+                }
+
+                if (accountIdFont != null && !accountIdFont.isDisposed()) {
+                    accountIdFont.dispose();
+                    accountIdFont = null;
+                }
+
+                if (regionFont != null && !regionFont.isDisposed()) {
+                    regionFont.dispose();
+                    regionFont = null;
+                }
+
+                if (radioButton != null && !radioButton.isDisposed()) {
+                    radioButton.dispose();
+                    radioButton = null;
+                }
+
+                if (profileNameAndRegionText != null && !profileNameAndRegionText.isDisposed()) {
+                    profileNameAndRegionText.dispose();
+                    profileNameAndRegionText = null;
+                }
+
+                if (accountIdLabel != null && !accountIdLabel.isDisposed()) {
+                    accountIdLabel.dispose();
+                    accountIdLabel = null;
                 }
             });
         }
@@ -266,10 +289,12 @@ public final class ChangeProfileDialog extends Dialog {
                                     SWT.NONE, true);
                         }
 
-                        for (QDeveloperProfile profile : profiles) {
-                            if (selectedDeveloperProfile == null
-                                    || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
-                                createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
+                        for (int i = 0; i < 4; ++i) {
+                            for (QDeveloperProfile profile : profiles) {
+                                if (selectedDeveloperProfile == null
+                                        || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
+                                    createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
+                                }
                             }
                         }
 

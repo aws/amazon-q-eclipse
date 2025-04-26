@@ -26,6 +26,10 @@ public abstract class AmazonQView extends BaseAmazonQView {
         this.browserProvider = AmazonQBrowserProvider.getInstance();
     }
 
+    private final Browser getBrowser() {
+        return browserProvider.getBrowser(componentId);
+    }
+
     public final Browser getAndAttachBrowser(final Composite parent) {
         return browserProvider.getAndAttachBrowser(parent, componentId);
     }

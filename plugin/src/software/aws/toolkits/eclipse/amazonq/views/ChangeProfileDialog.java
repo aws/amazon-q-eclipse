@@ -7,7 +7,9 @@ import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.MouseAdapter;
@@ -22,6 +24,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
@@ -42,6 +45,7 @@ public final class ChangeProfileDialog extends Dialog {
     private Font titleFont;
     private Font descriptionFont;
     private RadioButtonWithDescriptor selectedRadioButton;
+    private Font loadingLabelFont;
 
     public final class RadioButtonWithDescriptor extends Composite {
 
@@ -151,7 +155,6 @@ public final class ChangeProfileDialog extends Dialog {
         super(parentShell);
     }
 
-
     private Font createFont(final int size, final int style) {
         FontData[] fontData = getShell().getDisplay().getSystemFont().getFontData();
         FontData newFontData = new FontData(fontData[0].getName(), size, // specify exact font size
@@ -192,12 +195,52 @@ public final class ChangeProfileDialog extends Dialog {
         GridData textData = new GridData(SWT.FILL, SWT.CENTER, true, false);
         descriptionText.setLayoutData(textData);
 
-        ScrolledComposite scrolledComposite = new ScrolledComposite(container, SWT.V_SCROLL | SWT.H_SCROLL);
+        Composite stackComposite = new Composite(container, SWT.NONE);
+        stackComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        StackLayout stackLayout = new StackLayout();
+        stackComposite.setLayout(stackLayout);
+
+        Composite loadingComposite = new Composite(stackComposite, SWT.NONE);
+        loadingComposite.setLayout(new GridLayout(1, false));
+        Label loadingLabel = new Label(loadingComposite, SWT.NONE);
+        loadingLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
+        loadingLabel.setText("Loading profiles   ");
+
+        loadingLabelFont = createFont(11, SWT.ITALIC);
+        loadingLabel.setFont(loadingLabelFont);
+
+        Point size = loadingLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+
+        GridData loadingLabelData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
+        loadingLabelData.horizontalIndent = -20;
+        loadingLabelData.widthHint = size.x;
+        loadingLabel.setLayoutData(loadingLabelData);
+
+        Display.getDefault().timerExec(250, new Runnable() {
+            int dotCount = 0;
+
+            @Override
+            public void run() {
+                if (loadingLabel != null && !loadingLabel.isDisposed()) {
+                    dotCount = (dotCount + 1) % 4;
+                    String dots = ".".repeat(dotCount);
+                    loadingLabel.setText("Loading profiles" + dots);
+                    loadingComposite.layout(true);
+                    stackComposite.layout(true, true);
+                    Display.getDefault().timerExec(500, this);
+                }
+            }
+        });
+
+        loadingLabel.addDisposeListener(e -> {
+            if (loadingLabel.getFont() != null && !loadingLabel.getFont().isDisposed()) {
+                loadingLabel.getFont().dispose();
+            }
+        });
+
+        ScrolledComposite scrolledComposite = new ScrolledComposite(stackComposite, SWT.V_SCROLL | SWT.H_SCROLL);
         scrolledComposite.setExpandHorizontal(true);
         scrolledComposite.setExpandVertical(true);
-
-        GridData scrollData = new GridData(SWT.FILL, SWT.FILL, true, true);
-        scrolledComposite.setLayoutData(scrollData);
 
         Composite radioButtonComposite = new Composite(scrolledComposite, SWT.NONE);
         GridLayout radioLayout = new GridLayout(1, false);
@@ -205,31 +248,46 @@ public final class ChangeProfileDialog extends Dialog {
         radioLayout.marginHeight = 5;
         radioLayout.verticalSpacing = 5;
         radioButtonComposite.setLayout(radioLayout);
-        radioButtonComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-
-        List<QDeveloperProfile> profiles = QDeveloperProfileUtil.getInstance().queryForDeveloperProfiles(false);
-        QDeveloperProfile selectedDeveloperProfile = QDeveloperProfileUtil.getInstance().getSelectedProfile();
-
-        if (selectedDeveloperProfile != null) {
-            selectedRadioButton = createRadioButton(radioButtonComposite, selectedDeveloperProfile, SWT.NONE, true);
-        }
-
-        for (QDeveloperProfile profile : profiles) {
-            if (selectedDeveloperProfile == null || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
-                createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
-            }
-        }
-
         scrolledComposite.setContent(radioButtonComposite);
-        Point computeSize = radioButtonComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        scrolledComposite.setMinSize(computeSize);
 
-        radioButtonComposite.layout(true, true);
-        scrolledComposite.layout(true, true);
-        container.layout(true, true);
+        stackLayout.topControl = loadingComposite;
+        stackComposite.layout(true, true);
+
+        Thread updateThread = new Thread() {
+            @Override
+            public void run() {
+                List<QDeveloperProfile> profiles = QDeveloperProfileUtil.getInstance().queryForDeveloperProfiles(false);
+                QDeveloperProfile selectedDeveloperProfile = QDeveloperProfileUtil.getInstance().getSelectedProfile();
+
+                Display.getDefault().asyncExec(() -> {
+                    if (!stackComposite.isDisposed()) {
+                        if (selectedDeveloperProfile != null) {
+                            selectedRadioButton = createRadioButton(radioButtonComposite, selectedDeveloperProfile,
+                                    SWT.NONE, true);
+                        }
+
+                        for (QDeveloperProfile profile : profiles) {
+                            if (selectedDeveloperProfile == null
+                                    || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
+                                createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
+                            }
+                        }
+
+                        radioButtonComposite.layout(true, true);
+                        scrolledComposite.setMinSize(radioButtonComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+
+                        stackLayout.topControl = scrolledComposite;
+                        stackComposite.layout(true, true);
+                    }
+                });
+            }
+        };
+        updateThread.setDaemon(true);
+        updateThread.start();
 
         return container;
     }
+
 
     @Override
     protected void configureShell(final Shell newShell) {
@@ -249,7 +307,11 @@ public final class ChangeProfileDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        QDeveloperProfileUtil.getInstance().setDeveloperProfile((QDeveloperProfile) selectedRadioButton.getData());
+        BusyIndicator.showWhile(Display.getDefault(), () -> {
+            QDeveloperProfileUtil.getInstance().setDeveloperProfile((QDeveloperProfile) selectedRadioButton.getData())
+                    .join();
+        });
+
         super.okPressed();
     }
 
@@ -268,6 +330,14 @@ public final class ChangeProfileDialog extends Dialog {
 
         button.setSelection(isSelected);
         return button;
+    }
+
+    @Override
+    public boolean close() {
+        if (loadingLabelFont != null && !loadingLabelFont.isDisposed()) {
+            loadingLabelFont.dispose();
+        }
+        return super.close();
     }
 
 }

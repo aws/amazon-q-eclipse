@@ -308,8 +308,11 @@ public final class ChangeProfileDialog extends Dialog {
     @Override
     protected void okPressed() {
         BusyIndicator.showWhile(Display.getDefault(), () -> {
-            QDeveloperProfileUtil.getInstance().setDeveloperProfile((QDeveloperProfile) selectedRadioButton.getData())
-                    .join();
+            if (selectedRadioButton != null) {
+                QDeveloperProfileUtil.getInstance()
+                        .setDeveloperProfile((QDeveloperProfile) selectedRadioButton.getData())
+                        .join();
+            }
         });
 
         super.okPressed();

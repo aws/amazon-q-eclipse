@@ -397,6 +397,9 @@ public final class ChangeProfileDialog extends Dialog {
         if (loadingLabelFont != null && !loadingLabelFont.isDisposed()) {
             loadingLabelFont.dispose();
         }
+        if (scrollableLabelFont != null && !scrollableLabelFont.isDisposed()) {
+            scrollableLabelFont.dispose();
+        }
         return super.close();
     }
 

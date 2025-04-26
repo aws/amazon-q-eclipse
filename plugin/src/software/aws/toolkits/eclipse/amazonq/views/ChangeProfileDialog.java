@@ -46,6 +46,7 @@ public final class ChangeProfileDialog extends Dialog {
     private Font descriptionFont;
     private RadioButtonWithDescriptor selectedRadioButton;
     private Font loadingLabelFont;
+    private Font scrollableLabelFont;
 
     public final class RadioButtonWithDescriptor extends Composite {
 
@@ -197,7 +198,7 @@ public final class ChangeProfileDialog extends Dialog {
 
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         gridData.widthHint = 450;
-        gridData.heightHint = 200;
+        gridData.heightHint = 238;
         container.setLayoutData(gridData);
 
         titleFont = createFont(14, SWT.BOLD);
@@ -261,7 +262,8 @@ public final class ChangeProfileDialog extends Dialog {
             }
         });
 
-        ScrolledComposite scrolledComposite = new ScrolledComposite(stackComposite, SWT.V_SCROLL | SWT.H_SCROLL);
+        ScrolledComposite scrolledComposite = new ScrolledComposite(stackComposite,
+                SWT.V_SCROLL | SWT.H_SCROLL);
         scrolledComposite.setExpandHorizontal(true);
         scrolledComposite.setExpandVertical(true);
 
@@ -276,6 +278,36 @@ public final class ChangeProfileDialog extends Dialog {
         stackLayout.topControl = loadingComposite;
         stackComposite.layout(true, true);
 
+        Label scrollableLabel = new Label(container, SWT.NONE);
+        scrollableLabel.setText("\u2304"); // down arrow head
+        GridData scrollableLabelData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
+        scrollableLabelData.verticalIndent = 0;
+        scrollableLabel.setLayoutData(scrollableLabelData);
+        scrollableLabel.setVisible(false);
+
+        scrollableLabelFont = createFont(16, SWT.BOLD);
+        scrollableLabel.setFont(scrollableLabelFont);
+
+        Runnable showDownArrowWhenScrollable = new Runnable() {
+            @Override
+            public void run() {
+                int scrollPosition = scrolledComposite.getVerticalBar().getSelection();
+                int maxScroll = scrolledComposite.getVerticalBar().getMaximum();
+                int thumbSize = scrolledComposite.getVerticalBar().getThumb();
+
+                boolean isAtBottom = (scrollPosition + thumbSize) >= maxScroll;
+                scrollableLabel.setVisible(!isAtBottom);
+                container.layout(true, true);
+            }
+        };
+
+        scrolledComposite.getVerticalBar().addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(final SelectionEvent e) {
+                showDownArrowWhenScrollable.run();
+            }
+        });
+
         Thread updateThread = new Thread() {
             @Override
             public void run() {
@@ -289,17 +321,17 @@ public final class ChangeProfileDialog extends Dialog {
                                     SWT.NONE, true);
                         }
 
-                        for (int i = 0; i < 4; ++i) {
-                            for (QDeveloperProfile profile : profiles) {
-                                if (selectedDeveloperProfile == null
-                                        || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
-                                    createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
-                                }
+                        for (QDeveloperProfile profile : profiles) {
+                            if (selectedDeveloperProfile == null
+                                    || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
+                                createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
                             }
                         }
 
                         radioButtonComposite.layout(true, true);
                         scrolledComposite.setMinSize(radioButtonComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+
+                        showDownArrowWhenScrollable.run();
 
                         stackLayout.topControl = scrolledComposite;
                         stackComposite.layout(true, true);
@@ -350,7 +382,7 @@ public final class ChangeProfileDialog extends Dialog {
                 developerProfile.getRegion(), developerProfile.getAccountId(), style);
         button.setData(developerProfile);
         button.addSelectionListener(() -> {
-            if (selectedRadioButton != null) {
+            if (selectedRadioButton != null && selectedRadioButton != button) {
                 selectedRadioButton.setSelection(false);
             }
             selectedRadioButton = button;

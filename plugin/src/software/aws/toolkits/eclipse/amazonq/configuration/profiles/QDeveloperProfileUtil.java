@@ -161,8 +161,8 @@ public final class QDeveloperProfileUtil {
 
     private boolean handleSingleOrNoProfile(final List<QDeveloperProfile> profiles,
             final boolean tryApplyCachedProfile) {
-        if (!getProfiles().isEmpty() && tryApplyCachedProfile) {
-            setDeveloperProfile(getProfiles().get(0));
+        if (!profiles.isEmpty() && tryApplyCachedProfile) {
+            setDeveloperProfile(profiles.get(0));
             return true;
         }
         return false;

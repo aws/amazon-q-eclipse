@@ -36,7 +36,6 @@ public final class ToolkitLoginWebview extends AmazonQView {
 
         if (browser == null || browser.isDisposed()) {
             browser = setupBrowser(parent);
-
             if (browser == null) {
                 return parent;
             }

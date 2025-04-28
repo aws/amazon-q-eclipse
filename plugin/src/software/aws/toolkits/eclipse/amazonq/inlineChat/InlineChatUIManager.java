@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension5;
+import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.SWT;
@@ -44,7 +45,6 @@ public final class InlineChatUIManager {
     // UI elements
     private PopupDialog inputBox;
     private ITextViewer viewer;
-    private final int maxInputLength = 128;
     private PaintListener currentPaintListener;
     private final String inputPromptMessage = "Enter instructions for Amazon Q (Enter | Esc)";
     private final String generatingMessage = "Amazon Q is generating...";
@@ -103,7 +103,14 @@ public final class InlineChatUIManager {
                 protected Point getInitialLocation(final Point initialSize) {
                     if (screenLocation == null) {
                         try {
-                            int visualOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                            int visualOffset;
+                            if (viewer instanceof ITextViewerExtension5) {
+                                visualOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                            } else if (viewer instanceof ProjectionViewer) {
+                                visualOffset = ((ProjectionViewer) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                            } else {
+                                visualOffset = task.getSelectionOffset();
+                            }
                             int indentedOffset = calculateIndentOffset(widget, visualOffset);
                             Point location = widget.getLocationAtOffset(indentedOffset);
 
@@ -161,15 +168,6 @@ public final class InlineChatUIManager {
                     gridData.widthHint = 350;
                     inputField.setLayoutData(gridData);
 
-                    // Enforce maximum character count that can be entered into the input
-                    inputField.addVerifyListener(e -> {
-                        String currentText = inputField.getText();
-                        String newText = currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
-                        if (newText.length() > maxInputLength) {
-                            e.doit = false; // Prevent the input
-                        }
-                    });
-
                     inputField.addKeyListener(new KeyAdapter() {
                         @Override
                         public void keyPressed(final KeyEvent e) {
@@ -220,7 +218,13 @@ public final class InlineChatUIManager {
             removeCurrentPaintListener();
             var widget = viewer.getTextWidget();
             try {
-                latestOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                if (viewer instanceof ITextViewerExtension5) {
+                    latestOffset = ((ITextViewerExtension5) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                } else if (viewer instanceof ProjectionViewer) {
+                    latestOffset = ((ProjectionViewer) viewer).modelOffset2WidgetOffset(task.getSelectionOffset());
+                } else {
+                    latestOffset = task.getSelectionOffset();
+                }
                 currentPaintListener = createPaintListenerPrompt(widget, latestOffset, promptText, isDarkTheme);
                 widget.addPaintListener(currentPaintListener);
                 widget.redraw();
@@ -346,7 +350,7 @@ public final class InlineChatUIManager {
     }
 
     private boolean userInputIsValid(final String input) {
-        return input != null && input.length() >= 2 && input.length() < maxInputLength;
+        return input != null && input.length() >= 2;
     }
 
     /**

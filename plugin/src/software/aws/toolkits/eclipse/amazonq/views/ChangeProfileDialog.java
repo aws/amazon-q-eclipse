@@ -299,7 +299,7 @@ public final class ChangeProfileDialog extends Dialog {
         Point size = loadingLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT);
 
         GridData loadingLabelData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
-        loadingLabelData.horizontalIndent = -20;
+        loadingLabelData.verticalIndent = 20;
         loadingLabelData.widthHint = size.x;
         loadingLabel.setLayoutData(loadingLabelData);
 

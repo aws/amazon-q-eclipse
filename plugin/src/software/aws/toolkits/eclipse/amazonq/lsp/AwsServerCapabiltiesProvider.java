@@ -28,7 +28,7 @@ public final class AwsServerCapabiltiesProvider {
                 )
             )
         );
-    
+
     private static final List<QuickActionsCommandGroup> DEFAULT_CONTEXT_COMMANDS = Collections.singletonList(
             new QuickActionsCommandGroup(
                     Arrays.asList(

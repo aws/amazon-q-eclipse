@@ -38,7 +38,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
             List<String> commands = new ArrayList<>();
             commands.add(serverCommand.toString());
-            commands.add("/Users/breedloj/workspace/foobarbaz/language-servers/app/aws-lsp-codewhisperer-runtimes/build/aws-lsp-codewhisperer-token-binary.js");
+            commands.add(lspInstallResult.getServerCommandArgs());
             commands.add("--stdio");
             commands.add("--set-credentials-encryption-key");
             setCommands(commands);

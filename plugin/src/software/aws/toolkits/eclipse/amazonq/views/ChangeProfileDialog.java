@@ -201,66 +201,14 @@ public final class ChangeProfileDialog extends Dialog {
         gridData.heightHint = 238;
         container.setLayoutData(gridData);
 
-        titleFont = createFont(14, SWT.BOLD);
-
-        Label headerLabel = new Label(container, SWT.NONE);
-        headerLabel.setText(HEADER);
-        headerLabel.setFont(titleFont);
-        headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-
-        descriptionFont = createFont(12, SWT.NORMAL);
-
-        StyledText descriptionText = new StyledText(container, SWT.READ_ONLY | SWT.WRAP);
-        descriptionText.setText(DESCRIPTION);
-        descriptionText.setFont(descriptionFont);
-        descriptionText.setBackground(container.getBackground());
-        descriptionText.setEditable(false);
-        descriptionText.setCaret(null);
-        GridData textData = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        descriptionText.setLayoutData(textData);
+        setupHeaderText(container);
 
         Composite stackComposite = new Composite(container, SWT.NONE);
         stackComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         StackLayout stackLayout = new StackLayout();
         stackComposite.setLayout(stackLayout);
 
-        Composite loadingComposite = new Composite(stackComposite, SWT.NONE);
-        loadingComposite.setLayout(new GridLayout(1, false));
-        Label loadingLabel = new Label(loadingComposite, SWT.NONE);
-        loadingLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
-        loadingLabel.setText("Loading profiles   ");
-
-        loadingLabelFont = createFont(11, SWT.ITALIC);
-        loadingLabel.setFont(loadingLabelFont);
-
-        Point size = loadingLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-
-        GridData loadingLabelData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
-        loadingLabelData.horizontalIndent = -20;
-        loadingLabelData.widthHint = size.x;
-        loadingLabel.setLayoutData(loadingLabelData);
-
-        Display.getDefault().timerExec(250, new Runnable() {
-            int dotCount = 0;
-
-            @Override
-            public void run() {
-                if (loadingLabel != null && !loadingLabel.isDisposed()) {
-                    dotCount = (dotCount + 1) % 4;
-                    String dots = ".".repeat(dotCount);
-                    loadingLabel.setText("Loading profiles" + dots);
-                    loadingComposite.layout(true);
-                    stackComposite.layout(true, true);
-                    Display.getDefault().timerExec(500, this);
-                }
-            }
-        });
-
-        loadingLabel.addDisposeListener(e -> {
-            if (loadingLabel.getFont() != null && !loadingLabel.getFont().isDisposed()) {
-                loadingLabel.getFont().dispose();
-            }
-        });
+        Composite loadingComposite = setupLoadingComposite(stackComposite);
 
         ScrolledComposite scrolledComposite = new ScrolledComposite(stackComposite,
                 SWT.V_SCROLL | SWT.H_SCROLL);
@@ -297,6 +245,12 @@ public final class ChangeProfileDialog extends Dialog {
 
                 boolean isAtBottom = (scrollPosition + thumbSize) >= maxScroll;
                 scrollableLabel.setVisible(!isAtBottom);
+
+                radioButtonComposite.layout(true, true);
+                scrolledComposite.setMinSize(radioButtonComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+
+                stackLayout.topControl = scrolledComposite;
+                stackComposite.layout(true, true);
                 container.layout(true, true);
             }
         };
@@ -308,6 +262,74 @@ public final class ChangeProfileDialog extends Dialog {
             }
         });
 
+        startFetchProfilesTask(stackComposite, radioButtonComposite, showDownArrowWhenScrollable);
+        return container;
+    }
+
+    private void setupHeaderText(final Composite container) {
+        titleFont = createFont(14, SWT.BOLD);
+
+        Label headerLabel = new Label(container, SWT.NONE);
+        headerLabel.setText(HEADER);
+        headerLabel.setFont(titleFont);
+        headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        descriptionFont = createFont(12, SWT.NORMAL);
+
+        StyledText descriptionText = new StyledText(container, SWT.READ_ONLY | SWT.WRAP);
+        descriptionText.setText(DESCRIPTION);
+        descriptionText.setFont(descriptionFont);
+        descriptionText.setBackground(container.getBackground());
+        descriptionText.setEditable(false);
+        descriptionText.setCaret(null);
+        GridData textData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        descriptionText.setLayoutData(textData);
+    }
+
+    private Composite setupLoadingComposite(final Composite stackComposite) {
+        Composite loadingComposite = new Composite(stackComposite, SWT.NONE);
+        loadingComposite.setLayout(new GridLayout(1, false));
+        Label loadingLabel = new Label(loadingComposite, SWT.NONE);
+        loadingLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
+        loadingLabel.setText("Loading profiles   ");
+
+        loadingLabelFont = createFont(11, SWT.ITALIC);
+        loadingLabel.setFont(loadingLabelFont);
+
+        Point size = loadingLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+
+        GridData loadingLabelData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
+        loadingLabelData.horizontalIndent = -20;
+        loadingLabelData.widthHint = size.x;
+        loadingLabel.setLayoutData(loadingLabelData);
+
+        Display.getDefault().timerExec(250, new Runnable() {
+            private int dotCount = 0;
+
+            @Override
+            public void run() {
+                if (loadingLabel != null && !loadingLabel.isDisposed()) {
+                    dotCount = (dotCount + 1) % 4;
+                    String dots = ".".repeat(dotCount);
+                    loadingLabel.setText("Loading profiles" + dots);
+                    loadingComposite.layout(true);
+                    stackComposite.layout(true, true);
+                    Display.getDefault().timerExec(500, this);
+                }
+            }
+        });
+
+        loadingLabel.addDisposeListener(e -> {
+            if (loadingLabel.getFont() != null && !loadingLabel.getFont().isDisposed()) {
+                loadingLabel.getFont().dispose();
+            }
+        });
+
+        return loadingComposite;
+    }
+
+    private void startFetchProfilesTask(final Composite stackComposite, final Composite radioButtonComposite,
+            final Runnable showDownArrowWhenScrollable) {
         Thread updateThread = new Thread() {
             @Override
             public void run() {
@@ -328,24 +350,14 @@ public final class ChangeProfileDialog extends Dialog {
                             }
                         }
 
-                        radioButtonComposite.layout(true, true);
-                        scrolledComposite.setMinSize(radioButtonComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-
                         showDownArrowWhenScrollable.run();
-
-                        stackLayout.topControl = scrolledComposite;
-                        stackComposite.layout(true, true);
                     }
                 });
             }
         };
         updateThread.setDaemon(true);
         updateThread.start();
-
-        return container;
     }
-
-
     @Override
     protected void configureShell(final Shell newShell) {
         super.configureShell(newShell);

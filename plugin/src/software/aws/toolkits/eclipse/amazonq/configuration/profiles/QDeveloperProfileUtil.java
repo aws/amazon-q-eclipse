@@ -72,7 +72,7 @@ public final class QDeveloperProfileUtil {
     }
 
     private QDeveloperProfile deserializeProfile(final String json) throws JsonProcessingException {
-            return OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
+        return OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
     }
 
     private String serializeProfile(final QDeveloperProfile developerProfile) throws JsonProcessingException {
@@ -194,12 +194,12 @@ public final class QDeveloperProfileUtil {
                 .orElse(Collections.emptyList());
     }
 
-    public List<QDeveloperProfile> getDeveloperProfiles(final boolean tryApplyCachedProfile) {
+    public List<QDeveloperProfile> getDeveloperProfiles() {
         List<QDeveloperProfile> profiles = getProfiles();
         if (profiles != null && !profiles.isEmpty()) {
             return profiles;
         }
-        return queryForDeveloperProfiles(tryApplyCachedProfile);
+        return queryForDeveloperProfiles(false);
     }
 
     public CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile) {

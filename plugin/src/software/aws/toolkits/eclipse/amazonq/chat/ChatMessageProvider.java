@@ -12,6 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionPar
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -88,6 +89,21 @@ public final class ChatMessageProvider {
     public void sendTabChange(final GenericTabParams tabParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.sendTabChange(tabParams);
+    }
+
+    public void sendInfoLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendInfoLinkClickParams(sourceLinkClickParams);
+    }
+
+    public void sendLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendLinkClickParams(sourceLinkClickParams);
+    }
+
+    public void sendSourceLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendSourceLinkClickParams(sourceLinkClickParams);
     }
 
     public void followUpClick(final FollowUpClickParams followUpClickParams) {

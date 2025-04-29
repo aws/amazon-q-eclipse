@@ -13,6 +13,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
@@ -57,6 +58,15 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonNotification("aws/chat/tabChange")
     void tabChange(GenericTabParams params);
+
+    @JsonNotification("aws/chat/infoLinkClick")
+    void infoLinkClick(GenericLinkClickParams params);
+
+    @JsonNotification("aws/chat/linkClick")
+    void linkClick(GenericLinkClickParams params);
+
+    @JsonNotification("aws/chat/sourceLinkClick")
+    void sourceLinkClick(GenericLinkClickParams params);
 
     @JsonNotification("aws/chat/followUpClick")
     void followUpClick(FollowUpClickParams params);

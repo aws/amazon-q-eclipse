@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
-import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -62,12 +62,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case CHAT_INFO_LINK_CLICK:
             case CHAT_LINK_CLICK:
             case CHAT_SOURCE_LINK_CLICK:
-                InfoLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params, InfoLinkClickParams.class);
-                var link = infoLinkClickParams.getLink();
-                if (link == null || link.isEmpty()) {
-                    throw new IllegalArgumentException("Link parameter cannot be null or empty");
-                }
-                PluginUtils.handleExternalLinkClick(link);
+                GenericLinkClickParams linkClickParams = jsonHandler.convertObject(params,
+                        GenericLinkClickParams.class);
+                validateAndHandleLink(linkClickParams.getLink());
+                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_READY:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
@@ -138,6 +136,13 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             }
         });
         return range.get().map(CursorState::new);
+    }
+
+    private void validateAndHandleLink(final String link) {
+        if (link == null || link.isEmpty()) {
+            throw new IllegalArgumentException("Link parameter cannot be null or empty");
+        }
+        PluginUtils.handleExternalLinkClick(link);
     }
 
     private boolean isInsertToCursorEvent(final Object params) {

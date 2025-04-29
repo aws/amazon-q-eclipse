@@ -27,6 +27,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionPar
 import software.aws.toolkits.eclipse.amazonq.chat.models.ErrorParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
@@ -127,6 +128,21 @@ public final class ChatCommunicationManager {
                 case CHAT_TAB_CHANGE:
                     GenericTabParams tabParamsForChange = jsonHandler.convertObject(params, GenericTabParams.class);
                     chatMessageProvider.sendTabChange(tabParamsForChange);
+                    break;
+                case CHAT_INFO_LINK_CLICK:
+                    GenericLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params,
+                            GenericLinkClickParams.class);
+                    chatMessageProvider.sendInfoLinkClick(infoLinkClickParams);
+                    break;
+                case CHAT_LINK_CLICK:
+                    GenericLinkClickParams linkClickParams = jsonHandler.convertObject(params,
+                            GenericLinkClickParams.class);
+                    chatMessageProvider.sendLinkClick(linkClickParams);
+                    break;
+                case CHAT_SOURCE_LINK_CLICK:
+                    GenericLinkClickParams sourceLinkClickParams = jsonHandler.convertObject(params,
+                            GenericLinkClickParams.class);
+                    chatMessageProvider.sendSourceLinkClick(sourceLinkClickParams);
                     break;
                 case CHAT_FOLLOW_UP_CLICK:
                     FollowUpClickParams followUpClickParams = jsonHandler.convertObject(params,

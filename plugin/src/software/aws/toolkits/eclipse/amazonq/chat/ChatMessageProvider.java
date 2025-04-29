@@ -13,6 +13,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -69,6 +70,11 @@ public final class ChatMessageProvider {
     public CompletableFuture<Boolean> endChat(final GenericTabParams tabParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         return chatMessage.endChat(tabParams);
+    }
+
+    public void sendPromptInputOptionChange(final PromptInputOptionChangeParams optionChangeParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendPromptInputOptionChange(optionChangeParams);
     }
 
     public void sendChatReady() {

@@ -17,6 +17,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.BaseChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
@@ -102,6 +103,11 @@ public final class ChatCommunicationManager {
                         return chatMessageProvider.sendChatPrompt(chatRequestParams.getTabId(),
                                 encryptedChatRequestParams);
                     });
+                    break;
+                case CHAT_PROMPT_OPTION_CHANGE:
+                    PromptInputOptionChangeParams promptInputOptionChangeParams = jsonHandler.convertObject(params,
+                            PromptInputOptionChangeParams.class);
+                    chatMessageProvider.sendPromptInputOptionChange(promptInputOptionChangeParams);
                     break;
                 case CHAT_QUICK_ACTION:
                     QuickActionParams quickActionParams = jsonHandler.convertObject(params, QuickActionParams.class);

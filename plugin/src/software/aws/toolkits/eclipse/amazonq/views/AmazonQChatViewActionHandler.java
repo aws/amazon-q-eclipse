@@ -56,6 +56,9 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case CHAT_SEND_PROMPT:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
+            case CHAT_PROMPT_OPTION_CHANGE:
+                chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
             case CHAT_QUICK_ACTION:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;

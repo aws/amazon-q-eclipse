@@ -30,6 +30,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
@@ -130,19 +131,13 @@ public final class ChatCommunicationManager {
                     chatMessageProvider.sendTabChange(tabParamsForChange);
                     break;
                 case CHAT_INFO_LINK_CLICK:
-                    GenericLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params,
-                            GenericLinkClickParams.class);
-                    chatMessageProvider.sendInfoLinkClick(infoLinkClickParams);
+                    chatMessageProvider.sendInfoLinkClick((GenericLinkClickParams) params);
                     break;
                 case CHAT_LINK_CLICK:
-                    GenericLinkClickParams linkClickParams = jsonHandler.convertObject(params,
-                            GenericLinkClickParams.class);
-                    chatMessageProvider.sendLinkClick(linkClickParams);
+                    chatMessageProvider.sendLinkClick((GenericLinkClickParams) params);
                     break;
                 case CHAT_SOURCE_LINK_CLICK:
-                    GenericLinkClickParams sourceLinkClickParams = jsonHandler.convertObject(params,
-                            GenericLinkClickParams.class);
-                    chatMessageProvider.sendSourceLinkClick(sourceLinkClickParams);
+                    chatMessageProvider.sendSourceLinkClick((GenericLinkClickParams) params);
                     break;
                 case CHAT_FOLLOW_UP_CLICK:
                     FollowUpClickParams followUpClickParams = jsonHandler.convertObject(params,
@@ -152,6 +147,10 @@ public final class ChatCommunicationManager {
                 case CHAT_END_CHAT:
                     GenericTabParams tabParamsForEndChat = jsonHandler.convertObject(params, GenericTabParams.class);
                     chatMessageProvider.endChat(tabParamsForEndChat);
+                    break;
+                case CHAT_INSERT_TO_CURSOR_POSITION:
+                    chatMessageProvider.sendInsertToCursorPositionParams((InsertToCursorPositionParams) params);
+                    chatMessageProvider.sendTelemetryEvent(params);
                     break;
                 case CHAT_FEEDBACK:
                     var feedbackParams = jsonHandler.convertObject(params, FeedbackParams.class);

@@ -23,11 +23,14 @@ import org.eclipse.ui.PlatformUI;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -179,4 +182,28 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         }
     }
 
+    @Override
+    public final void sendContextCommands(final Object params) {
+        var command = new ChatUIInboundCommand(
+                "aws/chat/sendContextCommands",
+                null,
+                params,
+                null
+            );
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+    }
+
+    @Override
+    public final CompletableFuture<OpenTabResult> openTab(final OpenTabParams params) {
+        return CompletableFuture.supplyAsync(() -> {
+            var command = new ChatUIInboundCommand(
+                    "aws/chat/openTab",
+                    null,
+                    null,
+                    null
+                );
+            Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+            return new OpenTabResult("");
+        });
+    }
 }

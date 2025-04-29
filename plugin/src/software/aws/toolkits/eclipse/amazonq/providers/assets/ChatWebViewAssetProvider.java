@@ -19,9 +19,12 @@ import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
@@ -39,7 +42,7 @@ import software.aws.toolkits.eclipse.amazonq.views.LoginViewCommandParser;
 import software.aws.toolkits.eclipse.amazonq.views.ViewActionHandler;
 import software.aws.toolkits.eclipse.amazonq.views.ViewCommandParser;
 
-public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
+public final class ChatWebViewAssetProvider extends WebViewAssetProvider implements EventObserver<ChatUIInboundCommand> {
 
     private WebviewAssetServer webviewAssetServer;
     private final ChatTheme chatTheme;
@@ -47,6 +50,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     private final ViewActionHandler actionHandler;
     private final ChatCommunicationManager chatCommunicationManager;
     private Optional<String> content;
+    private Disposable chatUICommandSubscription;
 
     public ChatWebViewAssetProvider() {
         chatTheme = new ChatTheme();
@@ -103,6 +107,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     try {
                         chatTheme.injectTheme(browser);
                         disableBrowserContextMenu(browser);
+                        chatUICommandSubscription = Activator.getEventBroker().subscribeWithReplay(ChatUIInboundCommand.class, ChatWebViewAssetProvider.this);
                     } catch (Exception e) {
                         Activator.getLogger().info("Error occurred while injecting theme into Q chat", e);
                     }
@@ -145,6 +150,23 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     private String generateCss() {
         return """
                 <style>
+                    :root {
+                        --icon-scale-medium: 60%;
+                        --icon-scale-small: 50%;
+                        --icon-padding: 5px;
+                        --mask-position: center;
+                    }
+
+                    .mynah-chat-prompt-input-container,
+                    .mynah-chat-prompt-toolbar,
+                    .mynah-chat-prompt-context {
+                        transform: translateZ(0);
+                        -webkit-backface-visibility: hidden;
+                        backface-visibility: hidden;
+                        transition: none !important;
+                        will-change: transform;
+                    }
+
                     body,
                     html {
                         background-color: var(--mynah-color-bg);
@@ -155,38 +177,63 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         margin: 0;
                         padding: 0;
                     }
+
+                    [class*="mynah-ui-icon-"] {
+                        mask-position: var(--mask-position);
+                        -webkit-mask-position: var(--mask-position);
+                        transform: translateZ(0);
+                        -webkit-backface-visibility: hidden;
+                        backface-visibility: hidden;
+                        transition: none !important;
+                    }
+
                     .mynah-ui-icon-plus,
                     .mynah-ui-icon-cancel {
                         -webkit-mask-size: 155% !important;
                         mask-size: 155% !important;
-                        mask-position: center;
-                        scale: 60%;
+                        scale: var(--icon-scale-medium);
                     }
+
                     .code-snippet-close-button i.mynah-ui-icon-cancel,
                     .mynah-chat-item-card-related-content-show-more i.mynah-ui-icon-down-open {
                         -webkit-mask-size: 195.5% !important;
                         mask-size: 195.5% !important;
-                        mask-position: center;
                         aspect-ratio: 1/1;
                         width: 15px;
                         height: 15px;
-                        scale: 50%
+                        scale: var(--icon-scale-small);
                     }
+
                     .mynah-ui-icon-tabs {
                         -webkit-mask-size: 102% !important;
                         mask-size: 102% !important;
-                        mask-position: center;
                     }
+
+                    .mynah-ui-icon-code-block,
+                    .mynah-ui-icon-enter {
+                        padding: 0 4px !important;
+                        scale: var(--icon-scale-medium);
+                    }
+
+                    .mynah-ui-icon-at,
+                    [class^="mynah-chat-tree-view-"] {
+                        padding: var(--icon-padding) !important;
+                        scale: var(--icon-scale-medium);
+                    }
+
                     textarea:placeholder-shown {
                         line-height: 1.5rem;
                     }
+
                     .mynah-ui-spinner-container {
                         contain: layout !important;
                     }
+
                     .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part {
                         position: static !important;
                         will-change: transform !important;
                     }
+
                     .mynah-ui-spinner-container,
                     .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part,
                     .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
@@ -195,6 +242,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         box-shadow: none !important;
                         border-radius: 0 !important;
                     }
+
                     .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
                         will-change: transform !important;
                         transform: translateZ(0) !important;
@@ -223,24 +271,15 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
                                 });
-                                const tabId = mynahUI.getSelectedTabId();
-                                window.tabId = tabId
-                                mynahUI.updateStore(tabId, { contextCommands: %s });
                                 window.mynah = mynahUI
                             })
                             .catch(error => console.error('Error initializing chat:', error));
                     }
-
                     window.addEventListener('load', init);
-
                     %s
-
                     %s
-
                     %s
-
                     %s
-
                 </script>
                 """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig, "true".equals(disclaimerAcknowledged), contextCommands,
                 getArrowKeyBlockingFunction(), getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(),
@@ -413,6 +452,11 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
         }
     }
 
+    @Override
+    public void onEvent(final ChatUIInboundCommand command) {
+        chatCommunicationManager.sendMessageToChatUI(command);
+    }
+
     public Optional<String> resolveJsPath() {
         var chatUiDirectory = getChatUiDirectory();
 
@@ -461,6 +505,10 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
             webviewAssetServer.stop();
         }
         webviewAssetServer = null;
+        if (chatUICommandSubscription != null) {
+            chatUICommandSubscription.dispose();
+            chatUICommandSubscription = null;
+        }
     }
 
 }

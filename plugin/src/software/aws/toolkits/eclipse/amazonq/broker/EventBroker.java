@@ -87,6 +87,25 @@ public final class EventBroker {
     }
 
     /**
+     * Subscribes an observer to events of a specific type, replaying all cached events.
+     * The observer will receive all cached events followed by new events on a computation thread.
+     *
+     * @param <T>       the type of events to observe
+     * @param eventType the Class object representing the event type
+     * @param observer  the observer that will handle emitted events
+     * @return a Disposable that can be used to unsubscribe from the events
+     */
+    public <T> Disposable subscribeWithReplay(final Class<T> eventType, final EventObserver<T> observer) {
+        Disposable subscription = ofObservable(eventType)
+                .replay()
+                .autoConnect()
+                .observeOn(Schedulers.computation())
+                .subscribe(observer::onEvent);
+        disposableSubscriptions.add(subscription);
+        return subscription;
+    }
+
+    /**
      * Returns an Observable for the specified event type. This Observable can be
      * used to create custom subscription chains with additional operators.
      *

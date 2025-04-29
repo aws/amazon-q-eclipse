@@ -14,6 +14,7 @@ public enum Command {
     CHAT_TAB_REMOVE("aws/chat/tabRemove"),
     CHAT_TAB_CHANGE("aws/chat/tabChange"),
     CHAT_SEND_PROMPT("aws/chat/sendChatPrompt"),
+    CHAT_PROMPT_OPTION_CHANGE("aws/chat/promptInputOptionChange"),
     CHAT_LINK_CLICK("aws/chat/linkClick"),
     CHAT_INFO_LINK_CLICK("aws/chat/infoLinkClick"),
     CHAT_SOURCE_LINK_CLICK("aws/chat/sourceLinkClick"),

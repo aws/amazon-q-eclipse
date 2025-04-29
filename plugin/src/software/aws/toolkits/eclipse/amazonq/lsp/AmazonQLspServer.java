@@ -15,6 +15,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
@@ -71,11 +73,17 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonNotification("aws/chat/followUpClick")
     void followUpClick(FollowUpClickParams params);
 
+    @JsonNotification("aws/chat/promptInputOptionChange")
+    void promptInputOptionChange(PromptInputOptionChangeParams params);
+
     @JsonNotification("aws/chat/ready")
     void chatReady();
 
     @JsonNotification("aws/chat/feedback")
     void sendFeedback(FeedbackParams params);
+
+    @JsonNotification("aws/chat/insertToCursorPosition")
+    void insertToCursorPosition(InsertToCursorPositionParams params);
 
     @JsonRequest("aws/credentials/token/update")
     CompletableFuture<Void> updateTokenCredentials(UpdateCredentialsPayload payload);

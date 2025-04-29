@@ -56,6 +56,9 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case CHAT_SEND_PROMPT:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
+            case CHAT_PROMPT_OPTION_CHANGE:
+                chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
             case CHAT_QUICK_ACTION:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
@@ -65,7 +68,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 GenericLinkClickParams linkClickParams = jsonHandler.convertObject(params,
                         GenericLinkClickParams.class);
                 validateAndHandleLink(linkClickParams.getLink());
-                chatCommunicationManager.sendMessageToChatServer(command, params);
+                chatCommunicationManager.sendMessageToChatServer(command, linkClickParams);
                 break;
             case CHAT_READY:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
@@ -92,7 +95,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                     insertToCursorParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
                     cursorState.ifPresent(state -> insertToCursorParams.setCursorState(Arrays.asList(state)));
                 });
-                chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, insertToCursorParams);
+                chatCommunicationManager.sendMessageToChatServer(command, insertToCursorParams);
                 break;
             case CHAT_FEEDBACK:
                 chatCommunicationManager.sendMessageToChatServer(command, params);

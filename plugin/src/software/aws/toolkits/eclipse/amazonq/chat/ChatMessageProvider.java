@@ -12,6 +12,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionPar
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -70,6 +72,11 @@ public final class ChatMessageProvider {
         return chatMessage.endChat(tabParams);
     }
 
+    public void sendPromptInputOptionChange(final PromptInputOptionChangeParams optionChangeParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendPromptInputOptionChange(optionChangeParams);
+    }
+
     public void sendChatReady() {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.sendChatReady();
@@ -104,6 +111,11 @@ public final class ChatMessageProvider {
     public void sendSourceLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.sendSourceLinkClickParams(sourceLinkClickParams);
+    }
+
+    public void sendInsertToCursorPositionParams(final InsertToCursorPositionParams insertToCursorPositionParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendInsertToCursorPositionParams(insertToCursorPositionParams);
     }
 
     public void followUpClick(final FollowUpClickParams followUpClickParams) {

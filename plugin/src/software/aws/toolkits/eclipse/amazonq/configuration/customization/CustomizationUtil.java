@@ -29,9 +29,9 @@ public final class CustomizationUtil {
         try {
             Activator.getLogger().info("Triggering configuration pull from Amazon Q LSP server");
             Activator.getLspProvider().getAmazonQServer()
-                    .thenAccept(server -> server.getWorkspaceService()
-                            .didChangeConfiguration(new DidChangeConfigurationParams()))
-                    .get();
+                    .thenAccept(server -> {
+                        server.getWorkspaceService().didChangeConfiguration(new DidChangeConfigurationParams());
+                    }).get();
         } catch (Exception e) {
             Activator.getLogger().error("Error occurred while sending change configuration notification to Amazon Q LSP server", e);
             throw new AmazonQPluginException(e);

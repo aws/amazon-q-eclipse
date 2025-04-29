@@ -34,7 +34,8 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         VIEWS = Map.of(AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
                 AmazonQViewType.DEPENDENCY_MISSING_VIEW, new DependencyMissingView(),
                 AmazonQViewType.RE_AUTHENTICATE_VIEW, new ReauthenticateView(),
-                AmazonQViewType.LSP_STARTUP_FAILED_VIEW, new LspStartUpFailedView(), AmazonQViewType.CHAT_VIEW, new AmazonQChatWebview(),
+                AmazonQViewType.LSP_STARTUP_FAILED_VIEW, new LspStartUpFailedView(),
+                AmazonQViewType.CHAT_VIEW, new AmazonQChatWebview(),
                 AmazonQViewType.TOOLKIT_LOGIN_VIEW, new ToolkitLoginWebview());
     }
 

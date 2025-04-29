@@ -26,7 +26,7 @@ public abstract class AmazonQView extends BaseAmazonQView {
         this.browserProvider = AmazonQBrowserProvider.getInstance();
     }
 
-    public final Browser getBrowser() {
+    final Browser getBrowser() {
         return browserProvider.getBrowser(componentId);
     }
 
@@ -41,7 +41,7 @@ public abstract class AmazonQView extends BaseAmazonQView {
         parent.setBackground(bg);
     }
 
-    protected final boolean setupBrowser(final Composite parent) {
+    protected final Browser setupBrowser(final Composite parent) {
         return browserProvider.setupBrowser(parent, componentId, false);
     }
 

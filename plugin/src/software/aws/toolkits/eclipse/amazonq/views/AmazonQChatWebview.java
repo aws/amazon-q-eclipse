@@ -37,14 +37,13 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         // attempt to use existing browser with chat history if present, else create a
         // new one
         if (browser == null || browser.isDisposed()) {
-            var result = setupBrowser(parent);
+            browser = setupBrowser(parent);
             // if setup of amazon q view fails due to missing webview dependency, switch to
             // that view and don't setup rest of the content
-            if (!result) {
+            if (browser == null) {
                 return parent;
             }
 
-            browser = getBrowser();
             browser.setVisible(false);
             browser.addProgressListener(new ProgressAdapter() {
                 @Override

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
@@ -35,11 +36,12 @@ import software.aws.toolkits.eclipse.amazonq.views.model.UpdateConfigurationPara
 public final class QDeveloperProfileUtil {
 
     private static final QDeveloperProfileUtil INSTANCE;
-    private List<QDeveloperProfile> profiles;
     private QDeveloperProfile savedDeveloperProfile;
     private QDeveloperProfile selectedDeveloperProfile;
     private CompletableFuture<Void> profileSelectionTask;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
+    private List<QDeveloperProfile> profiles;
+    private ReentrantLock profilesLock = new ReentrantLock(true);
 
     static {
         INSTANCE = new QDeveloperProfileUtil();
@@ -66,11 +68,11 @@ public final class QDeveloperProfileUtil {
             Activator.getLogger().error("Failed to deserialize developer profile", e);
         }
         profileSelectionTask = new CompletableFuture<>();
-        profiles = new ArrayList<QDeveloperProfile>();
+        profiles = new ArrayList<>();
     }
 
     private QDeveloperProfile deserializeProfile(final String json) throws JsonProcessingException {
-            return OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
+        return OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
     }
 
     private String serializeProfile(final QDeveloperProfile developerProfile) throws JsonProcessingException {
@@ -83,8 +85,9 @@ public final class QDeveloperProfileUtil {
         }
     }
 
-    public synchronized List<QDeveloperProfile> queryForDeveloperProfiles(final boolean tryApplyCachedProfile) {
-        CompletableFuture<List<QDeveloperProfile>> profilesFuture = Activator.getLspProvider().getAmazonQServer()
+    public synchronized CompletableFuture<List<QDeveloperProfile>> queryForDeveloperProfilesFuture(
+            final boolean tryApplyCachedProfile) {
+        return Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> {
                     GetConfigurationFromServerParams params = new GetConfigurationFromServerParams(
                             ExpectedResponseType.Q_DEVELOPER_PROFILE);
@@ -98,13 +101,16 @@ public final class QDeveloperProfileUtil {
                 }).thenApply(result -> {
                     return handleSelectedProfile(result, tryApplyCachedProfile);
                 });
+    }
+
+    public synchronized List<QDeveloperProfile> queryForDeveloperProfiles(final boolean tryApplyCachedProfile) {
         try {
-            profiles = profilesFuture.get();
+            return queryForDeveloperProfilesFuture(tryApplyCachedProfile).get();
         } catch (InterruptedException | ExecutionException e) {
             Activator.getLogger().error("Failed to fetch developer profiles: ", e);
         }
 
-        return profiles;
+        return new ArrayList<>();
     }
 
     public synchronized CompletableFuture<Void> getProfileSelectionTaskFuture() {
@@ -129,9 +135,28 @@ public final class QDeveloperProfileUtil {
         }
 
         if (!isProfileSet) {
+            setProfiles(profiles);
             Activator.getEventBroker().post(QDeveloperProfileState.class, QDeveloperProfileState.AVAILABLE);
         }
         return profiles;
+    }
+
+    private List<QDeveloperProfile> getProfiles() {
+        try {
+            profilesLock.lock();
+            return profiles;
+        } finally {
+            profilesLock.unlock();
+        }
+    }
+
+    private void setProfiles(final List<QDeveloperProfile> profiles) {
+        try {
+            profilesLock.lock();
+            this.profiles = profiles;
+        } finally {
+            profilesLock.unlock();
+        }
     }
 
     private boolean handleSingleOrNoProfile(final List<QDeveloperProfile> profiles,
@@ -148,7 +173,9 @@ public final class QDeveloperProfileUtil {
         boolean isProfileSelected = false;
         if (selectedDeveloperProfile != null) {
             isProfileSelected = profiles.stream()
-                    .anyMatch(profile -> profile.getArn().equals(selectedDeveloperProfile.getArn()));
+                    .anyMatch(profile -> {
+                        return profile.getArn().equals(selectedDeveloperProfile.getArn());
+                    });
 
             if (isProfileSelected && tryApplyCachedProfile) {
                 setDeveloperProfile(selectedDeveloperProfile);
@@ -160,21 +187,25 @@ public final class QDeveloperProfileUtil {
     private List<QDeveloperProfile> processConfigurations(
             final LspServerConfigurations<QDeveloperProfile> configurations) {
         return Optional.ofNullable(configurations).map(
-                config -> config.getConfigurations().stream().filter(this::isValidProfile).collect(Collectors.toList()))
+                config -> {
+                    return config.getConfigurations().stream().filter(this::isValidProfile)
+                            .collect(Collectors.toList());
+                })
                 .orElse(Collections.emptyList());
     }
 
-    public List<QDeveloperProfile> getDeveloperProfiles(final boolean tryApplyCachedProfile) {
+    public List<QDeveloperProfile> getDeveloperProfiles() {
+        List<QDeveloperProfile> profiles = getProfiles();
         if (profiles != null && !profiles.isEmpty()) {
             return profiles;
         }
-        return queryForDeveloperProfiles(tryApplyCachedProfile);
+        return queryForDeveloperProfiles(false);
     }
 
-    public void setDeveloperProfile(final QDeveloperProfile developerProfile) {
+    public CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile) {
         if (developerProfile == null || (selectedDeveloperProfile != null
                 && selectedDeveloperProfile.getArn().equals(developerProfile.getArn()))) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         selectedDeveloperProfile = developerProfile;
@@ -182,7 +213,7 @@ public final class QDeveloperProfileUtil {
 
         String section = "aws.q";
         Map<String, Object> settings = Map.of("profileArn", selectedDeveloperProfile.getArn());
-        Activator.getLspProvider().getAmazonQServer()
+        return Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> server.updateConfiguration(new UpdateConfigurationParams(section, settings)))
                 .thenRun(() -> {
                     showNotification(selectedDeveloperProfile.getName());
@@ -190,7 +221,7 @@ public final class QDeveloperProfileUtil {
                     if (profileSelectionTask != null) {
                         profileSelectionTask.complete(null);
                     }
-                    profiles = null;
+                    setProfiles(null);
                 })
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Error occurred while setting Q Developer Profile: ", throwable);

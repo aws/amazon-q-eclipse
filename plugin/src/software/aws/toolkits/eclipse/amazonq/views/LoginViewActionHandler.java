@@ -59,7 +59,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         if (QDeveloperProfileUtil.getInstance().isProfileSelectionRequired()) {
                             Map<String, Object> profilesData = new HashMap<>();
                             profilesData.put("profiles",
-                                    QDeveloperProfileUtil.getInstance().getDeveloperProfiles(false));
+                                    QDeveloperProfileUtil.getInstance().getDeveloperProfiles());
                             Display.getDefault().asyncExec(() -> {
                                 browser.execute(String.format("ideClient.handleProfiles(%s)",
                                         JSON_HANDLER.serialize(profilesData)));

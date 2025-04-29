@@ -35,13 +35,10 @@ public final class ToolkitLoginWebview extends AmazonQView {
         browser = getAndAttachBrowser(parent);
 
         if (browser == null || browser.isDisposed()) {
-            setupBrowser(parent);
-            browser = getBrowser();
-
+            browser = setupBrowser(parent);
             if (browser == null) {
                 return parent;
             }
-            var browser = getBrowser();
 
             browser.setVisible(false);
             browser.addProgressListener(new ProgressAdapter() {

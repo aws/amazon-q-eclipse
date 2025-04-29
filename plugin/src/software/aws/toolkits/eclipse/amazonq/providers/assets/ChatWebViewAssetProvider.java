@@ -213,7 +213,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     const init = () => {
                         waitForFunction('ideCommand')
                             .then(() => {
-                                    amazonQChat.createChat({
+                                amazonQChat.createChat({
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }

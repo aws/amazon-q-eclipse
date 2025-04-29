@@ -27,7 +27,6 @@ public final class AmazonQBrowserProvider {
     private Map<String, Browser> browserById;
     private Map<String, Composite> compositeById;
 
-    // Test constructor that accepts a platform
     private AmazonQBrowserProvider(final Builder builder) {
         this.pluginPlatform = builder.pluginPlatform;
         browserById = new HashMap<>();
@@ -84,7 +83,7 @@ public final class AmazonQBrowserProvider {
      * returns boolean representing whether a browser type compatible with webview rendering for the current platform is found
      * @param parent
      */
-    public synchronized boolean setupBrowser(final Composite parent, final String componentId,
+    public synchronized Browser setupBrowser(final Composite parent, final String componentId,
             final boolean publishUnconditionally) {
         var browser = new Browser(parent, getBrowserStyle());
 
@@ -97,8 +96,9 @@ public final class AmazonQBrowserProvider {
         // platform
         if (hasWebViewDependency()) {
             browserById.put(componentId, browser);
+            return browser;
         }
-        return hasWebViewDependency();
+        return null;
     }
 
     public synchronized Browser getBrowser(final String componentId) {

@@ -8,7 +8,6 @@ import java.awt.datatransfer.StringSelection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
@@ -17,8 +16,6 @@ import org.eclipse.swt.browser.ProgressAdapter;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Display;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.reactivex.rxjava3.disposables.Disposable;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
@@ -26,13 +23,8 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
-import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
-import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -106,7 +98,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
                 Display.getDefault().syncExec(() -> {
                     try {
                         chatTheme.injectTheme(browser);
-                        disableBrowserContextMenu(browser);
                         chatUICommandSubscription = Activator.getEventBroker().subscribeWithReplay(ChatUIInboundCommand.class, ChatWebViewAssetProvider.this);
                     } catch (Exception e) {
                         Activator.getLogger().info("Error occurred while injecting theme into Q chat", e);
@@ -252,8 +243,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
     }
 
     private String generateJS(final String jsEntrypoint) {
-        var chatQuickActionConfig = generateQuickActionConfig();
-        var contextCommands = generateContextCommands();
         var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
         return String.format("""
                 <script type="text/javascript" src="%s" defer></script>
@@ -268,7 +257,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
                                     }
                                 },
                                 {
-                                    quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
                                 });
                                 window.mynah = mynahUI
@@ -279,9 +267,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
                     %s
                     %s
                     %s
-                    %s
                 </script>
-                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig, "true".equals(disclaimerAcknowledged), contextCommands,
+                """, jsEntrypoint, getWaitFunction(), "true".equals(disclaimerAcknowledged),
                 getArrowKeyBlockingFunction(), getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(),
                 getFocusOnChatPromptFunction());
     }
@@ -415,32 +402,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
                     }
                 });
                 """;
-    }
-
-    /*
-     * Generates javascript for chat options to be supplied to Chat UI defined here
-     * https://github.com/aws/language-servers/blob/
-     * 785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
-     */
-    private String generateQuickActionConfig() {
-        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
-                .map(ChatOptions::quickActions).map(QuickActions::quickActionsCommandGroups)
-                .map(this::serializeQuickActionCommands).orElse("[]");
-    }
-
-    private String generateContextCommands() {
-        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getContextCommands())
-                .map(this::serializeQuickActionCommands).orElse("[]");
-    }
-
-    private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {
-        try {
-            ObjectMapper mapper = ObjectMapperFactory.getInstance();
-            return mapper.writeValueAsString(quickActionCommands);
-        } catch (Exception e) {
-            Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
-            return "";
-        }
     }
 
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {

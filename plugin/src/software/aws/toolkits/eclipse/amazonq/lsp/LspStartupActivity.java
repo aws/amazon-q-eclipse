@@ -17,7 +17,9 @@ import org.eclipse.ui.IStartup;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
+import software.aws.toolkits.eclipse.amazonq.broker.events.QDeveloperProfileState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.ToolkitTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.AutoTriggerDocumentListener;
@@ -45,6 +47,9 @@ public class LspStartupActivity implements IStartup {
                     Display.getDefault().asyncExec(() -> {
                         AmazonQToolbarActions.getInstance();
                     });
+                    AmazonQBrowserProvider.getInstance().publishBrowserCompatibilityState();
+                    Activator.getEventBroker().post(QDeveloperProfileState.class, QDeveloperProfileState.NOT_APPLICABLE);
+
                     Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(server -> {
                         try {
                             schedulePostStartupJobs();

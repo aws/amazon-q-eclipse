@@ -3,12 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.router;
 
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -23,6 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
 import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.QDeveloperProfileState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
@@ -37,6 +40,7 @@ public final class ViewRouterTest {
     private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
     private Observable<ChatWebViewAssetState> chatWebViewAssetStateObservable;
     private Observable<ToolkitLoginWebViewAssetState> toolkitLoginWebViewAssetStateObservable;
+    private Observable<QDeveloperProfileState> qDeveloperProfileStateObservable;
 
     private ViewRouter viewRouter;
     private EventBroker eventBrokerMock;
@@ -56,6 +60,7 @@ public final class ViewRouterTest {
         browserCompatibilityStateObservable = publishSubject.ofType(BrowserCompatibilityState.class);
         chatWebViewAssetStateObservable = publishSubject.ofType(ChatWebViewAssetState.class);
         toolkitLoginWebViewAssetStateObservable = publishSubject.ofType(ToolkitLoginWebViewAssetState.class);
+        qDeveloperProfileStateObservable = publishSubject.ofType(QDeveloperProfileState.class);
 
         eventBrokerMock = activatorStaticMockExtension.getMock(EventBroker.class);
 
@@ -63,7 +68,8 @@ public final class ViewRouterTest {
                 .withLspStateObservable(lspStateObservable)
                 .withBrowserCompatibilityStateObservable(browserCompatibilityStateObservable)
                 .withChatWebViewAssetStateObservable(chatWebViewAssetStateObservable)
-                .withToolkitLoginWebViewAssetStateObservable(toolkitLoginWebViewAssetStateObservable).build();
+                .withToolkitLoginWebViewAssetStateObservable(toolkitLoginWebViewAssetStateObservable)
+                .withQDeveloperProfileStateObservable(qDeveloperProfileStateObservable).build();
     }
 
     @AfterEach
@@ -83,8 +89,28 @@ public final class ViewRouterTest {
         publishSubject.onNext(browserCompatibilityState);
         publishSubject.onNext(chatWebViewAssetState);
         publishSubject.onNext(toolkitLoginWebViewAssetState);
+        publishSubject.onNext(QDeveloperProfileState.AVAILABLE); // does not affect view selection
 
         verify(eventBrokerMock).post(AmazonQViewType.class, expectedActiveViewType);
+    }
+
+    @Test
+    void testDuplicateViewIdPublishedWhenDeveloperProfileSelected() {
+        publishSubject.onNext(getAuthStateObject(AuthStateType.LOGGED_IN));
+        publishSubject.onNext(AmazonQLspState.ACTIVE);
+        publishSubject.onNext(BrowserCompatibilityState.COMPATIBLE);
+        publishSubject.onNext(ChatWebViewAssetState.RESOLVED);
+        publishSubject.onNext(ToolkitLoginWebViewAssetState.RESOLVED);
+        publishSubject.onNext(QDeveloperProfileState.AVAILABLE);
+
+        publishSubject.onNext(getAuthStateObject(AuthStateType.LOGGED_IN));
+        publishSubject.onNext(AmazonQLspState.ACTIVE);
+        publishSubject.onNext(BrowserCompatibilityState.COMPATIBLE);
+        publishSubject.onNext(ChatWebViewAssetState.RESOLVED);
+        publishSubject.onNext(ToolkitLoginWebViewAssetState.RESOLVED);
+        publishSubject.onNext(QDeveloperProfileState.SELECTED);
+
+        verify(eventBrokerMock, times(2)).post(AmazonQViewType.class, AmazonQViewType.CHAT_VIEW);
     }
 
     private static Stream<Arguments> provideStateSource() {

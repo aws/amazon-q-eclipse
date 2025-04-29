@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record UpdateCredentialsPayload(
         @JsonProperty("data") String data,
+        @JsonProperty("metadata") ConnectionMetadata metadata,
         @JsonProperty("encrypted") Boolean encrypted
     ) {
 }

@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
+import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
@@ -49,7 +50,8 @@ public final class DefaultAuthStateManager implements AuthStateManager {
     }
 
     @Override
-    public void toLoggedIn(final LoginType loginType, final LoginParams loginParams, final String ssoTokenId) throws IllegalArgumentException {
+    public void toLoggedIn(final LoginType loginType, final LoginParams loginParams, final String ssoTokenId)
+            throws IllegalArgumentException {
         if (loginType == null) {
             throw new IllegalArgumentException("loginType is a required parameter");
         }
@@ -65,7 +67,6 @@ public final class DefaultAuthStateManager implements AuthStateManager {
         if (ssoTokenId == null) {
             throw new IllegalArgumentException("ssoTokenId is a required parameter");
         }
-
 
         updateState(AuthStateType.LOGGED_IN, loginType, loginParams, ssoTokenId);
     }
@@ -121,7 +122,13 @@ public final class DefaultAuthStateManager implements AuthStateManager {
          */
         AuthState newAuthState = getAuthState();
         if (previousAuthState == null || newAuthState.authStateType() != previousAuthState.authStateType()) {
-            Activator.getEventBroker().post(AuthState.class, newAuthState);
+            if (loginType == LoginType.IAM_IDENTITY_CENTER && newAuthState.isLoggedIn()) {
+                QDeveloperProfileUtil.getInstance().getProfileSelectionTaskFuture().thenRun(() -> {
+                    Activator.getEventBroker().post(AuthState.class, newAuthState);
+                });
+            } else {
+                Activator.getEventBroker().post(AuthState.class, newAuthState);
+            }
         }
         previousAuthState = newAuthState;
     }

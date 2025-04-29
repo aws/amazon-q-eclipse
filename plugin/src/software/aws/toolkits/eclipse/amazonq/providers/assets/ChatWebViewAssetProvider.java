@@ -221,9 +221,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                 {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
-                                });
-                            })
-                            .catch(error => console.error('Error initializing chat:', error));
+                                })
+                            }).catch(error => console.error('Error initializing chat:', error));
                     }
 
                     window.addEventListener('load', init);
@@ -325,8 +324,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                     if (node.querySelectorAll) {
                                         const buttons = node.querySelectorAll(selector); // Missing selector parameter
                                         buttons.forEach(attachEventListeners);
-                        }
-                    }
+                                    }
+                                }
                             });
                         });
                     } catch (error) {

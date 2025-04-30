@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
@@ -156,20 +157,32 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         Activator.getLogger().info("Opening URI: " + uri);
 
         return CompletableFuture.supplyAsync(() -> {
-            try {
+            final boolean[] success = new boolean[1];
                 if (isLocalFile(uri)) {
-                    IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-                    IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
-                    IDE.openEditorOnFileStore(page, fileStore);
-                    return new ShowDocumentResult(true);
+                    Display.getDefault().syncExec(() -> {
+                        try {
+                            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                            IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
+                            IDE.openEditorOnFileStore(page, fileStore);
+                            success[0] = true;
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error in UI thread while opening URI: " + uri, e);
+                            success[0] = false;
+                        }
+                    });
+                    return new ShowDocumentResult(success[0]);
                 } else {
-                    PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));
-                    return new ShowDocumentResult(true);
+                    Display.getDefault().syncExec(() -> {
+                        try {
+                            PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));
+                            success[0] = true;
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error in UI thread while opening external URI: " + uri, e);
+                            success[0] = false;
+                        }
+                    });
+                    return new ShowDocumentResult(success[0]);
                 }
-            } catch (Exception e) {
-                Activator.getLogger().error("Error opening URI: " + uri, e);
-                return new ShowDocumentResult(false);
-            }
         });
     }
 

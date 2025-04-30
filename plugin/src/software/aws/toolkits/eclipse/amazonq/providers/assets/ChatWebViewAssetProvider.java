@@ -330,8 +330,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                     if (node.querySelectorAll) {
                                         const buttons = node.querySelectorAll(selector); // Missing selector parameter
                                         buttons.forEach(attachEventListeners);
-                        }
-                    }
+                                    }
+                                }
                             });
                         });
                     } catch (error) {

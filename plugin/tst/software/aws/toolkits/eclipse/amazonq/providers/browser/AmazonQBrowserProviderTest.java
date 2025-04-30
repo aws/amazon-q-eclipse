@@ -46,7 +46,7 @@ public final class AmazonQBrowserProviderTest {
             staticDisplay.when(Display::getDefault).thenReturn(mockDisplay);
             doNothing().when(mockDisplay).asyncExec(any(Runnable.class));
 
-            browserProvider = new AmazonQBrowserProvider(platform);
+            browserProvider = AmazonQBrowserProvider.builder().withPluginPlatform(platform).build();
             assertEquals(expectedStyle, browserProvider.getBrowserStyle());
         }
     }
@@ -64,10 +64,10 @@ public final class AmazonQBrowserProviderTest {
             staticDisplay.when(Display::getDefault).thenReturn(mockDisplay);
             doNothing().when(mockDisplay).asyncExec(any(Runnable.class));
 
-            browserProvider = new AmazonQBrowserProvider(platform);
+            browserProvider = AmazonQBrowserProvider.builder().withPluginPlatform(platform).build();
 
             assertFalse(browserProvider.hasWebViewDependency());
-            browserProvider.checkWebViewCompatibility(browserType);
+            browserProvider.checkWebViewCompatibility(browserType, false);
 
             assertEquals(expectedResult, browserProvider.hasWebViewDependency());
         }

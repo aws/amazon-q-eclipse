@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;

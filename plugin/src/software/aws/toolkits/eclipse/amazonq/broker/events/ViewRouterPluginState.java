@@ -6,5 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.broker.events;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 
 public record ViewRouterPluginState(AuthState authState, AmazonQLspState lspState, BrowserCompatibilityState browserCompatibilityState,
-        ChatWebViewAssetState chatWebViewAssetState, ToolkitLoginWebViewAssetState toolkitLoginWebViewAssetState) {
+        ChatWebViewAssetState chatWebViewAssetState, ToolkitLoginWebViewAssetState toolkitLoginWebViewAssetState,
+        QDeveloperProfileState qDeveloperProfileState) {
 }

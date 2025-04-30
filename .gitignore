@@ -13,3 +13,4 @@ telemetry/bin
 bin
 package-lock.json
 telemetry/
+plugin/.settings

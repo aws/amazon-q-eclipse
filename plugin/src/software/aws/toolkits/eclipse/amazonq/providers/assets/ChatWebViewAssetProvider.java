@@ -257,7 +257,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
                                     }
                                 },
                                 {
-                                    disclaimerAcknowledged: %b
+                                    disclaimerAcknowledged: %b,
+                                    agenticMode: true
                                 });
                                 window.mynah = mynahUI
                             })

@@ -3,7 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,13 +14,16 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.IDE;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
@@ -148,13 +152,22 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final CompletableFuture<ShowDocumentResult> showDocument(final ShowDocumentParams params) {
-        Activator.getLogger().info("Opening redirect URL: " + params.getUri());
+        String uri = params.getUri();
+        Activator.getLogger().info("Opening URI: " + uri);
+
         return CompletableFuture.supplyAsync(() -> {
             try {
-                PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(params.getUri()));
-                return new ShowDocumentResult(true);
-            } catch (PartInitException | MalformedURLException e) {
-                Activator.getLogger().error("Error opening URL: " + params.getUri(), e);
+                if (isLocalFile(uri)) {
+                    IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                    IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
+                    IDE.openEditorOnFileStore(page, fileStore);
+                    return new ShowDocumentResult(true);
+                } else {
+                    PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));
+                    return new ShowDocumentResult(true);
+                }
+            } catch (Exception e) {
+                Activator.getLogger().error("Error opening URI: " + uri, e);
                 return new ShowDocumentResult(false);
             }
         });
@@ -206,4 +219,20 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             return new OpenTabResult("");
         });
     }
+
+    private boolean isLocalFile(final String uri) {
+        try {
+            URI parsedUri = new URI(uri);
+            String scheme = parsedUri.getScheme();
+
+            if (scheme == null || scheme.equals("file")) {
+                return true;
+            }
+
+            return uri.startsWith("file:");
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
 }

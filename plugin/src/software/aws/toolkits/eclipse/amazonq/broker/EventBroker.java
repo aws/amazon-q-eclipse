@@ -80,7 +80,7 @@ public final class EventBroker {
     private <T> Subject<Object> getOrCreateStatelessSubject(final Class<T> eventType) {
         return statelessSubjectsForType.computeIfAbsent(eventType, k -> {
             Subject<Object> subject = BehaviorSubject.create().toSerialized();
-            subject.doOnNext(event -> {
+            Disposable subscription = subject.doOnNext(event -> {
                 if (statefulSubjectsByIdForType.containsKey(eventType)) {
                     ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
                     for (String key: statefulSubjectsByIdForType.get(eventType).keySet()) {
@@ -88,9 +88,9 @@ public final class EventBroker {
                         statefulSubjectsByIdForType.get(eventType).get(key).onNext(event);
                         subjectLock.unlock();
                     }
-                    ;
                 }
             }).subscribe();
+            disposableSubscriptions.add(subscription);
             subject.subscribeOn(Schedulers.computation());
             return subject;
         });
@@ -118,9 +118,7 @@ public final class EventBroker {
         Observable<T> observable = ofMissedObservable(eventType, observer.getSubscribingComponentId());
         Disposable subscription = observable
                 .observeOn(Schedulers.computation()) // subscribe on dedicated thread
-                .subscribe(event -> {
-                    observer.onEvent(event);
-                });
+                .subscribe(observer::onEvent);
         disposableSubscriptions.add(subscription); // track subscription for dispose call
         return new Disposable() {
             private volatile boolean disposed = false;
@@ -129,8 +127,18 @@ public final class EventBroker {
             public void dispose() {
                 if (!disposed) {
                     disposed = true;
-                    getStatefulSubject(eventType, observer.getSubscribingComponentId()).onComplete();
-                    subscription.dispose();
+                    ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
+                    try {
+                        subjectLock.lock();
+                        Subject<Object> newSubject = ReplaySubject.create().toSerialized();
+                        Subject<Object> oldSubject = getStatefulSubject(eventType,
+                                observer.getSubscribingComponentId());
+                        statefulSubjectsByIdForType.get(eventType).put(observer.getSubscribingComponentId(),
+                                newSubject);
+                        oldSubject.onComplete();
+                    } finally {
+                        subjectLock.unlock();
+                    }
                 }
             }
 
@@ -173,15 +181,6 @@ public final class EventBroker {
                 .computeIfAbsent(subscriberId, subjectId -> {
                     return getStatefulSubject(eventType, subscriberId);
                 }).ofType(eventType);
-        subjectById.get(subscriberId).doFinally(() -> {
-            ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
-            try {
-                subjectLock.lock();
-                statefulSubjectsByIdForType.get(eventType).put(subscriberId, ReplaySubject.create().toSerialized());
-            } finally {
-                subjectLock.unlock();
-            }
-        }).subscribe();
         return observable;
     }
 

@@ -32,8 +32,11 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
@@ -41,13 +44,14 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.CodeWhispererTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.LanguageUtil;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
-import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 
-public final class InlineChatSession extends FoldingListener implements ChatUiRequestListener, IPartListener2 {
+public final class InlineChatSession extends FoldingListener
+        implements EventObserver<ChatUIInboundCommand>, IPartListener2 {
 
     // Session state variables
     private static InlineChatSession instance;
@@ -57,6 +61,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     private boolean referencesEnabled;
     private IWorkbenchPage workbenchPage;
     private ProjectionAnnotationModel projectionModel;
+    private final JsonHandler jsonHandler;
 
     // Dependencies
     private final InlineChatUIManager uiManager;
@@ -78,12 +83,13 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     private final int aboutToUndo = 17; // 17 maps to this event type
 
     private InlineChatSession() {
-        chatCommunicationManager = ChatCommunicationManager.getInstance();
-        chatCommunicationManager.setInlineChatRequestListener(this);
+        Activator.getEventBroker().subscribe(ChatUIInboundCommand.class, this);
         uiManager = InlineChatUIManager.getInstance();
         diffManager = InlineChatDiffManager.getInstance();
         themeDetector = new ThemeDetector();
+        chatCommunicationManager = ChatCommunicationManager.getInstance();
         contextService = PlatformUI.getWorkbench().getService(IContextService.class);
+        jsonHandler = new JsonHandler();
     }
 
     public static synchronized InlineChatSession getInstance() {
@@ -164,8 +170,11 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
 
     // Chat server response handler
     @Override
-    public void onSendToChatUi(final String message) {
-        if (!isSessionActive()) {
+    public void onEvent(final ChatUIInboundCommand chatUIInboundCommand) {
+        String message = jsonHandler.serialize(chatUIInboundCommand);
+        String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
+
+        if (!isSessionActive() || !inlineChatCommand.equals(chatUIInboundCommand.command())) {
             return;
         }
 

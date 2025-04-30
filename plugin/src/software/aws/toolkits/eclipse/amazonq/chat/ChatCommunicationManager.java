@@ -17,7 +17,6 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.BaseChatRequestParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
@@ -32,6 +31,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
@@ -41,7 +41,6 @@ import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.ChatCodeReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
@@ -59,8 +58,6 @@ public final class ChatCommunicationManager {
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultMap chatPartialResultMap;
     private final LspEncryptionManager lspEncryptionManager;
-    private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
-    private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
     private final String inlineChatTabId = "123456789";
 
     private ChatCommunicationManager(final Builder builder) {
@@ -71,8 +68,6 @@ public final class ChatCommunicationManager {
                 : new ChatPartialResultMap();
         this.lspEncryptionManager = builder.lspEncryptionManager != null ? builder.lspEncryptionManager
                 : DefaultLspEncryptionManager.getInstance();
-        chatUiRequestListenerFuture = new CompletableFuture<>();
-        inlineChatListenerFuture = new CompletableFuture<>();
     }
 
     public static Builder builder() {
@@ -279,40 +274,6 @@ public final class ChatCommunicationManager {
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false);
         Activator.getEventBroker().post(ChatUIInboundCommand.class, chatUIInboundCommand);
-    }
-
-    public void setChatUiRequestListener(final ChatUiRequestListener listener) {
-        if (listener != null) {
-            chatUiRequestListenerFuture.complete(listener);
-        }
-    }
-
-    public void setInlineChatRequestListener(final ChatUiRequestListener listener) {
-        if (listener != null) {
-            inlineChatListenerFuture.complete(listener);
-        }
-    }
-
-    public void removeListener(final ChatUiRequestListener listener) {
-        if (chatUiRequestListenerFuture.isDone() && listener == chatUiRequestListenerFuture.join()) {
-            chatUiRequestListenerFuture = new CompletableFuture<>();
-        } else if (inlineChatListenerFuture.isDone() && listener == inlineChatListenerFuture.join()) {
-            inlineChatListenerFuture = new CompletableFuture<>();
-        }
-    }
-
-    /*
-     * Sends message to Chat UI to show in webview
-     */
-    public void sendMessageToChatUI(final ChatUIInboundCommand command) {
-        String message = jsonHandler.serialize(command);
-        String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
-        if (inlineChatCommand.equals(command.command())) {
-            inlineChatListenerFuture.thenApply(listener -> {
-                listener.onSendToChatUi(message);
-                return listener;
-            });
-        }
     }
 
     /*

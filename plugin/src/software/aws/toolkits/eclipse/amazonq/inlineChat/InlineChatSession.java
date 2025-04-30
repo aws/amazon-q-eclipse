@@ -61,7 +61,7 @@ public final class InlineChatSession extends FoldingListener
     private boolean referencesEnabled;
     private IWorkbenchPage workbenchPage;
     private ProjectionAnnotationModel projectionModel;
-    private final JsonHandler jsonHandler;
+    private static final JsonHandler JSON_HANDLER = new JsonHandler();
 
     // Dependencies
     private final InlineChatUIManager uiManager;
@@ -83,13 +83,12 @@ public final class InlineChatSession extends FoldingListener
     private final int aboutToUndo = 17; // 17 maps to this event type
 
     private InlineChatSession() {
-        Activator.getEventBroker().subscribe(ChatUIInboundCommand.class, this);
         uiManager = InlineChatUIManager.getInstance();
         diffManager = InlineChatDiffManager.getInstance();
         themeDetector = new ThemeDetector();
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         contextService = PlatformUI.getWorkbench().getService(IContextService.class);
-        jsonHandler = new JsonHandler();
+        Activator.getEventBroker().subscribe(ChatUIInboundCommand.class, this);
     }
 
     public static synchronized InlineChatSession getInstance() {
@@ -171,10 +170,10 @@ public final class InlineChatSession extends FoldingListener
     // Chat server response handler
     @Override
     public void onEvent(final ChatUIInboundCommand chatUIInboundCommand) {
-        String message = jsonHandler.serialize(chatUIInboundCommand);
+        String message = JSON_HANDLER.serialize(chatUIInboundCommand);
         String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
 
-        if (!isSessionActive() || !inlineChatCommand.equals(chatUIInboundCommand.command())) {
+        if (!isSessionActive() || !inlineChatCommand.equals(chatUIInboundCommand.command()) || message == null) {
             return;
         }
 

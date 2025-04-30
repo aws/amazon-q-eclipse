@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,7 +20,6 @@ import org.eclipse.swt.widgets.Display;
 import software.aws.toolkits.eclipse.amazonq.chat.models.BaseChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
@@ -33,6 +33,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ReferenceTrackerInformation;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
@@ -225,7 +226,7 @@ public final class ChatCommunicationManager {
         return range.get().map(CursorState::new);
     }
 
-    private CompletableFuture<ChatResult> sendEncryptedChatMessage(final String tabId,
+    private CompletableFuture<Object> sendEncryptedChatMessage(final String tabId,
             final Function<String, CompletableFuture<String>> action) {
         // Retrieving the chat result is expected to be a long-running process with
         // intermittent progress notifications being sent
@@ -247,11 +248,14 @@ public final class ChatCommunicationManager {
             } else {
                 try {
                     String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-                    ChatResult result = jsonHandler.deserialize(serializedData, ChatResult.class);
+                    Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
 
-                    if (result.codeReference() != null && result.codeReference().length >= 1) {
-                        ChatCodeReference chatCodeReference = new ChatCodeReference(result.codeReference());
-                        Activator.getCodeReferenceLoggingService().log(chatCodeReference);
+                    if (result.containsKey("codeReference") && result.get("codeReference") instanceof ReferenceTrackerInformation[]) {
+                        ReferenceTrackerInformation[] codeReference = (ReferenceTrackerInformation[]) result.get("codeReference");
+                        if (codeReference != null && codeReference.length >= 1) {
+                            ChatCodeReference chatCodeReference = new ChatCodeReference(codeReference);
+                            Activator.getCodeReferenceLoggingService().log(chatCodeReference);
+                        }
                     }
 
                     // show chat response in Chat UI
@@ -342,11 +346,9 @@ public final class ChatCommunicationManager {
 
         String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
         String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
-        ChatResult partialChatResult = jsonHandler.deserialize(serializedData, ChatResult.class);
-
-        // Check to ensure the body has content in order to keep displaying the spinner
-        // while loading
-        if (partialChatResult.body() == null || partialChatResult.body().length() == 0) {
+        Map<String, Object> partialChatResult = jsonHandler.deserialize(serializedData, Map.class);
+        Object body = partialChatResult.get("body");
+        if (body == null || (body instanceof String && ((String)body).length() == 0)) {
             return;
         }
 

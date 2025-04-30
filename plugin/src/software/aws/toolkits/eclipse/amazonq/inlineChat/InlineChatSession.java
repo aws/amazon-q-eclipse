@@ -173,7 +173,7 @@ public final class InlineChatSession extends FoldingListener
         String message = JSON_HANDLER.serialize(chatUIInboundCommand);
         String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
 
-        if (!isSessionActive() || !inlineChatCommand.equals(chatUIInboundCommand.command()) || message == null) {
+        if (!isSessionActive() || !inlineChatCommand.equals(chatUIInboundCommand.command())) {
             return;
         }
 

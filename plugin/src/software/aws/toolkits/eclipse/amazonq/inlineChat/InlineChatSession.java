@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -229,7 +230,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
     private void sendInlineChatRequest() {
         try {
             var prompt = task.getPrompt();
-            var chatPrompt = new ChatPrompt(prompt, prompt, "");
+            var chatPrompt = new ChatPrompt(prompt, prompt, "", Collections.emptyList());
             params = new InlineChatRequestParams(chatPrompt, null, Arrays.asList(task.getCursorState()));
             chatCommunicationManager.sendInlineChatMessageToChatServer(params);
 

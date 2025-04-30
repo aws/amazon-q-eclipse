@@ -3,4 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-public record Command(String command, String description) { }
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record Command(
+    @JsonProperty("command") String command,
+    @JsonProperty("description") String description) { }

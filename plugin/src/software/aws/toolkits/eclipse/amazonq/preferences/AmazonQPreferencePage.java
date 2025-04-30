@@ -33,10 +33,21 @@ import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 public class AmazonQPreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
     public static final String PREFERENCE_STORE_ID = "software.aws.toolkits.eclipse.preferences";
     public static final String CODE_REFERENCE_OPT_IN = "codeReferenceOptIn";
+    public static final String WORKSPACE_INDEX = "workspaceIndex";
+    public static final String USE_GPU_FOR_INDEXING = "useGpuForIndexing";
+    public static final String INDEX_WORKER_THREADS = "indexWorkerThreads";
     public static final String TELEMETRY_OPT_IN = "telemetryOptIn";
     public static final String Q_DATA_SHARING = "qDataSharing";
     public static final String HTTPS_PROXY = "httpsProxy";
     public static final String CA_CERT = "customCaCert";
+
+    private Boolean isWorkspaceIndexChecked;
+    private Boolean isGpuIndexingChecked;
+    private int indexWorkerThreads;
+
+    private Boolean changedWorkspaceIndexChecked;
+    private Boolean changedGpuIndexingChecked;
+    private int changedIndexWorkerThreads;
 
     private Boolean isTelemetryOptInChecked;
     private Boolean isQDataSharingOptInChecked;
@@ -53,6 +64,12 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
 
     @Override
     public final void init(final IWorkbench workbench) {
+        isWorkspaceIndexChecked = preferenceStore.getBoolean(WORKSPACE_INDEX);
+        changedWorkspaceIndexChecked = preferenceStore.getBoolean(WORKSPACE_INDEX);
+        isGpuIndexingChecked = preferenceStore.getBoolean(USE_GPU_FOR_INDEXING);
+        changedGpuIndexingChecked = preferenceStore.getBoolean(USE_GPU_FOR_INDEXING);
+        indexWorkerThreads = preferenceStore.getInt(INDEX_WORKER_THREADS);
+        changedIndexWorkerThreads = preferenceStore.getInt(INDEX_WORKER_THREADS);
         isTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
         changedTelemetryOptInChecked = preferenceStore.getBoolean(TELEMETRY_OPT_IN);
         isQDataSharingOptInChecked = preferenceStore.getBoolean(Q_DATA_SHARING);
@@ -65,8 +82,12 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         ((GridLayout) getFieldEditorParent().getLayout()).numColumns = 1;
 
         createHorizontalSeparator();
-        createHeading("Inline Suggestions");
+        createHeading("Code Suggestions");
         createCodeReferenceOptInField();
+        createHeading("Workspace Indexing");
+        createWorkspaceIndexField();
+        createUseGpuForIndexingField();
+        createIndexWorkerThreadsField();
         createHeading("Data Sharing");
         createTelemetryOptInField();
         createHorizontalSeparator();
@@ -100,7 +121,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         codeReferenceOptInComposite.setLayoutData(telemetryOptInCompositeData);
 
         BooleanFieldEditor codeReferenceOptIn = new BooleanFieldEditor(CODE_REFERENCE_OPT_IN,
-                "Show inline code suggestions with code references", codeReferenceOptInComposite);
+                "Show Code Suggestions with Code References", codeReferenceOptInComposite);
         addField(codeReferenceOptIn);
 
         if (Activator.getLoginService().getAuthState().loginType().equals(LoginType.IAM_IDENTITY_CENTER)) {
@@ -122,6 +143,65 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
                 PluginUtils.openWebpage(event.text);
             }
         });
+    }
+
+    private void createWorkspaceIndexField() {
+        Composite workspaceIndexComposite = new Composite(getFieldEditorParent(), SWT.NONE);
+        workspaceIndexComposite.setLayout(new GridLayout(2, false));
+        GridData workspaceIndexCompositeData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        workspaceIndexCompositeData.horizontalIndent = 20;
+        workspaceIndexComposite.setLayoutData(workspaceIndexCompositeData);
+
+        BooleanFieldEditor workspaceIndex = new BooleanFieldEditor(WORKSPACE_INDEX, "Workspace Index", workspaceIndexComposite) {
+            @Override
+            protected void valueChanged(final boolean oldValue, final boolean newValue) {
+                isWorkspaceIndexChecked = newValue;
+            }
+        };
+        addField(workspaceIndex);
+
+        createLabel("""
+                When you add @workspace to your question in Amazon Q chat, Amazon Q will index your workspace files locally\
+                \nto use as context for its response. Extra CPU usage is expected while indexing a workspace. This will not\
+                \nimpact Amazon Q features or your IDE, but you may manage CPU usage by setting the number of index threads.
+                """, 20, workspaceIndexComposite);
+    }
+
+    private void createUseGpuForIndexingField() {
+        Composite useGpuComposite = new Composite(getFieldEditorParent(), SWT.NONE);
+        useGpuComposite.setLayout(new GridLayout(2, false));
+        GridData useGpuCompositeData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        useGpuCompositeData.horizontalIndent = 20;
+        useGpuComposite.setLayoutData(useGpuCompositeData);
+
+        BooleanFieldEditor useGpuForIndexing = new BooleanFieldEditor(USE_GPU_FOR_INDEXING, "Use GPU for Indexing", useGpuComposite) {
+            @Override
+            protected void valueChanged(final boolean oldValue, final boolean newValue) {
+                isGpuIndexingChecked = newValue;
+            }
+        };
+        addField(useGpuForIndexing);
+
+        createLabel("""
+                Enable GPU to help index your local workspace files. Only applies to Linux and Windows.
+                """, 20, useGpuComposite);
+    }
+
+    private void createIndexWorkerThreadsField() {
+        Composite indexWorkerThreadsComposite = new Composite(getFieldEditorParent(), SWT.NONE);
+        indexWorkerThreadsComposite.setLayout(new GridLayout(2, false));
+        GridData indexWorkerThreadsCompositeData = new GridData(SWT.LEFT, SWT.CENTER, true, false);
+        indexWorkerThreadsCompositeData.horizontalIndent = 20;
+        indexWorkerThreadsComposite.setLayoutData(indexWorkerThreadsCompositeData);
+
+        StringFieldEditor indexWorkerThreads = new StringFieldEditor(INDEX_WORKER_THREADS, "Index Worker Threads", 10, indexWorkerThreadsComposite);
+        addField(indexWorkerThreads);
+
+        createLabel("""
+                Number of worker threads of Amazon Q local index process. '0' will use the system default worker threads for balance\
+                \nperformance. You may increase this number to more quickly index your workspace, but only up to your hardware's number\
+                \nof CPU cores. Please restart Eclipse after changing worker threads.
+                """, 20, getFieldEditorParent());
     }
 
     private void createTelemetryOptInField() {
@@ -266,6 +346,24 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
             AwsTelemetryProvider.emitModifySettingEvent("amazonQ.dataSharing",
                     changedDataSharingOptInChecked.toString());
             isQDataSharingOptInChecked = changedDataSharingOptInChecked;
+        }
+
+        if (changedWorkspaceIndexChecked != isWorkspaceIndexChecked) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.workspaceIndexing",
+                    changedWorkspaceIndexChecked.toString());
+            isWorkspaceIndexChecked = changedWorkspaceIndexChecked;
+        }
+
+        if (changedGpuIndexingChecked != isGpuIndexingChecked) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.gpuIndexing",
+                    changedGpuIndexingChecked.toString());
+            isGpuIndexingChecked = changedGpuIndexingChecked;
+        }
+
+        if (changedIndexWorkerThreads != indexWorkerThreads) {
+            AwsTelemetryProvider.emitModifySettingEvent("amazonQ.indexThreads",
+                    String.valueOf(changedIndexWorkerThreads));
+            indexWorkerThreads = changedIndexWorkerThreads;
         }
         ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
     }

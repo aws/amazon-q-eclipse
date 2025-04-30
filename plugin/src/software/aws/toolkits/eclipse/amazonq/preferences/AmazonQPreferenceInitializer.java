@@ -18,6 +18,9 @@ public class AmazonQPreferenceInitializer extends AbstractPreferenceInitializer 
     public final void initializeDefaultPreferences() {
         IPreferenceStore store = Activator.getDefault().getPreferenceStore();
         store.setDefault(AmazonQPreferencePage.CODE_REFERENCE_OPT_IN, true);
+        store.setDefault(AmazonQPreferencePage.WORKSPACE_INDEX, false);
+        store.setDefault(AmazonQPreferencePage.USE_GPU_FOR_INDEXING, false);
+        store.setDefault(AmazonQPreferencePage.INDEX_WORKER_THREADS, 0);
         store.setDefault(AmazonQPreferencePage.TELEMETRY_OPT_IN, true);
         store.setDefault(AmazonQPreferencePage.Q_DATA_SHARING, true);
         store.setDefault(AmazonQPreferencePage.HTTPS_PROXY, "");

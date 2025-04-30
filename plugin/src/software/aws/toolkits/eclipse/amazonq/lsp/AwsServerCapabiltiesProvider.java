@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsServerCapabilities;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
@@ -28,6 +29,14 @@ public final class AwsServerCapabiltiesProvider {
             )
         );
 
+    private static final List<QuickActionsCommandGroup> DEFAULT_CONTEXT_COMMANDS = Collections.singletonList(
+            new QuickActionsCommandGroup(
+                    Arrays.asList(
+                        new Command("@workspace", "Reference all code in workspace.")
+                    )
+                )
+            );
+
     public static synchronized AwsServerCapabiltiesProvider getInstance() {
         if (instance == null) {
             instance = new AwsServerCapabiltiesProvider();
@@ -44,5 +53,9 @@ public final class AwsServerCapabiltiesProvider {
             return serverCapabilties.chatOptions();
         }
         return DEFAULT_CHAT_OPTIONS;
+    }
+
+    public List<QuickActionsCommandGroup> getContextCommands() {
+        return DEFAULT_CONTEXT_COMMANDS;
     }
 }

@@ -22,6 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.util.DefaultCodeReferenceLoggingSer
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
 import software.aws.toolkits.eclipse.amazonq.views.router.ViewRouter;
+import software.aws.toolkits.eclipse.workspace.WorkspaceChangeListener;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -36,6 +37,7 @@ public class Activator extends AbstractUIPlugin {
     private static EventBroker eventBroker = new EventBroker();
     private static ViewRouter viewRouter = ViewRouter.builder().build();
     private final InlineChatEditorListener editorListener;
+    private static WorkspaceChangeListener workspaceListener = WorkspaceChangeListener.getInstance();
 
     public Activator() {
         super();
@@ -52,6 +54,7 @@ public class Activator extends AbstractUIPlugin {
         codeReferenceLoggingService = DefaultCodeReferenceLoggingService.getInstance();
         editorListener = InlineChatEditorListener.getInstance();
         editorListener.initialize();
+        workspaceListener.start();
     }
 
     @Override
@@ -59,6 +62,7 @@ public class Activator extends AbstractUIPlugin {
         AmazonQBrowserProvider.getInstance().dispose();
         super.stop(context);
         plugin = null;
+        workspaceListener.stop();
     }
 
     public static Activator getDefault() {

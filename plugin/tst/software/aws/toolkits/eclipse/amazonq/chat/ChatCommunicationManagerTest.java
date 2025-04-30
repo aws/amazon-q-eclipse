@@ -17,6 +17,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -124,9 +125,10 @@ public final class ChatCommunicationManagerTest {
 
         private final ChatRequestParams params = new ChatRequestParams(
             "tabId",
-            new ChatPrompt("prompt", "escaped prompt", "command"),
+            new ChatPrompt("prompt", "escaped prompt", "command", Collections.emptyList()),
             new TextDocumentIdentifier("textDocument"),
-            Arrays.asList(cursorState)
+            Arrays.asList(cursorState),
+            Collections.emptyList()
         );
 
         private final ChatItemAction chatItemAction = new ChatItemAction(

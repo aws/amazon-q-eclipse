@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.lsp4j.Position;
@@ -27,7 +28,7 @@ public class ChatRequestParamsTest {
     private final String prompt = "prompt";
     private final String escapedPrompt = "escapedPrompt";
     private final String command = "command";
-    private final ChatPrompt chatPrompt = new ChatPrompt(prompt, escapedPrompt, command);
+    private final ChatPrompt chatPrompt = new ChatPrompt(prompt, escapedPrompt, command, Collections.emptyList());
 
     private final String partialResultToken = "partialResultToken";
 
@@ -44,7 +45,7 @@ public class ChatRequestParamsTest {
         ChatRequestParams chatRequestParams = new ChatRequestParams(tabId, chatPrompt,
                 new TextDocumentIdentifier("newDocumentUri"),
                 List.of(new CursorState(
-                        new Range(startPosition, endPosition))));
+                        new Range(startPosition, endPosition))), Collections.emptyList());
 
         assertEquals(tabId, chatRequestParams.getTabId());
         assertEquals(chatPrompt, chatRequestParams.getPrompt());

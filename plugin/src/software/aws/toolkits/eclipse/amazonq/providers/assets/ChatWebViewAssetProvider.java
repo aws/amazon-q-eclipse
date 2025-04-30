@@ -205,6 +205,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private String generateJS(final String jsEntrypoint) {
         var chatQuickActionConfig = generateQuickActionConfig();
+        var contextCommands = generateContextCommands();
         var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
         return String.format("""
                 <script type="text/javascript" src="%s" defer></script>
@@ -213,7 +214,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     const init = () => {
                         waitForFunction('ideCommand')
                             .then(() => {
-                                amazonQChat.createChat({
+                                const mynahUI = amazonQChat.createChat({
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
@@ -221,8 +222,13 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                 {
                                     quickActionCommands: %s,
                                     disclaimerAcknowledged: %b
-                                })
-                            }).catch(error => console.error('Error initializing chat:', error));
+                                });
+                                const tabId = mynahUI.getSelectedTabId();
+                                window.tabId = tabId
+                                mynahUI.updateStore(tabId, { contextCommands: %s });
+                                window.mynah = mynahUI
+                            })
+                            .catch(error => console.error('Error initializing chat:', error));
                     }
 
                     window.addEventListener('load', init);
@@ -236,7 +242,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     %s
 
                 </script>
-                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig, "true".equals(disclaimerAcknowledged),
+                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig, "true".equals(disclaimerAcknowledged), contextCommands,
                 getArrowKeyBlockingFunction(), getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(),
                 getFocusOnChatPromptFunction());
     }
@@ -380,6 +386,11 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     private String generateQuickActionConfig() {
         return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
                 .map(ChatOptions::quickActions).map(QuickActions::quickActionsCommandGroups)
+                .map(this::serializeQuickActionCommands).orElse("[]");
+    }
+
+    private String generateContextCommands() {
+        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getContextCommands())
                 .map(this::serializeQuickActionCommands).orElse("[]");
     }
 

@@ -11,6 +11,10 @@ public final class Constants {
 
     public static final String CUSTOMIZATION_STORAGE_INTERNAL_KEY = "aws.q.customization.eclipse";
     public static final String LSP_CUSTOMIZATION_CONFIGURATION_KEY = "customization";
+    public static final String LSP_PROJECT_CONTEXT_CONFIGURATION_KEY = "projectContext";
+    public static final String LSP_INDEXING_CONFIGURATION_KEY = "enableLocalIndexing";
+    public static final String LSP_GPU_INDEXING_CONFIGURATION_KEY = "enableGpuAcceleration";
+    public static final String LSP_INDEX_THREADS_CONFIGURATION_KEY = "indexWorkerThreads";
     public static final String LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY = "enableTelemetryEventsToDestination";
     public static final String LSP_OPT_OUT_TELEMETRY_CONFIGURATION_KEY = "optOutTelemetry";
     public static final String LSP_Q_CONFIGURATION_KEY = "aws.q";

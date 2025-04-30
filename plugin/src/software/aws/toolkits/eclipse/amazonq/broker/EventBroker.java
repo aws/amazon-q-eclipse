@@ -89,9 +89,12 @@ public final class EventBroker {
                 if (statefulSubjectsByIdForType.containsKey(eventType)) {
                     ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
                     for (String subscriberId : statefulSubjectsByIdForType.get(eventType).keySet()) {
-                        subjectLock.lock();
-                        statefulSubjectsByIdForType.get(eventType).get(subscriberId).onNext(event);
-                        subjectLock.unlock();
+                        try {
+                            subjectLock.lock();
+                            statefulSubjectsByIdForType.get(eventType).get(subscriberId).onNext(event);
+                        } finally {
+                            subjectLock.unlock();
+                        }
                     }
                 }
             }).subscribe();

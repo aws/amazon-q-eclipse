@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.FileClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
@@ -96,6 +97,11 @@ public final class ChatMessageProvider {
     public void sendTabChange(final GenericTabParams tabParams) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         chatMessage.sendTabChange(tabParams);
+    }
+
+    public void sendFileClick(final FileClickParams fileClickParams) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        chatMessage.sendFileClick(fileClickParams);
     }
 
     public void sendInfoLinkClick(final GenericLinkClickParams sourceLinkClickParams) {

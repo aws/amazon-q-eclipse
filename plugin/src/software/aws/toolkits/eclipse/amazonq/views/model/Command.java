@@ -13,6 +13,7 @@ public enum Command {
     CHAT_TAB_ADD("aws/chat/tabAdd"),
     CHAT_TAB_REMOVE("aws/chat/tabRemove"),
     CHAT_TAB_CHANGE("aws/chat/tabChange"),
+    FILE_CLICK("aws/chat/fileClick"),
     CHAT_SEND_PROMPT("aws/chat/sendChatPrompt"),
     CHAT_PROMPT_OPTION_CHANGE("aws/chat/promptInputOptionChange"),
     CHAT_LINK_CLICK("aws/chat/linkClick"),

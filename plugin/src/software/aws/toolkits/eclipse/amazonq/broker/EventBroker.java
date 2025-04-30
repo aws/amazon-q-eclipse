@@ -42,6 +42,11 @@ public final class EventBroker {
      */
     private final Map<Class<?>, Map<String, Subject<Object>>> statefulSubjectsByIdForType;
 
+    /**
+     * Maps event types to their corresponding locks for thread-safe access to
+     * stateful subjects. Each event type has its own fair lock to synchronize
+     * access to its stateful subjects.
+     */
     private final Map<Class<?>, ReentrantLock> statefulSubjectLockForType;
 
     /** Tracks all subscriptions for proper cleanup. */
@@ -83,9 +88,9 @@ public final class EventBroker {
             Disposable subscription = subject.doOnNext(event -> {
                 if (statefulSubjectsByIdForType.containsKey(eventType)) {
                     ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
-                    for (String key: statefulSubjectsByIdForType.get(eventType).keySet()) {
+                    for (String subscriberId : statefulSubjectsByIdForType.get(eventType).keySet()) {
                         subjectLock.lock();
-                        statefulSubjectsByIdForType.get(eventType).get(key).onNext(event);
+                        statefulSubjectsByIdForType.get(eventType).get(subscriberId).onNext(event);
                         subjectLock.unlock();
                     }
                 }
@@ -114,6 +119,23 @@ public final class EventBroker {
         return subscription;
     }
 
+    /**
+     * Subscribes an observer to events of a specific type with replay
+     * functionality. This method is designed for observers that need to receive
+     * events that were missed while they were not subscribed. The observer will
+     * receive events on a computation thread by default.
+     *
+     * When disposed, this subscription will: 1. Create a new ReplaySubject for
+     * future events 2. Complete the old subject to free resources 3. Dispose of the
+     * underlying subscription
+     *
+     * @param <T>       the type of events to observe
+     * @param eventType the Class object representing the event type
+     * @param observer  the observer that will handle emitted events and contains
+     *                  component ID
+     * @return a Disposable that can be used to unsubscribe from the events and
+     *         cleanup resources
+     */
     public <T> Disposable subscribe(final Class<T> eventType, final MissedReplayEventObserver<T> observer) {
         Observable<T> observable = ofMissedObservable(eventType, observer.getSubscribingComponentId());
         Disposable subscription = observable
@@ -136,6 +158,7 @@ public final class EventBroker {
                         statefulSubjectsByIdForType.get(eventType).put(observer.getSubscribingComponentId(),
                                 newSubject);
                         oldSubject.onComplete();
+                        subscription.dispose();
                     } finally {
                         subjectLock.unlock();
                     }
@@ -149,10 +172,31 @@ public final class EventBroker {
         };
     }
 
+    /**
+     * Gets or creates a ReentrantLock for the specified event type. The lock is
+     * used to synchronize access to stateful subjects for that event type. Creates
+     * a new fair ReentrantLock if none exists for the event type.
+     *
+     * @param <T>       The type parameter for the event class
+     * @param eventType The class object representing the event type
+     * @return A ReentrantLock instance for the specified event type
+     */
     private <T> ReentrantLock getStatefulSubjectLock(final Class<T> eventType) {
         return statefulSubjectLockForType.computeIfAbsent(eventType, type -> new ReentrantLock(true));
     }
 
+    /**
+     * Gets or creates a stateful Subject for a specific event type and subscriber
+     * ID.
+     *
+     * @param <T>          The type parameter for the event class
+     * @param eventType    The class object representing the event type
+     * @param subscriberId The unique identifier for the subscriber
+     * @return A Subject instance that handles events for the specified type and
+     *         subscriber. If a Subject already exists for this subscriber, returns
+     *         the existing one. Otherwise creates and returns a new serialized
+     *         ReplaySubject.
+     */
     private <T> Subject<Object> getStatefulSubject(final Class<T> eventType, final String subscriberId) {
         Map<String, Subject<Object>> subjectById = statefulSubjectsByIdForType.computeIfAbsent(eventType,
                 type -> new ConcurrentHashMap<>());
@@ -174,6 +218,17 @@ public final class EventBroker {
         return getOrCreateStatelessSubject(eventType).ofType(eventType);
     }
 
+    /**
+     * Returns an Observable for the specified event type and subscriber ID that
+     * includes missed events. This Observable is backed by a stateful subject that
+     * maintains event history for replay.
+     *
+     * @param <T>          the type of events the Observable will emit
+     * @param eventType    the Class object representing the event type
+     * @param subscriberId the unique identifier for the subscriber
+     * @return an Observable that emits both missed and new events of the specified
+     *         type for the given subscriber
+     */
     public <T> Observable<T> ofMissedObservable(final Class<T> eventType, final String subscriberId) {
         Map<String, Subject<Object>> subjectById = statefulSubjectsByIdForType.computeIfAbsent(eventType,
                 type -> new ConcurrentHashMap<>());

@@ -260,7 +260,7 @@ public final class ChatCommunicationManager {
                         : ChatUIInboundCommandName.ChatPrompt.getValue();
                     ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                             command, tabId, result, false);
-                    sendMessageToChatUI(chatUIInboundCommand);
+                    Activator.getEventBroker().post(ChatUIInboundCommand.class, chatUIInboundCommand);
                     return result;
                 } catch (Exception e) {
                     Activator.getLogger().error("An error occurred while processing chat response received: " + e.getMessage());
@@ -278,7 +278,7 @@ public final class ChatCommunicationManager {
         // show error in Chat UI
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false);
-        sendMessageToChatUI(chatUIInboundCommand);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, chatUIInboundCommand);
     }
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
@@ -309,11 +309,6 @@ public final class ChatCommunicationManager {
         String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
         if (inlineChatCommand.equals(command.command())) {
             inlineChatListenerFuture.thenApply(listener -> {
-                listener.onSendToChatUi(message);
-                return listener;
-            });
-        } else {
-            chatUiRequestListenerFuture.thenApply(listener -> {
                 listener.onSendToChatUi(message);
                 return listener;
             });
@@ -357,7 +352,7 @@ public final class ChatCommunicationManager {
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 command, tabId, partialChatResult, true);
 
-        sendMessageToChatUI(chatUIInboundCommand);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, chatUIInboundCommand);
     }
 
     /*

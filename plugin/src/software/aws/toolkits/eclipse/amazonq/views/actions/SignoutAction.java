@@ -16,7 +16,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 public final class SignoutAction extends Action {
 
     public SignoutAction() {
-        setText("Sign out");
+        super("Sign out");
     }
 
     @Override

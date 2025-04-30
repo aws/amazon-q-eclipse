@@ -9,12 +9,19 @@ import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+import software.aws.toolkits.eclipse.amazonq.broker.api.MissedReplayEventObserver;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.ChatWebViewAssetProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.assets.WebViewAssetProvider;
+import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 
-public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestListener {
+
+public class AmazonQChatWebview extends AmazonQView implements MissedReplayEventObserver<ChatUIInboundCommand> {
 
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQChatWebview";
 
@@ -23,6 +30,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     private Browser browser;
     private volatile boolean canDisposeState = false;
     private WebViewAssetProvider webViewAssetProvider;
+    private JsonHandler jsonHandler = new JsonHandler();
+    private Disposable chatUIInboundCommandsSubscription;
 
     public AmazonQChatWebview() {
         super();
@@ -70,12 +79,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
         parent.addDisposeListener(e -> chatStateManager.preserveBrowser());
 
-        chatCommunicationManager.setChatUiRequestListener(this);
-
-
         addFocusListener(parent, browser);
         setupAmazonQCommonActions();
 
+        chatUIInboundCommandsSubscription = Activator.getEventBroker().subscribe(ChatUIInboundCommand.class, this);
         return parent;
     }
 
@@ -86,11 +93,20 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     }
 
     @Override
-    public final void onSendToChatUi(final String message) {
-        String script = "window.postMessage(" + message + ");";
-        browser.getDisplay().asyncExec(() -> {
-            browser.evaluate(script);
-        });
+    public final void onEvent(final ChatUIInboundCommand command) {
+        String message = jsonHandler.serialize(command);
+        String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
+        if (!inlineChatCommand.equals(command.command())) {
+            String script = "window.postMessage(" + message + ");";
+            browser.getDisplay().asyncExec(() -> {
+                browser.evaluate(script);
+            });
+        }
+    }
+
+    @Override
+    public final String getSubscribingComponentId() {
+        return ID;
     }
 
     public final void disposeBrowserState() {
@@ -99,7 +115,10 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
 
     @Override
     public final void dispose() {
-        chatCommunicationManager.removeListener(this);
+        if (chatUIInboundCommandsSubscription != null && !chatUIInboundCommandsSubscription.isDisposed()) {
+            chatUIInboundCommandsSubscription.dispose();
+            chatUIInboundCommandsSubscription = null;
+        }
         if (canDisposeState) {
             ChatStateManager.getInstance().dispose();
         }

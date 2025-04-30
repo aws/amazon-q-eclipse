@@ -25,16 +25,13 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     private Composite parentComposite;
     private volatile StackLayout layout;
-    private Map<AmazonQViewType, BaseAmazonQView> views;
+    private static final Map<AmazonQViewType, BaseAmazonQView> VIEWS;
     private volatile AmazonQViewType activeViewType;
     private volatile BaseAmazonQView currentView;
     private final ReentrantLock containerLock;
 
-    public AmazonQViewContainer() {
-        activeViewType = AmazonQViewType.CHAT_VIEW;
-        containerLock = new ReentrantLock(true);
-
-        views = Map.of(
+    static {
+        VIEWS = Map.of(
                 AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
                 AmazonQViewType.DEPENDENCY_MISSING_VIEW, new DependencyMissingView(),
                 AmazonQViewType.RE_AUTHENTICATE_VIEW, new ReauthenticateView(),
@@ -42,6 +39,11 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
                 AmazonQViewType.CHAT_VIEW, new AmazonQChatWebview(),
                 AmazonQViewType.TOOLKIT_LOGIN_VIEW, new ToolkitLoginWebview()
         );
+    }
+
+    public AmazonQViewContainer() {
+        activeViewType = AmazonQViewType.CHAT_VIEW;
+        containerLock = new ReentrantLock(true);
 
         Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
     }
@@ -65,7 +67,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         Display.getDefault().asyncExec(() -> {
             try {
                 containerLock.lock();
-                BaseAmazonQView newView = views.get(activeViewType);
+                BaseAmazonQView newView = VIEWS.get(activeViewType);
 
                 if (currentView != null) {
                     if (currentView instanceof AmazonQChatWebview) {
@@ -99,7 +101,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     @Override
     public void onEvent(final AmazonQViewType newViewType) {
-        if (newViewType.equals(activeViewType) || !views.containsKey(newViewType)) {
+        if (newViewType.equals(activeViewType) || !VIEWS.containsKey(newViewType)) {
           return;
       }
 

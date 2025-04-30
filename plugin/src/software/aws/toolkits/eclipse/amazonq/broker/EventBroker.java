@@ -5,14 +5,17 @@ package software.aws.toolkits.eclipse.amazonq.broker;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
+import io.reactivex.rxjava3.subjects.ReplaySubject;
 import io.reactivex.rxjava3.subjects.Subject;
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.broker.api.MissedReplayEventObserver;
 
 /**
  * A thread-safe event broker that implements the publish-subscribe pattern
@@ -26,14 +29,28 @@ import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
  */
 public final class EventBroker {
 
-    /** Maps event types to their corresponding subjects for event distribution. */
-    private final Map<Class<?>, Subject<Object>> subjectsForType;
+    /**
+     * Maps event types to their corresponding state-less subjects for event distribution.
+     * Subjects do not support replay mechanism.
+     */
+    private final Map<Class<?>, Subject<Object>> statelessSubjectsForType;
+
+    /**
+     * Maps event types to their corresponding state-ful subjects for event
+     * distribution. Subjects will replay messages from the last time when there
+     * were no subscribers.
+     */
+    private final Map<Class<?>, Map<String, Subject<Object>>> statefulSubjectsByIdForType;
+
+    private final Map<Class<?>, ReentrantLock> statefulSubjectLockForType;
 
     /** Tracks all subscriptions for proper cleanup. */
     private final CompositeDisposable disposableSubscriptions;
 
     public EventBroker() {
-        subjectsForType = new ConcurrentHashMap<>();
+        statelessSubjectsForType = new ConcurrentHashMap<>();
+        statefulSubjectsByIdForType = new ConcurrentHashMap<>();
+        statefulSubjectLockForType = new ConcurrentHashMap<>();
         disposableSubscriptions = new CompositeDisposable();
     }
 
@@ -49,7 +66,7 @@ public final class EventBroker {
         if (event == null) {
             return;
         }
-        getOrCreateSubject(eventType).onNext(event);
+        getOrCreateStatelessSubject(eventType).onNext(event);
     }
 
     /**
@@ -60,9 +77,20 @@ public final class EventBroker {
      * @param eventType The class object representing the event type
      * @return A Subject that handles events of the specified type
      */
-    private <T> Subject<Object> getOrCreateSubject(final Class<T> eventType) {
-        return subjectsForType.computeIfAbsent(eventType, k -> {
+    private <T> Subject<Object> getOrCreateStatelessSubject(final Class<T> eventType) {
+        return statelessSubjectsForType.computeIfAbsent(eventType, k -> {
             Subject<Object> subject = BehaviorSubject.create().toSerialized();
+            subject.doOnNext(event -> {
+                if (statefulSubjectsByIdForType.containsKey(eventType)) {
+                    ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
+                    for (String key: statefulSubjectsByIdForType.get(eventType).keySet()) {
+                        subjectLock.lock();
+                        statefulSubjectsByIdForType.get(eventType).get(key).onNext(event);
+                        subjectLock.unlock();
+                    }
+                    ;
+                }
+            }).subscribe();
             subject.subscribeOn(Schedulers.computation());
             return subject;
         });
@@ -86,23 +114,44 @@ public final class EventBroker {
         return subscription;
     }
 
-    /**
-     * Subscribes an observer to events of a specific type, replaying all cached events.
-     * The observer will receive all cached events followed by new events on a computation thread.
-     *
-     * @param <T>       the type of events to observe
-     * @param eventType the Class object representing the event type
-     * @param observer  the observer that will handle emitted events
-     * @return a Disposable that can be used to unsubscribe from the events
-     */
-    public <T> Disposable subscribeWithReplay(final Class<T> eventType, final EventObserver<T> observer) {
-        Disposable subscription = ofObservable(eventType)
-                .replay()
-                .autoConnect()
-                .observeOn(Schedulers.computation())
-                .subscribe(observer::onEvent);
-        disposableSubscriptions.add(subscription);
-        return subscription;
+    public <T> Disposable subscribe(final Class<T> eventType, final MissedReplayEventObserver<T> observer) {
+        Observable<T> observable = ofMissedObservable(eventType, observer.getSubscribingComponentId());
+        Disposable subscription = observable
+                .observeOn(Schedulers.computation()) // subscribe on dedicated thread
+                .subscribe(event -> {
+                    observer.onEvent(event);
+                });
+        disposableSubscriptions.add(subscription); // track subscription for dispose call
+        return new Disposable() {
+            private volatile boolean disposed = false;
+
+            @Override
+            public void dispose() {
+                if (!disposed) {
+                    disposed = true;
+                    getStatefulSubject(eventType, observer.getSubscribingComponentId()).onComplete();
+                    subscription.dispose();
+                }
+            }
+
+            @Override
+            public boolean isDisposed() {
+                return disposed;
+            }
+        };
+    }
+
+    private <T> ReentrantLock getStatefulSubjectLock(final Class<T> eventType) {
+        return statefulSubjectLockForType.computeIfAbsent(eventType, type -> new ReentrantLock(true));
+    }
+
+    private <T> Subject<Object> getStatefulSubject(final Class<T> eventType, final String subscriberId) {
+        Map<String, Subject<Object>> subjectById = statefulSubjectsByIdForType.computeIfAbsent(eventType,
+                type -> new ConcurrentHashMap<>());
+        if (subjectById.containsKey(subscriberId)) {
+            return subjectById.get(subscriberId);
+        }
+        return ReplaySubject.create().toSerialized();
     }
 
     /**
@@ -114,7 +163,26 @@ public final class EventBroker {
      * @return an Observable that emits events of the specified type
      */
     public <T> Observable<T> ofObservable(final Class<T> eventType) {
-        return getOrCreateSubject(eventType).ofType(eventType);
+        return getOrCreateStatelessSubject(eventType).ofType(eventType);
+    }
+
+    public <T> Observable<T> ofMissedObservable(final Class<T> eventType, final String subscriberId) {
+        Map<String, Subject<Object>> subjectById = statefulSubjectsByIdForType.computeIfAbsent(eventType,
+                type -> new ConcurrentHashMap<>());
+        Observable<T> observable = subjectById
+                .computeIfAbsent(subscriberId, subjectId -> {
+                    return getStatefulSubject(eventType, subscriberId);
+                }).ofType(eventType);
+        subjectById.get(subscriberId).doFinally(() -> {
+            ReentrantLock subjectLock = getStatefulSubjectLock(eventType);
+            try {
+                subjectLock.lock();
+                statefulSubjectsByIdForType.get(eventType).put(subscriberId, ReplaySubject.create().toSerialized());
+            } finally {
+                subjectLock.unlock();
+            }
+        }).subscribe();
+        return observable;
     }
 
     /**

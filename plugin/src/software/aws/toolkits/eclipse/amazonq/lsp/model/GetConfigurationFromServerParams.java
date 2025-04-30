@@ -4,7 +4,24 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
 public class GetConfigurationFromServerParams {
+    public enum ExpectedResponseType {
+        CUSTOMIZATION, Q_DEVELOPER_PROFILE, DEFAULT
+    }
+
     private String section;
+
+    public GetConfigurationFromServerParams(final ExpectedResponseType responseType) {
+        switch (responseType) {
+        case CUSTOMIZATION:
+            section = "aws.q.customizations";
+            break;
+        case Q_DEVELOPER_PROFILE:
+            section = "aws.q.developerProfiles";
+            break;
+        default:
+            section = "aws.q";
+        }
+    }
 
     public final String getSection() {
         return this.section;

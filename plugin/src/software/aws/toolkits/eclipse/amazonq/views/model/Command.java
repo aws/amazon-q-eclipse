@@ -34,13 +34,16 @@ public enum Command {
     PROMPT_OPTION_ACKNOWLEDGED("chatPromptOptionAcknowledged"),
     TAB_BAR_ACTION("aws/chat/tabBarAction"),
     GET_SERIALIZED_CHAT("aws/chat/getSerializedChat"),
+    STOP_CHAT_RESPONSE("stopChatResponse"),
+    BUTTON_CLICK("aws/chat/buttonClick"),
+    CHAT_OPEN_TAB("aws/chat/openTab"),
+    OPEN_SETTINGS("openSettings"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
     LOGIN_IDC("loginIdC"),
     CANCEL_LOGIN("cancelLogin"),
-    ON_LOAD("onLoad"),
-    ON_SELECT_PROFILE("onSelectProfile");
+    ON_LOAD("onLoad");
 
     private final String commandString;
 

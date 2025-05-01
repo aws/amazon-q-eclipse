@@ -7,15 +7,17 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FileClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -144,6 +146,11 @@ public final class ChatMessageProvider {
         return chatMessage.sendListConversations(params);
     }
 
+    public CompletableFuture<ButtonClickResult> sendButtonClick(final ButtonClickParams params) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.sendButtonClick(params);
+    }
+
     public CompletableFuture<Object> sendConversationClick(final Object params) {
         ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
         return chatMessage.sendConversationClick(params);
@@ -159,7 +166,7 @@ public final class ChatMessageProvider {
         return chatMessage.tabBarActions(params);
     }
 
-    private void cancelInflightRequests(final String tabId) {
+    public void cancelInflightRequests(final String tabId) {
         var inflightRequest  =  inflightRequestByTabId.getOrDefault(tabId, null);
         if (inflightRequest != null) {
             inflightRequest.cancel(true);

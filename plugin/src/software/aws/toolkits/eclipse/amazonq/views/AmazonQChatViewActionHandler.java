@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -132,6 +133,19 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 break;
             case CREATE_PROMPT:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
+            case PROMPT_OPTION_ACKNOWLEDGED:
+                if (!(params instanceof Map)) {
+                    break;
+                }
+
+                @SuppressWarnings("unchecked")
+                Map<String, String> options = (Map<String, String>) params;
+                String messageId = options.get("messageId");
+
+                if ("programmerModeCardId".equals(messageId)) {
+                    Activator.getPluginStore().put(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED, "true");
+                }
                 break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());

@@ -239,6 +239,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private String generateJS(final String jsEntrypoint) {
         var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
+        var pairProgrammingAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED);
         return String.format("""
                 <script type="text/javascript" src="%s" defer></script>
                 <script type="text/javascript">
@@ -253,6 +254,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                 },
                                 {
                                     disclaimerAcknowledged: %b,
+                                    pairProgrammingAcknowledged: %b,
                                     agenticMode: true
                                 });
                                 window.mynah = mynahUI
@@ -264,7 +266,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     %s
                     %s
                 </script>
-                """, jsEntrypoint, getWaitFunction(), "true".equals(disclaimerAcknowledged),
+                """, jsEntrypoint, getWaitFunction(), "true".equals(disclaimerAcknowledged), "true".equals(pairProgrammingAcknowledged),
                 getArrowKeyBlockingFunction(), getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(),
                 getFocusOnChatPromptFunction());
     }

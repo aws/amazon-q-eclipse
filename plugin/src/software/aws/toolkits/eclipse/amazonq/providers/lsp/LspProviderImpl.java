@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.fetcher.RecordLspSetupArgs;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -55,6 +56,8 @@ public final class LspProviderImpl implements LspProvider {
             }
             emitInitializeMetric();
             Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.ACTIVE);
+            // TODO: this needs to startup so LSP messages can be queued - should be improved
+            ChatCommunicationManager.getInstance();
         }
     }
 

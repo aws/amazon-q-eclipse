@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -17,6 +19,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.widgets.Display;
 
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.chat.models.BaseChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
@@ -39,6 +42,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryption
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
+import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -53,15 +57,17 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Command;
  * webview used for displaying chat conversations. It is implemented as a
  * singleton to centralize control of all communication in the plugin.
  */
-public final class ChatCommunicationManager {
-    private static ChatCommunicationManager instance;
+public final class ChatCommunicationManager implements EventObserver<ChatUIInboundCommand> {
+    private static volatile ChatCommunicationManager instance;
 
     private final JsonHandler jsonHandler;
     private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultMap chatPartialResultMap;
     private final LspEncryptionManager lspEncryptionManager;
+    private final Queue<ChatUIInboundCommand> commandQueue;
     private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
     private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
+
     private final String inlineChatTabId = "123456789";
 
     private ChatCommunicationManager(final Builder builder) {
@@ -74,15 +80,21 @@ public final class ChatCommunicationManager {
                 : DefaultLspEncryptionManager.getInstance();
         chatUiRequestListenerFuture = new CompletableFuture<>();
         inlineChatListenerFuture = new CompletableFuture<>();
+        commandQueue = new ConcurrentLinkedQueue<ChatUIInboundCommand>();
+        Activator.getEventBroker().subscribe(ChatUIInboundCommand.class, this);
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public static synchronized ChatCommunicationManager getInstance() {
+    public static ChatCommunicationManager getInstance() {
         if (instance == null) {
-            instance = ChatCommunicationManager.builder().build();
+            synchronized (ChatCommunicationManager.class) {
+                if (instance == null) {
+                    instance = ChatCommunicationManager.builder().build();
+                }
+            }
         }
         return instance;
     }
@@ -123,7 +135,15 @@ public final class ChatCommunicationManager {
                     });
                     break;
                 case CHAT_READY:
-                    chatMessageProvider.sendChatReady();
+                    ThreadingUtils.executeAsyncTask(() -> {
+                        try {
+                            Thread.sleep(100);
+                            chatMessageProvider.sendChatReady();
+                            startCommandQueueProcessor();
+                        } catch (InterruptedException e) {
+                            Activator.getLogger().error("Chat initialization error: " + e);
+                        }
+                    });
                     break;
                 case CHAT_TAB_ADD:
                     GenericTabParams tabParamsForAdd = jsonHandler.convertObject(params, GenericTabParams.class);
@@ -249,11 +269,11 @@ public final class ChatCommunicationManager {
                 try {
                     String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
                     Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
-
-                    if (result.containsKey("codeReference") && result.get("codeReference") instanceof ReferenceTrackerInformation[]) {
-                        ReferenceTrackerInformation[] codeReference = (ReferenceTrackerInformation[]) result.get("codeReference");
-                        if (codeReference != null && codeReference.length >= 1) {
-                            ChatCodeReference chatCodeReference = new ChatCodeReference(codeReference);
+                    if (result.containsKey("codeReference")) {
+                        ReferenceTrackerInformation[] codeReferences = ObjectMapperFactory.getInstance().convertValue(result.get("codeReference"),
+                                ReferenceTrackerInformation[].class);
+                        if (codeReferences != null && codeReferences.length >= 1) {
+                            ChatCodeReference chatCodeReference = new ChatCodeReference(codeReferences);
                             Activator.getCodeReferenceLoggingService().log(chatCodeReference);
                         }
                     }
@@ -306,25 +326,6 @@ public final class ChatCommunicationManager {
     }
 
     /*
-     * Sends message to Chat UI to show in webview
-     */
-    public void sendMessageToChatUI(final ChatUIInboundCommand command) {
-        String message = jsonHandler.serialize(command);
-        String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
-        if (inlineChatCommand.equals(command.command())) {
-            inlineChatListenerFuture.thenApply(listener -> {
-                listener.onSendToChatUi(message);
-                return listener;
-            });
-        } else {
-            chatUiRequestListenerFuture.thenApply(listener -> {
-                listener.onSendToChatUi(message);
-                return listener;
-            });
-        }
-    }
-
-    /*
      * Handles chat progress notifications from the Amazon Q LSP server. - Process
      * partial results for Chat messages if provided token is maintained by
      * ChatCommunicationManager - Other notifications are ignored at this time. -
@@ -347,9 +348,11 @@ public final class ChatCommunicationManager {
         String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
         String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
         Map<String, Object> partialChatResult = jsonHandler.deserialize(serializedData, Map.class);
-        Object body = partialChatResult.get("body");
-        if (body == null || (body instanceof String && ((String)body).length() == 0)) {
-            return;
+        if (partialChatResult != null) {
+            Object body = partialChatResult.get("body");
+            if (body == null || (body instanceof String && ((String) body).length() == 0)) {
+                return;
+            }
         }
 
         String command = (inlineChatTabId.equals(tabId))
@@ -360,6 +363,30 @@ public final class ChatCommunicationManager {
                 command, tabId, partialChatResult, true);
 
         sendMessageToChatUI(chatUIInboundCommand);
+    }
+
+    @Override
+    public void onEvent(final ChatUIInboundCommand command) {
+        commandQueue.add(command);
+    }
+
+    /*
+     * Sends message to Chat UI to show in webview
+     */
+    private void sendMessageToChatUI(final ChatUIInboundCommand command) {
+        String message = jsonHandler.serialize(command);
+        String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
+        if (inlineChatCommand.equals(command.command())) {
+            inlineChatListenerFuture.thenApply(listener -> {
+                listener.onSendToChatUi(message);
+                return listener;
+            });
+        } else {
+            chatUiRequestListenerFuture.thenApply(listener -> {
+                listener.onSendToChatUi(message);
+                return listener;
+            });
+        }
     }
 
     /*
@@ -384,6 +411,25 @@ public final class ChatCommunicationManager {
      */
     private void removePartialChatMessage(final String partialResultToken) {
         chatPartialResultMap.removeEntry(partialResultToken);
+    }
+
+    private void startCommandQueueProcessor() {
+        ThreadingUtils.executeAsyncTask(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    ChatUIInboundCommand command = commandQueue.poll();
+                    if (command != null) {
+                        sendMessageToChatUI(command);
+                    } else {
+                        Thread.sleep(100);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    Activator.getLogger().error("Error processing command from queue", e);
+                }
+            }
+        });
     }
 
     public static final class Builder {

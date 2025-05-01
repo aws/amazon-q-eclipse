@@ -197,6 +197,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void sendContextCommands(final Object params) {
+        Activator.getLogger().info("SEND CONTEXT COMMANDS");
         var command = new ChatUIInboundCommand(
                 "aws/chat/sendContextCommands",
                 null,

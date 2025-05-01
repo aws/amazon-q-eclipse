@@ -16,12 +16,9 @@ import org.eclipse.swt.browser.ProgressAdapter;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.widgets.Display;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
@@ -34,7 +31,7 @@ import software.aws.toolkits.eclipse.amazonq.views.LoginViewCommandParser;
 import software.aws.toolkits.eclipse.amazonq.views.ViewActionHandler;
 import software.aws.toolkits.eclipse.amazonq.views.ViewCommandParser;
 
-public final class ChatWebViewAssetProvider extends WebViewAssetProvider implements EventObserver<ChatUIInboundCommand> {
+public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private WebviewAssetServer webviewAssetServer;
     private final ChatTheme chatTheme;
@@ -42,7 +39,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
     private final ViewActionHandler actionHandler;
     private final ChatCommunicationManager chatCommunicationManager;
     private Optional<String> content;
-    private Disposable chatUICommandSubscription;
 
     public ChatWebViewAssetProvider() {
         chatTheme = new ChatTheme();
@@ -98,7 +94,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
                 Display.getDefault().syncExec(() -> {
                     try {
                         chatTheme.injectTheme(browser);
-                        chatUICommandSubscription = Activator.getEventBroker().subscribeWithReplay(ChatUIInboundCommand.class, ChatWebViewAssetProvider.this);
                     } catch (Exception e) {
                         Activator.getLogger().info("Error occurred while injecting theme into Q chat", e);
                     }
@@ -414,10 +409,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
         }
     }
 
-    @Override
-    public void onEvent(final ChatUIInboundCommand command) {
-        chatCommunicationManager.sendMessageToChatUI(command);
-    }
 
     public Optional<String> resolveJsPath() {
         var chatUiDirectory = getChatUiDirectory();
@@ -467,10 +458,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider impleme
             webviewAssetServer.stop();
         }
         webviewAssetServer = null;
-        if (chatUICommandSubscription != null) {
-            chatUICommandSubscription.dispose();
-            chatUICommandSubscription = null;
-        }
     }
 
 }

@@ -15,8 +15,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogParam
 import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenFileDiffParams;
 
 public interface AmazonQLspClient extends LanguageClient {
 
@@ -29,12 +28,34 @@ public interface AmazonQLspClient extends LanguageClient {
     @JsonNotification("aws/chat/sendContextCommands")
     void sendContextCommands(Object params);
 
-    @JsonNotification("aws/chat/openTab")
-    CompletableFuture<OpenTabResult> openTab(OpenTabParams params);
+    @JsonRequest("aws/chat/openTab")
+    CompletableFuture<Object> openTab(Object params);
 
     @JsonRequest("aws/showSaveFileDialog")
     CompletableFuture<ShowSaveFileDialogResult> showSaveFileDialog(ShowSaveFileDialogParams params);
 
     @JsonRequest("aws/chat/getSerializedChat")
     CompletableFuture<SerializedChatResult> getSerializedChat(GetSerializedChatParams params);
+
+    @JsonNotification("aws/openFileDiff")
+    void openFileDiff(OpenFileDiffParams params);
+
+    @JsonNotification("aws/chat/sendChatUpdate")
+    void sendChatUpdate(Object params);
+
+    @JsonNotification("aws/didCopyFile")
+    void didCopyFile(Object params);
+
+    @JsonNotification("aws/didWriteFile")
+    void didWriteFile(Object params);
+
+    @JsonNotification("aws/didAppendFile")
+    void didAppendFile(Object params);
+
+    @JsonNotification("aws/didRemoveFileOrDirectory")
+    void didRemoveFileOrDirectory(Object params);
+
+    @JsonNotification("aws/didCreateDirectory")
+    void didCreateDirectory(Object params);
+
 }

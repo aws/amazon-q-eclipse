@@ -5,15 +5,17 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import java.util.concurrent.CompletableFuture;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FileClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 
 public final class ChatMessage {
@@ -107,6 +109,10 @@ public final class ChatMessage {
 
     public CompletableFuture<Object> tabBarActions(final Object params) {
         return amazonQLspServer.tabBarAction(params);
+    }
+
+    public CompletableFuture<ButtonClickResult> sendButtonClick(final ButtonClickParams params) {
+        return amazonQLspServer.buttonClick(params);
     }
 
 }

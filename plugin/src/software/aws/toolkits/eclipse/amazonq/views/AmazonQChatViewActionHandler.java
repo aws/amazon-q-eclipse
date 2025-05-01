@@ -124,6 +124,12 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case DISCLAIMER_ACKNOWLEDGED:
                 Activator.getPluginStore().put(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED, "true");
                 break;
+            case LIST_CONVERSATIONS:
+                chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
+            case CONVERSATION_CLICK:
+                chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());
         }

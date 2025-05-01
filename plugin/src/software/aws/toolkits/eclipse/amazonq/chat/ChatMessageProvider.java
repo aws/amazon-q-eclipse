@@ -139,6 +139,16 @@ public final class ChatMessageProvider {
         chatMessage.sendFeedback(params);
     }
 
+    public CompletableFuture<Object> sendListConversations(final Object params) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.sendListConversations(params);
+    }
+
+    public CompletableFuture<Object> sendConversationClick(final Object params) {
+        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
+        return chatMessage.sendConversationClick(params);
+    }
+
     private void cancelInflightRequests(final String tabId) {
         var inflightRequest  =  inflightRequestByTabId.getOrDefault(tabId, null);
         if (inflightRequest != null) {

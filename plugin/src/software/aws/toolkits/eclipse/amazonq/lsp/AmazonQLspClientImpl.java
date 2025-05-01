@@ -210,7 +210,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void sendContextCommands(final Object params) {
-        Activator.getLogger().info("SEND CONTEXT COMMANDS");
         var command = new ChatUIInboundCommand(
                 "aws/chat/sendContextCommands",
                 null,
@@ -226,11 +225,11 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             var command = new ChatUIInboundCommand(
                     "aws/chat/openTab",
                     null,
-                    null,
+                    params,
                     null
                 );
             Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
-            return new OpenTabResult("");
+            return new OpenTabResult(params.tabId());
         });
     }
 

@@ -92,4 +92,12 @@ public final class ChatMessage {
     public void sendTelemetryEvent(final Object params) {
         amazonQLspServer.sendTelemetryEvent(params);
     }
+
+    public CompletableFuture<Object> sendListConversations(final Object params) {
+        return amazonQLspServer.listConversations(params);
+    }
+
+    public CompletableFuture<Object> sendConversationClick(final Object params) {
+        return amazonQLspServer.conversationClick(params);
+    }
 }

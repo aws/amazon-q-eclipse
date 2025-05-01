@@ -3,4 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-public record OpenTabParams(String tabId, NewTabOptions newTabOptions) { }
+public record OpenTabParams(String tabId, Object newTabOptions) { }

@@ -28,6 +28,8 @@ public enum Command {
     CHAT_INSERT_TO_CURSOR_POSITION("insertToCursorPosition"),
     AUTH_FOLLOW_UP_CLICKED("authFollowUpClicked"), //Auth command handled in QChat webview
     DISCLAIMER_ACKNOWLEDGED("disclaimerAcknowledged"),
+    LIST_CONVERSATIONS("aws/chat/listConversations"),
+    CONVERSATION_CLICK("aws/chat/conversationClick"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),

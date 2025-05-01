@@ -105,6 +105,12 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonNotification("telemetry/event")
     void sendTelemetryEvent(Object params);
 
+    @JsonRequest("aws/chat/listConversations")
+    CompletableFuture<Object> listConversations(Object params);
+
+    @JsonRequest("aws/chat/conversationClick")
+    CompletableFuture<Object> conversationClick(Object params);
+
     @JsonRequest("aws/identity/listProfiles")
     CompletableFuture<ListProfilesResult> listProfiles();
 

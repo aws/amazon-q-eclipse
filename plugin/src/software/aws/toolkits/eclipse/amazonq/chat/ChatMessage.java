@@ -100,4 +100,8 @@ public final class ChatMessage {
     public CompletableFuture<Object> sendConversationClick(final Object params) {
         return amazonQLspServer.conversationClick(params);
     }
+
+    public CompletableFuture<Void> sendCreatePrompt(final Object params) {
+        return amazonQLspServer.createPrompt(params);
+    }
 }

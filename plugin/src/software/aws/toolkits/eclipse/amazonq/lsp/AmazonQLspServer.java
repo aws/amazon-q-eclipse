@@ -123,4 +123,7 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonRequest("aws/identity/updateProfile")
     CompletableFuture<Void> updateProfile(UpdateProfileParams params);
 
+    @JsonNotification("aws/chat/createPrompt")
+    CompletableFuture<Void> createPrompt(Object params);
+
 }

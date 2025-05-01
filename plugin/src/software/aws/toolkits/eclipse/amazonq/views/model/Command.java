@@ -30,6 +30,7 @@ public enum Command {
     DISCLAIMER_ACKNOWLEDGED("disclaimerAcknowledged"),
     LIST_CONVERSATIONS("aws/chat/listConversations"),
     CONVERSATION_CLICK("aws/chat/conversationClick"),
+    CREATE_PROMPT("aws/chat/createPrompt"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),

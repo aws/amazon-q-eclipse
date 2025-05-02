@@ -104,4 +104,9 @@ public final class ChatMessage {
     public CompletableFuture<Void> sendCreatePrompt(final Object params) {
         return amazonQLspServer.createPrompt(params);
     }
+
+    public CompletableFuture<Object> tabBarActions(final Object params) {
+        return amazonQLspServer.tabBarAction(params);
+    }
+
 }

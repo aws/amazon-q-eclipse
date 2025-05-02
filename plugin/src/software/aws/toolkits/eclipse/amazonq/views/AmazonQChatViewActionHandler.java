@@ -19,6 +19,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatAsyncResultManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
@@ -146,6 +147,13 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 if ("programmerModeCardId".equals(messageId)) {
                     Activator.getPluginStore().put(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED, "true");
                 }
+                break;
+            case TAB_BAR_ACTION:
+                chatCommunicationManager.sendMessageToChatServer(command, params);
+                break;
+            case GET_SERIALIZED_CHAT:
+                ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);
+                Activator.getLogger().info("Got serialized chat response for request ID: " + parsedCommand.getRequestId());
                 break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());

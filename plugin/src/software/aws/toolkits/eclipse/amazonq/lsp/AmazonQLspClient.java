@@ -9,6 +9,10 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.SerializedChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabParams;
@@ -28,4 +32,9 @@ public interface AmazonQLspClient extends LanguageClient {
     @JsonNotification("aws/chat/openTab")
     CompletableFuture<OpenTabResult> openTab(OpenTabParams params);
 
+    @JsonRequest("aws/showSaveFileDialog")
+    CompletableFuture<ShowSaveFileDialogResult> showSaveFileDialog(ShowSaveFileDialogParams params);
+
+    @JsonRequest("aws/chat/getSerializedChat")
+    CompletableFuture<SerializedChatResult> getSerializedChat(GetSerializedChatParams params);
 }

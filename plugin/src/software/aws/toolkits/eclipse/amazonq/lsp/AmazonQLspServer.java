@@ -126,4 +126,10 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonNotification("aws/chat/createPrompt")
     CompletableFuture<Void> createPrompt(Object params);
 
+    @JsonRequest("aws/chat/tabBarAction")
+    CompletableFuture<Object> tabBarAction(Object params);
+
+    @JsonRequest("aws/chat/getSerializedChat")
+    CompletableFuture<Object> getSerializedActions(Object params);
+
 }

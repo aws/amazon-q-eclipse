@@ -86,4 +86,5 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         chatCommunicationManager.removeListener(this);
         super.dispose();
     }
+
 }

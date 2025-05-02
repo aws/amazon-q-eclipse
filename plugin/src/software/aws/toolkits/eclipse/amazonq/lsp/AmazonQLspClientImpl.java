@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.filesystem.EFS;
@@ -21,14 +23,23 @@ import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatAsyncResultManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.SerializedChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
@@ -210,24 +221,14 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void sendContextCommands(final Object params) {
-        var command = new ChatUIInboundCommand(
-                "aws/chat/sendContextCommands",
-                null,
-                params,
-                null
-            );
+        var command = ChatUIInboundCommand.createCommand("aws/chat/sendContextCommands", params);
         Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
     }
 
     @Override
     public final CompletableFuture<OpenTabResult> openTab(final OpenTabParams params) {
         return CompletableFuture.supplyAsync(() -> {
-            var command = new ChatUIInboundCommand(
-                    "aws/chat/openTab",
-                    null,
-                    params,
-                    null
-                );
+            var command = ChatUIInboundCommand.createCommand("aws/chat/openTab", params);
             Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
             return new OpenTabResult(params.tabId());
         });
@@ -246,6 +247,61 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         } catch (URISyntaxException e) {
             return false;
         }
+    }
+
+    @Override
+    public final CompletableFuture<ShowSaveFileDialogResult> showSaveFileDialog(final ShowSaveFileDialogParams params) {
+        CompletableFuture<ShowSaveFileDialogResult> future = new CompletableFuture<>();
+        Display.getDefault().syncExec(() -> {
+            String name = "export-chat.md";
+            String path = "";
+            try {
+                URI uri = new URI(params.defaultUri());
+                File file = new File(uri);
+                path = file.getParent();
+                name = file.getName();
+            } catch (URISyntaxException e) {
+                Activator.getLogger().warn("Unable to parse file path details from showSaveFileDialog params: " + e.getMessage());
+            }
+
+            Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+            FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+            dialog.setFilterExtensions(new String[] {"*.md", "*.html"});
+            dialog.setFilterPath(path);
+            dialog.setFileName(name);
+            dialog.setFilterNames(new String[] {"Markdown Files (.md)", "HTML Files (.html)"});
+            dialog.setOverwrite(true);
+
+            String filePath = dialog.open();
+            if (filePath != null) {
+                future.complete(new ShowSaveFileDialogResult(filePath));
+            } else {
+                future.completeExceptionally(new IllegalStateException("User did not provide file path for export"));
+            }
+        });
+        return future;
+    }
+
+    @Override
+    public final CompletableFuture<SerializedChatResult> getSerializedChat(final GetSerializedChatParams params) {
+        return CompletableFuture.supplyAsync(() -> {
+            String requestId = UUID.randomUUID().toString();
+            var command = ChatUIInboundCommand.createCommand("aws/chat/getSerializedChat", params, requestId);
+            ChatAsyncResultManager manager = ChatAsyncResultManager.getInstance();
+            manager.createRequestId(requestId);
+            Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+            SerializedChatResult result;
+            try {
+                Object res = ChatAsyncResultManager.getInstance().getResult(requestId);
+                GetSerializedChatResult serializedChatResult = ObjectMapperFactory.getInstance().convertValue(res, GetSerializedChatResult.class);
+                result = serializedChatResult.result();
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to retrieve serialized chat from chat UI", e);
+            } finally {
+                manager.removeRequestId(requestId);
+            }
+            return result;
+        });
     }
 
 }

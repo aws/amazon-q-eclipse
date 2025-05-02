@@ -19,6 +19,7 @@ import com.google.gson.ToNumberPolicy;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResult;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
@@ -74,12 +75,8 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
             }
             if (message instanceof ResponseMessage && ((ResponseMessage) message).getResult() instanceof AwsExtendedInitializeResult) {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
-                var command = new ChatUIInboundCommand(
-                        "chatOptions",
-                        null,
-                        result.getAwsServerCapabilities().chatOptions(),
-                        null
-                    );
+                ChatOptions opts = new ChatOptions(result.getAwsServerCapabilities().chatOptions().quickActions(), true, true);
+                var command = ChatUIInboundCommand.createCommand("chatOptions", opts);
                 Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
                 Activator.getLspProvider().setAmazonQServer(launcher.getRemoteProxy());
             }

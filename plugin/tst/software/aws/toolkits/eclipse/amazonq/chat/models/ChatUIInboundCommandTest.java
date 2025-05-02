@@ -24,15 +24,17 @@ public class ChatUIInboundCommandTest {
 
     private final String selection = "selection";
     private final String triggerType = "triggerType";
+    private final String requestId = "requestId";
 
     @Test
     void testRecordConstructionAndGetters() {
-        ChatUIInboundCommand chatUiInboundCommand = new ChatUIInboundCommand(command, tabId, params, isPartialResult);
+        ChatUIInboundCommand chatUiInboundCommand = new ChatUIInboundCommand(command, tabId, params, isPartialResult, requestId);
 
         assertEquals(command, chatUiInboundCommand.command());
         assertEquals(tabId, chatUiInboundCommand.tabId());
         assertEquals(params, chatUiInboundCommand.params());
         assertEquals(isPartialResult, chatUiInboundCommand.isPartialResult());
+        assertEquals(requestId, chatUiInboundCommand.requestId());
     }
 
     @Test

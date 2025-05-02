@@ -23,6 +23,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension5;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.swt.SWT;
@@ -35,8 +36,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
-
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
@@ -47,9 +46,10 @@ import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
 import org.eclipse.ui.texteditor.ITextEditor;
-import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class QEclipseEditorUtils {
 
@@ -121,6 +121,9 @@ public final class QEclipseEditorUtils {
 
     public static Optional<String> getOpenFileUri(final IEditorInput editorInput) {
         try {
+            if (editorInput instanceof InMemoryInput) {
+                return Optional.empty();
+            }
             var filePath = getOpenFilePath(editorInput);
             var fileUri = Paths.get(filePath).toUri().toString();
             return Optional.of(fileUri);

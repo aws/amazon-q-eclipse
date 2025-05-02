@@ -129,6 +129,10 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);
                 Activator.getLogger().info("Got serialized chat response for request ID: " + parsedCommand.getRequestId());
                 break;
+            case CHAT_OPEN_TAB:
+                ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);
+                Activator.getLogger().info("Got open tab response for request ID: " + parsedCommand.getRequestId());
+                break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());
         }

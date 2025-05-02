@@ -182,8 +182,11 @@ public final class InlineChatEditorListener extends FoldingListener implements I
 
 
     private void removeCurrentPaintListener() {
+        if (currentViewer == null || currentPaintListener == null) {
+            return;
+        }
         try {
-            if (currentViewer != null && !currentViewer.getTextWidget().isDisposed() && currentPaintListener != null) {
+            if (currentViewer.getTextWidget() != null && !currentViewer.getTextWidget().isDisposed()) {
                 Display.getDefault().syncExec(() -> {
                     currentViewer.getTextWidget().removePaintListener(currentPaintListener);
                     currentViewer.getTextWidget().redraw();

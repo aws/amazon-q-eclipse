@@ -56,15 +56,22 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
 
         switch (command) {
             case CHAT_SEND_PROMPT:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
             case CHAT_PROMPT_OPTION_CHANGE:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
             case CHAT_QUICK_ACTION:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
             case FILE_CLICK:
+            case CHAT_READY:
+            case CHAT_TAB_ADD:
+            case CHAT_TAB_REMOVE:
+            case CHAT_TAB_CHANGE:
+            case CHAT_END_CHAT:
+            case CHAT_FEEDBACK:
+            case CHAT_FOLLOW_UP_CLICK:
+            case LIST_CONVERSATIONS:
+            case CONVERSATION_CLICK:
+            case CREATE_PROMPT:
+            case STOP_CHAT_RESPONSE:
+            case BUTTON_CLICK:
+            case TAB_BAR_ACTION:
                 chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_INFO_LINK_CLICK:
@@ -74,21 +81,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                         GenericLinkClickParams.class);
                 validateAndHandleLink(linkClickParams.getLink());
                 chatCommunicationManager.sendMessageToChatServer(command, linkClickParams);
-                break;
-            case CHAT_READY:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_TAB_ADD:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_TAB_REMOVE:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_TAB_CHANGE:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_END_CHAT:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
                 var insertToCursorParams = jsonHandler.convertObject(params, InsertToCursorPositionParams.class);
@@ -101,12 +93,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                     cursorState.ifPresent(state -> insertToCursorParams.setCursorState(Arrays.asList(state)));
                 });
                 chatCommunicationManager.sendMessageToChatServer(command, insertToCursorParams);
-                break;
-            case CHAT_FEEDBACK:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_FOLLOW_UP_CLICK:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case TELEMETRY_EVENT:
                 // telemetry notification for insert to cursor is modified and forwarded to server in the InsertToCursorPosition handler
@@ -126,15 +112,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case DISCLAIMER_ACKNOWLEDGED:
                 Activator.getPluginStore().put(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED, "true");
                 break;
-            case LIST_CONVERSATIONS:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CONVERSATION_CLICK:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CREATE_PROMPT:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
             case PROMPT_OPTION_ACKNOWLEDGED:
                 if (!(params instanceof Map)) {
                     break;
@@ -147,12 +124,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 if ("programmerModeCardId".equals(messageId)) {
                     Activator.getPluginStore().put(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED, "true");
                 }
-            case STOP_CHAT_RESPONSE:
-            case BUTTON_CLICK:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case TAB_BAR_ACTION:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
                 break;
             case GET_SERIALIZED_CHAT:
                 ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);

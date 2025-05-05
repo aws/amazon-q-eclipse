@@ -37,10 +37,8 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<String> sendChatPrompt(final String tabId, final EncryptedChatParams encryptedChatRequestParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-
-        var response = chatMessage.sendChatPrompt(encryptedChatRequestParams);
+    public CompletableFuture<String> sendChatPrompt(final String tabId, final ChatMessage encryptedChatRequestParams) {
+        var response = amazonQLspServer.sendChatPrompt(encryptedChatRequestParams);
         // We assume there is only one outgoing request per tab because the input is
         // blocked when there is an outgoing request
         inflightRequestByTabId.put(tabId, response);
@@ -48,15 +46,12 @@ public final class ChatMessageProvider {
         return handleChatResponse(tabId, response);
     }
 
-    public CompletableFuture<String> sendInlineChatPrompt(final EncryptedChatParams encryptedChatRequestParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendInlineChatPrompt(encryptedChatRequestParams);
+    public CompletableFuture<String> sendInlineChatPrompt(final ChatMessage encryptedChatRequestParams) {
+        return amazonQLspServer.sendInlineChatPrompt(encryptedChatRequestParams.getData());
     }
 
-    public CompletableFuture<String> sendQuickAction(final String tabId, final EncryptedQuickActionParams encryptedQuickActionParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-
-        var response = chatMessage.sendQuickAction(encryptedQuickActionParams);
+    public CompletableFuture<String> sendQuickAction(final String tabId, final ChatMessage encryptedQuickActionParams) {
+        var response = amazonQLspServer.sendQuickAction(encryptedQuickActionParams.getData());
         // We assume there is only one outgoing request per tab because the input is
         // blocked when there is an outgoing request
         inflightRequestByTabId.put(tabId, response);
@@ -70,100 +65,81 @@ public final class ChatMessageProvider {
         });
     }
 
-    public CompletableFuture<Boolean> endChat(final GenericTabParams tabParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.endChat(tabParams);
+    public CompletableFuture<Boolean> endChat(final ChatMessage tabParams) {
+        return amazonQLspServer.endChat(tabParams.getData());
     }
 
-    public void sendPromptInputOptionChange(final PromptInputOptionChangeParams optionChangeParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendPromptInputOptionChange(optionChangeParams);
+    public void sendPromptInputOptionChange(final ChatMessage optionChangeParams) {
+        amazonQLspServer.promptInputOptionChange(optionChangeParams.getData());
     }
 
     public void sendChatReady() {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendChatReady();
+        amazonQLspServer.chatReady();
     }
 
-    public void sendTabAdd(final GenericTabParams tabParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendTabAdd(tabParams);
+    public void sendTabAdd(final ChatMessage tabParams) {
+        amazonQLspServer.tabAdd(tabParams.getData());
     }
 
-    public void sendTabRemove(final GenericTabParams tabParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        cancelInflightRequests(tabParams.tabId());
-        chatMessage.sendTabRemove(tabParams);
+    public void sendTabRemove(final ChatMessage tabParams) {
+        cancelInflightRequests(tabParams.getValueAsString("tabId"));
+        amazonQLspServer.tabRemove(tabParams.getData());
     }
 
-    public void sendTabChange(final GenericTabParams tabParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendTabChange(tabParams);
+    public void sendTabChange(final ChatMessage tabParams) {
+        amazonQLspServer.tabChange(tabParams.getData());
     }
 
-    public void sendFileClick(final FileClickParams fileClickParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendFileClick(fileClickParams);
+    public void sendFileClick(final ChatMessage fileClickParams) {
+        amazonQLspServer.fileClick(fileClickParams.getData());
     }
 
-    public void sendInfoLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendInfoLinkClickParams(sourceLinkClickParams);
+    public void sendInfoLinkClick(final ChatMessage infoLinkClickParams) {
+        amazonQLspServer.infoLinkClick(infoLinkClickParams.getData());
     }
 
-    public void sendLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendLinkClickParams(sourceLinkClickParams);
+    public void sendLinkClick(final ChatMessage linkClickParams) {
+        amazonQLspServer.linkClick(linkClickParams.getData());
     }
 
-    public void sendSourceLinkClick(final GenericLinkClickParams sourceLinkClickParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendSourceLinkClickParams(sourceLinkClickParams);
+    public void sendSourceLinkClick(final ChatMessage sourceLinkClickParams) {
+        amazonQLspServer.sourceLinkClick(sourceLinkClickParams.getData());
     }
 
-    public void sendInsertToCursorPositionParams(final InsertToCursorPositionParams insertToCursorPositionParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendInsertToCursorPositionParams(insertToCursorPositionParams);
+    public void sendInsertToCursorPositionParams(final ChatMessage insertToCursorPositionParams) {
+        amazonQLspServer.insertToCursorPosition(insertToCursorPositionParams);
     }
 
-    public void followUpClick(final FollowUpClickParams followUpClickParams) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.followUpClick(followUpClickParams);
+    public void followUpClick(final ChatMessage followUpClickParams) {
+        amazonQLspServer.followUpClick(followUpClickParams.getData());
     }
 
-    public void sendTelemetryEvent(final Object params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendTelemetryEvent(params);
+    public void sendTelemetryEvent(final ChatMessage params) {
+        amazonQLspServer.sendTelemetryEvent(params.getData());
     }
 
-    public void sendFeedback(final FeedbackParams params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        chatMessage.sendFeedback(params);
+    public void sendFeedback(final ChatMessage params) {
+        amazonQLspServer.sendFeedback(params.getData());
     }
 
-    public CompletableFuture<Object> sendListConversations(final Object params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendListConversations(params);
+    public CompletableFuture<Object> sendListConversations(final ChatMessage params) {
+        return amazonQLspServer.listConversations(params.getData());
     }
 
-    public CompletableFuture<ButtonClickResult> sendButtonClick(final ButtonClickParams params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendButtonClick(params);
+    public CompletableFuture<ButtonClickResult> sendButtonClick(final ChatMessage params) {
+        return amazonQLspServer.buttonClick(params.getData());
     }
 
-    public CompletableFuture<Object> sendConversationClick(final Object params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendConversationClick(params);
+    public CompletableFuture<Object> sendConversationClick(final ChatMessage params) {
+        return amazonQLspServer.conversationClick(params.getData());
     }
 
-    public CompletableFuture<Void> sendCreatePrompt(final Object params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.sendCreatePrompt(params);
+    public CompletableFuture<Void> sendCreatePrompt(final ChatMessage params) {
+        return amazonQLspServer.createPrompt(params.getData());
     }
 
-    public CompletableFuture<Object> sendTabBarActions(final Object params) {
-        ChatMessage chatMessage = new ChatMessage(amazonQLspServer);
-        return chatMessage.tabBarActions(params);
+    public CompletableFuture<Object> sendTabBarActions(final ChatMessage params) {
+        return amazonQLspServer.tabBarAction(params.getData());
     }
 
     public void cancelInflightRequests(final String tabId) {

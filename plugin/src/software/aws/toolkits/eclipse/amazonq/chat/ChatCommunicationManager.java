@@ -77,6 +77,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
     private volatile boolean isQueueProcessorRunning = false;
+    private volatile Thread queueProcessorThread;
 
     private final String inlineChatTabId = "123456789";
 

@@ -40,21 +40,21 @@ public record ChatUIInboundCommand(
 
     public static ChatUIInboundCommand createCommand(final String commandName, final Object params) {
         return new ChatUIInboundCommand(
-                commandName,
-                null,
-                params,
-                null,
-                null
-            );
+            commandName,
+            null,
+            params,
+            null,
+            null
+        );
     }
 
     public static ChatUIInboundCommand createCommand(final String commandName, final Object params, final String requestId) {
         return new ChatUIInboundCommand(
-                commandName,
-                null,
-                params,
-                null,
-                requestId
-            );
+            commandName,
+            null,
+            params,
+            null,
+            requestId
+        );
     }
 };

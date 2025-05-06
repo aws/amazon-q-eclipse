@@ -9,17 +9,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FileClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
@@ -27,9 +17,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenRe
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ListProfilesResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LogInlineCompletionSessionResultsParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 

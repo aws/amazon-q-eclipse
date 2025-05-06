@@ -7,17 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FileClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 

@@ -7,9 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
 import org.eclipse.lsp4j.services.LanguageServer;
-
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
@@ -20,15 +18,12 @@ import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
 public final class LspProviderImpl implements LspProvider {
     private static final LspProviderImpl INSTANCE = new LspProviderImpl();
-
     private static final long TIMEOUT_SECONDS = 60L;
 
-    private final Map<Class<? extends LanguageServer>, CompletableFuture<LanguageServer>> futures;
-    private final Map<Class<? extends LanguageServer>, LanguageServer> servers;
+    private final Map<Class<? extends LanguageServer>, ServerEntry> serverRegistry;
 
     private LspProviderImpl() {
-        this.futures = new ConcurrentHashMap<>();
-        this.servers = new ConcurrentHashMap<>();
+        this.serverRegistry = new ConcurrentHashMap<>();
     }
 
     public static LspProvider getInstance() {
@@ -38,40 +33,19 @@ public final class LspProviderImpl implements LspProvider {
     @Override
     public <T extends LanguageServer> void setServer(final Class<T> lspType, final T server) {
         synchronized (lspType) {
-            servers.put(lspType, server);
-            CompletableFuture<LanguageServer> future = futures.remove(lspType);
-            if (future != null) {
-                future.complete(server);
-            }
+            ServerEntry entry = serverRegistry.computeIfAbsent(lspType, k -> new ServerEntry());
+            entry.setServer(server);
         }
     }
 
     @Override
-    public void setAmazonQServer(final LanguageServer server) {
+    public <T extends LanguageServer> void activate(final Class<T> lspType) {
         synchronized (AmazonQLspServer.class) {
-            servers.put(AmazonQLspServer.class, server);
-            CompletableFuture<LanguageServer> future = futures.remove(AmazonQLspServer.class);
-            if (future != null) {
-                future.complete(server);
+            ServerEntry entry = serverRegistry.get(AmazonQLspServer.class);
+            if (entry != null && entry.getFuture() != null) {
+                entry.getFuture().complete(serverRegistry.get(lspType).getServer());
             }
-            emitInitializeMetric();
-            Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.ACTIVE);
-            // TODO: this needs to startup so LSP messages can be queued - should be improved
-            ChatCommunicationManager.getInstance();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends LanguageServer> CompletableFuture<T> getServer(final Class<T> lspType) {
-        synchronized (lspType) {
-            T server = (T) servers.get(lspType);
-            if (server != null) {
-                return CompletableFuture.completedFuture(server);
-            }
-
-            CompletableFuture<LanguageServer> future = futures.computeIfAbsent(lspType, k -> new CompletableFuture<>());
-            return future.orTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                          .thenApply(lspServer -> (T) lspServer);
+            onServerActivation();
         }
     }
 
@@ -80,8 +54,54 @@ public final class LspProviderImpl implements LspProvider {
         return getServer(AmazonQLspServer.class);
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends LanguageServer> CompletableFuture<T> getServer(final Class<T> lspType) {
+        synchronized (lspType) {
+            ServerEntry entry = serverRegistry.computeIfAbsent(lspType, k -> new ServerEntry());
+            if (entry.getServer() != null) {
+                return CompletableFuture.completedFuture((T) entry.getServer());
+            }
+            return entry.getFutureWithTimeout(TIMEOUT_SECONDS);
+        }
+    }
+
+    private void onServerActivation() {
+        emitInitializeMetric();
+        Activator.getEventBroker().post(AmazonQLspState.class, AmazonQLspState.ACTIVE);
+        ChatCommunicationManager.getInstance();
+    }
+
     private void emitInitializeMetric() {
         LanguageServerTelemetryProvider.emitSetupInitialize(Result.SUCCEEDED, new RecordLspSetupArgs());
     }
 
+    private static final class ServerEntry {
+        private LanguageServer server;
+        private CompletableFuture<LanguageServer> future;
+
+        public void setServer(final LanguageServer server) {
+            this.server = server;
+            if (future != null) {
+                future.complete(server);
+            }
+        }
+
+        public LanguageServer getServer() {
+            return server;
+        }
+
+        public CompletableFuture<LanguageServer> getFuture() {
+            return future;
+        }
+
+        @SuppressWarnings("unchecked")
+        public <T extends LanguageServer> CompletableFuture<T> getFutureWithTimeout(final long timeoutSeconds) {
+            if (future == null) {
+                future = new CompletableFuture<>();
+            }
+            return future.orTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                        .thenApply(server -> (T) server);
+        }
+    }
 }

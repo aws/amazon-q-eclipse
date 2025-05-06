@@ -140,7 +140,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         --icon-scale-medium: 60%;
                         --icon-scale-small: 50%;
                         --icon-padding: 5px;
-                        --mask-position: center;
+                        --mask-position: center/100% no-repeat;
                     }
 
                     .mynah-chat-prompt-input-container,

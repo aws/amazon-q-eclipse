@@ -23,6 +23,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.widgets.Display;
 
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
@@ -217,10 +218,16 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         }
                     });
                 case BUTTON_CLICK:
-                    chatMessageProvider.sendButtonClick(message);
                     ThreadingUtils.scheduleAsyncTaskWithDelay(() -> {
                         WorkspaceUtils.refreshAllProjects();
                     }, 1000);
+
+                    String tabId = message.getValueAsString("tabId");
+                    ButtonClickResult response = chatMessageProvider.sendButtonClick(message).get();
+
+                    if (!response.success()) {
+                        sendErrorToUi(tabId, new Throwable(response.failureReason()));
+                    }
                     break;
                 default:
                     throw new AmazonQPluginException("Unexpected command received from Chat UI: " + command.toString());

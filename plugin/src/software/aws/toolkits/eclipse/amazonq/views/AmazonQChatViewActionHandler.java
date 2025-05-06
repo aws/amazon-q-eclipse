@@ -91,13 +91,14 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 });
                 chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
-//            case TELEMETRY_EVENT:
-//                // telemetry notification for insert to cursor is modified and forwarded to server in the InsertToCursorPosition handler
-//                if (isInsertToCursorEvent(message)) {
-//                    break;
-//                }
-//                chatCommunicationManager.sendMessageToChatServer(command, message);
-//                break;
+            case TELEMETRY_EVENT:
+                // telemetry notification for insert to cursor is modified and forwarded to
+                // server in the InsertToCursorPosition handler
+                if (isInsertToCursorEvent(message)) {
+                    break;
+                }
+                chatCommunicationManager.sendMessageToChatServer(command, message);
+                break;
             case CHAT_COPY_TO_CLIPBOARD:
                 handleCopyToClipboard(message.getValueAsString("code"));
                 break;

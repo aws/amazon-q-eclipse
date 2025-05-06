@@ -37,8 +37,9 @@ public final class ChatMessageProvider {
         this.amazonQLspServer = amazonQLspServer;
     }
 
-    public CompletableFuture<String> sendChatPrompt(final String tabId, final ChatMessage encryptedChatRequestParams) {
-        var response = amazonQLspServer.sendChatPrompt(encryptedChatRequestParams);
+    public CompletableFuture<String> sendChatPrompt(final String tabId,
+            final ChatMessage encryptedChatRequestParams) {
+        var response = amazonQLspServer.sendChatPrompt(encryptedChatRequestParams.getData());
         // We assume there is only one outgoing request per tab because the input is
         // blocked when there is an outgoing request
         inflightRequestByTabId.put(tabId, response);

@@ -36,6 +36,7 @@ import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -97,7 +98,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         if (isSessionActive()) {
             return false;
         }
-        if (editor == null || !(editor instanceof ITextEditor)) {
+        if (editor == null || !(editor instanceof ITextEditor) || (editor.getEditorInput() instanceof InMemoryInput)) {
             return false;
         }
         try {

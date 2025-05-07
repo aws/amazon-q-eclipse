@@ -18,6 +18,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -108,7 +109,8 @@ public final class InlineChatEditorListener extends FoldingListener implements I
         Display.getDefault().asyncExec(() -> {
             try {
                 // Check if we still have a valid selection before showing prompt
-                if (editor.getSelectionProvider().getSelection() instanceof ITextSelection) {
+                if (editor.getSelectionProvider().getSelection() instanceof ITextSelection
+                        && !(editor.getEditorInput() instanceof InMemoryInput)) {
                     ITextSelection currentSelection = (ITextSelection) editor.getSelectionProvider().getSelection();
 
                     // Only show if selection hasn't changed

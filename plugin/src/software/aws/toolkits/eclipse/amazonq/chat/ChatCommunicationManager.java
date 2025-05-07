@@ -75,6 +75,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
     private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
+    private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
     private final String inlineChatTabId = "123456789";
 
@@ -108,7 +109,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     }
 
     public void sendMessageToChatServer(final Command command, final ChatMessage message) {
-        chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
+        Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {
             try {
                 switch (command) {
                 case CHAT_SEND_PROMPT:
@@ -116,107 +117,111 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     addEditorState(message, true);
                     sendEncryptedChatMessage(message.getValueAsString("tabId"), token -> {
                         String encryptedMessage = lspEncryptionManager.encrypt(message.getData());
-
                         EncryptedChatParams encryptedChatRequestParams = new EncryptedChatParams(encryptedMessage,
                                 token);
-
-                        return chatMessageProvider.sendChatPrompt(message.getValueAsString("tabId"),
-                                new ChatMessage(encryptedChatRequestParams));
+                        String tabId = message.getValueAsString("tabId");
+                        var response = amazonQLspServer
+                                .sendChatPrompt(encryptedChatRequestParams);
+                        inflightRequestByTabId.put(tabId, response);
+                        return handleChatResponse(tabId, response);
                     });
                     break;
                 case CHAT_PROMPT_OPTION_CHANGE:
-                    chatMessageProvider.sendPromptInputOptionChange(message);
+                    amazonQLspServer.promptInputOptionChange(message.getData());
                     break;
                 case CHAT_QUICK_ACTION:
                     sendEncryptedChatMessage(message.getValueAsString("tabId"), token -> {
                         String encryptedMessage = lspEncryptionManager.encrypt(message.getData());
-
                         EncryptedQuickActionParams encryptedQuickActionParams = new EncryptedQuickActionParams(
                                 encryptedMessage, token);
-
-                        return chatMessageProvider.sendQuickAction(message.getValueAsString("tabId"),
-                                new ChatMessage(encryptedQuickActionParams));
+                        String tabId = message.getValueAsString("tabId");
+                        var response = amazonQLspServer.sendQuickAction(encryptedQuickActionParams);
+                        return handleChatResponse(tabId, response);
                     });
                     break;
                 case CHAT_READY:
                     ThreadingUtils.executeAsyncTask(() -> {
-                        chatMessageProvider.sendChatReady();
-                        startCommandQueueProcessor();
+                        try {
+                            Thread.sleep(500);
+                            amazonQLspServer.chatReady();
+                            startCommandQueueProcessor();
+                        } catch (InterruptedException e) {
+                            Activator.getLogger().error("Chat initialization error: " + e);
+                        }
                     });
                     break;
                 case CHAT_TAB_ADD:
-                    chatMessageProvider.sendTabAdd(message);
+                    amazonQLspServer.tabAdd(message.getData());
                     break;
                 case CHAT_TAB_REMOVE:
-                    chatMessageProvider.sendTabRemove(message);
+                    amazonQLspServer.tabRemove(message.getData());
                     break;
                 case CHAT_TAB_CHANGE:
-                    chatMessageProvider.sendTabChange(message);
+                    amazonQLspServer.tabChange(message.getData());
                     break;
                 case FILE_CLICK:
-                    chatMessageProvider.sendFileClick(message);
+                    amazonQLspServer.fileClick(message.getData());
                     break;
                 case CHAT_INFO_LINK_CLICK:
-                    chatMessageProvider.sendInfoLinkClick(message);
+                    amazonQLspServer.infoLinkClick(message.getData());
                     break;
                 case CHAT_LINK_CLICK:
-                    chatMessageProvider.sendLinkClick(message);
+                    amazonQLspServer.linkClick(message.getData());
                     break;
                 case CHAT_SOURCE_LINK_CLICK:
-                    chatMessageProvider.sendSourceLinkClick(message);
+                    amazonQLspServer.sourceLinkClick(message.getData());
                     break;
                 case CHAT_FOLLOW_UP_CLICK:
-                    chatMessageProvider.followUpClick(message);
+                    amazonQLspServer.followUpClick(message.getData());
                     break;
                 case CHAT_END_CHAT:
-                    chatMessageProvider.endChat(message);
+                    amazonQLspServer.endChat(message.getData());
                     break;
                 case CHAT_INSERT_TO_CURSOR_POSITION:
-                    chatMessageProvider.sendTelemetryEvent(message);
+                    amazonQLspServer.sendTelemetryEvent(message.getData());
                     break;
                 case CHAT_FEEDBACK:
-                    chatMessageProvider.sendFeedback(message);
+                    amazonQLspServer.sendFeedback(message.getData());
                     break;
                 case STOP_CHAT_RESPONSE:
-                    chatMessageProvider.cancelInflightRequests(message.getValueAsString("tabId"));
+                    cancelInflightRequests(message.getValueAsString("tabId"));
                     break;
                 case TELEMETRY_EVENT:
-                    chatMessageProvider.sendTelemetryEvent(message);
+                    amazonQLspServer.sendTelemetryEvent(message);
                     break;
                 case LIST_CONVERSATIONS:
-                    ThreadingUtils.executeAsyncTask(() -> {
-                        try {
-                            Object response = chatMessageProvider.sendListConversations(message).get();
-                            var listConversationsCommand = ChatUIInboundCommand.createCommand("aws/chat/listConversations", response);
-                            Activator.getEventBroker().post(ChatUIInboundCommand.class, listConversationsCommand);
-                        } catch (Exception e) {
-                            Activator.getLogger().error("Error processing listConversations: " + e);
-                        }
-                    });
+                    try {
+                        Object response = amazonQLspServer.listConversations(message.getData()).get();
+                        var listConversationsCommand = ChatUIInboundCommand.createCommand("aws/chat/listConversations",
+                                response);
+                        Activator.getEventBroker().post(ChatUIInboundCommand.class, listConversationsCommand);
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error processing listConversations: " + e);
+                    }
                     break;
                 case CONVERSATION_CLICK:
-                    ThreadingUtils.executeAsyncTask(() -> {
-                        try {
-                            Object response = chatMessageProvider.sendConversationClick(message).get();
-                            var conversationClickCommand = ChatUIInboundCommand.createCommand("aws/chat/conversationClick", response);
-                            Activator.getEventBroker().post(ChatUIInboundCommand.class, conversationClickCommand);
-                        } catch (Exception e) {
-                            Activator.getLogger().error("Error processing conversationClick: " + e);
-                        }
-                    });
+                    try {
+                        Object response = amazonQLspServer.conversationClick(message.getData()).get();
+                        var conversationClickCommand = ChatUIInboundCommand.createCommand("aws/chat/conversationClick",
+                                response);
+                        Activator.getEventBroker().post(ChatUIInboundCommand.class, conversationClickCommand);
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error processing conversationClick: " + e);
+                    }
+                    break;
                 case CREATE_PROMPT:
-                    chatMessageProvider.sendCreatePrompt(message);
+                    amazonQLspServer.createPrompt(message.getData());
                     break;
                 case TAB_BAR_ACTION:
-                    ThreadingUtils.executeAsyncTask(() -> {
-                        try {
-                            Object response = chatMessageProvider.sendTabBarActions(message).get();
-                            var tabBarActionsCommand = ChatUIInboundCommand.createCommand("aws/chat/tabBarAction", response);
-                            Activator.getEventBroker().post(ChatUIInboundCommand.class, tabBarActionsCommand);
-                        } catch (Exception e) {
-                            Activator.getLogger().error("Error processing tabBarActions: " + e);
-                        }
-                    });
+                    try {
+                        Object response = amazonQLspServer.tabBarAction(message.getData()).get();
+                        var tabBarActionsCommand = ChatUIInboundCommand.createCommand("aws/chat/tabBarAction",
+                                response);
+                        Activator.getEventBroker().post(ChatUIInboundCommand.class, tabBarActionsCommand);
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error processing tabBarActions: " + e);
+                    }
+                    break;
                 case BUTTON_CLICK:
                     ThreadingUtils.scheduleAsyncTaskWithDelay(() -> {
                         WorkspaceUtils.refreshAllProjects();
@@ -235,7 +240,15 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             } catch (Exception e) {
                 throw new AmazonQPluginException("Error occurred when sending message to server", e);
             }
-        }, ThreadingUtils.getWorkerPool());
+        });
+    }
+
+    public void cancelInflightRequests(final String tabId) {
+        var inflightRequest = inflightRequestByTabId.getOrDefault(tabId, null);
+        if (inflightRequest != null) {
+            inflightRequest.cancel(true);
+            inflightRequestByTabId.remove(tabId);
+        }
     }
 
     public void sendInlineChatMessageToChatServer(final InlineChatRequestParams params) {
@@ -410,6 +423,12 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         } else if (inlineChatListenerFuture.isDone() && listener == inlineChatListenerFuture.join()) {
             inlineChatListenerFuture = new CompletableFuture<>();
         }
+    }
+
+    private CompletableFuture<String> handleChatResponse(final String tabId, final CompletableFuture<String> response) {
+        return response.whenComplete((result, exception) -> {
+            inflightRequestByTabId.remove(tabId);
+        });
     }
 
     /*

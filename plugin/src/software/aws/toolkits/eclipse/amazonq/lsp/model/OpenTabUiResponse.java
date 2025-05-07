@@ -3,4 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-public record OpenTabUiResponse(boolean success, OpenTabResult result) { }
+public record OpenTabUiResponse(boolean success, Object result) { }

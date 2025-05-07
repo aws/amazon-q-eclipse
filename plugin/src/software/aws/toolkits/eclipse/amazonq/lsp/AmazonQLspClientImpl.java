@@ -75,6 +75,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabUiResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.TextCompareInput;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
@@ -392,33 +393,4 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 false, null);
         Activator.getEventBroker().post(ChatUIInboundCommand.class, conversationClickCommand);
     }
-
-    private static class TextCompareInput implements ITypedElement, IStreamContentAccessor {
-        private final String content;
-
-        public TextCompareInput(String content) {
-            this.content = content;
-        }
-
-        @Override
-        public String getName() {
-            return "";
-        }
-
-        @Override
-        public Image getImage() {
-            return null;
-        }
-
-        @Override
-        public String getType() {
-            return ITypedElement.TEXT_TYPE;
-        }
-
-        @Override
-        public InputStream getContents() {
-            return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
-        }
-    }
-
 }

@@ -22,7 +22,7 @@ public final class InMemoryInput implements IStorageEditorInput {
 
     @Override
     public boolean exists() {
-        return true;
+        return false;
     }
 
     @Override

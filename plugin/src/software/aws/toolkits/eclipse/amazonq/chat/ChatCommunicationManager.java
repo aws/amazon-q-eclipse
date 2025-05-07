@@ -57,7 +57,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private static volatile ChatCommunicationManager instance;
 
     private final JsonHandler jsonHandler;
-    private final CompletableFuture<ChatMessageProvider> chatMessageProvider;
     private final ChatPartialResultMap chatPartialResultMap;
     private final LspEncryptionManager lspEncryptionManager;
 
@@ -81,8 +80,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private ChatCommunicationManager(final Builder builder) {
         this.jsonHandler = builder.jsonHandler != null ? builder.jsonHandler : new JsonHandler();
-        this.chatMessageProvider = builder.chatMessageProvider != null ? builder.chatMessageProvider
-                : ChatMessageProvider.createAsync();
         this.chatPartialResultMap = builder.chatPartialResultMap != null ? builder.chatPartialResultMap
                 : new ChatPartialResultMap();
         this.lspEncryptionManager = builder.lspEncryptionManager != null ? builder.lspEncryptionManager
@@ -252,7 +249,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     }
 
     public void sendInlineChatMessageToChatServer(final InlineChatRequestParams params) {
-        chatMessageProvider.thenAcceptAsync(chatMessageProvider -> {
+        Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(chatMessageProvider -> {
             try {
                 ChatMessage chatRequestParams = new ChatMessage(params);
                 addEditorState(chatRequestParams, false);
@@ -587,17 +584,11 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     public static final class Builder {
 
         private JsonHandler jsonHandler;
-        private CompletableFuture<ChatMessageProvider> chatMessageProvider;
         private ChatPartialResultMap chatPartialResultMap;
         private LspEncryptionManager lspEncryptionManager;
 
         public Builder withJsonHandler(final JsonHandler jsonHandler) {
             this.jsonHandler = jsonHandler;
-            return this;
-        }
-
-        public Builder withChatMessageProvider(final CompletableFuture<ChatMessageProvider> chatMessageProvider) {
-            this.chatMessageProvider = chatMessageProvider;
             return this;
         }
 

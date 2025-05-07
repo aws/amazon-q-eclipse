@@ -22,7 +22,7 @@ public final class MemoryStorage implements IStorage {
 
     @Override
     public InputStream getContents() {
-        return new ByteArrayInputStream(bytes);
+        return new ByteArrayInputStream(bytes.clone());
     }
 
     @Override
@@ -32,7 +32,7 @@ public final class MemoryStorage implements IStorage {
 
     @Override
     public String getName() {
-        return getFullPath().lastSegment() + " (preview)";
+        return path + " (preview)";
     }
 
     @Override

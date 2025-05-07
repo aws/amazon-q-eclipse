@@ -39,7 +39,6 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.FileStoreEditorInput;
@@ -57,18 +56,13 @@ public final class QEclipseEditorUtils {
         // Prevent instantiation
     }
 
-    public static IWorkbenchPage getActivePage() {
+    private static IWorkbenchPage getActivePage() {
         IWorkbenchWindow window = getActiveWindow();
         return window == null ? null : window.getActivePage();
     }
 
-    public static IWorkbenchWindow getActiveWindow() {
+    private static IWorkbenchWindow getActiveWindow() {
         return PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-    }
-
-    public static IWorkbenchPart getActivePart() {
-        IWorkbenchPage page = getActivePage();
-        return page == null ? null : page.getActivePart();
     }
 
     public static ITextEditor getActiveTextEditor() {
@@ -76,11 +70,11 @@ public final class QEclipseEditorUtils {
         return activePage == null ? null : asTextEditor(activePage.getActiveEditor());
     }
 
-    public static ISelection getSelection(final ITextEditor textEditor) {
+    private static ISelection getSelection(final ITextEditor textEditor) {
         return textEditor.getSelectionProvider().getSelection();
     }
 
-    public static ITextEditor asTextEditor(final IEditorPart editorPart) {
+    private static ITextEditor asTextEditor(final IEditorPart editorPart) {
         if (editorPart instanceof ITextEditor) {
             return (ITextEditor) editorPart;
         } else {
@@ -97,7 +91,7 @@ public final class QEclipseEditorUtils {
         }
     }
 
-    public static ITextViewer asTextViewer(final IEditorPart editorPart) {
+    private static ITextViewer asTextViewer(final IEditorPart editorPart) {
         return editorPart != null ? editorPart.getAdapter(ITextViewer.class) : null;
     }
 
@@ -141,7 +135,7 @@ public final class QEclipseEditorUtils {
         return Optional.of(getOpenFilePath(editor.getEditorInput()));
     }
 
-    public static String getOpenFilePath(final IEditorInput editorInput) {
+    private static String getOpenFilePath(final IEditorInput editorInput) {
         if (editorInput instanceof FileStoreEditorInput fileStoreEditorInput) {
             return fileStoreEditorInput.getURI().getPath();
         } else if (editorInput instanceof IFileEditorInput fileEditorInput) {

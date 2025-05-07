@@ -40,15 +40,15 @@ public final class DefaultAuthCredentialsService implements AuthCredentialsServi
                 });
     }
 
-    public static class Builder {
+    public static final class Builder {
         private LspProvider lspProvider;
 
-        public final Builder withLspProvider(final LspProvider lspProvider) {
+        public Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
             return this;
         }
 
-        public final DefaultAuthCredentialsService build() {
+        public DefaultAuthCredentialsService build() {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
             }

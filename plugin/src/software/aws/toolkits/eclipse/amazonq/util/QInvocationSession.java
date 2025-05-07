@@ -64,7 +64,6 @@ public final class QInvocationSession extends QResource {
     private CaretListener caretListener = null;
     private QInlineInputListener inputListener = null;
     private QInlineTerminationListener terminationListener = null;
-    private final int[] headOffsetAtLine = new int[500];
     private final boolean isTabOnly = false;
     private Consumer<Integer> unsetVerticalIndent;
     private final ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
@@ -408,7 +407,7 @@ public final class QInvocationSession extends QResource {
         return state == QInvocationSessionState.DECISION_MADE;
     }
 
-    public synchronized void transitionToPreviewingState() {
+    private synchronized void transitionToPreviewingState() {
         assert state == QInvocationSessionState.INVOKING;
         state = QInvocationSessionState.SUGGESTION_PREVIEWING;
         if (changeStatusToPreviewing != null) {
@@ -416,7 +415,7 @@ public final class QInvocationSession extends QResource {
         }
     }
 
-    public void transitionToInvokingState() {
+    private void transitionToInvokingState() {
         assert state == QInvocationSessionState.INACTIVE;
         state = QInvocationSessionState.INVOKING;
         if (changeStatusToQuerying != null) {
@@ -450,13 +449,6 @@ public final class QInvocationSession extends QResource {
         this.caretMovementReason = reason;
     }
 
-    public void setHeadOffsetAtLine(final int lineNum, final int offSet) throws IllegalArgumentException {
-        if (lineNum >= headOffsetAtLine.length || lineNum < 0) {
-            throw new IllegalArgumentException("Problematic index given");
-        }
-        headOffsetAtLine[lineNum] = offSet;
-    }
-
     public Font getInlineTextFont() {
         return inlineTextFont;
     }
@@ -479,13 +471,6 @@ public final class QInvocationSession extends QResource {
 
     public CaretMovementReason getCaretMovementReason() {
         return caretMovementReason;
-    }
-
-    public int getHeadOffsetAtLine(final int lineNum) throws IllegalArgumentException {
-        if (lineNum >= headOffsetAtLine.length || lineNum < 0) {
-            throw new IllegalArgumentException("Problematic index given");
-        }
-        return headOffsetAtLine[lineNum];
     }
 
     public InlineCompletionItem getCurrentSuggestion() {
@@ -548,7 +533,7 @@ public final class QInvocationSession extends QResource {
         Activator.getCodeReferenceLoggingService().log(codeReference);
     }
 
-    public void setVerticalIndent(final int line, final int height) {
+    void setVerticalIndent(final int line, final int height) {
         var widget = viewer.getTextWidget();
         widget.setLineVerticalIndent(line, height);
         unsetVerticalIndent = (caretLine) -> {
@@ -556,7 +541,7 @@ public final class QInvocationSession extends QResource {
         };
     }
 
-    public void unsetVerticalIndent(final int caretLine) {
+    void unsetVerticalIndent(final int caretLine) {
         if (unsetVerticalIndent != null) {
             unsetVerticalIndent.accept(caretLine);
             unsetVerticalIndent = null;
@@ -575,7 +560,7 @@ public final class QInvocationSession extends QResource {
         return inputListener.getOutstandingPadding();
     }
 
-    public void primeListeners() {
+    private void primeListeners() {
         inputListener.onNewSuggestion();
         paintListener.onNewSuggestion();
         markSuggestionAsSeen();

@@ -53,7 +53,7 @@ public final class CustomizationDialog extends Dialog {
         CUSTOMIZATION
     }
 
-    public final class RadioButtonWithDescriptor extends Composite {
+    private final class RadioButtonWithDescriptor extends Composite {
 
         private Button radioButton;
         private Label textLabel;
@@ -61,7 +61,7 @@ public final class CustomizationDialog extends Dialog {
         private Font textFont;
         private Font subtextFont;
 
-        public RadioButtonWithDescriptor(final Composite parent, final String text, final String subtext,
+        private RadioButtonWithDescriptor(final Composite parent, final String text, final String subtext,
                 final int style) {
             super(parent, SWT.NONE);
 
@@ -114,7 +114,7 @@ public final class CustomizationDialog extends Dialog {
             radioButton.setSelection(isSelected);
         }
 
-        public void addSelectionListener(final Runnable runnable) {
+        private void addSelectionListener(final Runnable runnable) {
             radioButton.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(final SelectionEvent event) {

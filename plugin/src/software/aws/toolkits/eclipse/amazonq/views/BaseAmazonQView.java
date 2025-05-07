@@ -55,10 +55,6 @@ public abstract class BaseAmazonQView {
         return amazonQCommonActions;
     }
 
-    protected final AmazonQStaticActions getAmazonQStaticActions() {
-        return amazonQStaticActions;
-    }
-
     protected final Image loadImage(final String imagePath) {
         Image loadedImage = null;
         try {

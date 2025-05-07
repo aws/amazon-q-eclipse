@@ -15,7 +15,7 @@ public final class ChatAsyncResultManager {
     private final long defaultTimeout;
     private final TimeUnit defaultTimeUnit;
 
-    public ChatAsyncResultManager(final long timeout, final TimeUnit timeUnit) {
+    private ChatAsyncResultManager(final long timeout, final TimeUnit timeUnit) {
         results = new ConcurrentHashMap<>();
         this.defaultTimeout = timeout;
         this.defaultTimeUnit = timeUnit;
@@ -50,7 +50,7 @@ public final class ChatAsyncResultManager {
         return getResult(requestId, defaultTimeout, defaultTimeUnit);
     }
 
-    public Object getResult(final String requestId, final long timeout, final TimeUnit unit) throws Exception {
+    private Object getResult(final String requestId, final long timeout, final TimeUnit unit) throws Exception {
         CompletableFuture<Object> future = results.get(requestId);
         if (future == null) {
             throw new IllegalArgumentException("Request ID not found: " + requestId);

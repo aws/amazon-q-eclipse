@@ -206,5 +206,4 @@ public final class AmazonQBrowserProvider {
             return new AmazonQBrowserProvider(this);
         }
     }
-
 }

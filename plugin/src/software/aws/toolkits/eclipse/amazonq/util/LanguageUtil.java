@@ -14,7 +14,7 @@ public final class LanguageUtil {
             "handlebars", "groovy", "go", "diff", "css", "c", "coffeescript",
             "clojure", "bibtex", "abap");
 
-    public static String extractLanguageNameFromFileExtension(
+    private static String extractLanguageNameFromFileExtension(
             final String languageId) {
 
         if (languageId == null) {

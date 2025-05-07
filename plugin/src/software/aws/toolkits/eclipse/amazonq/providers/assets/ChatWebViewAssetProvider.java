@@ -165,6 +165,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     }
 
                     [class*="mynah-ui-icon-"] {
+                        contain: paint;
+                        -webkit-mask-repeat: no-repeat;
                         mask-position: var(--mask-position);
                         -webkit-mask-position: var(--mask-position);
                         transform: translateZ(0);
@@ -412,7 +414,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     }
 
 
-    public Optional<String> resolveJsPath() {
+    private Optional<String> resolveJsPath() {
         var chatUiDirectory = getChatUiDirectory();
 
         if (!isValid(chatUiDirectory)) {

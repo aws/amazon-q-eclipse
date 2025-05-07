@@ -8,7 +8,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,21 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.CompareUI;
+import org.eclipse.compare.IStreamContentAccessor;
+import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.structuremergeviewer.DiffNode;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Display;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -35,22 +49,11 @@ import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.VerifyKeyListener;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IEditorDescriptor;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.ide.IDE;
-import org.eclipse.ui.texteditor.ITextEditor;
-
-import com.github.difflib.DiffUtils;
-import com.github.difflib.patch.AbstractDelta;
-import com.github.difflib.patch.Patch;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatAsyncResultManager;
@@ -61,9 +64,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatResult
 import software.aws.toolkits.eclipse.amazonq.chat.models.SerializedChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogResult;
-import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
-import software.aws.toolkits.eclipse.amazonq.editor.MemoryStorage;
-import software.aws.toolkits.eclipse.amazonq.inlineChat.TextDiff;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
@@ -80,14 +80,11 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
-import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
-
-    private ThemeDetector themeDetector = new ThemeDetector();
 
     @Override
     public final CompletableFuture<ConnectionMetadata> getConnectionMetadata() {
@@ -357,122 +354,36 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void openFileDiff(final OpenFileDiffParams params) {
-        String annotationAdded = themeDetector.isDarkTheme() ? "diffAnnotation.added.dark" : "diffAnnotation.added";
-        String annotationDeleted = themeDetector.isDarkTheme() ? "diffAnnotation.deleted.dark"
-                : "diffAnnotation.deleted";
-
         Display.getDefault().asyncExec(() -> {
-            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
             try {
-                IStorageEditorInput input = new InMemoryInput(
-                        new MemoryStorage(new Path(params.originalFileUri().getPath()).lastSegment(), ""));
+                CompareConfiguration config = new CompareConfiguration();
+                config.setLeftEditable(false);
+                config.setRightEditable(false);
+                config.setLeftLabel("Original");
+                config.setRightLabel("Modified");
 
-                IEditorDescriptor defaultEditor = PlatformUI.getWorkbench().getEditorRegistry()
-                        .getDefaultEditor(".java");
+                // Create document contents
+                String originalContent = params.originalFileContent() != null ? params.originalFileContent() : "";
+                String newContent = params.fileContent() != null ? params.fileContent() : "";
 
-                IEditorPart editor = page.openEditor(input,
-                        defaultEditor != null ? defaultEditor.getId() : "org.eclipse.ui.DefaultTextEditor", true,
-                        IWorkbenchPage.MATCH_INPUT);
-                // Annotation model provides highlighting for the diff additions/deletions
-                IAnnotationModel annotationModel = ((ITextEditor) editor).getDocumentProvider()
-                        .getAnnotationModel(editor.getEditorInput());
-                var document = ((ITextEditor) editor).getDocumentProvider().getDocument(editor.getEditorInput());
+                ITypedElement left = new TextCompareInput(originalContent);
+                ITypedElement right = new TextCompareInput(newContent);
 
-                // Clear existing diff annotations prior to starting new diff
-                var annotations = annotationModel.getAnnotationIterator();
-                while (annotations.hasNext()) {
-                    var annotation = annotations.next();
-                    String type = annotation.getType();
-                    if (type.startsWith("diffAnnotation.")) {
-                        annotationModel.removeAnnotation(annotation);
+                // Create compare input
+                CompareEditorInput input = new CompareEditorInput(config) {
+                    @Override
+                    protected Object prepareInput(IProgressMonitor monitor) {
+                        return new DiffNode(left, right);
                     }
-                }
+                };
 
-                // Split original and new code into lines for diff comparison
-                String[] originalLines = (params.originalFileContent() != null
-                        && !params.originalFileContent().isEmpty())
-                                ? params.originalFileContent().lines().toArray(String[]::new)
-                                : new String[0];
-                String[] newLines = (params.fileContent() != null && !params.fileContent().isEmpty())
-                        ? params.fileContent().lines().toArray(String[]::new)
-                        : new String[0];
-                // Diff generation --> returns Patch object which contains deltas for each line
-                Patch<String> patch = DiffUtils.diff(Arrays.asList(originalLines), Arrays.asList(newLines));
+                input.setTitle("File Comparison");
+                CompareUI.openCompareEditor(input);
 
-                StringBuilder resultText = new StringBuilder();
-                List<TextDiff> currentDiffs = new ArrayList<>();
-                int currentPos = 0;
-                int currentLine = 0;
-
-                for (AbstractDelta<String> delta : patch.getDeltas()) {
-                    // Continuously copy unchanged lines until we hit a diff
-                    while (currentLine < delta.getSource().getPosition()) {
-                        resultText.append(originalLines[currentLine]).append("\n");
-                        currentPos += originalLines[currentLine].length() + 1;
-                        currentLine++;
-                    }
-
-                    List<String> originalChangedLines = delta.getSource().getLines();
-                    List<String> newChangedLines = delta.getTarget().getLines();
-
-                    // Handle deleted lines and mark position
-                    for (String line : originalChangedLines) {
-                        resultText.append(line).append("\n");
-                        currentDiffs.add(new TextDiff(currentPos, line.length(), true));
-                        currentPos += line.length() + 1;
-                    }
-
-                    // Handle added lines and mark position
-                    for (String line : newChangedLines) {
-                        resultText.append(line).append("\n");
-                        currentDiffs.add(new TextDiff(currentPos, line.length(), false));
-                        currentPos += line.length() + 1;
-                    }
-
-                    currentLine = delta.getSource().getPosition() + delta.getSource().size();
-                }
-                // Loop through remaining unchanged lines
-                while (currentLine < originalLines.length) {
-                    resultText.append(originalLines[currentLine]).append("\n");
-                    currentPos += originalLines[currentLine].length() + 1;
-                    currentLine++;
-                }
-
-                final String finalText = resultText.toString();
-                document.replace(0, document.getLength(), finalText);
-
-                // Add all annotations after text modifications are complete
-                for (TextDiff diff : currentDiffs) {
-                    Position position = new Position(diff.offset(), diff.length());
-                    String annotationType = diff.isDeletion() ? annotationDeleted : annotationAdded;
-                    String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
-                    annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
-                }
-                makeEditorReadOnly(editor);
-            } catch (CoreException | BadLocationException e) {
-                Activator.getLogger().info("Failed to open file/diff: " + e);
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to open comparison: " + e.getMessage(), e);
             }
-
         });
-    }
-
-    private void makeEditorReadOnly(final IEditorPart editor) {
-        ITextViewer viewer = editor.getAdapter(ITextViewer.class);
-        if (viewer != null) {
-            VerifyKeyListener verifyKeyListener = event -> event.doit = false;
-            ((ITextViewerExtension) viewer).prependVerifyKeyListener(verifyKeyListener);
-        }
-
-        // stop text‑modifying commands
-        ActionFactory[] ids = {ActionFactory.UNDO, ActionFactory.REDO, ActionFactory.CUT, ActionFactory.PASTE,
-                ActionFactory.DELETE};
-        for (ActionFactory id : ids) {
-            IAction a = ((ITextEditor) editor).getAction(id.getId());
-            if (a != null) {
-                a.setEnabled(false);
-            }
-        }
-        editor.doSave(new NullProgressMonitor());
     }
 
     @Override
@@ -480,6 +391,34 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         var conversationClickCommand = new ChatUIInboundCommand("aws/chat/sendChatUpdate", null, params,
                 false, null);
         Activator.getEventBroker().post(ChatUIInboundCommand.class, conversationClickCommand);
+    }
+
+    private static class TextCompareInput implements ITypedElement, IStreamContentAccessor {
+        private final String content;
+
+        public TextCompareInput(String content) {
+            this.content = content;
+        }
+
+        @Override
+        public String getName() {
+            return "";
+        }
+
+        @Override
+        public Image getImage() {
+            return null;
+        }
+
+        @Override
+        public String getType() {
+            return ITypedElement.TEXT_TYPE;
+        }
+
+        @Override
+        public InputStream getContents() {
+            return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+        }
     }
 
 }

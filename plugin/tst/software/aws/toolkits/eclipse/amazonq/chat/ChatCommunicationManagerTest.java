@@ -5,7 +5,6 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -45,18 +44,15 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackPayload;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
@@ -209,183 +205,13 @@ public final class ChatCommunicationManagerTest {
 
             verify(lspEncryptionManager).encrypt(params);
             verify(chatMessageProvider).sendChatPrompt(eq("tabId"), any(EncryptedChatParams.class));
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
             verify(codeReferenceLoggingService).log(any(ChatCodeReference.class));
-        }
-
-        @Test
-        void testChatSendPromptWithErrorCommunicatingWithServer() throws Exception {
-            when(jsonHandler.convertObject(any(Object.class), eq(ChatRequestParams.class)))
-                    .thenReturn(params);
-            when(chatMessageProvider.sendChatPrompt(any(String.class), any(EncryptedChatParams.class)))
-                    .thenReturn(CompletableFuture.failedFuture(new RuntimeException("error message")));
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-            try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
-                displayMock.when(Display::getDefault).thenReturn(display);
-                chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
-            }
-
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat request")));
-        }
-
-        @Test
-        void testChatSendPromptWithErrorInResponse() throws Exception {
-            when(jsonHandler.convertObject(any(Object.class), eq(ChatRequestParams.class)))
-                    .thenReturn(params);
-            when(chatMessageProvider.sendChatPrompt(any(String.class), any(EncryptedChatParams.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                    .thenThrow(new RuntimeException("Test exception"));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-            try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
-                displayMock.when(Display::getDefault).thenReturn(display);
-                chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
-            }
-
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat response")));
-        }
-
-    }
-
-    @Nested
-    class SendQuickActionsTests {
-
-        @RegisterExtension
-        private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
-
-        private final QuickActionParams quickActionParams = new QuickActionParams("tabId", "quickAction", "prompt");
-
-        private final String jsonString = "{"
-                + "  \"type\": \"answer\","
-                + "  \"header\": {"
-                + "    \"type\": \"answer\","
-                + "    \"body\": \"body\","
-                + "    \"status\": {"
-                + "      \"status\": \"success\","
-                + "      \"text\": \"Success\""
-                + "    }"
-                + "  },"
-                + "  \"buttons\": [],"
-                + "  \"body\": \"body\","
-                + "  \"messageId\": \"messageId\","
-                + "  \"canBeVoted\": true,"
-                + "  \"relatedContent\": {"
-                + "    \"title\": \"title\","
-                + "    \"content\": ["
-                + "      {"
-                + "        \"title\": \"title\","
-                + "        \"url\": \"url\","
-                + "        \"body\": \"body\""
-                + "      }"
-                + "    ]"
-                + "  },"
-                + "  \"followUp\": {"
-                + "    \"text\": \"text\","
-                + "    \"options\": ["
-                + "      {"
-                + "        \"pillText\": \"pillText\","
-                + "        \"prompt\": \"prompt\","
-                + "        \"isEnabled\": false,"
-                + "        \"description\": \"description\","
-                + "        \"button\": \"button\""
-                + "      }"
-                + "    ]"
-                + "  },"
-                + "  \"codeReference\": ["
-                + "    {"
-                + "      \"licenseName\": \"licenseName\","
-                + "      \"repository\": \"repository\","
-                + "      \"url\": \"url\","
-                + "      \"contentSpan\": {"
-                + "        \"start\": 1,"
-                + "        \"end\": 2"
-                + "      },"
-                + "      \"information\": \"information\""
-                + "    }"
-                + "  ]"
-                + "}";
-
-        @BeforeEach
-        void setupBeforeEach() {
-            chatCommunicationManager.setChatUiRequestListener(chatUiRequestListener);
-        }
-
-        @Test
-        void testSendQuickAction() throws Exception {
-            when(jsonHandler.convertObject(any(Object.class), eq(QuickActionParams.class)))
-                    .thenReturn(quickActionParams);
-            when(chatMessageProvider.sendQuickAction(any(String.class), any(EncryptedQuickActionParams.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
-
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
-
-            verify(jsonHandler).convertObject(any(Object.class), eq(QuickActionParams.class));
-            verify(chatPartialResultMap).setEntry(any(String.class), eq("tabId"));
-            verify(chatPartialResultMap).removeEntry(any(String.class));
-
-            verify(lspEncryptionManager).encrypt(quickActionParams);
-            verify(chatMessageProvider).sendQuickAction(eq("tabId"), any(EncryptedQuickActionParams.class));
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-        }
-
-        @Test
-        void testChatSendPromptWithErrorCommunicatingWithServer() throws Exception {
-            when(jsonHandler.convertObject(any(Object.class), eq(QuickActionParams.class)))
-                    .thenReturn(quickActionParams);
-            when(chatMessageProvider.sendQuickAction(any(String.class), any(EncryptedQuickActionParams.class)))
-                    .thenReturn(CompletableFuture.failedFuture(new RuntimeException("error message")));
-
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
-
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat request")));
-        }
-
-        @Test
-        void testChatSendPromptWithErrorInResponse() throws Exception {
-            when(jsonHandler.convertObject(any(Object.class), eq(QuickActionParams.class)))
-                    .thenReturn(quickActionParams);
-            when(chatMessageProvider.sendQuickAction(any(String.class), any(EncryptedQuickActionParams.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
-
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                    .thenThrow(new RuntimeException("Test exception"));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
-
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat response")));
         }
 
     }
 
     @Nested
     class SendChatReadyAndTelemetryEventTests {
-
-//        @Test
-//        void testSendQuickAction() {
-//            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_READY, new Object());
-//            verify(chatMessageProvider).sendChatReady();
-//        }
 
         @Test
         void testTelemetryEvent() {
@@ -563,34 +389,6 @@ public final class ChatCommunicationManagerTest {
                 chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
 
                 verifyNoInteractions(chatUiRequestListener);
-            }
-        }
-
-        @Test
-        void testChatPartialResult() {
-            try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
-                progressNotificationUtilsMock
-                        .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
-                        .thenReturn("token");
-                when(chatPartialResultMap.getValue(any(String.class))).thenReturn("tabId");
-
-                Either<WorkDoneProgressNotification, Object> either = mock(Either.class);
-                when(either.getRight()).thenReturn(new Object());
-                when(progressParams.getValue()).thenReturn(either);
-
-                progressNotificationUtilsMock
-                    .when(() -> ProgressNotificationUtils.getObject(any(ProgressParams.class), eq(String.class)))
-                    .thenReturn("chatPartialResult");
-
-                Map<String, Object> chatResult = mock(Map.class);
-
-                when(jsonHandler.deserialize(any(String.class), eq(Map.class))).thenReturn(chatResult);
-                when(chatResult.get("body")).thenReturn("body");
-                when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-                chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
-
-                verify(chatUiRequestListener).onSendToChatUi("serializedObject");
             }
         }
 

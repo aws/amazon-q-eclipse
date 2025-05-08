@@ -65,8 +65,6 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
         amazonQCommonActions = getAmazonQCommonActions();
 
         chatCommunicationManager.setChatUiRequestListener(this);
-
-
         addFocusListener(parent, browser);
         setupAmazonQCommonActions();
 
@@ -76,8 +74,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
     @Override
     public final void onSendToChatUi(final String message) {
         String script = "window.postMessage(" + message + ");";
-        browser.getDisplay().asyncExec(() -> {
-            browser.evaluate(script);
+        Display.getDefault().asyncExec(() -> {
+            browser.execute(script);
         });
     }
 

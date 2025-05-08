@@ -11,11 +11,8 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-<<<<<<< HEAD
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
-=======
->>>>>>> da22073 (Another attempt to fix CSS issues by redrawing icons periodically)
 
 import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -101,12 +98,7 @@ public final class AmazonQBrowserProvider {
             browserById.put(componentId, browser);
             return browser;
         }
-<<<<<<< HEAD
         return null;
-=======
-        setupPeriodicRefresh(browser);
-        return hasWebViewDependency();
->>>>>>> da22073 (Another attempt to fix CSS issues by redrawing icons periodically)
     }
 
     public synchronized Browser getBrowser(final String componentId) {

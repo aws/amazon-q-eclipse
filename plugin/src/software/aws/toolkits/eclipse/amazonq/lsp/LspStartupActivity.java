@@ -89,7 +89,9 @@ public class LspStartupActivity implements IStartup {
             @Override
             protected IStatus run(final IProgressMonitor monitor) {
                 try {
-                    UpdateUtils.getInstance().checkForUpdate();
+                    Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(server -> {
+                        UpdateUtils.getInstance().checkForUpdate();
+                    }, ThreadingUtils.getWorkerPool());
                 } catch (Exception e) {
                     return new Status(IStatus.WARNING, "amazonq", "Failed to check for updates", e);
                 }

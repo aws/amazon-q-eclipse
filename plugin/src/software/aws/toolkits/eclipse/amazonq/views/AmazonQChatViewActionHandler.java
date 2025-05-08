@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.browser.Browser;
@@ -16,6 +17,7 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -132,6 +134,18 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case CHAT_OPEN_TAB:
                 ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);
                 Activator.getLogger().info("Got open tab response for request ID: " + parsedCommand.getRequestId());
+                break;
+            case OPEN_SETTINGS:
+                Display.getDefault().asyncExec(() -> {
+                    PreferenceDialog dialog = PreferencesUtil.createPreferenceDialogOn(
+                            Display.getDefault().getActiveShell(),
+                            "software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage",
+                            new String[] {"software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"},
+                            null
+                        );
+                    dialog.open();
+                    ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);
+                });
                 break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());

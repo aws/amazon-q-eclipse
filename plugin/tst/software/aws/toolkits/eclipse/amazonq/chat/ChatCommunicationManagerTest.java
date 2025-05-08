@@ -5,7 +5,6 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -44,17 +43,19 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
+<<<<<<< HEAD
+=======
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
+>>>>>>> de188d7 (Gate the number of partial responses that are passed to the UI)
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackPayload;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
-import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
@@ -202,6 +203,7 @@ public final class ChatCommunicationManagerTest {
             verify(chatPartialResultMap).setEntry(any(String.class), eq("tabId"));
             verify(chatPartialResultMap).removeEntry(any(String.class));
 
+<<<<<<< HEAD
             verify(lspEncryptionManager).encrypt(params.getData());
             verify(chatMessageProvider).sendChatPrompt(eq("tabId"), any(ChatMessage.class));
             verify(chatUiRequestListener).onSendToChatUi("serializedObject");
@@ -361,6 +363,13 @@ public final class ChatCommunicationManagerTest {
                 message.contains("An error occurred while processing chat response")));
         }
 
+=======
+            verify(lspEncryptionManager).encrypt(params);
+            verify(chatMessageProvider).sendChatPrompt(eq("tabId"), any(EncryptedChatParams.class));
+            verify(codeReferenceLoggingService).log(any(ChatCodeReference.class));
+        }
+
+>>>>>>> de188d7 (Gate the number of partial responses that are passed to the UI)
     }
 
     @Nested

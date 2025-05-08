@@ -225,7 +225,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     }, 1000);
 
                     String tabId = message.getValueAsString("tabId");
-                    ButtonClickResult response = chatMessageProvider.sendButtonClick(message).get();
+                    ButtonClickResult response = amazonQLspServer.buttonClick(message.getData()).get();
 
                     if (!response.success()) {
                         sendErrorToUi(tabId, new Throwable(response.failureReason()));
@@ -361,7 +361,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             : ChatUIInboundCommandName.ChatPrompt.getValue();
                     ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                             command, tabId, result, false, null);
-                    sendMessageToChatUI(chatUIInboundCommand);
+                    commandQueue.add(chatUIInboundCommand);
                     return result;
                 } catch (Exception e) {
                     Activator.getLogger()
@@ -388,7 +388,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         var errorParams = new ErrorParams(tabId, null, "", "");
         ChatUIInboundCommand inbound = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);
-        sendMessageToChatUI(inbound);
+        commandQueue.add(inbound);
         return CompletableFuture.completedFuture(null);
     }
 
@@ -399,7 +399,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         // show error in Chat UI
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);
-        sendMessageToChatUI(chatUIInboundCommand);
+        commandQueue.add(chatUIInboundCommand);
     }
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
@@ -506,9 +506,11 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         }
         int length = bodyString.length();
         double ratio = Math.min(1.0, (double) length / CHAR_COUNT_FOR_MAX_DELAY);
-        int delay = (int) (MIN_DELAY_BETWEEN_PARTIALS + (MAX_DELAY_BETWEEN_PARTIALS - MIN_DELAY_BETWEEN_PARTIALS) * ratio);
+        int delay = (int) (MIN_DELAY_BETWEEN_PARTIALS
+                + (MAX_DELAY_BETWEEN_PARTIALS - MIN_DELAY_BETWEEN_PARTIALS) * ratio);
         return delay;
     }
+
 
     @Override
     public void onEvent(final ChatUIInboundCommand command) {

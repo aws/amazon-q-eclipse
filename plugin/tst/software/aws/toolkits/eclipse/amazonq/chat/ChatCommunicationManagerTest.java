@@ -3,11 +3,14 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
@@ -15,11 +18,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.eclipse.lsp4j.Position;
@@ -42,27 +51,29 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatItemAction;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
-<<<<<<< HEAD
-=======
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
->>>>>>> de188d7 (Gate the number of partial responses that are passed to the UI)
+import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackPayload;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.QuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ActivatorStaticMockExtension;
+import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
-import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
+import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
-import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
-import software.aws.toolkits.eclipse.amazonq.views.model.ChatCodeReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 
 public final class ChatCommunicationManagerTest {
+
+    @RegisterExtension
+    private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
 
     @Mock
     private JsonHandler jsonHandler;
@@ -71,60 +82,106 @@ public final class ChatCommunicationManagerTest {
     private LspEncryptionManager lspEncryptionManager;
 
     @Mock
-    private ChatMessageProvider chatMessageProvider;
-
-    @Mock
-    private CompletableFuture<ChatMessageProvider> chatMessageProviderFuture;
-
-    @Mock
-    private ChatUiRequestListener chatUiRequestListener;
-
-    @Mock
     private ChatPartialResultMap chatPartialResultMap;
 
     @Mock
     private Display display;
 
-    private ChatCommunicationManager chatCommunicationManager;
+    @Mock
+    private AmazonQLspServer amazonQLspServer;
 
+    private ChatCommunicationManager chatCommunicationManager;
 
     @BeforeEach
     void setupBeforeEach() {
         MockitoAnnotations.openMocks(this);
-        // Make sure thenAcceptAsync runs on the main thread
-        doAnswer(invocation -> {
-            Consumer<? super ChatMessageProvider> consumer = invocation.getArgument(0);
-            consumer.accept(chatMessageProvider);
-            return CompletableFuture.completedFuture(null);
-        }).when(chatMessageProviderFuture).thenAcceptAsync(ArgumentMatchers.<Consumer<? super ChatMessageProvider>>any(), any());
 
         chatCommunicationManager = spy(ChatCommunicationManager.builder()
                 .withJsonHandler(jsonHandler)
                 .withLspEncryptionManager(lspEncryptionManager)
-                .withChatMessageProvider(chatMessageProviderFuture)
                 .withChatPartialResultMap(chatPartialResultMap)
                 .build());
 
-        when(lspEncryptionManager.encrypt(any(String.class))).thenReturn("encrypted-message");
-        when(lspEncryptionManager.decrypt(any(String.class))).thenReturn("decrypted response");
+        when(lspEncryptionManager.encrypt(anyString())).thenReturn("encrypted-message");
+        when(lspEncryptionManager.decrypt(anyString())).thenReturn("decrypted response");
 
+        CompletableFuture<AmazonQLspServer> serverFuture = mock(CompletableFuture.class);
+        when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
+        doAnswer(invocation -> {
+            Consumer<? super AmazonQLspServer> consumer = invocation.getArgument(0);
+            consumer.accept(amazonQLspServer);
+            return CompletableFuture.completedFuture(null);
+        }).when(serverFuture).thenAcceptAsync(ArgumentMatchers.<Consumer<? super AmazonQLspServer>>any(), any());
+
+        doAnswer(invocation -> Optional.of("fileUri")).when(chatCommunicationManager).getOpenFileUri();
+        CursorState cursorState = new CursorState(new Range(new Position(0, 0), new Position(1, 1)));
+        doAnswer(invocation -> Optional.of(cursorState)).when(chatCommunicationManager).getSelectionRangeCursorState();
     }
 
     @Nested
-    class SendChatPromptTests {
+    class ErrorHandlingTests {
+        private BlockingQueue<ChatUIInboundCommand> commandQueue;
 
-        @RegisterExtension
-        private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
+        @BeforeEach
+        void setupCommandQueue() throws Exception {
+            Field commandQueueField = ChatCommunicationManager.class.getDeclaredField("commandQueue");
+            commandQueueField.setAccessible(true);
+            commandQueue = new LinkedBlockingQueue<>();
+            commandQueueField.set(chatCommunicationManager, commandQueue);
+        }
 
-        private final CursorState cursorState = new CursorState(new Range(new Position(0, 0), new Position(1, 1)));
+        @Test
+        void testSendErrorToUi() throws Exception {
+            Method sendErrorToUiMethod = ChatCommunicationManager.class.getDeclaredMethod("sendErrorToUi", String.class, Throwable.class);
+            sendErrorToUiMethod.setAccessible(true);
+            sendErrorToUiMethod.invoke(chatCommunicationManager, "tabId", new RuntimeException("Test error"));
 
-        private final ChatMessage params = new ChatMessage(new ChatRequestParams(
-            "tabId",
-            new ChatPrompt("prompt", "escaped prompt", "command", Collections.emptyList()),
-            new TextDocumentIdentifier("textDocument"),
-            Arrays.asList(cursorState),
-            Collections.emptyList()
-        ));
+            assertFalse(commandQueue.isEmpty());
+            ChatUIInboundCommand command = commandQueue.poll();
+            assertEquals(ChatUIInboundCommandName.ErrorMessage.getValue(), command.command());
+            assertEquals("tabId", command.tabId());
+        }
+
+        @Test
+        void testHandleCancellation() throws Exception {
+            Method handleCancellationMethod = ChatCommunicationManager.class.getDeclaredMethod("handleCancellation", String.class);
+            handleCancellationMethod.setAccessible(true);
+            CompletableFuture<Void> result = (CompletableFuture<Void>) handleCancellationMethod.invoke(chatCommunicationManager, "tabId");
+
+            assertTrue(result.isDone());
+
+            assertFalse(commandQueue.isEmpty());
+            ChatUIInboundCommand command = commandQueue.poll();
+            assertEquals(ChatUIInboundCommandName.ErrorMessage.getValue(), command.command());
+            assertEquals("tabId", command.tabId());
+        }
+    }
+
+    @Nested
+    class RequestManagementTests {
+        @Test
+        void testCancelInflightRequests() throws Exception {
+            CompletableFuture<String> mockFuture = mock(CompletableFuture.class);
+
+            Map<String, CompletableFuture<String>> inflightRequestMap = new ConcurrentHashMap<>();
+            inflightRequestMap.put("tabId", mockFuture);
+
+            Field inflightRequestField = ChatCommunicationManager.class.getDeclaredField("inflightRequestByTabId");
+            inflightRequestField.setAccessible(true);
+            inflightRequestField.set(chatCommunicationManager, inflightRequestMap);
+
+            chatCommunicationManager.cancelInflightRequests("tabId");
+
+            verify(mockFuture).cancel(true);
+            assertTrue(inflightRequestMap.isEmpty());
+        }
+    }
+
+    @Nested
+    class ChatPromptTests {
+        private final ChatMessage params = new ChatMessage(new ChatRequestParams("tabId",
+                new ChatPrompt("prompt", "escaped prompt", "command", Collections.emptyList()),
+                new TextDocumentIdentifier("textDocument"), Collections.emptyList(), Collections.emptyList()));
 
         private final String jsonString = "{"
                 + "  \"type\": \"answer\","
@@ -176,74 +233,74 @@ public final class ChatCommunicationManagerTest {
                 + "  ]"
                 + "}";
 
-        private CodeReferenceLoggingService codeReferenceLoggingService;
-
-        @BeforeEach
-        void setupBeforeEach() {
-            chatCommunicationManager.setChatUiRequestListener(chatUiRequestListener);
-            codeReferenceLoggingService = activatorStaticMockExtension.getMock(CodeReferenceLoggingService.class);
-            doReturn(Optional.of("fileUri")).when(chatCommunicationManager).getOpenFileUri();
-            doReturn(Optional.of(cursorState)).when(chatCommunicationManager).getSelectionRangeCursorState();
-        }
-
         @Test
-        void testChatSendPrompt() throws Exception {
-            when(chatMessageProvider.sendChatPrompt(any(String.class), any(ChatMessage.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
+        void testSuccessfulChatPromptSending() throws Exception {
+            CountDownLatch latch = new CountDownLatch(1);
 
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
+            CompletableFuture<String> completedFuture = CompletableFuture.completedFuture("chat response");
+
+            when(amazonQLspServer.sendChatPrompt(any(EncryptedChatParams.class)))
+                    .thenReturn(completedFuture);
+
+            when(jsonHandler.deserialize(anyString(), eq(Map.class)))
                     .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
+
+            doAnswer(invocation -> {
+                latch.countDown();
+                return "serializedObject";
+            }).when(jsonHandler).serialize(any(ChatUIInboundCommand.class));
+
+            CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+            when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
 
             try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
                 displayMock.when(Display::getDefault).thenReturn(display);
+
                 chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
+
+                assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
             }
 
-            verify(chatPartialResultMap).setEntry(any(String.class), eq("tabId"));
-            verify(chatPartialResultMap).removeEntry(any(String.class));
-
-<<<<<<< HEAD
+            verify(chatPartialResultMap).setEntry(anyString(), eq("tabId"));
+            verify(chatPartialResultMap).removeEntry(anyString());
             verify(lspEncryptionManager).encrypt(params.getData());
-            verify(chatMessageProvider).sendChatPrompt(eq("tabId"), any(ChatMessage.class));
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(codeReferenceLoggingService).log(any(ChatCodeReference.class));
+            verify(lspEncryptionManager).decrypt(anyString());
         }
 
         @Test
-        void testChatSendPromptWithErrorCommunicatingWithServer() throws Exception {
-            when(chatMessageProvider.sendChatPrompt(any(String.class), any(ChatMessage.class)))
-                    .thenReturn(CompletableFuture.failedFuture(new RuntimeException("error message")));
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
+        void testChatPromptWithResponseDeserializationError() throws Exception {
+            CountDownLatch latch = new CountDownLatch(1);
+
+            CompletableFuture<String> completedFuture = CompletableFuture.completedFuture("chat response");
+
+            when(amazonQLspServer.sendChatPrompt(any(EncryptedChatParams.class))).thenReturn(completedFuture);
+
+            RuntimeException deserializeException = new RuntimeException("Test exception");
+            when(jsonHandler.deserialize(anyString(), eq(Map.class))).thenThrow(deserializeException);
+
+            doAnswer(invocation -> {
+                latch.countDown();
+                return "serializedObject";
+            }).when(jsonHandler).serialize(any(ChatUIInboundCommand.class));
+
+            CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+            when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
+
+            when(lspEncryptionManager.decrypt(anyString())).thenReturn("some-json-data");
 
             try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
                 displayMock.when(Display::getDefault).thenReturn(display);
+
                 chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
+
+                assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
             }
 
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat request")));
-        }
-
-        @Test
-        void testChatSendPromptWithErrorInResponse() throws Exception {
-            when(chatMessageProvider.sendChatPrompt(any(String.class), any(ChatMessage.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                    .thenThrow(new RuntimeException("Test exception"));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
-
-            try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
-                displayMock.when(Display::getDefault).thenReturn(display);
-                chatCommunicationManager.sendMessageToChatServer(Command.CHAT_SEND_PROMPT, params);
-            }
-
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat response")));
+            verify(chatPartialResultMap).setEntry(anyString(), eq("tabId"));
+            verify(chatPartialResultMap).removeEntry(anyString());
+            verify(lspEncryptionManager).encrypt(params.getData());
+            verify(lspEncryptionManager).decrypt(anyString());
+            verify(jsonHandler).serialize(any(ChatUIInboundCommand.class));
         }
 
     }
@@ -251,304 +308,415 @@ public final class ChatCommunicationManagerTest {
     @Nested
     class SendQuickActionsTests {
 
-        @RegisterExtension
-        private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
+      private final ChatMessage quickActionParams = new ChatMessage(
+              new QuickActionParams("tabId", "quickAction", "prompt"));
 
-        private final ChatMessage quickActionParams = new ChatMessage(
-                new QuickActionParams("tabId", "quickAction", "prompt"));
+      private final String jsonString = "{"
+              + "  \"type\": \"answer\","
+              + "  \"header\": {"
+              + "    \"type\": \"answer\","
+              + "    \"body\": \"body\","
+              + "    \"status\": {"
+              + "      \"status\": \"success\","
+              + "      \"text\": \"Success\""
+              + "    }"
+              + "  },"
+              + "  \"buttons\": [],"
+              + "  \"body\": \"body\","
+              + "  \"messageId\": \"messageId\","
+              + "  \"canBeVoted\": true,"
+              + "  \"relatedContent\": {"
+              + "    \"title\": \"title\","
+              + "    \"content\": ["
+              + "      {"
+              + "        \"title\": \"title\","
+              + "        \"url\": \"url\","
+              + "        \"body\": \"body\""
+              + "      }"
+              + "    ]"
+              + "  },"
+              + "  \"followUp\": {"
+              + "    \"text\": \"text\","
+              + "    \"options\": ["
+              + "      {"
+              + "        \"pillText\": \"pillText\","
+              + "        \"prompt\": \"prompt\","
+              + "        \"isEnabled\": false,"
+              + "        \"description\": \"description\","
+              + "        \"button\": \"button\""
+              + "      }"
+              + "    ]"
+              + "  },"
+              + "  \"codeReference\": ["
+              + "    {"
+              + "      \"licenseName\": \"licenseName\","
+              + "      \"repository\": \"repository\","
+              + "      \"url\": \"url\","
+              + "      \"contentSpan\": {"
+              + "        \"start\": 1,"
+              + "        \"end\": 2"
+              + "      },"
+              + "      \"information\": \"information\""
+              + "    }"
+              + "  ]"
+              + "}";
 
-        private final String jsonString = "{"
-                + "  \"type\": \"answer\","
-                + "  \"header\": {"
-                + "    \"type\": \"answer\","
-                + "    \"body\": \"body\","
-                + "    \"status\": {"
-                + "      \"status\": \"success\","
-                + "      \"text\": \"Success\""
-                + "    }"
-                + "  },"
-                + "  \"buttons\": [],"
-                + "  \"body\": \"body\","
-                + "  \"messageId\": \"messageId\","
-                + "  \"canBeVoted\": true,"
-                + "  \"relatedContent\": {"
-                + "    \"title\": \"title\","
-                + "    \"content\": ["
-                + "      {"
-                + "        \"title\": \"title\","
-                + "        \"url\": \"url\","
-                + "        \"body\": \"body\""
-                + "      }"
-                + "    ]"
-                + "  },"
-                + "  \"followUp\": {"
-                + "    \"text\": \"text\","
-                + "    \"options\": ["
-                + "      {"
-                + "        \"pillText\": \"pillText\","
-                + "        \"prompt\": \"prompt\","
-                + "        \"isEnabled\": false,"
-                + "        \"description\": \"description\","
-                + "        \"button\": \"button\""
-                + "      }"
-                + "    ]"
-                + "  },"
-                + "  \"codeReference\": ["
-                + "    {"
-                + "      \"licenseName\": \"licenseName\","
-                + "      \"repository\": \"repository\","
-                + "      \"url\": \"url\","
-                + "      \"contentSpan\": {"
-                + "        \"start\": 1,"
-                + "        \"end\": 2"
-                + "      },"
-                + "      \"information\": \"information\""
-                + "    }"
-                + "  ]"
-                + "}";
+      @Test
+      void testSendQuickAction() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-        @BeforeEach
-        void setupBeforeEach() {
-            chatCommunicationManager.setChatUiRequestListener(chatUiRequestListener);
-        }
+          CompletableFuture<String> completedFuture = CompletableFuture.completedFuture("chat response");
 
-        @Test
-        void testSendQuickAction() throws Exception {
-            when(chatMessageProvider.sendQuickAction(any(String.class), any(ChatMessage.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
+          when(amazonQLspServer.sendQuickAction(any(EncryptedQuickActionParams.class)))
+                  .thenReturn(completedFuture);
 
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
+          when(jsonHandler.deserialize(anyString(), eq(Map.class)))
+                  .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
 
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
+          doAnswer(invocation -> {
+              latch.countDown();
+              return "serializedObject";
+          }).when(jsonHandler).serialize(any(ChatUIInboundCommand.class));
 
-            verify(chatPartialResultMap).setEntry(any(String.class), eq("tabId"));
-            verify(chatPartialResultMap).removeEntry(any(String.class));
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
 
-            verify(lspEncryptionManager).encrypt(quickActionParams.getData());
-            verify(chatMessageProvider).sendQuickAction(eq("tabId"), any(ChatMessage.class));
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-        }
+          when(lspEncryptionManager.decrypt(anyString())).thenReturn("some-json-data");
 
-        @Test
-        void testChatSendPromptWithErrorCommunicatingWithServer() throws Exception {
-            when(chatMessageProvider.sendQuickAction(any(String.class), any(ChatMessage.class)))
-                    .thenReturn(CompletableFuture.failedFuture(new RuntimeException("error message")));
+          try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
+              displayMock.when(Display::getDefault).thenReturn(display);
 
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                .thenReturn(ObjectMapperFactory.getInstance().readValue(jsonString, Map.class));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
+              chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
 
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
+              assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          }
 
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat request")));
-        }
+          verify(chatPartialResultMap).setEntry(anyString(), eq("tabId"));
+          verify(chatPartialResultMap).removeEntry(anyString());
+          verify(lspEncryptionManager).encrypt(eq(quickActionParams.getData()));
+      }
 
-        @Test
-        void testChatSendPromptWithErrorInResponse() throws Exception {
-            when(chatMessageProvider.sendQuickAction(any(String.class), any(ChatMessage.class)))
-                    .thenReturn(CompletableFuture.completedFuture("chat response"));
+      @Test
+      void testChatSendPromptWithErrorInResponse() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-            when(jsonHandler.deserialize(any(String.class), eq(Map.class)))
-                    .thenThrow(new RuntimeException("Test exception"));
-            when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
+          CompletableFuture<String> completedFuture = CompletableFuture.completedFuture("chat response");
 
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
+          when(amazonQLspServer.sendQuickAction(any(EncryptedQuickActionParams.class))).thenReturn(completedFuture);
 
-            verify(chatUiRequestListener).onSendToChatUi("serializedObject");
-            verify(activatorStaticMockExtension.getMock(LoggingService.class)).error(argThat(message ->
-                message.contains("An error occurred while processing chat response")));
-        }
+          RuntimeException deserializeException = new RuntimeException("Test exception");
+          when(jsonHandler.deserialize(anyString(), eq(Map.class))).thenThrow(deserializeException);
 
-=======
-            verify(lspEncryptionManager).encrypt(params);
-            verify(chatMessageProvider).sendChatPrompt(eq("tabId"), any(EncryptedChatParams.class));
-            verify(codeReferenceLoggingService).log(any(ChatCodeReference.class));
-        }
+          doAnswer(invocation -> {
+              latch.countDown();
+              return "serializedObject";
+          }).when(jsonHandler).serialize(any(ChatUIInboundCommand.class));
 
->>>>>>> de188d7 (Gate the number of partial responses that are passed to the UI)
-    }
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
 
-    @Nested
-    class SendChatReadyAndTelemetryEventTests {
+          when(lspEncryptionManager.decrypt(anyString())).thenReturn("some-json-data");
 
-        @Test
-        void testTelemetryEvent() {
-            chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, new ChatMessage(new Object()));
-            verify(chatMessageProvider).sendTelemetryEvent(any(ChatMessage.class));
-        }
+          try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
+              displayMock.when(Display::getDefault).thenReturn(display);
 
-    }
+              chatCommunicationManager.sendMessageToChatServer(Command.CHAT_QUICK_ACTION, quickActionParams);
 
-    @Nested
-    class SendTabUpdateTests {
+              assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          }
 
-        private final ChatMessage genericTabParams = new ChatMessage(new GenericTabParams("tabId"));
+          verify(chatPartialResultMap).setEntry(anyString(), eq("tabId"));
+          verify(chatPartialResultMap).removeEntry(anyString());
+      }
+  }
 
-        @Test
-        void testChatTabAdd() {
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_TAB_ADD, genericTabParams);
-            verify(chatMessageProvider).sendTabAdd(genericTabParams);
-        }
+  @Nested
+  class SendChatReadyAndTelemetryEventTests {
+      @Test
+      void testSendChatReady() throws Exception {
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
 
-        @Test
-        void testChatTabRemove() {
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_TAB_REMOVE, genericTabParams);
-            verify(chatMessageProvider).sendTabRemove(genericTabParams);
-        }
+          CountDownLatch latch = new CountDownLatch(1);
 
-        @Test
-        void testChatTabChange() {
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_TAB_CHANGE, genericTabParams);
-            verify(chatMessageProvider).sendTabChange(genericTabParams);
-        }
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).chatReady();
 
-        @Test
-        void testEndChat() {
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_END_CHAT, genericTabParams);
-            verify(chatMessageProvider).endChat(genericTabParams);
-        }
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_READY, new ChatMessage(new Object()));
 
-    }
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          verify(amazonQLspServer).chatReady();
+      }
 
-    @Nested
-    class SendFollowUpClickTests {
+      @Test
+      void testTelemetryEvent() throws Exception {
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
 
-        private final ChatItemAction chatItemAction = new ChatItemAction("pillText", "prompt", false, "description",
-                "button");
+          CountDownLatch latch = new CountDownLatch(1);
+          ChatMessage message = new ChatMessage(new Object());
 
-        private final ChatMessage followUpClickParams = new ChatMessage(new FollowUpClickParams("tabId", "messageId", chatItemAction));
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).sendTelemetryEvent(message);
 
-        @Test
-        void testFollowUpClick() {
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_FOLLOW_UP_CLICK, followUpClickParams);
-            verify(chatMessageProvider).followUpClick(followUpClickParams);
-        }
+          chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, message);
 
-    }
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          verify(amazonQLspServer).sendTelemetryEvent(message);
+      }
+  }
 
-    @Nested
-    class SendFeedbackTests {
+  @Nested
+  class SendTabUpdateTests {
+      private final ChatMessage genericTabParams = new ChatMessage(new GenericTabParams("tabId"));
 
-        private final FeedbackPayload feedbackPayload = new FeedbackPayload("messageId", "tabId", "selectedOption", "commend");
-        private final ChatMessage feedbackParams = new ChatMessage(
-                new FeedbackParams("tabId", "eventId", feedbackPayload));
+      @BeforeEach
+      void setUp() {
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
+      }
 
-        @Test
-        void testFollowUpClick() {
-            chatCommunicationManager.sendMessageToChatServer(Command.CHAT_FEEDBACK, feedbackParams);
-            verify(chatMessageProvider).sendFeedback(feedbackParams);
-        }
+      @Test
+      void testChatTabAdd() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-    }
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).tabAdd(genericTabParams.getData());
 
-    @Nested
-    class HandlePartialResultProgressNotificationTests {
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_TAB_ADD, genericTabParams);
 
-        @Mock
-        private ProgressParams progressParams;
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          verify(amazonQLspServer).tabAdd(genericTabParams.getData());
+      }
 
-        @BeforeEach
-        void setupBeforeEach() {
-            MockitoAnnotations.openMocks(this);
-            chatCommunicationManager.setChatUiRequestListener(chatUiRequestListener);
-            chatCommunicationManager.registerPartialResultToken("token");
-        }
+      @Test
+      void testChatTabRemove() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-        @Test
-        void testWithNullTabId() {
-            try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
-                progressNotificationUtilsMock
-                        .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
-                        .thenReturn("token");
-                when(chatPartialResultMap.getValue(any(String.class))).thenReturn(null);
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).tabRemove(genericTabParams.getData());
 
-                chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_TAB_REMOVE, genericTabParams);
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
 
-                verifyNoInteractions(lspEncryptionManager);
-                verifyNoInteractions(jsonHandler);
-                verifyNoInteractions(chatUiRequestListener);
-            }
-        }
+          verify(amazonQLspServer).tabRemove(genericTabParams.getData());
+      }
 
-        @Test
-        void testWithEmptyTabId() {
-            try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
-                progressNotificationUtilsMock
-                        .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
-                        .thenReturn("token");
-                when(chatPartialResultMap.getValue(any(String.class))).thenReturn("");
+      @Test
+      void testChatTabChange() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-                chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).tabChange(genericTabParams.getData());
 
-                verifyNoInteractions(lspEncryptionManager);
-                verifyNoInteractions(jsonHandler);
-                verifyNoInteractions(chatUiRequestListener);
-            }
-        }
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_TAB_CHANGE, genericTabParams);
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          verify(amazonQLspServer).tabChange(genericTabParams.getData());
+      }
 
-        @Test
-        void testIncorrectParamsObject() {
-            try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
-                progressNotificationUtilsMock
-                        .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
-                        .thenReturn("token");
-                when(chatPartialResultMap.getValue(any(String.class))).thenReturn("tabId");
+      @Test
+      void testEndChat() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-                Either<WorkDoneProgressNotification, Object> either = mock(Either.class);
-                when(either.isLeft()).thenReturn(true);
-                when(progressParams.getValue()).thenReturn(either);
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).endChat(genericTabParams.getData());
 
-                assertThrows(AmazonQPluginException.class, () -> chatCommunicationManager.handlePartialResultProgressNotification(progressParams));
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_END_CHAT, genericTabParams);
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
 
-                verifyNoInteractions(lspEncryptionManager);
-                verifyNoInteractions(jsonHandler);
-                verifyNoInteractions(chatUiRequestListener);
-            }
-        }
+          verify(amazonQLspServer).endChat(genericTabParams.getData());
+      }
+  }
 
-        @Test
-        void testIncorrectChatPartialResult() {
-            try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
-                progressNotificationUtilsMock
-                        .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
-                        .thenReturn("token");
-                when(chatPartialResultMap.getValue(any(String.class))).thenReturn("tabId");
+  @Nested
+  class SendFollowUpClickTests {
+      private final ChatItemAction chatItemAction = new ChatItemAction("pillText", "prompt", false, "description",
+              "button");
 
-                Either<WorkDoneProgressNotification, Object> either = mock(Either.class);
-                when(either.getRight()).thenReturn(new Object());
-                when(progressParams.getValue()).thenReturn(either);
+      private final ChatMessage followUpClickParams = new ChatMessage(
+              new FollowUpClickParams("tabId", "messageId", chatItemAction));
 
-                progressNotificationUtilsMock
-                    .when(() -> ProgressNotificationUtils.getObject(any(ProgressParams.class), eq(String.class)))
-                    .thenReturn("chatPartialResult");
+      @BeforeEach
+      void setupBeforeEach() {
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
+      }
 
-                Map<String, Object> chatResult = mock(Map.class);
+      @Test
+      void testFollowUpClick() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
 
-                when(jsonHandler.deserialize(any(String.class), eq(Map.class))).thenReturn(chatResult);
-                when(chatResult.get(any())).thenReturn(null);
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).followUpClick(followUpClickParams.getData());
 
-                chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_FOLLOW_UP_CLICK, followUpClickParams);
 
-                verifyNoInteractions(chatUiRequestListener);
-            }
-        }
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          verify(amazonQLspServer).followUpClick(followUpClickParams.getData());
+      }
+  }
 
-    }
+  @Nested
+  class SendFeedbackTests {
+      private final FeedbackPayload feedbackPayload = new FeedbackPayload("messageId", "tabId", "selectedOption",
+              "commend");
+      private final ChatMessage feedbackParams = new ChatMessage(
+              new FeedbackParams("tabId", "eventId", feedbackPayload));
 
-    @Test
-    void sendMessageToChatServerFails() {
-        when(jsonHandler.convertObject(any(Object.class), eq(ChatRequestParams.class)))
-                .thenThrow(new RuntimeException("Test exception"));
+      @BeforeEach
+      void setupBeforeEach() {
+          CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
+      }
 
-        try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
-            displayMock.when(Display::getDefault).thenReturn(display);
-            assertThrows(AmazonQPluginException.class, () -> chatCommunicationManager
-                    .sendMessageToChatServer(Command.CHAT_SEND_PROMPT, new ChatMessage(new Object())));
-        }
-    }
+      @Test
+      void testSendFeedback() throws Exception {
+          CountDownLatch latch = new CountDownLatch(1);
+
+          doAnswer(invocation -> {
+              latch.countDown();
+              return null;
+          }).when(amazonQLspServer).sendFeedback(feedbackParams.getData());
+
+          chatCommunicationManager.sendMessageToChatServer(Command.CHAT_FEEDBACK, feedbackParams);
+
+          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
+          verify(amazonQLspServer).sendFeedback(feedbackParams.getData());
+      }
+  }
+
+  @Nested
+  class HandlePartialResultProgressNotificationTests {
+      @Mock
+      private ProgressParams progressParams;
+
+      @BeforeEach
+      void setupBeforeEach() {
+          MockitoAnnotations.openMocks(this);
+          CompletableFuture<AmazonQLspServer> serverFuture = mock(CompletableFuture.class);
+          when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer())
+                  .thenReturn(serverFuture);
+          doAnswer(invocation -> {
+              Consumer<? super AmazonQLspServer> consumer = invocation.getArgument(0);
+              consumer.accept(amazonQLspServer);
+              return CompletableFuture.completedFuture(null);
+          }).when(serverFuture).thenAcceptAsync(ArgumentMatchers.<Consumer<? super AmazonQLspServer>>any(), any());
+      }
+
+      @Test
+      void testWithNullTabId() {
+          try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
+              progressNotificationUtilsMock
+                      .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
+                      .thenReturn("token");
+              when(chatPartialResultMap.getValue(anyString())).thenReturn(null);
+
+              chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+
+              verifyNoInteractions(lspEncryptionManager);
+              verifyNoInteractions(jsonHandler);
+          }
+      }
+
+      @Test
+      void testWithEmptyTabId() {
+          try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
+              progressNotificationUtilsMock
+                      .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
+                      .thenReturn("token");
+              when(chatPartialResultMap.getValue(anyString())).thenReturn("");
+
+              chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+
+              verifyNoInteractions(lspEncryptionManager);
+              verifyNoInteractions(jsonHandler);
+          }
+      }
+
+      @Test
+      void testIncorrectParamsObject() {
+          try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
+              progressNotificationUtilsMock
+                      .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
+                      .thenReturn("token");
+              when(chatPartialResultMap.getValue(anyString())).thenReturn("tabId");
+
+              Either<WorkDoneProgressNotification, Object> either = mock(Either.class);
+              when(either.isLeft()).thenReturn(true);
+              when(progressParams.getValue()).thenReturn(either);
+
+              assertThrows(AmazonQPluginException.class, () -> chatCommunicationManager.handlePartialResultProgressNotification(progressParams));
+
+              verifyNoInteractions(lspEncryptionManager);
+              verifyNoInteractions(jsonHandler);
+          }
+      }
+
+      @Test
+      void testIncorrectChatPartialResult() {
+          try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
+              progressNotificationUtilsMock
+                      .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
+                      .thenReturn("token");
+              when(chatPartialResultMap.getValue(anyString())).thenReturn("tabId");
+
+              Either<WorkDoneProgressNotification, Object> either = mock(Either.class);
+              when(either.getRight()).thenReturn(new Object());
+              when(progressParams.getValue()).thenReturn(either);
+
+              progressNotificationUtilsMock
+                  .when(() -> ProgressNotificationUtils.getObject(any(ProgressParams.class), eq(String.class)))
+                  .thenReturn("chatPartialResult");
+
+              Map<String, Object> chatResult = mock(Map.class);
+
+              when(jsonHandler.deserialize(anyString(), eq(Map.class))).thenReturn(chatResult);
+              when(chatResult.get(any())).thenReturn(null);
+
+              chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+          }
+      }
+
+      @Test
+      void testChatPartialResult() {
+          try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {
+              progressNotificationUtilsMock
+                      .when(() -> ProgressNotificationUtils.getToken(any(ProgressParams.class)))
+                      .thenReturn("token");
+              when(chatPartialResultMap.getValue(anyString())).thenReturn("tabId");
+
+              Either<WorkDoneProgressNotification, Object> either = mock(Either.class);
+              when(either.getRight()).thenReturn(new Object());
+              when(progressParams.getValue()).thenReturn(either);
+
+              progressNotificationUtilsMock
+                  .when(() -> ProgressNotificationUtils.getObject(any(ProgressParams.class), eq(String.class)))
+                  .thenReturn("chatPartialResult");
+
+              Map<String, Object> chatResult = mock(Map.class);
+
+              when(jsonHandler.deserialize(anyString(), eq(Map.class))).thenReturn(chatResult);
+              when(chatResult.get("body")).thenReturn("body");
+              when(jsonHandler.serialize(any(ChatUIInboundCommand.class))).thenReturn("serializedObject");
+
+              chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
+          }
+      }
+
+  }
 
 }

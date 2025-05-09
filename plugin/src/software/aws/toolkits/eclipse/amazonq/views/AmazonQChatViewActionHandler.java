@@ -135,7 +135,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                             null
                         );
                     dialog.open();
-                    ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), params);
+                    ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), message.getData());
                 });
                 break;
             default:

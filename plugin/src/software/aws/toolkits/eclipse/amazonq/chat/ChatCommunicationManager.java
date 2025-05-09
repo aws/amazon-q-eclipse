@@ -137,15 +137,8 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     });
                     break;
                 case CHAT_READY:
-                    ThreadingUtils.executeAsyncTask(() -> {
-                        try {
-                            Thread.sleep(500);
-                            amazonQLspServer.chatReady();
-                            startCommandQueueProcessor();
-                        } catch (InterruptedException e) {
-                            Activator.getLogger().error("Chat initialization error: " + e);
-                        }
-                    });
+                    amazonQLspServer.chatReady();
+                    startCommandQueueProcessor();
                     break;
                 case CHAT_TAB_ADD:
                     amazonQLspServer.tabAdd(message.getData());
@@ -314,6 +307,8 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
             // The mapping entry no longer needs to be maintained once the final result is
             // retrieved.
+            ChatMessage newMessage = new ChatMessage(encryptedChatResult);
+
             if (exception != null) {
                 if (exception instanceof CancellationException
                         || exception.getCause() instanceof CancellationException) {
@@ -344,13 +339,13 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 try {
                     finalResultProcessed.put(partialResultToken, true);
                     String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-                    Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
-                    if (result.containsKey("codeReference")) {
-                        ReferenceTrackerInformation[] codeReferences = ObjectMapperFactory.getInstance().convertValue(
-                                result.get("codeReference"),
+                    Object codeReferences = newMessage.getValueForKey("codeReference");
+                    if (codeReferences != null) {
+                        ReferenceTrackerInformation[] referenceTrackerInformation = ObjectMapperFactory.getInstance()
+                                .convertValue(codeReferences,
                                 ReferenceTrackerInformation[].class);
-                        if (codeReferences != null && codeReferences.length >= 1) {
-                            ChatCodeReference chatCodeReference = new ChatCodeReference(codeReferences);
+                        if (referenceTrackerInformation != null && referenceTrackerInformation.length >= 1) {
+                            ChatCodeReference chatCodeReference = new ChatCodeReference(referenceTrackerInformation);
                             Activator.getCodeReferenceLoggingService().log(chatCodeReference);
                         }
                     }
@@ -360,9 +355,9 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
                             : ChatUIInboundCommandName.ChatPrompt.getValue();
                     ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                            command, tabId, result, false, null);
-                    commandQueue.add(chatUIInboundCommand);
-                    return result;
+                            command, tabId, newMessage.getData(), false, null);
+                    sendMessageToChatUI(chatUIInboundCommand);
+                    return newMessage.getData();
                 } catch (Exception e) {
                     Activator.getLogger()
                             .error("An error occurred while processing chat response received: " + e.getMessage());
@@ -392,7 +387,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         return CompletableFuture.completedFuture(null);
     }
 
-    private void sendErrorToUi(final String tabId, final Throwable exception) {
+    void sendErrorToUi(final String tabId, final Throwable exception) {
         String errorTitle = "An error occurred while processing your request.";
         String errorMessage = String.format("Details: %s", exception.getMessage());
         ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);

@@ -311,6 +311,7 @@ public final class ChatCommunicationManagerTest {
         void setupBeforeEach() {
             MockitoAnnotations.openMocks(this);
             chatCommunicationManager.setChatUiRequestListener(chatUiRequestListener);
+            chatCommunicationManager.registerPartialResultToken("token");
         }
 
         @Test

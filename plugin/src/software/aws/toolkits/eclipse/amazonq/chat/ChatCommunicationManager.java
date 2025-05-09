@@ -82,6 +82,9 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private final ConcurrentHashMap<String, Object> partialResultLocks = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Boolean> finalResultProcessed = new ConcurrentHashMap<>();
 
+    private final ConcurrentHashMap<String, Object> partialResultLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Boolean> finalResultProcessed = new ConcurrentHashMap<>();
+
     private CompletableFuture<ChatUiRequestListener> chatUiRequestListenerFuture;
     private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
 
@@ -321,6 +324,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         registerPartialResultToken(partialResultToken);
 
         return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
+<<<<<<< HEAD
             if (exception != null) {
                 // handle cancellations
                 if (exception instanceof CancellationException
@@ -381,6 +385,56 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 partialResultLocks.remove(partialResultToken);
                 finalResultProcessed.remove(partialResultToken);
                 return null;
+=======
+            try {
+                // The mapping entry no longer needs to be maintained once the final result is
+                // retrieved.
+                if (exception != null) {
+                    if (exception instanceof CancellationException
+                            || exception.getCause() instanceof CancellationException) {
+                        handleCancellation(tabId).thenRun(() -> {
+                            removePartialChatMessage(partialResultToken);
+                        });
+                        return null;
+                    }
+                    Activator.getLogger()
+                            .error("An error occurred while processing chat request: " + exception.getMessage());
+                    sendErrorToUi(tabId, exception);
+                    removePartialChatMessage(partialResultToken);
+                    return null;
+                } else {
+                    removePartialChatMessage(partialResultToken);
+                    try {
+                        finalResultProcessed.put(partialResultToken, true);
+                        String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+                        Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
+                        if (result.containsKey("codeReference")) {
+                            ReferenceTrackerInformation[] codeReferences = ObjectMapperFactory.getInstance().convertValue(result.get("codeReference"),
+                                    ReferenceTrackerInformation[].class);
+                            if (codeReferences != null && codeReferences.length >= 1) {
+                                ChatCodeReference chatCodeReference = new ChatCodeReference(codeReferences);
+                                Activator.getCodeReferenceLoggingService().log(chatCodeReference);
+                            }
+                        }
+
+                        // show chat response in Chat UI
+                        String command = (inlineChatTabId.equals(tabId))
+                            ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                            : ChatUIInboundCommandName.ChatPrompt.getValue();
+                        ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+                                command, tabId, result, false, null);
+                        sendMessageToChatUI(chatUIInboundCommand);
+                        return result;
+                    } catch (Exception e) {
+                        Activator.getLogger().error("An error occurred while processing chat response received: " + e.getMessage());
+                        sendErrorToUi(tabId, e);
+                        return null;
+                    }
+                }
+            } finally {
+                partialResultLocks.remove(partialResultToken);
+                finalResultProcessed.remove(partialResultToken);
+>>>>>>> d1c63bd (Synchronize on partial result token)
             }
         });
     }
@@ -447,10 +501,11 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         String token = ProgressNotificationUtils.getToken(params);
         String tabId = getPartialChatMessage(token);
 
-        if (tabId == null || tabId.isEmpty()) {
+        if (tabId == null || tabId.isEmpty() || partialResultLocks.get(token) == null) {
             return;
         }
 
+<<<<<<< HEAD
         if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
             throw new AmazonQPluginException(
                     "Error handling partial result notification: expected value of type Object");
@@ -481,8 +536,54 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     ChatAsyncResultManager.getInstance().setResult(token, partialChatResult);
                     return;
                 }
+=======
+        synchronized (partialResultLocks.get(token)) {
+            if (Boolean.TRUE.equals(finalResultProcessed.get(token))) {
+                return;
+>>>>>>> d1c63bd (Synchronize on partial result token)
             }
+
+            long currentTime = System.currentTimeMillis();
+            Long lastProcessedTime = lastProcessedTimeMap.get(tabId);
+            if (lastProcessedTime != null && (currentTime - lastProcessedTime) < DELAY_BETWEEN_PARTIALS) {
+                // Not enough time has elapsed since the last partial response, so we skip this one
+                return;
+            }
+
+            // Check to ensure Object is sent in params
+            if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
+                throw new AmazonQPluginException(
+                        "Error handling partial result notification: expected value of type Object");
+            }
+
+            String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
+            String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
+            Map<String, Object> partialChatResult = jsonHandler.deserialize(serializedData, Map.class);
+            if (partialChatResult != null) {
+                Object body = partialChatResult.get("body");
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> additionalMessages = (List<Map<String, Object>>) partialChatResult
+                        .get("additionalMessages");
+                boolean noBody = (body == null || (body instanceof String && ((String) body).length() == 0));
+                boolean noAdditionalMessages = (additionalMessages == null || additionalMessages.isEmpty());
+                if (noBody && noAdditionalMessages) {
+                    return;
+                }
+            }
+
+            String command = (inlineChatTabId.equals(tabId))
+                ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                : ChatUIInboundCommandName.ChatPrompt.getValue();
+
+            ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
+                    command, tabId, partialChatResult, true, null);
+
+            sendMessageToChatUI(chatUIInboundCommand);
+
+            // Update the last processed time for this tab
+            lastProcessedTimeMap.put(tabId, currentTime);
         }
+<<<<<<< HEAD
 
         // normal partial processing
         Object lock = partialResultLocks.get(token);
@@ -534,6 +635,10 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         return delay;
     }
 
+=======
+    }
+
+>>>>>>> d1c63bd (Synchronize on partial result token)
     @Override
     public void onEvent(final ChatUIInboundCommand command) {
         commandQueue.add(command);

@@ -12,11 +12,13 @@ import java.util.concurrent.TimeoutException;
 public final class ChatAsyncResultManager {
     private static ChatAsyncResultManager instance;
     private Map<String, CompletableFuture<Object>> results;
+    private Map<String, Object> completedResults;
     private final long defaultTimeout;
     private final TimeUnit defaultTimeUnit;
 
     private ChatAsyncResultManager(final long timeout, final TimeUnit timeUnit) {
         results = new ConcurrentHashMap<>();
+        completedResults = new ConcurrentHashMap<>();
         this.defaultTimeout = timeout;
         this.defaultTimeUnit = timeUnit;
     }
@@ -29,7 +31,9 @@ public final class ChatAsyncResultManager {
     }
 
     public void createRequestId(final String requestId) {
-        results.put(requestId, new CompletableFuture<>());
+        if (!completedResults.containsKey(requestId)) {
+            results.put(requestId, new CompletableFuture<>());
+        }
     }
 
     public void removeRequestId(final String requestId) {
@@ -37,13 +41,16 @@ public final class ChatAsyncResultManager {
         if (future != null && !future.isDone()) {
             future.cancel(true);
         }
+        completedResults.remove(requestId);
     }
 
     public void setResult(final String requestId, final Object result) {
         CompletableFuture<Object> future = results.get(requestId);
         if (future != null) {
             future.complete(result);
+            results.remove(requestId);
         }
+        completedResults.put(requestId, result);
     }
 
     public Object getResult(final String requestId) throws Exception {
@@ -51,13 +58,21 @@ public final class ChatAsyncResultManager {
     }
 
     private Object getResult(final String requestId, final long timeout, final TimeUnit unit) throws Exception {
+        Object completedResult = completedResults.get(requestId);
+        if (completedResult != null) {
+            return completedResult;
+        }
+
         CompletableFuture<Object> future = results.get(requestId);
         if (future == null) {
             throw new IllegalArgumentException("Request ID not found: " + requestId);
         }
 
         try {
-            return future.get(timeout, unit);
+            Object result = future.get(timeout, unit);
+            completedResults.put(requestId, result);
+            results.remove(requestId);
+            return result;
         } catch (TimeoutException e) {
             future.cancel(true);
             results.remove(requestId);

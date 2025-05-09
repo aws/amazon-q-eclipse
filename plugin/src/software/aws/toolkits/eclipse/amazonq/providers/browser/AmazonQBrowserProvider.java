@@ -111,8 +111,8 @@ public class AmazonQBrowserProvider {
                             icon.style.maskImage = standardMask;
                         });
                     """);
-                    Display.getDefault().timerExec(15000, this);
                 }
+                Display.getDefault().timerExec(15000, this);
             }
         });
     }

@@ -230,6 +230,9 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             } catch (Exception e) {
                 throw new AmazonQPluginException("Error occurred when sending message to server", e);
             }
+        }).exceptionally(throwable -> {
+            Activator.getLogger().error("Failed to process message: " + throwable.getMessage());
+            return null;
         });
     }
 
@@ -295,38 +298,28 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private CompletableFuture<Object> sendEncryptedChatMessage(final String tabId,
             final Function<String, CompletableFuture<String>> action) {
-        // Retrieving the chat result is expected to be a long-running process with
-        // intermittent progress notifications being sent
-        // from the LSP server. The progress notifications provide a token and a partial
-        // result Object - we are utilizing a token to
-        // ChatMessage mapping to acquire the associated ChatMessage so we can formulate
-        // a message for the UI.
         String partialResultToken = addPartialChatMessage(tabId);
         registerPartialResultToken(partialResultToken);
 
         return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
-            // The mapping entry no longer needs to be maintained once the final result is
-            // retrieved.
-            ChatMessage newMessage = new ChatMessage(encryptedChatResult);
-
             if (exception != null) {
                 if (exception instanceof CancellationException
                         || exception.getCause() instanceof CancellationException) {
-                    handleCancellation(tabId)
-                            .thenRunAsync(() -> {
-                                try {
-                                    Thread.sleep(1000);
-                                    removePartialChatMessage(partialResultToken);
-                                } catch (InterruptedException e) {
-                                    Thread.currentThread().interrupt();
-                                }
-                            })
-                            .whenComplete((res, ex) -> {
-                                partialResultLocks.remove(partialResultToken);
-                                finalResultProcessed.remove(partialResultToken);
-                            });
+                    ChatAsyncResultManager manager = ChatAsyncResultManager.getInstance();
+                    try {
+                        manager.createRequestId(partialResultToken);
+                        manager.getResult(partialResultToken);
+                        handleCancellation(tabId);
+                    } catch (Exception e) {
+                        Activator.getLogger().error("An error occurred while processing cancellation: " + exception.getMessage());
+                    } finally {
+                        manager.removeRequestId(partialResultToken);
+                        partialResultLocks.remove(partialResultToken);
+                        finalResultProcessed.remove(partialResultToken);
+                    }
                     return null;
                 }
+
                 Activator.getLogger()
                         .error("An error occurred while processing chat request: " + exception.getMessage());
                 sendErrorToUi(tabId, exception);
@@ -334,38 +327,38 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 partialResultLocks.remove(partialResultToken);
                 finalResultProcessed.remove(partialResultToken);
                 return null;
-            } else {
-                removePartialChatMessage(partialResultToken);
-                try {
-                    finalResultProcessed.put(partialResultToken, true);
-                    String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-                    Object codeReferences = newMessage.getValueForKey("codeReference");
-                    if (codeReferences != null) {
-                        ReferenceTrackerInformation[] referenceTrackerInformation = ObjectMapperFactory.getInstance()
-                                .convertValue(codeReferences,
-                                ReferenceTrackerInformation[].class);
-                        if (referenceTrackerInformation != null && referenceTrackerInformation.length >= 1) {
-                            ChatCodeReference chatCodeReference = new ChatCodeReference(referenceTrackerInformation);
-                            Activator.getCodeReferenceLoggingService().log(chatCodeReference);
-                        }
-                    }
+            }
 
-                    // show chat response in Chat UI
-                    String command = (inlineChatTabId.equals(tabId))
-                            ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
-                            : ChatUIInboundCommandName.ChatPrompt.getValue();
-                    ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                            command, tabId, newMessage.getData(), false, null);
-                    sendMessageToChatUI(chatUIInboundCommand);
-                    return newMessage.getData();
-                } catch (Exception e) {
-                    Activator.getLogger()
-                            .error("An error occurred while processing chat response received: " + e.getMessage());
-                    sendErrorToUi(tabId, e);
-                    partialResultLocks.remove(partialResultToken);
-                    finalResultProcessed.remove(partialResultToken);
-                    return null;
+            removePartialChatMessage(partialResultToken);
+            try {
+                finalResultProcessed.put(partialResultToken, true);
+                String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
+
+                if (result.containsKey("codeReference")) {
+                    ReferenceTrackerInformation[] codeReferences = ObjectMapperFactory.getInstance()
+                            .convertValue(result.get("codeReference"), ReferenceTrackerInformation[].class);
+                    if (codeReferences != null && codeReferences.length >= 1) {
+                        Activator.getCodeReferenceLoggingService()
+                                .log(new ChatCodeReference(codeReferences));
+                    }
                 }
+
+                // Send response to Chat UI
+                String command = inlineChatTabId.equals(tabId)
+                        ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                        : ChatUIInboundCommandName.ChatPrompt.getValue();
+
+                sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, result, false, null));
+                return result;
+            } catch (Exception e) {
+                Activator.getLogger()
+                        .error("An error occurred while processing chat response: " + e.getMessage());
+                sendErrorToUi(tabId, e);
+                partialResultLocks.remove(partialResultToken);
+                finalResultProcessed.remove(partialResultToken);
+                return null;
             }
         });
     }
@@ -442,7 +435,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 return;
             }
 
-            // Check to ensure Object is sent in params
             if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
                 throw new AmazonQPluginException(
                         "Error handling partial result notification: expected value of type Object");
@@ -450,47 +442,55 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
             String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
             String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
-            long currentTime = System.currentTimeMillis();
             Map<String, Object> partialChatResult = jsonHandler.deserialize(serializedData, Map.class);
-            if (partialChatResult != null) {
-                Object body = partialChatResult.get("body");
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> additionalMessages = (List<Map<String, Object>>) partialChatResult
-                        .get("additionalMessages");
 
-                // If there are no additional messages, apply the delay check
-                boolean noAdditionalMessages = (additionalMessages == null || additionalMessages.isEmpty());
-                if (noAdditionalMessages) {
-                    if (body == null || (body instanceof String)) {
-                        String bodyString = (String) body;
-                        Long lastProcessedTime = lastProcessedTimeMap.get(tabId);
-                        if (lastProcessedTime != null) {
-                            int currentDelay = calculateDelay(bodyString);
-                            if ((currentTime - lastProcessedTime) < currentDelay) {
-                                return;
-                            }
-                        }
-                    }
-                } else {
-                    WorkspaceUtils.refreshAllProjects();
-                }
-
-                boolean noBody = (body == null || (body instanceof String && ((String) body).length() < MINIMUM_PARTIAL_RESPONSE_LENGTH));
-                if (noBody && noAdditionalMessages) {
-                    return;
-                }
+            if (partialChatResult == null) {
+                return;
             }
 
-            String command = (inlineChatTabId.equals(tabId))
-                ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
-                : ChatUIInboundCommandName.ChatPrompt.getValue();
+            Object body = partialChatResult.get("body");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> additionalMessages = (List<Map<String, Object>>) partialChatResult.get("additionalMessages");
+            boolean hasAdditionalMessages = (additionalMessages != null && !additionalMessages.isEmpty());
+            long currentTime = System.currentTimeMillis();
+
+            if (!hasAdditionalMessages) {
+                if (body instanceof String) {
+                    Long lastProcessedTime = lastProcessedTimeMap.get(tabId);
+                    if (lastProcessedTime != null) {
+                        int currentDelay = calculateDelay((String) body);
+                        if ((currentTime - lastProcessedTime) < currentDelay) {
+                            return;
+                        }
+                    }
+                }
+            } else {
+                WorkspaceUtils.refreshAllProjects();
+            }
+
+            boolean insufficientContent = (body == null
+                    || (body instanceof String && ((String) body).length() < MINIMUM_PARTIAL_RESPONSE_LENGTH));
+            if (insufficientContent && !hasAdditionalMessages) {
+                return;
+            }
+
+            String command = inlineChatTabId.equals(tabId)
+                    ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                    : ChatUIInboundCommandName.ChatPrompt.getValue();
 
             ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                     command, tabId, partialChatResult, true, null);
-
             sendMessageToChatUI(chatUIInboundCommand);
 
-            // Update the last processed time for this tab
+            if (additionalMessages != null) {
+                for (Map<String, Object> message : additionalMessages) {
+                    String messageId = (String) message.get("messageId");
+                    if (messageId != null && messageId.startsWith("stopped")) {
+                        ChatAsyncResultManager.getInstance().setResult(token, partialChatResult);
+                    }
+                }
+            }
+
             lastProcessedTimeMap.put(tabId, currentTime);
         }
     }

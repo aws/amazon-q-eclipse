@@ -29,6 +29,7 @@ import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 public final class ActivatorStaticMockExtension extends StaticMockExtension<Activator>
         implements BeforeEachCallback, BeforeAllCallback, AfterAllCallback {
 
+    private boolean isSetup = false;
     private MockedStatic<Activator> activatorStaticMock = null;
 
     @Override
@@ -38,6 +39,10 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
 
     @Override
     public void beforeEach(final ExtensionContext context) {
+        if (isSetup) {
+            return;
+        }
+
         LoggingService loggingServiceMock = Mockito.mock(LoggingService.class);
         TelemetryService telemetryServiceMock = Mockito.mock(TelemetryService.class);
         Activator activatorMock = Mockito.mock(Activator.class);
@@ -70,6 +75,7 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
                 EventBroker.class, eventBrokerMock
         );
         setMocksMap(newMocksMap);
+        isSetup = true;
     }
 
     @Override

@@ -306,6 +306,10 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         registerPartialResultToken(partialResultToken);
 
         return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
+            // The mapping entry no longer needs to be maintained once the final result is
+            // retrieved.
+            ChatMessage newMessage = new ChatMessage(encryptedChatResult);
+
             if (exception != null) {
                 // handle cancellations
                 if (exception instanceof CancellationException
@@ -335,38 +339,38 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 finalResultProcessed.remove(partialResultToken);
                 lastProcessedTimeMap.remove(tabId);
                 return null;
-            }
-
-            // process successful responses
-            removePartialChatMessage(partialResultToken);
-            try {
-                finalResultProcessed.put(partialResultToken, true);
-                String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-                @SuppressWarnings("unchecked")
-                Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
-
-                if (result.containsKey("codeReference")) {
-                    ReferenceTrackerInformation[] codeReferences = ObjectMapperFactory.getInstance()
-                            .convertValue(result.get("codeReference"), ReferenceTrackerInformation[].class);
-                    if (codeReferences != null && codeReferences.length >= 1) {
-                        Activator.getCodeReferenceLoggingService()
-                                .log(new ChatCodeReference(codeReferences));
+            } else {
+                removePartialChatMessage(partialResultToken);
+                try {
+                    finalResultProcessed.put(partialResultToken, true);
+                    String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+                    Object codeReferences = newMessage.getValueForKey("codeReference");
+                    if (codeReferences != null) {
+                        ReferenceTrackerInformation[] referenceTrackerInformation = ObjectMapperFactory.getInstance()
+                                .convertValue(codeReferences,
+                                ReferenceTrackerInformation[].class);
+                        if (referenceTrackerInformation != null && referenceTrackerInformation.length >= 1) {
+                            ChatCodeReference chatCodeReference = new ChatCodeReference(referenceTrackerInformation);
+                            Activator.getCodeReferenceLoggingService().log(chatCodeReference);
+                        }
                     }
+
+                    // show chat response in Chat UI
+                    String command = (inlineChatTabId.equals(tabId))
+                            ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                            : ChatUIInboundCommandName.ChatPrompt.getValue();
+                    ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(command, tabId,
+                            newMessage.getData(), false, null);
+                    sendMessageToChatUI(chatUIInboundCommand);
+                    return newMessage.getData();
+                } catch (Exception e) {
+                    Activator.getLogger()
+                            .error("An error occurred while processing chat response received: " + e.getMessage());
+                    sendErrorToUi(tabId, e);
+                    partialResultLocks.remove(partialResultToken);
+                    finalResultProcessed.remove(partialResultToken);
+                    return null;
                 }
-
-                String command = inlineChatTabId.equals(tabId)
-                        ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
-                        : ChatUIInboundCommandName.ChatPrompt.getValue();
-
-                sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, result, false, null));
-                return result;
-            } catch (Exception e) {
-                Activator.getLogger()
-                        .error("An error occurred while processing chat response: " + e.getMessage());
-                sendErrorToUi(tabId, e);
-                partialResultLocks.remove(partialResultToken);
-                finalResultProcessed.remove(partialResultToken);
-                return null;
             }
         });
     }

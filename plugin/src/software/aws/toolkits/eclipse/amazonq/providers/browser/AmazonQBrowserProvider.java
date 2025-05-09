@@ -207,4 +207,30 @@ public final class AmazonQBrowserProvider {
         }
     }
 
+<<<<<<< HEAD
+=======
+    private void setupPeriodicRefresh(final Browser browser) {
+        Display.getDefault().timerExec(15000, new Runnable() {
+            @Override
+            public void run() {
+                if (!browser.isDisposed()) {
+                    browser.execute("""
+                        document.querySelectorAll('[class*="mynah-ui-icon-"]').forEach(icon => {
+                            const computed = window.getComputedStyle(icon);
+                            const webkitMask = computed.getPropertyValue('-webkit-mask-image');
+                            const standardMask = computed.getPropertyValue('mask-image');
+                            icon.style.webkitMaskImage = '';
+                            icon.style.maskImage = '';
+                            icon.offsetHeight;
+                            icon.style.webkitMaskImage = webkitMask;
+                            icon.style.maskImage = standardMask;
+                        });
+                    """);
+                }
+                Display.getDefault().timerExec(15000, this);
+            }
+        });
+    }
+
+>>>>>>> 6b5f728 (Fix cancellation race condition issue)
 }

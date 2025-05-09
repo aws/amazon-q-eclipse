@@ -48,11 +48,16 @@ public final class ChatAsyncResultManager {
         CompletableFuture<Object> future = results.get(requestId);
         if (future != null) {
             future.complete(result);
+<<<<<<< HEAD
             completedResults.put(requestId, result);
             results.remove(requestId);
         } else {
             completedResults.put(requestId, result);
+=======
+            results.remove(requestId);
+>>>>>>> 6b5f728 (Fix cancellation race condition issue)
         }
+        completedResults.put(requestId, result);
     }
 
 

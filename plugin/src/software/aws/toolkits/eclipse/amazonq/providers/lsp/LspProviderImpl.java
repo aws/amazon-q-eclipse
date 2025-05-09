@@ -57,13 +57,11 @@ public final class LspProviderImpl implements LspProvider {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends LanguageServer> CompletableFuture<T> getServer(final Class<T> lspType) {
-        synchronized (lspType) {
-            ServerEntry entry = serverRegistry.computeIfAbsent(lspType, k -> new ServerEntry());
-            if (entry.getServer() != null) {
-                return CompletableFuture.completedFuture((T) entry.getServer());
-            }
-            return entry.getFutureWithTimeout(TIMEOUT_SECONDS);
+        ServerEntry entry = serverRegistry.computeIfAbsent(lspType, k -> new ServerEntry());
+        if (entry.getServer() != null) {
+            return CompletableFuture.completedFuture((T) entry.getServer());
         }
+        return entry.getFutureWithTimeout(TIMEOUT_SECONDS);
     }
 
     private void onServerActivation() {

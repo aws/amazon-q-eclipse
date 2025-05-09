@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -14,6 +15,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.Message;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.ToNumberPolicy;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
@@ -33,6 +36,18 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         super.configureGson(builder -> {
            builder.registerTypeAdapterFactory(new QLspTypeAdapterFactory());
            builder.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE);
+           builder.setExclusionStrategies(new ExclusionStrategy() {
+                @Override
+                public boolean shouldSkipField(final FieldAttributes field) {
+                    String packageName = field.getDeclaringClass().getPackage().getName();
+                    return packageName.startsWith("java.");
+                }
+
+                @Override
+                public boolean shouldSkipClass(final Class<?> clazz) {
+                    return false;
+                }
+            });
         });
         launcher = super.create();
         return launcher;
@@ -61,7 +76,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
-        return super.wrapMessageConsumer((Message message) -> {
+        return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 ClientMetadata metadata = PluginClientMetadata.getInstance();

@@ -9,17 +9,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FileClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericLinkClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.PromptInputOptionChangeParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.GetSsoTokenResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenParams;
@@ -27,67 +17,65 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.InvalidateSsoTokenRe
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.ListProfilesResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.UpdateProfileParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.LogInlineCompletionSessionResultsParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 
 public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/textDocument/inlineCompletionWithReferences")
-    CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(InlineCompletionParams params);
+    CompletableFuture<InlineCompletionResponse> inlineCompletionWithReferences(Object params);
 
     @JsonNotification("aws/logInlineCompletionSessionResults")
-    void logInlineCompletionSessionResult(LogInlineCompletionSessionResultsParams params);
+    void logInlineCompletionSessionResult(Object params);
 
     @JsonRequest("aws/chat/sendChatPrompt")
-    CompletableFuture<String> sendChatPrompt(EncryptedChatParams encryptedChatRequestParams);
+    CompletableFuture<String> sendChatPrompt(Object encryptedChatRequestParams);
 
     @JsonRequest("aws/chat/sendInlineChatPrompt")
-    CompletableFuture<String> sendInlineChatPrompt(EncryptedChatParams encryptedChatRequestParams);
+    CompletableFuture<String> sendInlineChatPrompt(Object encryptedChatRequestParams);
 
     @JsonRequest("aws/chat/sendChatQuickAction")
-    CompletableFuture<String> sendQuickAction(EncryptedQuickActionParams encryptedQuickActionParams);
+    CompletableFuture<String> sendQuickAction(Object encryptedQuickActionParams);
 
     @JsonRequest("aws/chat/endChat")
-    CompletableFuture<Boolean> endChat(GenericTabParams params);
+    CompletableFuture<Boolean> endChat(Object params);
 
     @JsonNotification("aws/chat/tabAdd")
-    void tabAdd(GenericTabParams params);
+    void tabAdd(Object params);
 
     @JsonNotification("aws/chat/tabRemove")
-    void tabRemove(GenericTabParams params);
+    void tabRemove(Object params);
 
     @JsonNotification("aws/chat/tabChange")
-    void tabChange(GenericTabParams params);
+    void tabChange(Object params);
 
     @JsonNotification("aws/chat/fileClick")
-    void fileClick(FileClickParams params);
+    void fileClick(Object params);
 
     @JsonNotification("aws/chat/infoLinkClick")
-    void infoLinkClick(GenericLinkClickParams params);
+    void infoLinkClick(Object params);
 
     @JsonNotification("aws/chat/linkClick")
-    void linkClick(GenericLinkClickParams params);
+    void linkClick(Object params);
 
     @JsonNotification("aws/chat/sourceLinkClick")
-    void sourceLinkClick(GenericLinkClickParams params);
+    void sourceLinkClick(Object params);
 
     @JsonNotification("aws/chat/followUpClick")
-    void followUpClick(FollowUpClickParams params);
+    void followUpClick(Object params);
 
     @JsonNotification("aws/chat/promptInputOptionChange")
-    void promptInputOptionChange(PromptInputOptionChangeParams params);
+    void promptInputOptionChange(Object params);
 
     @JsonNotification("aws/chat/ready")
     void chatReady();
 
     @JsonNotification("aws/chat/feedback")
-    void sendFeedback(FeedbackParams params);
+    void sendFeedback(Object params);
 
     @JsonNotification("aws/chat/insertToCursorPosition")
-    void insertToCursorPosition(InsertToCursorPositionParams params);
+    void insertToCursorPosition(Object params);
 
     @JsonRequest("aws/credentials/token/update")
     CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);
@@ -129,5 +117,5 @@ public interface AmazonQLspServer extends LanguageServer {
     CompletableFuture<Object> getSerializedActions(Object params);
 
     @JsonRequest("aws/chat/buttonClick")
-    CompletableFuture<ButtonClickResult> buttonClick(ButtonClickParams params);
+    CompletableFuture<ButtonClickResult> buttonClick(Object params);
 }

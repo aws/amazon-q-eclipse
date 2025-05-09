@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
@@ -47,10 +48,44 @@ public final class JsonHandler {
     }
 
     public JsonNode getValueForKey(final Object obj, final String key) {
-        var paramsNode = objectMapper.valueToTree(obj);
-        if (paramsNode.has(key)) {
-            return paramsNode.get(key);
+        JsonNode currentNode = objectMapper.valueToTree(obj);
+
+        String[] keyParts = key.split("\\.");
+        for (String keyPart : keyParts) {
+            if (currentNode == null || !currentNode.has(keyPart)) {
+                return null;
+            }
+            currentNode = currentNode.get(keyPart);
         }
-        return null;
+
+        return currentNode;
+    }
+
+    public JsonNode addValueForKey(final Object obj, final String key, final Object value) {
+        ObjectNode rootNode;
+        if (obj instanceof JsonNode) {
+            rootNode = (ObjectNode) obj;
+        } else {
+            rootNode = objectMapper.valueToTree(obj);
+        }
+
+        String[] keyParts = key.split("\\.");
+        ObjectNode currentNode = rootNode;
+
+        for (int i = 0; i < keyParts.length - 1; i++) {
+            String keyPart = keyParts[i];
+            if (!currentNode.has(keyPart) || !currentNode.get(keyPart).isObject()) {
+                currentNode.putObject(keyPart);
+            }
+            currentNode = (ObjectNode) currentNode.get(keyPart);
+        }
+
+        String finalKey = keyParts[keyParts.length - 1];
+        if (value != null) {
+            JsonNode valueNode = objectMapper.valueToTree(value);
+            currentNode.set(finalKey, valueNode);
+        }
+
+        return rootNode;
     }
 }

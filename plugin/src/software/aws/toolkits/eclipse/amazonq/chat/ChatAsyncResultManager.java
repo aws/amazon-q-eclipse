@@ -48,10 +48,13 @@ public final class ChatAsyncResultManager {
         CompletableFuture<Object> future = results.get(requestId);
         if (future != null) {
             future.complete(result);
+            completedResults.put(requestId, result);
             results.remove(requestId);
+        } else {
+            completedResults.put(requestId, result);
         }
-        completedResults.put(requestId, result);
     }
+
 
     public Object getResult(final String requestId) throws Exception {
         return getResult(requestId, defaultTimeout, defaultTimeUnit);

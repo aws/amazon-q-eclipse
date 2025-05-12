@@ -144,6 +144,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     amazonQLspServer.tabAdd(message.getData());
                     break;
                 case CHAT_TAB_REMOVE:
+                    lastProcessedTimeMap.remove(message.getValueAsString("tabId"));
                     amazonQLspServer.tabRemove(message.getData());
                     break;
                 case CHAT_TAB_CHANGE:
@@ -177,7 +178,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     cancelInflightRequests(message.getValueAsString("tabId"));
                     break;
                 case TELEMETRY_EVENT:
-                    amazonQLspServer.sendTelemetryEvent(message);
+                    amazonQLspServer.sendTelemetryEvent(message.getData());
                     break;
                 case LIST_CONVERSATIONS:
                     try {
@@ -303,6 +304,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
         return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
             if (exception != null) {
+                // handle cancellations
                 if (exception instanceof CancellationException
                         || exception.getCause() instanceof CancellationException) {
                     ChatAsyncResultManager manager = ChatAsyncResultManager.getInstance();
@@ -316,19 +318,23 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         manager.removeRequestId(partialResultToken);
                         partialResultLocks.remove(partialResultToken);
                         finalResultProcessed.remove(partialResultToken);
+                        lastProcessedTimeMap.remove(tabId);
                     }
                     return null;
                 }
 
+                // handle non-cancellation errors
                 Activator.getLogger()
                         .error("An error occurred while processing chat request: " + exception.getMessage());
                 sendErrorToUi(tabId, exception);
                 removePartialChatMessage(partialResultToken);
                 partialResultLocks.remove(partialResultToken);
                 finalResultProcessed.remove(partialResultToken);
+                lastProcessedTimeMap.remove(tabId);
                 return null;
             }
 
+            // process successful responses
             removePartialChatMessage(partialResultToken);
             try {
                 finalResultProcessed.put(partialResultToken, true);
@@ -345,7 +351,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     }
                 }
 
-                // Send response to Chat UI
                 String command = inlineChatTabId.equals(tabId)
                         ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
                         : ChatUIInboundCommandName.ChatPrompt.getValue();
@@ -372,6 +377,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     // Workaround to properly report cancellation event to chatUI
     private CompletableFuture<Void> handleCancellation(final String tabId) {
         Activator.getLogger().info("Chat request was cancelled for tab: " + tabId);
+        lastProcessedTimeMap.remove(tabId);
 
         var errorParams = new ErrorParams(tabId, null, "", "");
         ChatUIInboundCommand inbound = new ChatUIInboundCommand(
@@ -426,45 +432,68 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         String token = ProgressNotificationUtils.getToken(params);
         String tabId = getPartialChatMessage(token);
 
-        if (tabId == null || tabId.isEmpty() || partialResultLocks.get(token) == null) {
+        if (tabId == null || tabId.isEmpty()) {
             return;
         }
 
-        synchronized (partialResultLocks.get(token)) {
-            if (Boolean.TRUE.equals(finalResultProcessed.get(token))) {
-                return;
+        if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
+            throw new AmazonQPluginException(
+                    "Error handling partial result notification: expected value of type Object");
+        }
+
+        String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
+        String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
+        Map<String, Object> partialChatResult = jsonHandler.deserialize(serializedData, Map.class);
+
+        if (partialChatResult == null) {
+            return;
+        }
+
+        String command = inlineChatTabId.equals(tabId)
+                ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                : ChatUIInboundCommandName.ChatPrompt.getValue();
+
+        // special case: check for stop message before acquiring lock
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> additionalMessages = (List<Map<String, Object>>) partialChatResult.get("additionalMessages");
+        if (additionalMessages != null) {
+            for (Map<String, Object> message : additionalMessages) {
+                String messageId = (String) message.get("messageId");
+                if (messageId != null && messageId.startsWith("stopped")) {
+                    // process stop messages immediately
+                    sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, partialChatResult, true, null));
+                    finalResultProcessed.put(token, true);
+                    ChatAsyncResultManager.getInstance().setResult(token, partialChatResult);
+                    return;
+                }
             }
+        }
 
-            if (params.getValue().isLeft() || Objects.isNull(params.getValue().getRight())) {
-                throw new AmazonQPluginException(
-                        "Error handling partial result notification: expected value of type Object");
-            }
+        // normal partial processing
+        Object lock = partialResultLocks.get(token);
+        if (lock == null) {
+            return;
+        }
 
-            String encryptedPartialChatResult = ProgressNotificationUtils.getObject(params, String.class);
-            String serializedData = lspEncryptionManager.decrypt(encryptedPartialChatResult);
-            Map<String, Object> partialChatResult = jsonHandler.deserialize(serializedData, Map.class);
-
-            if (partialChatResult == null) {
+        synchronized (lock) {
+            if (partialResultLocks.get(token) == null || Boolean.TRUE.equals(finalResultProcessed.get(token))) {
                 return;
             }
 
             Object body = partialChatResult.get("body");
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> additionalMessages = (List<Map<String, Object>>) partialChatResult.get("additionalMessages");
             boolean hasAdditionalMessages = (additionalMessages != null && !additionalMessages.isEmpty());
             long currentTime = System.currentTimeMillis();
 
-            if (!hasAdditionalMessages) {
-                if (body instanceof String) {
-                    Long lastProcessedTime = lastProcessedTimeMap.get(tabId);
-                    if (lastProcessedTime != null) {
-                        int currentDelay = calculateDelay((String) body);
-                        if ((currentTime - lastProcessedTime) < currentDelay) {
-                            return;
-                        }
+            // rate limit by discarding messages that have arrived too soon since the last was fired
+            if (!hasAdditionalMessages && body instanceof String) {
+                Long lastProcessedTime = lastProcessedTimeMap.get(tabId);
+                if (lastProcessedTime != null) {
+                    int currentDelay = calculateDelay((String) body);
+                    if ((currentTime - lastProcessedTime) < currentDelay) {
+                        return;
                     }
                 }
-            } else {
+            } else if (hasAdditionalMessages) {
                 WorkspaceUtils.refreshAllProjects();
             }
 
@@ -474,24 +503,11 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 return;
             }
 
-            String command = inlineChatTabId.equals(tabId)
-                    ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
-                    : ChatUIInboundCommandName.ChatPrompt.getValue();
-
-            ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
-                    command, tabId, partialChatResult, true, null);
-            sendMessageToChatUI(chatUIInboundCommand);
-
-            if (additionalMessages != null) {
-                for (Map<String, Object> message : additionalMessages) {
-                    String messageId = (String) message.get("messageId");
-                    if (messageId != null && messageId.startsWith("stopped")) {
-                        ChatAsyncResultManager.getInstance().setResult(token, partialChatResult);
-                    }
-                }
+            // send partial response to UI if not cancelled in the interim
+            if (Boolean.FALSE.equals(finalResultProcessed.get(token))) {
+                sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, partialChatResult, true, null));
+                lastProcessedTimeMap.put(tabId, currentTime);
             }
-
-            lastProcessedTimeMap.put(tabId, currentTime);
         }
     }
 

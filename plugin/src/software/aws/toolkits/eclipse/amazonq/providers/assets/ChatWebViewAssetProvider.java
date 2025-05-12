@@ -251,9 +251,10 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                 return;
                             }
 
+                            const currentText = element.innerText.trim();
+                            const hasText = currentText.length > 0;
+                            const textLength = currentText.length;
                             const cursorPosition = getCursorPosition(element);
-                            const hasText = element.innerText.length > 0;
-                            const textLength = element.innerText.length;
 
                             switch (event.key) {
                                 case 'ArrowLeft':

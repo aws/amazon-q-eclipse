@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,7 +22,6 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
@@ -41,13 +41,17 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPageListener;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPartReference;
+import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.github.difflib.DiffUtils;
@@ -365,7 +369,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
             try {
                 IStorageEditorInput input = new InMemoryInput(
-                        new MemoryStorage(new Path(params.originalFileUri().getPath()).lastSegment(), ""));
+                        new MemoryStorage(params.originalFileUri().getPath(), ""));
 
                 IEditorDescriptor defaultEditor = PlatformUI.getWorkbench().getEditorRegistry()
                         .getDefaultEditor(".java");
@@ -377,16 +381,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 IAnnotationModel annotationModel = ((ITextEditor) editor).getDocumentProvider()
                         .getAnnotationModel(editor.getEditorInput());
                 var document = ((ITextEditor) editor).getDocumentProvider().getDocument(editor.getEditorInput());
-
-                // Clear existing diff annotations prior to starting new diff
-                var annotations = annotationModel.getAnnotationIterator();
-                while (annotations.hasNext()) {
-                    var annotation = annotations.next();
-                    String type = annotation.getType();
-                    if (type.startsWith("diffAnnotation.")) {
-                        annotationModel.removeAnnotation(annotation);
-                    }
-                }
 
                 // Split original and new code into lines for diff comparison
                 String[] originalLines = (params.originalFileContent() != null
@@ -472,18 +466,81 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 a.setEnabled(false);
             }
         }
-        editor.getSite().getPage().addPartListener(new IPartListener2() {
-            @Override
-            public void partClosed(final IWorkbenchPartReference partRef) {
-                if (partRef.getPart(false) == editor) {
-                    editor.getSite().getPage().removePartListener(this);
+        IWorkbenchPartSite site = editor.getSite();
+        if (site == null) {
+            return;
+        }
 
-                    Display.getDefault().asyncExec(() -> {
-                        editor.getEditorSite().getPage().closeEditor(editor, false);
-                    });
-                }
+        IWorkbenchWindow window = site.getWorkbenchWindow();
+        if (window == null) {
+            return;
+        }
+
+        IPageListener pageListener = new IPageListener() {
+            @Override
+            public void pageOpened(final IWorkbenchPage page) {
             }
-        });
+
+            @Override
+            public void pageClosed(final IWorkbenchPage page) {
+                // Clean up the editor when the page closes
+                Display.getDefault().asyncExec(() -> {
+                    try {
+                        if (editor != null && !editor.isDirty()) {
+                            IWorkbenchPage currentPage = editor.getSite().getPage();
+                            if (currentPage != null) {
+                                // Remove any annotations first
+                                if (editor instanceof ITextEditor) {
+                                    ITextEditor textEditor = (ITextEditor) editor;
+                                    IDocumentProvider provider = textEditor.getDocumentProvider();
+                                    if (provider != null) {
+                                        IAnnotationModel annotationModel = provider
+                                                .getAnnotationModel(editor.getEditorInput());
+                                        if (annotationModel != null) {
+                                            Iterator<?> annotationIterator = annotationModel.getAnnotationIterator();
+                                            while (annotationIterator.hasNext()) {
+                                                annotationModel
+                                                        .removeAnnotation((Annotation) annotationIterator.next());
+                                            }
+                                        }
+                                    }
+                                }
+                                // Close the editor
+                                currentPage.closeEditor(editor, false);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error closing editor during page close", e);
+                    } finally {
+                        // Remove the listener from the window
+                        window.removePageListener(this);
+                    }
+                });
+            }
+
+            @Override
+            public void pageActivated(final IWorkbenchPage page) {
+            }
+        };
+
+        window.addPageListener(pageListener);
+
+        IWorkbenchPage page = site.getPage();
+        if (page != null) {
+            page.addPartListener(new IPartListener2() {
+                @Override
+                public void partClosed(final IWorkbenchPartReference partRef) {
+                    if (partRef.getPart(false) == editor) {
+                        window.removePageListener(pageListener);
+                        IWorkbenchPage page = partRef.getPage();
+                        if (page != null) {
+                            page.removePartListener(this);
+                        }
+                    }
+                }
+            });
+        }
+
         editor.doSave(new NullProgressMonitor());
     }
 

@@ -22,6 +22,7 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
@@ -40,7 +41,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IPageListener;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IStorageEditorInput;
@@ -48,6 +51,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.ide.IDE;
@@ -366,8 +370,13 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 : "diffAnnotation.deleted";
 
         Display.getDefault().asyncExec(() -> {
-            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
             try {
+                IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+
+                if (openExistingEditor(page, params.originalFileUri().getPath())) {
+                    return;
+                }
+
                 IStorageEditorInput input = new InMemoryInput(
                         new MemoryStorage(params.originalFileUri().getPath(), ""));
 
@@ -448,6 +457,28 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             }
 
         });
+    }
+
+    private boolean openExistingEditor(final IWorkbenchPage page, final String path) {
+        IEditorReference[] editorRefs = page.getEditorReferences();
+        for (IEditorReference editorRef : editorRefs) {
+            try {
+                IEditorInput editorInput = editorRef.getEditorInput();
+                if (editorInput instanceof InMemoryInput) {
+                    InMemoryInput memoryInput = (InMemoryInput) editorInput;
+                    if (memoryInput.getStorage().getFullPath().equals(new Path(path))) {
+                        Display.getDefault().asyncExec(() -> {
+                            page.activate(editorRef.getEditor(false));
+                        });
+                        return true;
+                    }
+                }
+            } catch (PartInitException e) {
+                Activator.getLogger().error("Error checking editor input", e);
+            }
+        }
+
+        return false;
     }
 
     private void makeEditorReadOnly(final IEditorPart editor) {

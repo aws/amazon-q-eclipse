@@ -3,14 +3,15 @@
 
 package software.aws.toolkits.eclipse.amazonq.handlers;
 
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QInvocationSession;
-
-import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 
 public class QTriggerSuggestionsHandler extends AbstractHandler {
 
@@ -23,7 +24,7 @@ public class QTriggerSuggestionsHandler extends AbstractHandler {
     @Override
     public final synchronized Object execute(final ExecutionEvent event) throws ExecutionException {
         var editor = getActiveTextEditor();
-        if (editor == null) {
+        if (editor == null || editor.getEditorInput() instanceof InMemoryInput) {
             Activator.getLogger().info("Suggestion triggered with no active editor. Returning.");
             return null;
         }

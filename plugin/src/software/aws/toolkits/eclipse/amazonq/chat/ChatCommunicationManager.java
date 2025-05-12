@@ -147,8 +147,13 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         break;
                     case CHAT_TAB_ADD:
                     amazonQLspServer.tabAdd(message.getData());
+<<<<<<< HEAD
                         break;
                     case CHAT_TAB_REMOVE:
+=======
+                    break;
+                case CHAT_TAB_REMOVE:
+>>>>>>> a91b195 (Process cancellation partials immediately)
                     lastProcessedTimeMap.remove(message.getValueAsString("tabId"));
                     amazonQLspServer.tabRemove(message.getData());
                         break;
@@ -181,11 +186,19 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         break;
                     case STOP_CHAT_RESPONSE:
                     cancelInflightRequests(message.getValueAsString("tabId"));
+<<<<<<< HEAD
                         break;
                     case TELEMETRY_EVENT:
                     amazonQLspServer.sendTelemetryEvent(message.getData());
                         break;
                     case LIST_CONVERSATIONS:
+=======
+                    break;
+                case TELEMETRY_EVENT:
+                    amazonQLspServer.sendTelemetryEvent(message.getData());
+                    break;
+                case LIST_CONVERSATIONS:
+>>>>>>> a91b195 (Process cancellation partials immediately)
                     try {
                         Object response = amazonQLspServer.listConversations(message.getData()).get();
                         var listConversationsCommand = ChatUIInboundCommand.createCommand("aws/chat/listConversations",
@@ -496,6 +509,11 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         return;
                     }
                 }
+<<<<<<< HEAD
+=======
+            } else if (hasAdditionalMessages) {
+                WorkspaceUtils.refreshAllProjects();
+>>>>>>> a91b195 (Process cancellation partials immediately)
             }
 
             boolean insufficientContent = (body == null

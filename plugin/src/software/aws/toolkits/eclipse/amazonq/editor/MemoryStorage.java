@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 
 public final class MemoryStorage implements IStorage {
     private final String path;
@@ -32,7 +33,7 @@ public final class MemoryStorage implements IStorage {
 
     @Override
     public String getName() {
-        return path + " (preview)";
+        return new Path(path).lastSegment() + " (preview)";
     }
 
     @Override
@@ -41,8 +42,8 @@ public final class MemoryStorage implements IStorage {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public Object getAdapter(final Class c) {
-        return null;
+    public <T> T getAdapter(final Class<T> adapter) {
+        return Platform.getAdapterManager().getAdapter(this, adapter);
     }
+
 }

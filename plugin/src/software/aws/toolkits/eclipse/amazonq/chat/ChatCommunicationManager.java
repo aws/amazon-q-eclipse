@@ -65,7 +65,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private final Map<String, Long> lastProcessedTimeMap = new ConcurrentHashMap<>();
 
     private static final int MINIMUM_PARTIAL_RESPONSE_LENGTH = 50;
-    private static final int MIN_DELAY_BETWEEN_PARTIALS = 50;
+    private static final int MIN_DELAY_BETWEEN_PARTIALS = 0;
     private static final int MAX_DELAY_BETWEEN_PARTIALS = 2500;
     private static final int CHAR_COUNT_FOR_MAX_DELAY = 5000;
 

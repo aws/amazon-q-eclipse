@@ -284,7 +284,7 @@ public final class QInvocationSession extends QResource {
                 });
             } catch (InterruptedException e) {
                 Activator.getLogger().error("Inline completion interrupted", e);
-            } catch (ExecutionException e) {
+            } catch (Exception e) {
                 Activator.getLogger().error("Error executing inline completion", e);
             }
         });

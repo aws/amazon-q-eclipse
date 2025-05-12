@@ -76,6 +76,8 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
     private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
+    private volatile boolean isQueueProcessorRunning = false;
+
     private final String inlineChatTabId = "123456789";
 
     private ChatCommunicationManager(final Builder builder) {
@@ -576,8 +578,13 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     }
 
     private void startCommandQueueProcessor() {
+        if (isQueueProcessorRunning) {
+            return;
+        }
+        isQueueProcessorRunning = true;
         ThreadingUtils.executeAsyncTask(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
+            queueProcessorThread = Thread.currentThread();
+            while (isQueueProcessorRunning && !Thread.currentThread().isInterrupted()) {
                 try {
                     ChatUIInboundCommand command = commandQueue.take();
                     sendMessageToChatUI(command);
@@ -586,13 +593,20 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    isQueueProcessorRunning = false;
                 } catch (Exception e) {
                     Activator.getLogger().error("Error processing command from queue", e);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        isQueueProcessorRunning = false;
+                    }
                 }
             }
+            isQueueProcessorRunning = false;
         });
     }
-
 
     public static final class Builder {
 

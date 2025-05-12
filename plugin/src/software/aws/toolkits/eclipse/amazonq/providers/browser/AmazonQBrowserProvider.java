@@ -7,8 +7,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
-
 import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
@@ -73,7 +71,6 @@ public class AmazonQBrowserProvider {
         if (hasWebViewDependency()) {
             this.browser = browser;
         }
-        setupPeriodicRefresh(browser);
         return hasWebViewDependency();
     }
 
@@ -92,29 +89,6 @@ public class AmazonQBrowserProvider {
 
     public final void updateBrowser(final Browser browser) {
         this.browser = browser;
-    }
-
-    private void setupPeriodicRefresh(final Browser browser) {
-        Display.getDefault().timerExec(15000, new Runnable() {
-            @Override
-            public void run() {
-                if (!browser.isDisposed()) {
-                    browser.execute("""
-                        document.querySelectorAll('[class*="mynah-ui-icon-"]').forEach(icon => {
-                            const computed = window.getComputedStyle(icon);
-                            const webkitMask = computed.getPropertyValue('-webkit-mask-image');
-                            const standardMask = computed.getPropertyValue('mask-image');
-                            icon.style.webkitMaskImage = '';
-                            icon.style.maskImage = '';
-                            icon.offsetHeight;
-                            icon.style.webkitMaskImage = webkitMask;
-                            icon.style.maskImage = standardMask;
-                        });
-                    """);
-                }
-                Display.getDefault().timerExec(15000, this);
-            }
-        });
     }
 
 }

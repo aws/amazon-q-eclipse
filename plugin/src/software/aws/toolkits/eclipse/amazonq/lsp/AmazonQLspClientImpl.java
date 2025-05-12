@@ -41,8 +41,10 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.ide.IDE;
@@ -470,6 +472,18 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 a.setEnabled(false);
             }
         }
+        editor.getSite().getPage().addPartListener(new IPartListener2() {
+            @Override
+            public void partClosed(final IWorkbenchPartReference partRef) {
+                if (partRef.getPart(false) == editor) {
+                    editor.getSite().getPage().removePartListener(this);
+
+                    Display.getDefault().asyncExec(() -> {
+                        editor.getEditorSite().getPage().closeEditor(editor, false);
+                    });
+                }
+            }
+        });
         editor.doSave(new NullProgressMonitor());
     }
 

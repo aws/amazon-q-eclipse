@@ -124,4 +124,5 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
         super.dispose();
     }
+
 }

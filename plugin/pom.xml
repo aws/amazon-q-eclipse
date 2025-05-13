@@ -151,14 +151,6 @@
             </plugin>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>
-                <artifactId>tycho-surefire-plugin</artifactId>
-                <version>${tycho.version}</version>
-                <configuration>
-                    <argLine>-DWEBKIT_DISABLE_BACK_FORWARD_CACHE=1</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.eclipse.tycho</groupId>
                 <artifactId>tycho-packaging-plugin</artifactId>
                 <version>${tycho.version}</version>
                 <configuration>
@@ -170,9 +162,6 @@
                       </includes>
                      </fileSet>
                     </additionalFileSets>
-                    <jvmArgs>
-                        <jvmArg>-DWEBKIT_DISABLE_BACK_FORWARD_CACHE=1</jvmArg>
-                    </jvmArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -439,16 +428,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.eclipse.tycho</groupId>
-                <artifactId>tycho-p2-director-plugin</artifactId>
-                <version>${tycho.version}</version>
-                <configuration>
-                    <vmArguments>
-                        <vmArgument>-DWEBKIT_DISABLE_BACK_FORWARD_CACHE=1</vmArgument>
-                    </vmArguments>
-                </configuration>
             </plugin>
         </plugins>
     </build>

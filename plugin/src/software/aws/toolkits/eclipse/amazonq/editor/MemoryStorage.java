@@ -33,7 +33,7 @@ public final class MemoryStorage implements IStorage {
 
     @Override
     public String getName() {
-        return new Path(path).lastSegment() + " (preview)";
+        return path + " (preview)";
     }
 
     @Override

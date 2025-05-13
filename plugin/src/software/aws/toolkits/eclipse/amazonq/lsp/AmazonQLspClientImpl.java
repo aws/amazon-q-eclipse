@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -41,17 +42,12 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorDescriptor;
-import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IPageListener;
-import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.ide.IDE;
@@ -96,6 +92,8 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
 
     private ThemeDetector themeDetector = new ThemeDetector();
+    private Map<String, IEditorPart> textEditorNameMapsEditor = new ConcurrentHashMap<>();
+    private Map<String, String> textEditorNameMapsPath = new ConcurrentHashMap<>();
 
     @Override
     public final CompletableFuture<ConnectionMetadata> getConnectionMetadata() {
@@ -372,13 +370,13 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         Display.getDefault().asyncExec(() -> {
             try {
                 IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-
-                if (openExistingEditor(page, params.originalFileUri().getPath())) {
+                String textEditorName = new Path(params.originalFileUri().getPath()).lastSegment() + " (preview)";
+                if (openExistingEditor(page, textEditorName, params.originalFileUri().getPath())) {
                     return;
                 }
 
                 IStorageEditorInput input = new InMemoryInput(
-                        new MemoryStorage(params.originalFileUri().getPath(), ""));
+                        new MemoryStorage(new Path(params.originalFileUri().getPath()).lastSegment(), ""));
 
                 IEditorDescriptor defaultEditor = PlatformUI.getWorkbench().getEditorRegistry()
                         .getDefaultEditor(".java");
@@ -451,37 +449,27 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                     String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
                     annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
                 }
-                makeEditorReadOnly(editor);
+                makeEditorReadOnly(editor, textEditorName);
+
+                textEditorNameMapsPath.put(textEditorName, params.originalFileUri().getPath());
+                textEditorNameMapsEditor.put(textEditorName, editor);
             } catch (CoreException | BadLocationException e) {
                 Activator.getLogger().info("Failed to open file/diff: " + e);
             }
-
         });
     }
 
-    private boolean openExistingEditor(final IWorkbenchPage page, final String path) {
-        IEditorReference[] editorRefs = page.getEditorReferences();
-        for (IEditorReference editorRef : editorRefs) {
-            try {
-                IEditorInput editorInput = editorRef.getEditorInput();
-                if (editorInput instanceof InMemoryInput) {
-                    InMemoryInput memoryInput = (InMemoryInput) editorInput;
-                    if (memoryInput.getStorage().getFullPath().equals(new Path(path))) {
-                        Display.getDefault().asyncExec(() -> {
-                            page.activate(editorRef.getEditor(false));
-                        });
-                        return true;
-                    }
-                }
-            } catch (PartInitException e) {
-                Activator.getLogger().error("Error checking editor input", e);
-            }
+    private boolean openExistingEditor(final IWorkbenchPage page, final String textEditorName, final String path) {
+        if (path.equals(textEditorNameMapsPath.getOrDefault(textEditorName, null))) {
+            Display.getDefault().asyncExec(() -> {
+                page.activate(textEditorNameMapsEditor.get(textEditorName));
+            });
+            return true;
         }
-
         return false;
     }
 
-    private void makeEditorReadOnly(final IEditorPart editor) {
+    private void makeEditorReadOnly(final IEditorPart editor, final String textEditorName) {
         ITextViewer viewer = editor.getAdapter(ITextViewer.class);
         if (viewer != null) {
             VerifyKeyListener verifyKeyListener = event -> event.doit = false;
@@ -538,6 +526,8 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                                 }
                                 // Close the editor
                                 currentPage.closeEditor(editor, false);
+                                textEditorNameMapsEditor.remove(textEditorName);
+                                textEditorNameMapsPath.remove(textEditorName);
                             }
                         }
                     } catch (Exception e) {
@@ -553,24 +543,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             public void pageActivated(final IWorkbenchPage page) {
             }
         };
-
         window.addPageListener(pageListener);
-
-        IWorkbenchPage page = site.getPage();
-        if (page != null) {
-            page.addPartListener(new IPartListener2() {
-                @Override
-                public void partClosed(final IWorkbenchPartReference partRef) {
-                    if (partRef.getPart(false) == editor) {
-                        window.removePageListener(pageListener);
-                        IWorkbenchPage page = partRef.getPage();
-                        if (page != null) {
-                            page.removePartListener(this);
-                        }
-                    }
-                }
-            });
-        }
 
         editor.doSave(new NullProgressMonitor());
     }

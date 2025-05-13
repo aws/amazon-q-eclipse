@@ -57,5 +57,8 @@ public interface AmazonQLspClient extends LanguageClient {
 
     @JsonNotification("aws/didCreateDirectory")
     void didCreateDirectory(Object params);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 49b54e6 (Implement refresh LSP callbacks)
 }

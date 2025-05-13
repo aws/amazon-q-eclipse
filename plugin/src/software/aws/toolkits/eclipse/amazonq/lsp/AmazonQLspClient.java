@@ -42,4 +42,19 @@ public interface AmazonQLspClient extends LanguageClient {
 
     @JsonNotification("aws/chat/sendChatUpdate")
     void sendChatUpdate(Object params);
+
+    @JsonNotification("aws/didCopyFile")
+    void didCopyFile(Object params);
+
+    @JsonNotification("aws/didWriteFile")
+    void didWriteFile(Object params);
+
+    @JsonNotification("aws/didAppendFile")
+    void didAppendFile(Object params);
+
+    @JsonNotification("aws/didRemoveFileOrDirectory")
+    void didRemoveFileOrDirectory(Object params);
+
+    @JsonNotification("aws/didCreateDirectory")
+    void didCreateDirectory(Object params);
 }

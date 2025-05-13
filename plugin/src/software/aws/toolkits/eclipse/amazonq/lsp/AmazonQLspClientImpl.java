@@ -87,6 +87,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.WorkspaceUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 @SuppressWarnings("restriction")
@@ -556,4 +557,32 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         Activator.getEventBroker().post(ChatUIInboundCommand.class, conversationClickCommand);
     }
 
+    @Override
+    public final void didCopyFile(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didWriteFile(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didAppendFile(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didRemoveFileOrDirectory(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didCreateDirectory(final Object params) {
+        refreshProjects();
+    }
+
+    private void refreshProjects() {
+        WorkspaceUtils.refreshAllProjects();
+    }
 }

@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.util.WorkspaceUtils;
 
 public final class ChatMessageProvider {
 
@@ -53,7 +52,6 @@ public final class ChatMessageProvider {
 
     private CompletableFuture<String> handleChatResponse(final String tabId, final CompletableFuture<String> response) {
         return response.whenComplete((result, exception) -> {
-            WorkspaceUtils.refreshAllProjects();
             inflightRequestByTabId.remove(tabId);
         });
     }

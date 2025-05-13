@@ -495,8 +495,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         return;
                     }
                 }
-            } else if (hasAdditionalMessages) {
-                WorkspaceUtils.refreshAllProjects();
             }
 
             boolean insufficientContent = (body == null

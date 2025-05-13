@@ -38,6 +38,7 @@ import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.VerifyKeyListener;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -460,7 +461,9 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     }
 
     private boolean openExistingEditor(final IWorkbenchPage page, final String textEditorName, final String path) {
-        if (path.equals(textEditorNameMapsPath.getOrDefault(textEditorName, null))) {
+        if (path.equals(textEditorNameMapsPath.getOrDefault(textEditorName, null))
+                && textEditorNameMapsEditor.get(textEditorName).getAdapter(Control.class) != null
+                && !textEditorNameMapsEditor.get(textEditorName).getAdapter(Control.class).isDisposed()) {
             Display.getDefault().asyncExec(() -> {
                 page.activate(textEditorNameMapsEditor.get(textEditorName));
             });
@@ -485,6 +488,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 a.setEnabled(false);
             }
         }
+
         IWorkbenchPartSite site = editor.getSite();
         if (site == null) {
             return;
@@ -495,6 +499,35 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             return;
         }
 
+        Runnable cleanupEditor = () -> {
+            Display.getDefault().asyncExec(() -> {
+                try {
+                    if (editor != null && !editor.isDirty()) {
+                        IWorkbenchPage currentPage = editor.getSite().getPage();
+                        if (currentPage != null) {
+                            // Remove annotations
+                            if (editor instanceof ITextEditor) {
+                                ITextEditor textEditor = (ITextEditor) editor;
+                                IDocumentProvider provider = textEditor.getDocumentProvider();
+                                if (provider != null) {
+                                    IAnnotationModel annotationModel = provider
+                                            .getAnnotationModel(editor.getEditorInput());
+                                    if (annotationModel != null) {
+                                        Iterator<?> annotationIterator = annotationModel.getAnnotationIterator();
+                                        while (annotationIterator.hasNext()) {
+                                            annotationModel.removeAnnotation((Annotation) annotationIterator.next());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Activator.getLogger().error("Error during editor cleanup", e);
+                }
+            });
+        };
+
         IPageListener pageListener = new IPageListener() {
             @Override
             public void pageOpened(final IWorkbenchPage page) {
@@ -502,47 +535,15 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
             @Override
             public void pageClosed(final IWorkbenchPage page) {
-                // Clean up the editor when the page closes
-                Display.getDefault().asyncExec(() -> {
-                    try {
-                        if (editor != null && !editor.isDirty()) {
-                            IWorkbenchPage currentPage = editor.getSite().getPage();
-                            if (currentPage != null) {
-                                // Remove any annotations first
-                                if (editor instanceof ITextEditor) {
-                                    ITextEditor textEditor = (ITextEditor) editor;
-                                    IDocumentProvider provider = textEditor.getDocumentProvider();
-                                    if (provider != null) {
-                                        IAnnotationModel annotationModel = provider
-                                                .getAnnotationModel(editor.getEditorInput());
-                                        if (annotationModel != null) {
-                                            Iterator<?> annotationIterator = annotationModel.getAnnotationIterator();
-                                            while (annotationIterator.hasNext()) {
-                                                annotationModel
-                                                        .removeAnnotation((Annotation) annotationIterator.next());
-                                            }
-                                        }
-                                    }
-                                }
-                                // Close the editor
-                                currentPage.closeEditor(editor, false);
-                                textEditorNameMapsEditor.remove(textEditorName);
-                                textEditorNameMapsPath.remove(textEditorName);
-                            }
-                        }
-                    } catch (Exception e) {
-                        Activator.getLogger().error("Error closing editor during page close", e);
-                    } finally {
-                        // Remove the listener from the window
-                        window.removePageListener(this);
-                    }
-                });
+                cleanupEditor.run();
+                window.removePageListener(this);
             }
 
             @Override
             public void pageActivated(final IWorkbenchPage page) {
             }
         };
+
         window.addPageListener(pageListener);
 
         editor.doSave(new NullProgressMonitor());

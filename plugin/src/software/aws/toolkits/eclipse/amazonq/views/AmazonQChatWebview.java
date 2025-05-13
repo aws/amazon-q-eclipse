@@ -60,6 +60,8 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
             webViewAssetProvider.injectAssets(browser);
         }
 
+        browser.execute("document.body.style.zoom = '150%';");
+
         super.setupView(parent);
 
         parent.addDisposeListener(e -> this.preserveBrowser());

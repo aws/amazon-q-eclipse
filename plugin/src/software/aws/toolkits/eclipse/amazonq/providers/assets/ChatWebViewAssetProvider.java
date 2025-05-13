@@ -136,10 +136,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     private String generateCss() {
         return """
                 <style>
-                    :root {
-                        --mask-position: center/100% no-repeat;
-                    }
-
                     body,
                     html {
                         background-color: var(--mynah-color-bg);
@@ -152,16 +148,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     }
 
                     [class*="mynah-ui-icon-"] {
-                        contain: paint;
-                        -webkit-mask-repeat: no-repeat;
-                        mask-position: var(--mask-position);
-                        -webkit-mask-position: var(--mask-position);
                         transform: translateZ(0);
-                        -webkit-backface-visibility: hidden;
-                        backface-visibility: hidden;
-                        transition: none !important;
                     }
-
                 </style>
                 """;
     }
@@ -176,6 +164,20 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     const init = () => {
                         waitForFunction('ideCommand')
                             .then(() => {
+                                function refreshIcons() {
+                                    document.querySelectorAll('[class*="mynah-ui-icon-"]').forEach(icon => {
+                                        icon.style.transform = 'none';
+                                        void icon.offsetHeight;
+                                        icon.style.transform = 'translateZ(0)';
+                                    });
+                                }
+
+                                document.addEventListener('visibilitychange', () => {
+                                    if (document.visibilityState === 'visible') {
+                                        refreshIcons();
+                                    }
+                                });
+
                                 const mynahUI = amazonQChat.createChat({
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));

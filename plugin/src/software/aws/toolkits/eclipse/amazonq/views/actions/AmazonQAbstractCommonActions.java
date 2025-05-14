@@ -30,6 +30,7 @@ public abstract class AmazonQAbstractCommonActions {
         private final ViewLogsAction viewLogsAction;
         private final ChangeProfileDialogContributionItem changeProfileDialogContributionItem;
         private final ReportAnIssueAction reportAnIssueAction;
+        private final OpenPreferencesAction openPreferencesAction;
 
         Actions() {
             signoutAction = new SignoutAction();
@@ -43,6 +44,7 @@ public abstract class AmazonQAbstractCommonActions {
             viewLogsAction = new ViewLogsAction();
             reportAnIssueAction = new ReportAnIssueAction();
             changeProfileDialogContributionItem = new ChangeProfileDialogContributionItem();
+            openPreferencesAction = new OpenPreferencesAction();
         }
 
         public OpenQChatAction getOpenQChatAction() {
@@ -111,6 +113,7 @@ public abstract class AmazonQAbstractCommonActions {
             }
         });
         menuManager.add(new Separator());
+        menuManager.add(action.openPreferencesAction);
         menuManager.add(feedbackSubMenu);
         menuManager.add(helpSubMenu);
         menuManager.add(new Separator());

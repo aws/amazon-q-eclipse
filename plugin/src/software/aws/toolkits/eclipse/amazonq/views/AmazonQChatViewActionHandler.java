@@ -32,6 +32,7 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpClickedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
@@ -136,15 +137,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                 Activator.getLogger().info("Got open tab response for request ID: " + parsedCommand.getRequestId());
                 break;
             case OPEN_SETTINGS:
-                Display.getDefault().asyncExec(() -> {
-                    PreferenceDialog dialog = PreferencesUtil.createPreferenceDialogOn(
-                            Display.getDefault().getActiveShell(),
-                            "software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage",
-                            new String[] {"software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"},
-                            null
-                        );
-                    dialog.open();
-                });
+                AmazonQPreferencePage.openPreferencePane();
                 break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());

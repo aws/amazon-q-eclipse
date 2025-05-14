@@ -107,7 +107,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
             break;
         case ON_SELECT_PROFILE:
             QDeveloperProfile developerProfile = JSON_HANDLER.convertObject(params, QDeveloperProfile.class);
-            QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile);
+            QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true);
         default:
             Activator.getLogger()
                     .error("Unexpected command received from Amazon Q Login: " + parsedCommand.getCommand());

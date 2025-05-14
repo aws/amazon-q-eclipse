@@ -379,7 +379,7 @@ public final class ChangeProfileDialog extends Dialog {
         BusyIndicator.showWhile(Display.getDefault(), () -> {
             if (selectedRadioButton != null) {
                 QDeveloperProfileUtil.getInstance()
-                        .setDeveloperProfile((QDeveloperProfile) selectedRadioButton.getData())
+                        .setDeveloperProfile((QDeveloperProfile) selectedRadioButton.getData(), true)
                         .join();
             }
         });

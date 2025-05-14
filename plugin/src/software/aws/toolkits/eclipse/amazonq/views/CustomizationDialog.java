@@ -179,7 +179,7 @@ public final class CustomizationDialog extends Dialog {
     private void updateComboOnUIThread(final List<Customization> customizations) {
         combo.removeAll();
         int customizationsCount = 0;
-        int selectedCustomizationIndex = -1;
+        int selectedCustomizationIndex = 0;
         Customization currentCustomization = Activator.getPluginStore()
                 .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
         for (int index = 0; index < customizations.size(); index++) {
@@ -318,7 +318,8 @@ public final class CustomizationDialog extends Dialog {
         } else if (Objects.nonNull(this.getSelectedCustomization())
                 && StringUtils.isNotBlank(this.getSelectedCustomization().getName())) {
             try {
-                QDeveloperProfileUtil.getInstance().setDeveloperProfile(this.getSelectedCustomization().getProfile())
+                QDeveloperProfileUtil.getInstance()
+                        .setDeveloperProfile(this.getSelectedCustomization().getProfile(), false)
                         .get();
             } catch (InterruptedException | ExecutionException e) {
                 Activator.getLogger().info("Failed to update profile: " + e);

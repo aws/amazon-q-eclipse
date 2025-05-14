@@ -83,7 +83,7 @@ public final class QDeveloperProfileUtil {
 
     public void initialize() {
         if (savedDeveloperProfile != null) {
-            setDeveloperProfile(savedDeveloperProfile);
+            setDeveloperProfile(savedDeveloperProfile, true);
         }
     }
 
@@ -164,7 +164,7 @@ public final class QDeveloperProfileUtil {
     private boolean handleSingleOrNoProfile(final List<QDeveloperProfile> profiles,
             final boolean tryApplyCachedProfile) {
         if (!profiles.isEmpty() && tryApplyCachedProfile) {
-            setDeveloperProfile(profiles.get(0));
+            setDeveloperProfile(profiles.get(0), true);
             return true;
         }
         return false;
@@ -180,7 +180,7 @@ public final class QDeveloperProfileUtil {
                     });
 
             if (isProfileSelected && tryApplyCachedProfile) {
-                setDeveloperProfile(selectedDeveloperProfile);
+                setDeveloperProfile(selectedDeveloperProfile, true);
             }
         }
         return isProfileSelected;
@@ -204,7 +204,7 @@ public final class QDeveloperProfileUtil {
         return queryForDeveloperProfiles(false);
     }
 
-    public CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile) {
+    public CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile, final boolean updateCustomization) {
         if (developerProfile == null || (selectedDeveloperProfile != null
                 && selectedDeveloperProfile.getArn().equals(developerProfile.getArn()))) {
             return CompletableFuture.completedFuture(null);
@@ -228,10 +228,10 @@ public final class QDeveloperProfileUtil {
                     Customization currentCustomization = Activator.getPluginStore()
                             .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
 
-                    if (currentCustomization != null
+                    if (updateCustomization && currentCustomization != null
                             && !selectedDeveloperProfile.getArn().equals(currentCustomization.getProfile().getArn())) {
                         Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-                        Display.getCurrent().asyncExec(
+                        Display.getDefault().asyncExec(
                                 () -> CustomizationUtil.showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
                     }
                 })

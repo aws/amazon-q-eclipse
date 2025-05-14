@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
@@ -31,12 +30,12 @@ import org.eclipse.swt.widgets.Shell;
 
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
+import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationDialog extends Dialog {
@@ -179,13 +178,24 @@ public final class CustomizationDialog extends Dialog {
 
     private void updateComboOnUIThread(final List<Customization> customizations) {
         combo.removeAll();
-        int defaultSelectedDropdownIndex = -1;
+        int customizationsCount = 0;
+        int selectedCustomizationIndex = -1;
+        Customization currentCustomization = Activator.getPluginStore()
+                .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+
         for (int index = 0; index < customizations.size(); index++) {
+            if (customizations.get(index).getIsDefault()) {
+                continue;
+            }
+            if (currentCustomization != null
+                    && customizations.get(index).getArn().equals(currentCustomization.getArn())) {
+                selectedCustomizationIndex = customizationsCount;
+            }
             addFormattedOption(combo, customizations.get(index).getName(), customizations.get(index).getDescription());
-            combo.setData(String.format("%s", index), customizations.get(index));
-            defaultSelectedDropdownIndex = index;
+            combo.setData(String.format("%s", customizationsCount), customizations.get(index));
+            ++customizationsCount;
         }
-        combo.select(defaultSelectedDropdownIndex);
+        combo.select(selectedCustomizationIndex);
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT) || customizations.isEmpty()) {
             combo.setEnabled(false);
         } else {
@@ -304,23 +314,23 @@ public final class CustomizationDialog extends Dialog {
     protected void okPressed() {
         if (this.responseSelection.equals(ResponseSelection.AMAZON_Q_FOUNDATION_DEFAULT)) {
             Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
-            Display.getCurrent().asyncExec(() -> showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
+            Display.getCurrent()
+                    .asyncExec(() -> CustomizationUtil.showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
         } else if (Objects.nonNull(this.getSelectedCustomization())
                 && StringUtils.isNotBlank(this.getSelectedCustomization().getName())) {
+            try {
+                QDeveloperProfileUtil.getInstance().setDeveloperProfile(this.getSelectedCustomization().getProfile())
+                        .get();
+            } catch (InterruptedException | ExecutionException e) {
+                Activator.getLogger().info("Failed to update profile: " + e);
+            }
             Activator.getPluginStore().putObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY,
                     this.getSelectedCustomization());
             ThreadingUtils.executeAsyncTask(() -> CustomizationUtil.triggerChangeConfigurationNotification());
-            Display.getCurrent().asyncExec(() -> showNotification(
+            Display.getCurrent().asyncExec(() -> CustomizationUtil.showNotification(
                     String.format("%s customization", this.getSelectedCustomization().getName())));
         }
         super.okPressed();
-    }
-
-    private void showNotification(final String customizationName) {
-        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
-                Constants.IDE_CUSTOMIZATION_NOTIFICATION_TITLE,
-                String.format(Constants.IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE, customizationName));
-        notification.open();
     }
 
     private Font createFont(final int size, final int style) {

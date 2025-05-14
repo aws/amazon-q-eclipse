@@ -52,6 +52,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         extendedClientInfoOptions.put("version", metadata.getIdeVersion());
         extendedClientInfoOptions.put("name", metadata.getIdeName());
         qOptions.put("developerProfiles", true);
+        qOptions.put("customizationsWithMetadata", true);
         awsClientCapabilities.put("q", qOptions);
         awsInitOptions.put("awsClientCapabilities", awsClientCapabilities);
         awsInitOptions.put("clientInfo", extendedClientInfoOptions);
@@ -76,6 +77,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 awsServerCapabiltiesProvider.setAwsServerCapabilties(result.getAwsServerCapabilities());
                 Activator.getLspProvider().setAmazonQServer(launcher.getRemoteProxy());
             }
+            Activator.getLogger().info("message: " + message.toString());
             consumer.consume(message);
         });
     }

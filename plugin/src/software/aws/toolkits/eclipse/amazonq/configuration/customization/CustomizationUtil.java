@@ -10,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
+import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
+import org.eclipse.swt.widgets.Display;
 
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
@@ -17,6 +19,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServe
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.Constants;
+import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationUtil {
@@ -57,4 +61,12 @@ public final class CustomizationUtil {
                     throw new AmazonQPluginException(throwable);
                });
     }
+
+    public static void showNotification(final String customizationName) {
+        AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
+                Constants.IDE_CUSTOMIZATION_NOTIFICATION_TITLE,
+                String.format(Constants.IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE, customizationName));
+        notification.open();
+    }
+
 }

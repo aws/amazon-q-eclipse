@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.broker.events.QDeveloperProfileState;
+import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
@@ -30,6 +31,7 @@ import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 import software.aws.toolkits.eclipse.amazonq.views.ViewConstants;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.views.model.QDeveloperProfile;
 import software.aws.toolkits.eclipse.amazonq.views.model.UpdateConfigurationParams;
 
@@ -222,6 +224,16 @@ public final class QDeveloperProfileUtil {
                         profileSelectionTask.complete(null);
                     }
                     setProfiles(null);
+
+                    Customization currentCustomization = Activator.getPluginStore()
+                            .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+
+                    if (currentCustomization != null
+                            && selectedDeveloperProfile.getArn().equals(currentCustomization.getProfile().getArn())) {
+                        Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+                        Display.getCurrent().asyncExec(
+                                () -> CustomizationUtil.showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
+                    }
                 })
                 .exceptionally(throwable -> {
                     Activator.getLogger().error("Error occurred while setting Q Developer Profile: ", throwable);

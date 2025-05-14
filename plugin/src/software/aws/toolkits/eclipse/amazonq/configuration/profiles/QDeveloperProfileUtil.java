@@ -229,7 +229,7 @@ public final class QDeveloperProfileUtil {
                             .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
 
                     if (currentCustomization != null
-                            && selectedDeveloperProfile.getArn().equals(currentCustomization.getProfile().getArn())) {
+                            && !selectedDeveloperProfile.getArn().equals(currentCustomization.getProfile().getArn())) {
                         Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
                         Display.getCurrent().asyncExec(
                                 () -> CustomizationUtil.showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));

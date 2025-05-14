@@ -182,7 +182,6 @@ public final class CustomizationDialog extends Dialog {
         int selectedCustomizationIndex = -1;
         Customization currentCustomization = Activator.getPluginStore()
                 .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
-
         for (int index = 0; index < customizations.size(); index++) {
             if (customizations.get(index).getIsDefault()) {
                 continue;

@@ -41,28 +41,17 @@ class DefaultAuthStateManagerTest {
     private DefaultAuthStateManager authStateManager;
     private LoginParams loginParams;
     private AutoCloseable closeable;
-    
-    // Constants for test values
-    private static final String TEST_URL = "https://example.com";
-    private static final String TEST_TOKEN_ID = "testToken";
-    private static final String SSO_TOKEN_ID = "ssoTokenId";
 
     @BeforeEach
     void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
+
         assertNotNull(pluginStore, "PluginStore mock should not be null");
-        
-        // Initialize manager
+
         authStateManager = new DefaultAuthStateManager(pluginStore);
-        
-        // Setup common test data
-        setupLoginParams();
-    }
-    
-    private void setupLoginParams() {
         loginParams = new LoginParams();
         LoginIdcParams idcParams = new LoginIdcParams();
-        idcParams.setUrl(TEST_URL);
+        idcParams.setUrl("https://example.com");
         loginParams.setLoginIdcParams(idcParams);
     }
 

@@ -3,6 +3,24 @@
 
 package software.aws.toolkits.eclipse.amazonq.customization;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import org.eclipse.lsp4j.DidChangeConfigurationParams;
+import org.eclipse.lsp4j.services.WorkspaceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -16,24 +34,6 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServe
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
-import org.eclipse.lsp4j.DidChangeConfigurationParams;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import org.eclipse.lsp4j.services.WorkspaceService;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 
 public final class CustomizationUtilTest {
@@ -48,7 +48,7 @@ public final class CustomizationUtilTest {
 
     private final class ConfigurationResponse {
         private List<Customization> customizations = Arrays.asList(
-                new Customization("arn", "name", "description")
+                new Customization("arn", "name", "description", true, null)
         );
 
         public List<Customization> getCustomizations() {
@@ -96,9 +96,9 @@ public final class CustomizationUtilTest {
 
     @Test
     void testListCustomizations() {
-        Customization validCustomization = new Customization("arn", "name", "description");
-        Customization invalidCustomization = new Customization("", "", "");
-        Customization otherValidCustomization = new Customization("arn2", "name2", "description2");
+        Customization validCustomization = new Customization("arn", "name", "description", true, null);
+        Customization invalidCustomization = new Customization("", "", "", true, null);
+        Customization otherValidCustomization = new Customization("arn2", "name2", "description2", true, null);
 
         LspServerConfigurations testConfigurationResponse = new LspServerConfigurations(List.of(validCustomization,
                 invalidCustomization, otherValidCustomization));

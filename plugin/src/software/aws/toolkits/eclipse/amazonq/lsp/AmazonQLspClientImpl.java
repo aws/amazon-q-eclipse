@@ -207,20 +207,13 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
         return CompletableFuture.supplyAsync(() -> {
             final boolean[] success = new boolean[1];
-                if (isLocalFile(uri)) {
+                if (params.getExternal() != null && params.getExternal()) {
                     Display.getDefault().syncExec(() -> {
                         try {
-                            if (uri.endsWith("default.md")) {
-                                success[0] = false;
-                                Activator.getLogger().warn("Received request to open default.md - ignoring");
-                                return;
-                            }
-                            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-                            IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
-                            IDE.openEditorOnFileStore(page, fileStore);
+                            PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));
                             success[0] = true;
                         } catch (Exception e) {
-                            Activator.getLogger().error("Error in UI thread while opening URI: " + uri, e);
+                            Activator.getLogger().error("Error in UI thread while opening external URI: " + uri, e);
                             success[0] = false;
                         }
                     });
@@ -228,10 +221,12 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 } else {
                     Display.getDefault().syncExec(() -> {
                         try {
-                            PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));
+                            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                            IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
+                            IDE.openEditorOnFileStore(page, fileStore);
                             success[0] = true;
                         } catch (Exception e) {
-                            Activator.getLogger().error("Error in UI thread while opening external URI: " + uri, e);
+                            Activator.getLogger().error("Error in UI thread while opening URI: " + uri, e);
                             success[0] = false;
                         }
                     });
@@ -291,21 +286,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             }
             return response.result();
         });
-    }
-
-    private boolean isLocalFile(final String uri) {
-        try {
-            URI parsedUri = new URI(uri);
-            String scheme = parsedUri.getScheme();
-
-            if (scheme == null || scheme.equals("file")) {
-                return true;
-            }
-
-            return uri.startsWith("file:");
-        } catch (URISyntaxException e) {
-            return false;
-        }
     }
 
     @Override

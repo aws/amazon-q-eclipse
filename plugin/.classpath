@@ -1,36 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="target/dependency/"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
-			<attribute name="module" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="src" output="target/classes" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="target/classes" path="target/generated-sources">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="target/dependency/annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/apache-client.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/auth.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/aws-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/aws-json-protocol.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/checksums-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/checksums.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/cognitoidentity.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/commons-codec.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/delight-rhino-sandbox.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/endpoints-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/http-auth-aws-eventstream.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/http-auth-aws.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/http-auth-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/http-auth.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/http-client-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/httpclient.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/httpcore.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/identity-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/jackson-annotations.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/jackson-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/jackson-databind.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/jakarta.inject-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/java-diff-utils.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/jna-platform.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/jna.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/json-utils.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/maven-artifact.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/metrics-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/netty-nio-client.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/nimbus-jose-jwt.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/profiles.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/protocol-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/proxy-vole.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/reactive-streams.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/regions.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/retries-spi.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/retries.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/rhino-runtime.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/rxjava.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/sdk-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/slf4j-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/third-party-jackson-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="target/dependency/utils.jar"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="optional" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="src" output="target/test-classes" path="tst">
-		<attributes>
-			<attribute name="test" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry excluding="**" kind="src" output="target/test-classes" path="src/test/resources">
-		<attributes>
-			<attribute name="test" value="true"/>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="optional" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry excluding="main/resources/|test/resources/" kind="src" path="src"/>
-	<classpathentry kind="src" path="target/generated-sources"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

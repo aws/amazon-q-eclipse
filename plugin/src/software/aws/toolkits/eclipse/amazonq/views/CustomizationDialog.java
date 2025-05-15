@@ -171,8 +171,9 @@ public final class CustomizationDialog extends Dialog {
         return customizations;
     }
 
-    private static void addFormattedOption(final Combo combo, final String name, final String description) {
-        String formattedText = name + " (" + description + ")";
+    private static void addFormattedOption(final Combo combo, final String name, final String profileName,
+            final String description) {
+        String formattedText = name + " (" + profileName + ") - " + description;
         combo.add(formattedText);
     }
 
@@ -190,7 +191,8 @@ public final class CustomizationDialog extends Dialog {
                     && customizations.get(index).getArn().equals(currentCustomization.getArn())) {
                 selectedCustomizationIndex = customizationsCount;
             }
-            addFormattedOption(combo, customizations.get(index).getName(), customizations.get(index).getDescription());
+            addFormattedOption(combo, customizations.get(index).getName(),
+                    customizations.get(index).getProfile().getName(), customizations.get(index).getDescription());
             combo.setData(String.format("%s", customizationsCount), customizations.get(index));
             ++customizationsCount;
         }

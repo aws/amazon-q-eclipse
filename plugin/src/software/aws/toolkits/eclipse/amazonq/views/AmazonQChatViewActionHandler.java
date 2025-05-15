@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.swt.browser.Browser;
@@ -17,7 +16,6 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

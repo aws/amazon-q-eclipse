@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -61,7 +62,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
-        return super.wrapMessageConsumer((Message message) -> {
+        return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 ClientMetadata metadata = PluginClientMetadata.getInstance();

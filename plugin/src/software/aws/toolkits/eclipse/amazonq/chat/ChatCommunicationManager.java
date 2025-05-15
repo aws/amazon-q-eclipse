@@ -41,7 +41,6 @@ import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ProgressNotificationUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
-import software.aws.toolkits.eclipse.amazonq.util.WorkspaceUtils;
 import software.aws.toolkits.eclipse.amazonq.views.ChatUiRequestListener;
 import software.aws.toolkits.eclipse.amazonq.views.model.ChatCodeReference;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -109,6 +108,10 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     }
 
     public void sendMessageToChatServer(final Command command, final ChatMessage message) {
+        if (!isQueueProcessorRunning || (queueProcessorThread != null && !queueProcessorThread.isAlive())) {
+            isQueueProcessorRunning = false;
+            startCommandQueueProcessor();
+        }
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {
             try {
                 switch (command) {
@@ -172,6 +175,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     amazonQLspServer.endChat(message.getData());
                     break;
                 case CHAT_INSERT_TO_CURSOR_POSITION:
+                    amazonQLspServer.insertToCursorPosition(message.getData());
                     amazonQLspServer.sendTelemetryEvent(message.getData());
                     break;
                 case CHAT_FEEDBACK:
@@ -306,10 +310,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         registerPartialResultToken(partialResultToken);
 
         return action.apply(partialResultToken).handle((encryptedChatResult, exception) -> {
-            // The mapping entry no longer needs to be maintained once the final result is
-            // retrieved.
-            ChatMessage newMessage = new ChatMessage(encryptedChatResult);
-
             if (exception != null) {
                 // handle cancellations
                 if (exception instanceof CancellationException
@@ -339,38 +339,37 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 finalResultProcessed.remove(partialResultToken);
                 lastProcessedTimeMap.remove(tabId);
                 return null;
-            } else {
-                removePartialChatMessage(partialResultToken);
-                try {
-                    finalResultProcessed.put(partialResultToken, true);
-                    String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
-                    Object codeReferences = newMessage.getValueForKey("codeReference");
-                    if (codeReferences != null) {
-                        ReferenceTrackerInformation[] referenceTrackerInformation = ObjectMapperFactory.getInstance()
-                                .convertValue(codeReferences,
-                                ReferenceTrackerInformation[].class);
-                        if (referenceTrackerInformation != null && referenceTrackerInformation.length >= 1) {
-                            ChatCodeReference chatCodeReference = new ChatCodeReference(referenceTrackerInformation);
-                            Activator.getCodeReferenceLoggingService().log(chatCodeReference);
-                        }
-                    }
+            }
 
-                    // show chat response in Chat UI
-                    String command = (inlineChatTabId.equals(tabId))
-                            ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
-                            : ChatUIInboundCommandName.ChatPrompt.getValue();
-                    ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(command, tabId,
-                            newMessage.getData(), false, null);
-                    sendMessageToChatUI(chatUIInboundCommand);
-                    return newMessage.getData();
-                } catch (Exception e) {
-                    Activator.getLogger()
-                            .error("An error occurred while processing chat response received: " + e.getMessage());
-                    sendErrorToUi(tabId, e);
-                    partialResultLocks.remove(partialResultToken);
-                    finalResultProcessed.remove(partialResultToken);
-                    return null;
+            // process successful responses
+            removePartialChatMessage(partialResultToken);
+            try {
+                finalResultProcessed.put(partialResultToken, true);
+                String serializedData = lspEncryptionManager.decrypt(encryptedChatResult);
+                Map<String, Object> result = jsonHandler.deserialize(serializedData, Map.class);
+
+                if (result.containsKey("codeReference")) {
+                    ReferenceTrackerInformation[] codeReferences = ObjectMapperFactory.getInstance()
+                            .convertValue(result.get("codeReference"), ReferenceTrackerInformation[].class);
+                    if (codeReferences != null && codeReferences.length >= 1) {
+                        Activator.getCodeReferenceLoggingService()
+                                .log(new ChatCodeReference(codeReferences));
+                    }
                 }
+
+                String command = inlineChatTabId.equals(tabId)
+                        ? ChatUIInboundCommandName.InlineChatPrompt.getValue()
+                        : ChatUIInboundCommandName.ChatPrompt.getValue();
+
+                sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, result, false, null));
+                return result;
+            } catch (Exception e) {
+                Activator.getLogger()
+                        .error("An error occurred while processing chat response: " + e.getMessage());
+                sendErrorToUi(tabId, e);
+                partialResultLocks.remove(partialResultToken);
+                finalResultProcessed.remove(partialResultToken);
+                return null;
             }
         });
     }

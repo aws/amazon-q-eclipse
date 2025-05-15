@@ -15,8 +15,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Message;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
 import com.google.gson.ToNumberPolicy;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
@@ -36,18 +34,6 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         super.configureGson(builder -> {
            builder.registerTypeAdapterFactory(new QLspTypeAdapterFactory());
            builder.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE);
-           builder.setExclusionStrategies(new ExclusionStrategy() {
-                @Override
-                public boolean shouldSkipField(final FieldAttributes field) {
-                    String packageName = field.getDeclaringClass().getPackage().getName();
-                    return packageName.startsWith("java.");
-                }
-
-                @Override
-                public boolean shouldSkipClass(final Class<?> clazz) {
-                    return false;
-                }
-            });
         });
         launcher = super.create();
         return launcher;

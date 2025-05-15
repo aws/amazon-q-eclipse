@@ -227,11 +227,9 @@ public final class ChangeProfileDialog extends Dialog {
         stackComposite.layout(true, true);
 
         Label scrollableLabel = new Label(container, SWT.NONE);
-        scrollableLabel.setText("\u2304"); // down arrow head
         GridData scrollableLabelData = new GridData(SWT.CENTER, SWT.CENTER, false, false);
         scrollableLabelData.verticalIndent = 0;
         scrollableLabel.setLayoutData(scrollableLabelData);
-        scrollableLabel.setVisible(false);
 
         scrollableLabelFont = createFont(16, SWT.BOLD);
         scrollableLabel.setFont(scrollableLabelFont);
@@ -244,7 +242,12 @@ public final class ChangeProfileDialog extends Dialog {
                 int thumbSize = scrolledComposite.getVerticalBar().getThumb();
 
                 boolean isAtBottom = (scrollPosition + thumbSize) >= maxScroll;
-                scrollableLabel.setVisible(!isAtBottom);
+
+                if (isAtBottom) {
+                    scrollableLabel.setText("\u23AF");
+                } else {
+                    scrollableLabel.setText("\u2304"); // down arrow head
+                }
 
                 radioButtonComposite.layout(true, true);
                 scrolledComposite.setMinSize(radioButtonComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT));

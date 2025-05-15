@@ -86,7 +86,6 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                     cursorState.ifPresent(state -> message.addValueForKey("cursorState", Arrays.asList(state)));
                 });
                 chatCommunicationManager.sendMessageToChatServer(command, message);
-<<<<<<< HEAD
                 break;
             case TELEMETRY_EVENT:
                 // telemetry notification for insert to cursor is modified and forwarded to
@@ -95,16 +94,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
                     break;
                 }
                 chatCommunicationManager.sendMessageToChatServer(command, message);
-=======
->>>>>>> 9ae6439 (remove layers of abstraction from chat event flow and simplify object modeling)
                 break;
-//            case TELEMETRY_EVENT:
-//                // telemetry notification for insert to cursor is modified and forwarded to server in the InsertToCursorPosition handler
-//                if (isInsertToCursorEvent(message)) {
-//                    break;
-//                }
-//                chatCommunicationManager.sendMessageToChatServer(command, message);
-//                break;
             case CHAT_COPY_TO_CLIPBOARD:
                 handleCopyToClipboard(message.getValueAsString("code"));
                 break;

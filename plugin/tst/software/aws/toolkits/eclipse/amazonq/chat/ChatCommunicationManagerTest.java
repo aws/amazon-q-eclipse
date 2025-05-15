@@ -425,18 +425,17 @@ public final class ChatCommunicationManagerTest {
           CompletableFuture<AmazonQLspServer> serverFuture = CompletableFuture.completedFuture(amazonQLspServer);
           when(activatorStaticMockExtension.getMock(LspProvider.class).getAmazonQServer()).thenReturn(serverFuture);
 
-          CountDownLatch latch = new CountDownLatch(1);
           ChatMessage message = new ChatMessage(new Object());
 
-          doAnswer(invocation -> {
-              latch.countDown();
-              return null;
-          }).when(amazonQLspServer).sendTelemetryEvent(message);
+          try (MockedStatic<Display> displayMock = mockStatic(Display.class)) {
+              displayMock.when(Display::getDefault).thenReturn(display);
 
-          chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, message);
+              chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, message);
 
-          assertTrue(latch.await(2, TimeUnit.SECONDS), "Async operation did not complete in time");
-          verify(amazonQLspServer).sendTelemetryEvent(message);
+              Thread.sleep(1000);
+          }
+
+          verify(amazonQLspServer).sendTelemetryEvent(message.getData());
       }
   }
 
@@ -698,7 +697,6 @@ public final class ChatCommunicationManagerTest {
               chatCommunicationManager.handlePartialResultProgressNotification(progressParams);
           }
       }
-
   }
 
 }

@@ -17,7 +17,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -38,7 +37,6 @@ import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.VerifyKeyListener;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -94,8 +92,6 @@ import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
 
     private ThemeDetector themeDetector = new ThemeDetector();
-    private Map<String, IEditorPart> textEditorNameMapsEditor = new ConcurrentHashMap<>();
-    private Map<String, String> textEditorNameMapsPath = new ConcurrentHashMap<>();
 
     @Override
     public final CompletableFuture<ConnectionMetadata> getConnectionMetadata() {
@@ -352,11 +348,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         Display.getDefault().asyncExec(() -> {
             try {
                 IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-                String textEditorName = new Path(params.originalFileUri().getPath()).lastSegment() + " (preview)";
-                if (openExistingEditor(page, textEditorName, params.originalFileUri().getPath())) {
-                    return;
-                }
-
                 IStorageEditorInput input = new InMemoryInput(
                         new MemoryStorage(new Path(params.originalFileUri().getPath()).lastSegment(), ""));
 
@@ -431,29 +422,14 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                     String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
                     annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
                 }
-                makeEditorReadOnly(editor, textEditorName);
-
-                textEditorNameMapsPath.put(textEditorName, params.originalFileUri().getPath());
-                textEditorNameMapsEditor.put(textEditorName, editor);
+                makeEditorReadOnly(editor);
             } catch (CoreException | BadLocationException e) {
                 Activator.getLogger().info("Failed to open file/diff: " + e);
             }
         });
     }
 
-    private boolean openExistingEditor(final IWorkbenchPage page, final String textEditorName, final String path) {
-        if (path.equals(textEditorNameMapsPath.getOrDefault(textEditorName, null))
-                && textEditorNameMapsEditor.get(textEditorName).getAdapter(Control.class) != null
-                && !textEditorNameMapsEditor.get(textEditorName).getAdapter(Control.class).isDisposed()) {
-            Display.getDefault().asyncExec(() -> {
-                page.activate(textEditorNameMapsEditor.get(textEditorName));
-            });
-            return true;
-        }
-        return false;
-    }
-
-    private void makeEditorReadOnly(final IEditorPart editor, final String textEditorName) {
+    private void makeEditorReadOnly(final IEditorPart editor) {
         ITextViewer viewer = editor.getAdapter(ITextViewer.class);
         if (viewer != null) {
             VerifyKeyListener verifyKeyListener = event -> event.doit = false;

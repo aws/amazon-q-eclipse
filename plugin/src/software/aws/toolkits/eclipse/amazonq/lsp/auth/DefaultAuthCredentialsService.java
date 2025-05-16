@@ -6,8 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
-
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -25,7 +23,7 @@ public final class DefaultAuthCredentialsService implements AuthCredentialsServi
     }
 
     @Override
-    public CompletableFuture<ResponseMessage> updateTokenCredentials(final UpdateCredentialsPayload params) {
+    public CompletableFuture<Void> updateTokenCredentials(final UpdateCredentialsPayload params) {
         return lspProvider.getAmazonQServer()
                 .thenCompose(server -> server.updateTokenCredentials(params))
                 .exceptionally(throwable -> {

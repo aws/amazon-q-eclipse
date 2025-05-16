@@ -3,11 +3,12 @@
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.concurrent.CompletableFuture;
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
+
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;
 
+import io.reactivex.rxjava3.annotations.Nullable;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
@@ -25,6 +26,8 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LogInlineCompletionSessionResultsParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
+import software.aws.toolkits.eclipse.amazonq.views.model.Configuration;
+import software.aws.toolkits.eclipse.amazonq.views.model.UpdateConfigurationParams;
 
 public interface AmazonQLspServer extends LanguageServer {
 
@@ -65,13 +68,17 @@ public interface AmazonQLspServer extends LanguageServer {
     void sendFeedback(FeedbackParams params);
 
     @JsonRequest("aws/credentials/token/update")
-    CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload payload);
+    CompletableFuture<Void> updateTokenCredentials(UpdateCredentialsPayload payload);
 
     @JsonNotification("aws/credentials/token/delete")
     void deleteTokenCredentials();
 
     @JsonRequest("aws/getConfigurationFromServer")
-    CompletableFuture<LspServerConfigurations> getConfigurationFromServer(GetConfigurationFromServerParams params);
+    <T extends Configuration> CompletableFuture<LspServerConfigurations<T>> getConfigurationFromServer(
+            GetConfigurationFromServerParams params);
+
+    @JsonRequest("aws/updateConfiguration")
+    CompletableFuture<Void> updateConfiguration(@Nullable UpdateConfigurationParams params);
 
     @JsonNotification("telemetry/event")
     void sendTelemetryEvent(Object params);

@@ -12,11 +12,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 
@@ -39,12 +39,14 @@ public class DefaultAuthCredentialsServiceTest {
     @Test
     void updateTokenCredentialsUnencryptedSuccess() {
         String accessToken = "accessToken";
+        ConnectionMetadata connectionMetadata = mock(ConnectionMetadata.class);
         boolean isEncrypted = false;
 
         when(mockedAmazonQServer.updateTokenCredentials(any()))
-            .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+                .thenReturn(CompletableFuture.completedFuture(null));
 
-        authCredentialsService.updateTokenCredentials(new UpdateCredentialsPayload(accessToken, isEncrypted));
+        authCredentialsService
+                .updateTokenCredentials(new UpdateCredentialsPayload(accessToken, connectionMetadata, isEncrypted));
 
         verify(mockedAmazonQServer).updateTokenCredentials(any());
         verifyNoMoreInteractions(mockedAmazonQServer);
@@ -53,11 +55,13 @@ public class DefaultAuthCredentialsServiceTest {
     @Test
     void updateTokenCredentialsEncryptedSuccess() {
         boolean isEncrypted = true;
+        ConnectionMetadata connectionMetadata = mock(ConnectionMetadata.class);
 
         when(mockedAmazonQServer.updateTokenCredentials(any()))
-            .thenReturn(CompletableFuture.completedFuture(new ResponseMessage()));
+                .thenReturn(CompletableFuture.completedFuture(null));
 
-        authCredentialsService.updateTokenCredentials(new UpdateCredentialsPayload("encryptedToken", isEncrypted));
+        authCredentialsService.updateTokenCredentials(
+                new UpdateCredentialsPayload("encryptedToken", connectionMetadata, isEncrypted));
 
         verify(mockedAmazonQServer).updateTokenCredentials(any());
         verifyNoMoreInteractions(mockedAmazonQServer);

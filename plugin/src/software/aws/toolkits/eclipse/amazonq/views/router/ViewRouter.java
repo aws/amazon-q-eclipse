@@ -10,6 +10,7 @@ import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQViewType;
 import software.aws.toolkits.eclipse.amazonq.broker.events.BrowserCompatibilityState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
+import software.aws.toolkits.eclipse.amazonq.broker.events.QDeveloperProfileState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ToolkitLoginWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ViewRouterPluginState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
@@ -28,6 +29,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
 
     private AmazonQViewType activeView;
+    private boolean publishUnconditionally = false;
 
     /**
      * Constructs a ViewRouter with the specified builder configuration. Initializes
@@ -62,6 +64,11 @@ public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
             builder.toolkitLoginWebViewAssetStateObservable = Activator.getEventBroker()
                     .ofObservable(ToolkitLoginWebViewAssetState.class);
         }
+
+        if (builder.qDeveloperProfileStateObservable == null) {
+            builder.qDeveloperProfileStateObservable = Activator.getEventBroker()
+                    .ofObservable(QDeveloperProfileState.class);
+        }
         /**
          * Combines all state observables into a single stream that emits a new PluginState
          * whenever any individual state changes. The combined stream:
@@ -70,8 +77,8 @@ public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
          */
         Observable.combineLatest(builder.authStateObservable, builder.lspStateObservable,
                 builder.browserCompatibilityStateObservable, builder.chatWebViewAssetStateObservable,
-                builder.toolkitLoginWebViewAssetStateObservable, ViewRouterPluginState::new)
-                .observeOn(Schedulers.computation()).subscribe(this::onEvent);
+                builder.toolkitLoginWebViewAssetStateObservable, builder.qDeveloperProfileStateObservable,
+                ViewRouterPluginState::new).observeOn(Schedulers.computation()).subscribe(this::onEvent);
     }
 
     public static Builder builder() {
@@ -115,6 +122,9 @@ public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
         } else if (pluginState.authState().isExpired()) {
             newActiveView = AmazonQViewType.RE_AUTHENTICATE_VIEW;
         } else {
+            if (pluginState.qDeveloperProfileState() == QDeveloperProfileState.SELECTED) {
+                publishUnconditionally = true;
+            }
             newActiveView = AmazonQViewType.CHAT_VIEW;
         }
 
@@ -128,10 +138,11 @@ public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
      * @param newActiveViewId The new view to be activated
      */
     private void updateActiveView(final AmazonQViewType newActiveViewId) {
-        if (activeView != newActiveViewId) {
+        if (activeView != newActiveViewId || publishUnconditionally) {
             activeView = newActiveViewId;
             notifyActiveViewChange();
         }
+        publishUnconditionally = false;
     }
 
     /**
@@ -148,6 +159,7 @@ public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
         private Observable<BrowserCompatibilityState> browserCompatibilityStateObservable;
         private Observable<ChatWebViewAssetState> chatWebViewAssetStateObservable;
         private Observable<ToolkitLoginWebViewAssetState> toolkitLoginWebViewAssetStateObservable;
+        private Observable<QDeveloperProfileState> qDeveloperProfileStateObservable;
 
         public Builder withAuthStateObservable(final Observable<AuthState> authStateObservable) {
             this.authStateObservable = authStateObservable;
@@ -174,6 +186,12 @@ public final class ViewRouter implements EventObserver<ViewRouterPluginState> {
         public Builder withToolkitLoginWebViewAssetStateObservable(
                 final Observable<ToolkitLoginWebViewAssetState> webViewAssetStateObservable) {
             this.toolkitLoginWebViewAssetStateObservable = webViewAssetStateObservable;
+            return this;
+        }
+
+        public Builder withQDeveloperProfileStateObservable(
+                final Observable<QDeveloperProfileState> qDeveloperProfileStateObservable) {
+            this.qDeveloperProfileStateObservable = qDeveloperProfileStateObservable;
             return this;
         }
 

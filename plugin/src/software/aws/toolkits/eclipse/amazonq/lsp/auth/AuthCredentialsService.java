@@ -5,11 +5,9 @@ package software.aws.toolkits.eclipse.amazonq.lsp.auth;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
-
 import software.aws.toolkits.eclipse.amazonq.lsp.model.UpdateCredentialsPayload;
 
 public interface AuthCredentialsService {
-    CompletableFuture<ResponseMessage> updateTokenCredentials(UpdateCredentialsPayload params);
+    CompletableFuture<Void> updateTokenCredentials(UpdateCredentialsPayload params);
     CompletableFuture<Void> deleteTokenCredentials();
 }

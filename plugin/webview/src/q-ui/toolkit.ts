@@ -16,6 +16,7 @@ const store = createStore<State>({
         stage: 'START' as Stage,
         ssoRegions: [] as Region[],
         authorizationCode: undefined,
+        redirectUrl: undefined,
         lastLoginIdcInfo: {
             startUrl: '',
             region: '',

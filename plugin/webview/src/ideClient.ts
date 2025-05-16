@@ -30,6 +30,7 @@ export class IdeClient {
 
         this.store.commit("setExistingConnections", existConnections)
         this.updateAuthorization(undefined)
+        this.updateRedirectUrl(undefined)
     }
 
     handleProfiles(profilesData: { profiles: Profile[] }) {
@@ -46,6 +47,10 @@ export class IdeClient {
 
     updateLastLoginIdcInfo(idcInfo: IdcInfo) {
         this.store.commit('setLastLoginIdcInfo', idcInfo)
+    }
+
+    updateRedirectUrl(redirectUrl: string | undefined) {
+        this.store.commit('setRedirectUrl', redirectUrl)
     }
 
     reset() {

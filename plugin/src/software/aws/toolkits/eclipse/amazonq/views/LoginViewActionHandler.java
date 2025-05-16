@@ -103,7 +103,6 @@ public class LoginViewActionHandler implements ViewActionHandler {
             browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
             browser.execute(String.format("ideClient.prepareUi(%s)", js));
             browser.execute("ideClient.updateAuthorization('')");
-            browser.execute("document.oncontextmenu = e => e.preventDefault();");
             break;
         case ON_SELECT_PROFILE:
             QDeveloperProfile developerProfile = JSON_HANDLER.convertObject(params, QDeveloperProfile.class);

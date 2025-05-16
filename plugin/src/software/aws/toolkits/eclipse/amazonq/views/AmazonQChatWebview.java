@@ -51,6 +51,7 @@ public class AmazonQChatWebview extends AmazonQView implements ChatUiRequestList
                     Display.getDefault().asyncExec(() -> {
                         if (!browser.isDisposed()) {
                             browser.setVisible(true);
+                            chatCommunicationManager.activate();
                         }
                     });
                 }

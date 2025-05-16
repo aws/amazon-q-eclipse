@@ -49,6 +49,7 @@ export interface State {
     stage: Stage,
     ssoRegions: Region[],
     authorizationCode: string | undefined,
+    redirectUrl: string | undefined,
     lastLoginIdcInfo: IdcInfo,
     feature: Feature,
     cancellable: boolean,

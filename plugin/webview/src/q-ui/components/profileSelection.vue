@@ -124,7 +124,6 @@ export default defineComponent({
 .profile-name {
     font-weight: bold;
     margin-bottom: 2px;
-    color: white;
 }
 .profile-region {
     font-style: italic;
@@ -135,6 +134,9 @@ export default defineComponent({
     color: #bbbbbb;
 }
 body.jb-dark {
+	.profile-name {
+		color: white;
+	}
     .profile-item {
         border: 1px solid white;
     }
@@ -144,6 +146,9 @@ body.jb-dark {
 }
 
 body.jb-light {
+	.profile-name {
+		color: black;
+	}
     .profile-item {
         border: 1px solid black;
     }

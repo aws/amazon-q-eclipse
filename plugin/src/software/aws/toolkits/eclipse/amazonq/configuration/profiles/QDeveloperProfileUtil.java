@@ -23,6 +23,9 @@ import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.broker.events.QDeveloperProfileState;
 import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
+import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
@@ -44,6 +47,7 @@ public final class QDeveloperProfileUtil {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
     private List<QDeveloperProfile> profiles;
     private ReentrantLock profilesLock = new ReentrantLock(true);
+    private CompletableFuture<Void> initializationFuture;
 
     static {
         INSTANCE = new QDeveloperProfileUtil();
@@ -69,6 +73,13 @@ public final class QDeveloperProfileUtil {
         } catch (Exception e) {
             Activator.getLogger().error("Failed to deserialize developer profile", e);
         }
+
+        if (savedDeveloperProfile == null) {
+            initializationFuture = CompletableFuture.completedFuture(null);
+        } else {
+            initializationFuture = new CompletableFuture<>();
+        }
+
         profileSelectionTask = new CompletableFuture<>();
         profiles = new ArrayList<>();
     }
@@ -83,12 +94,27 @@ public final class QDeveloperProfileUtil {
 
     public void initialize() {
         if (savedDeveloperProfile != null) {
-            setDeveloperProfile(savedDeveloperProfile, true);
+            selectedDeveloperProfile = savedDeveloperProfile;
+            queryForDeveloperProfilesFuture(true, true).exceptionally(throwable -> {
+                Activator.getLogger().error(
+                        "Plugin initialization with saved developer profile failed. Prompting user to log back in.");
+                Activator.getEventBroker().post(AuthState.class,
+                        new AuthState(AuthStateType.LOGGED_OUT, LoginType.IAM_IDENTITY_CENTER));
+                return null;
+            }).thenAccept(result -> {
+                CustomizationUtil.validateCurrentCustomization();
+            });
+            savedDeveloperProfile = null;
         }
     }
 
     public synchronized CompletableFuture<List<QDeveloperProfile>> queryForDeveloperProfilesFuture(
             final boolean tryApplyCachedProfile) {
+        return queryForDeveloperProfilesFuture(tryApplyCachedProfile, false);
+    }
+
+    private synchronized CompletableFuture<List<QDeveloperProfile>> queryForDeveloperProfilesFuture(
+            final boolean tryApplyCachedProfile, final boolean applyProfileUnconditionally) {
         return Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> {
                     GetConfigurationFromServerParams params = new GetConfigurationFromServerParams(
@@ -101,15 +127,15 @@ public final class QDeveloperProfileUtil {
                             throwable);
                     throw new AmazonQPluginException(throwable);
                 }).thenApply(result -> {
-                    return handleSelectedProfile(result, tryApplyCachedProfile);
+                    return handleSelectedProfile(result, tryApplyCachedProfile, applyProfileUnconditionally);
                 });
     }
 
-    public synchronized List<QDeveloperProfile> queryForDeveloperProfiles(final boolean tryApplyCachedProfile) {
+    public synchronized List<QDeveloperProfile> queryForDeveloperProfiles(final boolean tryApplyCachedProfile) throws ExecutionException {
         try {
-            return queryForDeveloperProfilesFuture(tryApplyCachedProfile).get();
-        } catch (InterruptedException | ExecutionException e) {
-            Activator.getLogger().error("Failed to fetch developer profiles: ", e);
+            return queryForDeveloperProfilesFuture(tryApplyCachedProfile, false).get();
+        } catch (InterruptedException e) {
+            Activator.getLogger().error("Interrupted when fetching profile: ", e);
         }
 
         return new ArrayList<>();
@@ -128,12 +154,12 @@ public final class QDeveloperProfileUtil {
     }
 
     private List<QDeveloperProfile> handleSelectedProfile(final List<QDeveloperProfile> profiles,
-            final boolean tryApplyCachedProfile) {
+            final boolean tryApplyCachedProfile, final boolean applyProfileUnconditionally) {
         boolean isProfileSet = false;
         if (profiles.size() <= 1) {
-            isProfileSet = handleSingleOrNoProfile(profiles, tryApplyCachedProfile);
+            isProfileSet = handleSingleOrNoProfile(profiles, tryApplyCachedProfile, applyProfileUnconditionally);
         } else {
-            isProfileSet = handleMultipleProfiles(profiles, tryApplyCachedProfile);
+            isProfileSet = handleMultipleProfiles(profiles, tryApplyCachedProfile, applyProfileUnconditionally);
         }
 
         if (!isProfileSet) {
@@ -162,16 +188,16 @@ public final class QDeveloperProfileUtil {
     }
 
     private boolean handleSingleOrNoProfile(final List<QDeveloperProfile> profiles,
-            final boolean tryApplyCachedProfile) {
+            final boolean tryApplyCachedProfile, final boolean applyProfileUnconditionally) {
         if (!profiles.isEmpty() && tryApplyCachedProfile) {
-            setDeveloperProfile(profiles.get(0), true);
+            setDeveloperProfile(profiles.get(0), true, applyProfileUnconditionally);
             return true;
         }
         return false;
     }
 
     private boolean handleMultipleProfiles(final List<QDeveloperProfile> profiles,
-            final boolean tryApplyCachedProfile) {
+            final boolean tryApplyCachedProfile, final boolean applyProfileUnconditionally) {
         boolean isProfileSelected = false;
         if (selectedDeveloperProfile != null) {
             isProfileSelected = profiles.stream()
@@ -180,7 +206,7 @@ public final class QDeveloperProfileUtil {
                     });
 
             if (isProfileSelected && tryApplyCachedProfile) {
-                setDeveloperProfile(selectedDeveloperProfile, true);
+                setDeveloperProfile(selectedDeveloperProfile, true, applyProfileUnconditionally);
             }
         }
         return isProfileSelected;
@@ -201,11 +227,24 @@ public final class QDeveloperProfileUtil {
         if (profiles != null && !profiles.isEmpty()) {
             return profiles;
         }
-        return queryForDeveloperProfiles(false);
+
+        try {
+            return queryForDeveloperProfiles(false);
+        } catch (Exception e) {
+            Activator.getLogger().error("Interupted while fetching profiles: " + e);
+        }
+
+        return null;
     }
 
-    public CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile, final boolean updateCustomization) {
-        if (developerProfile == null || (selectedDeveloperProfile != null
+    public CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile,
+            final boolean updateCustomization) {
+        return setDeveloperProfile(developerProfile, updateCustomization, false);
+    }
+
+    private CompletableFuture<Void> setDeveloperProfile(final QDeveloperProfile developerProfile,
+            final boolean updateCustomization, final boolean applyProfileUnconditionally) {
+        if (developerProfile == null || (!applyProfileUnconditionally && selectedDeveloperProfile != null
                 && selectedDeveloperProfile.getArn().equals(developerProfile.getArn()))) {
             return CompletableFuture.completedFuture(null);
         }
@@ -270,10 +309,14 @@ public final class QDeveloperProfileUtil {
 
     public boolean isProfileSelectionRequired() {
         if (profiles == null || profiles.isEmpty()) {
-            queryForDeveloperProfiles(false);
+            try {
+                queryForDeveloperProfiles(false);
+            } catch (Exception e) {
+                Activator.getLogger().error("Interrupted when fetching profile: ", e);
+            }
 
             if (profiles.size() == 1) {
-                handleSingleOrNoProfile(profiles, true);
+                handleSingleOrNoProfile(profiles, true, false);
             }
         }
         return profiles.size() > 1;

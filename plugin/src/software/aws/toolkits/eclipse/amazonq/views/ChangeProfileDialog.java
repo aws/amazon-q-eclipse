@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
-import java.util.List;
-
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -244,7 +242,7 @@ public final class ChangeProfileDialog extends Dialog {
                 boolean isAtBottom = (scrollPosition + thumbSize) >= maxScroll;
 
                 if (isAtBottom) {
-                    scrollableLabel.setText("\u23AF");
+                    scrollableLabel.setText("\u23AF"); // line
                 } else {
                     scrollableLabel.setText("\u2304"); // down arrow head
                 }
@@ -336,26 +334,29 @@ public final class ChangeProfileDialog extends Dialog {
         Thread updateThread = new Thread() {
             @Override
             public void run() {
-                List<QDeveloperProfile> profiles = QDeveloperProfileUtil.getInstance().queryForDeveloperProfiles(false);
-                QDeveloperProfile selectedDeveloperProfile = QDeveloperProfileUtil.getInstance().getSelectedProfile();
+                QDeveloperProfileUtil.getInstance().queryForDeveloperProfilesFuture(false)
+                        .thenAccept(profiles -> {
+                            QDeveloperProfile selectedDeveloperProfile = QDeveloperProfileUtil.getInstance().getSelectedProfile();
 
-                Display.getDefault().asyncExec(() -> {
-                    if (!stackComposite.isDisposed()) {
-                        if (selectedDeveloperProfile != null) {
-                            selectedRadioButton = createRadioButton(radioButtonComposite, selectedDeveloperProfile,
-                                    SWT.NONE, true);
-                        }
+                            Display.getDefault().asyncExec(() -> {
+                                if (!stackComposite.isDisposed()) {
+                                    if (selectedDeveloperProfile != null) {
+                                        selectedRadioButton = createRadioButton(radioButtonComposite, selectedDeveloperProfile,
+                                                SWT.NONE, true);
+                                    }
 
-                        for (QDeveloperProfile profile : profiles) {
-                            if (selectedDeveloperProfile == null
-                                    || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
-                                createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
-                            }
-                        }
+                                    for (QDeveloperProfile profile : profiles) {
+                                        if (selectedDeveloperProfile == null
+                                                || !profile.getArn().equals(selectedDeveloperProfile.getArn())) {
+                                            createRadioButton(radioButtonComposite, profile, SWT.NONE, false);
+                                        }
+                                    }
 
-                        showDownArrowWhenScrollable.run();
-                    }
-                });
+                                    showDownArrowWhenScrollable.run();
+                                }
+                            });
+
+                        });
             }
         };
         updateThread.setDaemon(true);

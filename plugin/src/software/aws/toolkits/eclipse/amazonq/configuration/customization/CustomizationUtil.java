@@ -62,6 +62,24 @@ public final class CustomizationUtil {
                });
     }
 
+    public static void validateCurrentCustomization() {
+        listCustomizations().thenAccept(customizations -> {
+            Customization currentCustomization = Activator.getPluginStore()
+                    .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
+
+            for (final Customization validCustomization : customizations) {
+                if (validCustomization.getArn().equals(currentCustomization.getArn())) {
+                    return;
+                }
+            }
+
+            // Use default customization
+            Activator.getPluginStore().remove(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY);
+            Display.getDefault()
+                    .asyncExec(() -> CustomizationUtil.showNotification(Constants.DEFAULT_Q_FOUNDATION_DISPLAY_NAME));
+        });
+    }
+
     public static void showNotification(final String customizationName) {
         AbstractNotificationPopup notification = new ToolkitNotification(Display.getCurrent(),
                 Constants.IDE_CUSTOMIZATION_NOTIFICATION_TITLE,

@@ -47,7 +47,6 @@ public final class QDeveloperProfileUtil {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperFactory.getInstance();
     private List<QDeveloperProfile> profiles;
     private ReentrantLock profilesLock = new ReentrantLock(true);
-    private CompletableFuture<Void> initializationFuture;
 
     static {
         INSTANCE = new QDeveloperProfileUtil();
@@ -73,13 +72,6 @@ public final class QDeveloperProfileUtil {
         } catch (Exception e) {
             Activator.getLogger().error("Failed to deserialize developer profile", e);
         }
-
-        if (savedDeveloperProfile == null) {
-            initializationFuture = CompletableFuture.completedFuture(null);
-        } else {
-            initializationFuture = new CompletableFuture<>();
-        }
-
         profileSelectionTask = new CompletableFuture<>();
         profiles = new ArrayList<>();
     }

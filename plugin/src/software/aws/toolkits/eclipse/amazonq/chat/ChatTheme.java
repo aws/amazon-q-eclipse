@@ -6,54 +6,22 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.swt.browser.Browser;
-
 import software.aws.toolkits.eclipse.amazonq.chat.models.QChatCssVariable;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
 public final class ChatTheme {
-    private static final String CHAT_THEME_STYLE_TITLE = "CHAT_THEME_STYLE";
-
-    private  ThemeDetector themeDetector;
+    private ThemeDetector themeDetector;
 
     public ChatTheme() {
         this.themeDetector = new ThemeDetector();
     }
 
-    public void injectTheme(final Browser browser) {
-        String css = "";
-
-        if (themeDetector.isDarkTheme()) {
-            css = getCssForDarkTheme();
-        } else {
-            css = getCssForLightTheme();
-        }
-
-        String removeExistingThemeScript = String.format("""
-                    var sheets = document.styleSheets;\
-                    for (var i=0; i<sheets.length; i++){\
-                        var sheet = sheets[i];\
-                        if (sheet.title === "%s") {\
-                            for (var j=0; j<sheet.rules.length; j++){\
-                                sheet.deleteRule(j);\
-                            }\
-                        }\
-                    }\
-                """, CHAT_THEME_STYLE_TITLE);
-
-        String addThemeScript = String.format("""
-                    var style = document.createElement('style');\
-                    style.type = "text/css";\
-                    style.title = "%s";\
-                    document.head.appendChild(style);\
-                    style.sheet.insertRule("%s", style.sheet.cssRules.length);\
-                """, CHAT_THEME_STYLE_TITLE, css);
-
-        browser.evaluate(removeExistingThemeScript);
-        browser.evaluate(addThemeScript);
+    public String getThemeVariables() {
+        Map<QChatCssVariable, String> themeMap = themeDetector.isDarkTheme() ? getDarkThemeMap() : getLightThemeMap();
+        return getCss(themeMap);
     }
 
-    private String getCssForDarkTheme() {
+    private Map<QChatCssVariable, String> getDarkThemeMap() {
         Map<QChatCssVariable, String> themeMap = new HashMap<>();
 
         String defaultTextColor = rgb(238, 238, 238);
@@ -106,10 +74,10 @@ public final class ChatTheme {
         // Input
         themeMap.put(QChatCssVariable.InputBackground, rgb(60, 60, 60));
 
-        return getCss(themeMap);
+        return themeMap;
     }
 
-    private String getCssForLightTheme() {
+    private Map<QChatCssVariable, String> getLightThemeMap() {
         Map<QChatCssVariable, String> themeMap = new HashMap<>();
 
         String defaultTextColor = rgb(10, 10, 10);
@@ -162,10 +130,10 @@ public final class ChatTheme {
         // Input
         themeMap.put(QChatCssVariable.InputBackground, rgb(255, 255, 255));
 
-        return getCss(themeMap);
+        return themeMap;
     }
 
-    private  String getCss(final Map<QChatCssVariable, String> themeMap) {
+    private String getCss(final Map<QChatCssVariable, String> themeMap) {
         StringBuilder variables = new StringBuilder();
 
         for (var entry : themeMap.entrySet()) {
@@ -173,7 +141,7 @@ public final class ChatTheme {
                 continue;
             }
 
-            variables.append(String.format("%s:%s;",
+            variables.append(String.format("%s:%s !important;",
                     entry.getKey().getValue(),
                     entry.getValue()));
         }
@@ -181,12 +149,11 @@ public final class ChatTheme {
         return String.format(":root{%s}", variables.toString());
     }
 
-    private  String rgb(final Integer r, final Integer g, final Integer b) {
+    private String rgb(final Integer r, final Integer g, final Integer b) {
         return String.format("rgb(%s,%s,%s)", r, g, b);
     }
 
-    private  String rgba(final Integer r, final Integer g, final Integer b, final Double a) {
-        return String.format("rgb(%s,%s,%s,%s)", r, g, b, a);
+    private String rgba(final Integer r, final Integer g, final Integer b, final Double a) {
+        return String.format("rgba(%s,%s,%s,%s)", r, g, b, a);
     }
-
 }

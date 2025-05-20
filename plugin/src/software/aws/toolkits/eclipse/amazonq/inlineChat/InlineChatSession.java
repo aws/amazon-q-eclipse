@@ -274,10 +274,13 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             } catch (Exception e) {
                 Activator.getLogger().error("FAILURE ON EMISSION:", e);
             }
-            uiManager.closePrompt();
+            uiManager.endSession();
+            diffManager.endSession();
             cleanupSessionState();
             setState(SessionState.INACTIVE);
             Activator.getLogger().info("Inline chat session ended.");
+        }).thenRun(() -> {
+            task = null;
         });
     }
 

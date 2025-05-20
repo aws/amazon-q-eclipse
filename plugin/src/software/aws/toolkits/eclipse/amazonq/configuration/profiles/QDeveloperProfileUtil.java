@@ -142,7 +142,8 @@ public final class QDeveloperProfileUtil {
     }
 
     private boolean isValidProfile(final QDeveloperProfile profile) {
-        return profile != null && StringUtils.isNotBlank(profile.getName());
+        return profile != null && StringUtils.isNotBlank(profile.getName()) && StringUtils.isNotBlank(profile.getArn())
+                && StringUtils.isNotBlank(profile.getAccountId());
     }
 
     private List<QDeveloperProfile> handleSelectedProfile(final List<QDeveloperProfile> profiles,

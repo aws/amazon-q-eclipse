@@ -127,32 +127,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     %s
                 </body>
                 </html>
-<<<<<<< HEAD
                 """, chatJsPath, chatJsPath, themeVariables, generateJS(chatJsPath)));
-=======
-                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
-    }
-
-    private String generateCss() {
-        return """
-                <style>
-                    body,
-                    html {
-                        background-color: var(--mynah-color-bg);
-                        color: var(--mynah-color-text-default);
-                        height: 100vh;
-                        width: 100%%;
-                        overflow: hidden;
-                        margin: 0;
-                        padding: 0;
-                    }
-
-                    [class*="mynah-ui-icon-"] {
-                        transform: translateZ(0);
-                    }
-                </style>
-                """;
->>>>>>> a0cb319 (New approach for refreshing icons on visibility event)
     }
 
     private String generateJS(final String jsEntrypoint) {
@@ -165,31 +140,20 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     const init = () => {
                         waitForFunction('ideCommand')
                             .then(() => {
-<<<<<<< HEAD
                                 function refreshUi() {
-=======
-                                function refreshIcons() {
->>>>>>> a0cb319 (New approach for refreshing icons on visibility event)
                                     document.querySelectorAll('[class*="mynah-ui-icon-"]').forEach(icon => {
                                         icon.style.transform = 'none';
                                         void icon.offsetHeight;
                                         icon.style.transform = 'translateZ(0)';
                                     });
-<<<<<<< HEAD
                                     document.querySelectorAll('[class*="mynah-chat-wrapper"]').forEach(wrapper => {
                                         wrapper.style.overflow = 'visible';
                                     });
-=======
->>>>>>> a0cb319 (New approach for refreshing icons on visibility event)
                                 }
 
                                 document.addEventListener('visibilitychange', () => {
                                     if (document.visibilityState === 'visible') {
-<<<<<<< HEAD
                                         refreshUi();
-=======
-                                        refreshIcons();
->>>>>>> a0cb319 (New approach for refreshing icons on visibility event)
                                     }
                                 });
 

@@ -22,7 +22,7 @@ public final class ThreadingUtils {
     }
 
     public static void executeAsyncTask(final Runnable task) {
-        THREAD_POOL.submit(task);
+        THREAD_POOL.execute(task);
     }
 
     public static Future<?> executeAsyncTaskAndReturnFuture(final Runnable task) {

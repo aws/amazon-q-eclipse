@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,15 +17,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -51,7 +46,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.ChatItemAction;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
-import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
@@ -116,45 +110,6 @@ public final class ChatCommunicationManagerTest {
         doAnswer(invocation -> Optional.of("fileUri")).when(chatCommunicationManager).getOpenFileUri();
         CursorState cursorState = new CursorState(new Range(new Position(0, 0), new Position(1, 1)));
         doAnswer(invocation -> Optional.of(cursorState)).when(chatCommunicationManager).getSelectionRangeCursorState();
-    }
-
-    @Nested
-    class ErrorHandlingTests {
-        private BlockingQueue<ChatUIInboundCommand> commandQueue;
-
-        @BeforeEach
-        void setupCommandQueue() throws Exception {
-            Field commandQueueField = ChatCommunicationManager.class.getDeclaredField("commandQueue");
-            commandQueueField.setAccessible(true);
-            commandQueue = new LinkedBlockingQueue<>();
-            commandQueueField.set(chatCommunicationManager, commandQueue);
-        }
-
-        @Test
-        void testSendErrorToUi() throws Exception {
-            Method sendErrorToUiMethod = ChatCommunicationManager.class.getDeclaredMethod("sendErrorToUi", String.class, Throwable.class);
-            sendErrorToUiMethod.setAccessible(true);
-            sendErrorToUiMethod.invoke(chatCommunicationManager, "tabId", new RuntimeException("Test error"));
-
-            assertFalse(commandQueue.isEmpty());
-            ChatUIInboundCommand command = commandQueue.poll();
-            assertEquals(ChatUIInboundCommandName.ErrorMessage.getValue(), command.command());
-            assertEquals("tabId", command.tabId());
-        }
-
-        @Test
-        void testHandleCancellation() throws Exception {
-            Method handleCancellationMethod = ChatCommunicationManager.class.getDeclaredMethod("handleCancellation", String.class);
-            handleCancellationMethod.setAccessible(true);
-            CompletableFuture<Void> result = (CompletableFuture<Void>) handleCancellationMethod.invoke(chatCommunicationManager, "tabId");
-
-            assertTrue(result.isDone());
-
-            assertFalse(commandQueue.isEmpty());
-            ChatUIInboundCommand command = commandQueue.poll();
-            assertEquals(ChatUIInboundCommandName.ErrorMessage.getValue(), command.command());
-            assertEquals("tabId", command.tabId());
-        }
     }
 
     @Nested

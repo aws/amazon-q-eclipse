@@ -33,6 +33,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatMessage;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
@@ -233,7 +234,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             var prompt = task.getPrompt();
             var chatPrompt = new ChatPrompt(prompt, prompt, "", Collections.emptyList());
             params = new InlineChatRequestParams(chatPrompt, null, Arrays.asList(task.getCursorState()));
-            chatCommunicationManager.sendInlineChatMessageToChatServer(params);
+            chatCommunicationManager.sendInlineChatMessageToChatServer(new ChatMessage(params));
 
             Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri();
             if (fileUri.isPresent()) {

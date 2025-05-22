@@ -43,8 +43,7 @@
             name="Amazon Q"
             icon="icons/AmazonQ.png"
             class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
-            inject="true"
-            allowMultiple="false">
+            inject="true">
         </view>
    </extension>
     <extension point="org.eclipse.ui.activities">  
@@ -124,8 +123,7 @@
             class="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
             id="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"
             name="Amazon Q"
-            icon="icons/AmazonQ.png"
-            allowMultiple="false">
+            icon="icons/AmazonQ.png">
         </view>
         <view
               class="software.aws.toolkits.eclipse.amazonq.views.AmazonQCodeReferenceView"

@@ -21,10 +21,6 @@ public final class AutoTriggerTopLevelListener<T extends IPartListener2 & IAutoT
 
     }
 
-    public AutoTriggerTopLevelListener(final T partListener) {
-        this.partListener = partListener;
-    }
-
     public void addPartListener(final T partListener) {
         this.partListener = partListener;
     }

@@ -3,4 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-public record ChatOptions(QuickActions quickActions) { }
+public record ChatOptions(QuickActions quickActions, boolean history, boolean export) { }

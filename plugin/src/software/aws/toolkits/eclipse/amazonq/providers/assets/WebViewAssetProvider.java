@@ -32,8 +32,4 @@ public abstract class WebViewAssetProvider {
                 """;
     }
 
-    protected final void disableBrowserContextMenu(final Browser browser) {
-        browser.execute("document.oncontextmenu = e => e.preventDefault();");
-    }
-
 }

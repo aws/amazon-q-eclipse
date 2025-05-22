@@ -45,9 +45,13 @@ public enum QChatCssVariable {
 
     // Card
     CardBackground("--mynah-card-bg"),
+    CardBackgroundAlternate("--mynah-card-bg-alternate"),
 
     // Line height
-    LineHeight("--mynah-line-height");
+    LineHeight("--mynah-line-height"),
+
+    // Input
+    InputBackground("--mynah-input-bg");
 
     private String value;
 

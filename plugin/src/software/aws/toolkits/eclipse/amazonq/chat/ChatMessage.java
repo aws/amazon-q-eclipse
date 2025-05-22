@@ -3,65 +3,38 @@
 
 package software.aws.toolkits.eclipse.amazonq.chat;
 
-import java.util.concurrent.CompletableFuture;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedChatParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FeedbackParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.FollowUpClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.GenericTabParams;
-import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
+import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 
 public final class ChatMessage {
-    private final AmazonQLspServer amazonQLspServer;
+    private final JsonHandler jsonHandler;
+    private Object data;
 
-    public ChatMessage(final AmazonQLspServer amazonQLspServer) {
-        this.amazonQLspServer = amazonQLspServer;
+    public ChatMessage(final Object data) {
+        this.jsonHandler = new JsonHandler();
+        this.data = data;
     }
 
-    // Returns a ChatResult as an encrypted message {@link LspEncryptionManager#decrypt()}
-    public CompletableFuture<String> sendChatPrompt(final EncryptedChatParams params) {
-        return amazonQLspServer.sendChatPrompt(params);
+    public boolean hasKey(final String key) {
+        return jsonHandler.getValueForKey(data, key) != null;
     }
 
-    public CompletableFuture<String> sendInlineChatPrompt(final EncryptedChatParams params) {
-        return amazonQLspServer.sendInlineChatPrompt(params);
+    public JsonNode getValueForKey(final String key) {
+        return jsonHandler.getValueForKey(data, key);
     }
 
-    // Returns a ChatResult as an encrypted message {@link LspEncryptionManager#decrypt()}
-    public CompletableFuture<String> sendQuickAction(final EncryptedQuickActionParams params) {
-        return amazonQLspServer.sendQuickAction(params);
+    public void addValueForKey(final String key, final Object obj) {
+        data = jsonHandler.addValueForKey(data, key, obj);
     }
 
-    public CompletableFuture<Boolean> endChat(final GenericTabParams tabParams) {
-        return amazonQLspServer.endChat(tabParams);
+    public Object getData() {
+        return data;
     }
 
-    public void sendChatReady() {
-        amazonQLspServer.chatReady();
+    public String getValueAsString(final String key) {
+        JsonNode node = jsonHandler.getValueForKey(data, key);
+        return node != null ? node.asText() : null;
     }
 
-    public void sendTabAdd(final GenericTabParams tabParams) {
-        amazonQLspServer.tabAdd(tabParams);
-    }
-
-    public void sendTabRemove(final GenericTabParams tabParams) {
-        amazonQLspServer.tabRemove(tabParams);
-    }
-
-    public void sendTabChange(final GenericTabParams tabParams) {
-        amazonQLspServer.tabChange(tabParams);
-    }
-
-    public void followUpClick(final FollowUpClickParams followUpClickParams) {
-        amazonQLspServer.followUpClick(followUpClickParams);
-    }
-
-    public void sendFeedback(final FeedbackParams feedbackParams) {
-        amazonQLspServer.sendFeedback(feedbackParams);
-    }
-
-    public void sendTelemetryEvent(final Object params) {
-        amazonQLspServer.sendTelemetryEvent(params);
-    }
 }

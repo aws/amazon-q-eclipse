@@ -4,6 +4,7 @@
 <template>
     <div class="font-amazon">
         <div class="title bottom-small-gap">{{ this.authenticatingText }}</div>
+        <div class="hint bottom-small-gap wrap">{{ this.redirectUrl }}</div>
         <div v-if="requireConfirmationCodeOrNot" class="confirmation-code-container bottom-small-gap">
             <div class="hint">CONFIRMATION CODE</div>
             <div class="confirmation-code">{{ this.authorizationCode }}</div>
@@ -32,6 +33,7 @@ export default defineComponent({
         handleCancelButton() {
             this.$emit('cancel')
             this.authorizationCode = undefined
+            this.redirectUrl = undefined
         }
     },
     computed: {
@@ -40,7 +42,15 @@ export default defineComponent({
                 return this.$store.state.authorizationCode
             },
             set(value: string | undefined) {
-                this.$store.commit('setAuthorizationCode', value)
+                this.$store.commit('setRedirectUrl', value)
+            }
+        },
+        redirectUrl: {
+            get() {
+                return this.$store.state.redirectUrl
+            },
+            set(value: string | undefined) {
+                this.$store.commit('setRedirectUrl', value)
             }
         },
         requireConfirmationCodeOrNot(): boolean {
@@ -56,6 +66,7 @@ export default defineComponent({
     },
     mounted() {
         this.authorizationCode = undefined
+        this.redirectUrl = undefined
     }
 })
 </script>
@@ -70,5 +81,9 @@ export default defineComponent({
     color: #909090;
     margin-bottom: 5px;
     margin-top: 5px;
+}
+.wrap {
+    width: 350px;
+    overflow-x:auto;
 }
 </style>

@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,29 +19,25 @@ import org.eclipse.ui.PlatformUI;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import software.aws.toolkits.eclipse.amazonq.chat.ChatAsyncResultManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
-import software.aws.toolkits.eclipse.amazonq.chat.models.CopyToClipboardParams;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatMessage;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
-import software.aws.toolkits.eclipse.amazonq.chat.models.InfoLinkClickParams;
-import software.aws.toolkits.eclipse.amazonq.chat.models.InsertToCursorPositionParams;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpClickedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthFollowUpType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
 
 public class AmazonQChatViewActionHandler implements ViewActionHandler {
-    private final JsonHandler jsonHandler;
     private ChatCommunicationManager chatCommunicationManager;
 
     public AmazonQChatViewActionHandler(final ChatCommunicationManager chatCommunicationManager) {
-        this.jsonHandler = new JsonHandler();
         this.chatCommunicationManager = chatCommunicationManager;
     }
 
@@ -50,75 +47,86 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
     @Override
     public final void handleCommand(final ParsedCommand parsedCommand, final Browser browser) {
         Command command = parsedCommand.getCommand();
-        Object params = parsedCommand.getParams();
+        ChatMessage message = new ChatMessage(parsedCommand.getParams());
 
         switch (command) {
             case CHAT_SEND_PROMPT:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
+            case CHAT_PROMPT_OPTION_CHANGE:
             case CHAT_QUICK_ACTION:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
+            case FILE_CLICK:
+            case CHAT_READY:
+            case CHAT_TAB_ADD:
+            case CHAT_TAB_REMOVE:
+            case CHAT_TAB_CHANGE:
+            case CHAT_END_CHAT:
+            case CHAT_FEEDBACK:
+            case CHAT_FOLLOW_UP_CLICK:
+            case LIST_CONVERSATIONS:
+            case CONVERSATION_CLICK:
+            case CREATE_PROMPT:
+            case STOP_CHAT_RESPONSE:
+            case BUTTON_CLICK:
+            case TAB_BAR_ACTION:
+                chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
             case CHAT_INFO_LINK_CLICK:
             case CHAT_LINK_CLICK:
             case CHAT_SOURCE_LINK_CLICK:
-                InfoLinkClickParams infoLinkClickParams = jsonHandler.convertObject(params, InfoLinkClickParams.class);
-                var link = infoLinkClickParams.getLink();
-                if (link == null || link.isEmpty()) {
-                    throw new IllegalArgumentException("Link parameter cannot be null or empty");
-                }
-                PluginUtils.handleExternalLinkClick(link);
-                break;
-            case CHAT_READY:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_TAB_ADD:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_TAB_REMOVE:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_TAB_CHANGE:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_END_CHAT:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
+                validateAndHandleLink(message.getValueAsString("link"));
+                chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
             case CHAT_INSERT_TO_CURSOR_POSITION:
-                var insertToCursorParams = jsonHandler.convertObject(params, InsertToCursorPositionParams.class);
-                var cursorState = insertAtCursor(insertToCursorParams);
+                var cursorState = insertAtCursor(message);
                 // add information about editor state and send telemetry event
                 // only include files that are accessible via lsp which have absolute paths
-                // When this fails, we will still send the request for amazonq_interactWithMessage telemetry
+                // When this fails, we will still send the request for
+                // amazonq_interactWithMessage telemetry
                 getOpenFileUri().ifPresent(filePathUri -> {
-                    insertToCursorParams.setTextDocument(new TextDocumentIdentifier(filePathUri));
-                    cursorState.ifPresent(state -> insertToCursorParams.setCursorState(Arrays.asList(state)));
+                    message.addValueForKey("textDocument", new TextDocumentIdentifier(filePathUri));
+                    cursorState.ifPresent(state -> message.addValueForKey("cursorState", Arrays.asList(state)));
                 });
-                chatCommunicationManager.sendMessageToChatServer(Command.TELEMETRY_EVENT, insertToCursorParams);
-                break;
-            case CHAT_FEEDBACK:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
-                break;
-            case CHAT_FOLLOW_UP_CLICK:
-                chatCommunicationManager.sendMessageToChatServer(command, params);
+                chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
             case TELEMETRY_EVENT:
-                // telemetry notification for insert to cursor is modified and forwarded to server in the InsertToCursorPosition handler
-                if (isInsertToCursorEvent(params)) {
+                // telemetry notification for insert to cursor is modified and forwarded to
+                // server in the InsertToCursorPosition handler
+                if (isInsertToCursorEvent(message)) {
                     break;
                 }
-                chatCommunicationManager.sendMessageToChatServer(command, params);
+                chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
             case CHAT_COPY_TO_CLIPBOARD:
-                CopyToClipboardParams copyToClipboardParams = jsonHandler.convertObject(params, CopyToClipboardParams.class);
-                handleCopyToClipboard(copyToClipboardParams.code());
+                handleCopyToClipboard(message.getValueAsString("code"));
                 break;
             case AUTH_FOLLOW_UP_CLICKED:
-                AuthFollowUpClickedParams authFollowUpClickedParams = jsonHandler.convertObject(params, AuthFollowUpClickedParams.class);
-                handleAuthFollowUpClicked(authFollowUpClickedParams);
+                handleAuthFollowUpClicked(message);
                 break;
             case DISCLAIMER_ACKNOWLEDGED:
                 Activator.getPluginStore().put(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED, "true");
+                break;
+            case PROMPT_OPTION_ACKNOWLEDGED:
+                if (!(message.getData() instanceof Map)) {
+                    break;
+                }
+
+                @SuppressWarnings("unchecked")
+                Map<String, String> options = (Map<String, String>) message.getData();
+                String messageId = options.get("messageId");
+
+                if ("programmerModeCardId".equals(messageId)) {
+                    Activator.getPluginStore().put(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED, "true");
+                }
+                break;
+            case GET_SERIALIZED_CHAT:
+                ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), message.getData());
+                Activator.getLogger().info("Got serialized chat response for request ID: " + parsedCommand.getRequestId());
+                break;
+            case CHAT_OPEN_TAB:
+                ChatAsyncResultManager.getInstance().setResult(parsedCommand.getRequestId(), message.getData());
+                Activator.getLogger().info("Got open tab response for request ID: " + parsedCommand.getRequestId());
+                break;
+            case OPEN_SETTINGS:
+                AmazonQPreferencePage.openPreferencePane();
                 break;
             default:
                 throw new AmazonQPluginException("Unexpected command received from Amazon Q Chat: " + command.toString());
@@ -129,19 +137,26 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
      *   Inserts the text present in parameters at caret position in editor
      *   and returns cursor state range from the start caret to end caret, which includes the entire inserted text range
      */
-    private Optional<CursorState> insertAtCursor(final InsertToCursorPositionParams insertToCursorParams) {
+    private Optional<CursorState> insertAtCursor(final ChatMessage message) {
         AtomicReference<Optional<Range>> range = new AtomicReference<Optional<Range>>();
         Display.getDefault().syncExec(new Runnable() {
             @Override
             public void run() {
-                range.set(QEclipseEditorUtils.insertAtCursor(insertToCursorParams.getCode()));
+                range.set(QEclipseEditorUtils.insertAtCursor(message.getValueAsString("code")));
             }
         });
         return range.get().map(CursorState::new);
     }
 
-    private boolean isInsertToCursorEvent(final Object params) {
-        return Optional.ofNullable(jsonHandler.getValueForKey(params, "name"))
+    private void validateAndHandleLink(final String link) {
+        if (link == null || link.isEmpty()) {
+            throw new IllegalArgumentException("Link parameter cannot be null or empty");
+        }
+        PluginUtils.handleExternalLinkClick(link);
+    }
+
+    private boolean isInsertToCursorEvent(final ChatMessage message) {
+        return Optional.ofNullable(message.getValueForKey("name"))
                 .map(JsonNode::asText)
                 .map("insertToCursorPosition"::equals)
                 .orElse(false);
@@ -174,8 +189,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
         });
     }
 
-    private void handleAuthFollowUpClicked(final AuthFollowUpClickedParams params) {
-        String incomingType = params.authFollowupType();
+    private void handleAuthFollowUpClicked(final ChatMessage message) {
+        String incomingType = message.getValueAsString("authFollowupType");
         String fullAuth =  AuthFollowUpType.FULL_AUTH.getValue();
         String reAuth = AuthFollowUpType.RE_AUTH.getValue();
         String missingScopes = AuthFollowUpType.MISSING_SCOPES.getValue();

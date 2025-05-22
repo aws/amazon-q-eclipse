@@ -321,6 +321,11 @@ public final class InlineChatUIManager {
         });
     }
 
+    void endSession() {
+        closePrompt();
+        task = null;
+    }
+
     private void removeCurrentPaintListener() {
         if (viewer == null) {
             return;

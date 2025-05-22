@@ -197,21 +197,6 @@ public final class DefaultTelemetryService implements TelemetryService {
         private ToolkitTelemetryClient telemetryClient;
         private ClientMetadata clientMetadata;
 
-        public final Builder withTelemetryRegion(final Region region) {
-            this.region = region;
-            return this;
-        }
-
-        public final Builder withTelemetryEndpoint(final String endpoint) {
-            this.endpoint = endpoint;
-            return this;
-        }
-
-        public final Builder withIdentityPool(final String identityPool) {
-            this.identityPool = identityPool;
-            return this;
-        }
-
         public final Builder withTelemetryClient(final ToolkitTelemetryClient telemetryClient) {
             this.telemetryClient = telemetryClient;
             return this;

@@ -26,7 +26,9 @@ public final class Constants {
     public static final String LSP_CW_OPT_OUT_KEY = "shareCodeWhispererContentWithAWS";
     public static final String LSP_CODE_REFERENCES_OPT_OUT_KEY = "includeSuggestionsWithCodeReferences";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_TITLE = "Amazon Q Customization";
+    public static final String IDE_DEVELOPER_PROFILES_NOTIFICATION_TITLE = "Amazon Q Developer Profile";
     public static final String IDE_CUSTOMIZATION_NOTIFICATION_BODY_TEMPLATE = "Amazon Q inline suggestions are now coming from the %s";
+    public static final String IDE_DEVELOPER_PROFILES_NOTIFICATION_BODY_TEMPLATE = "You're using the '%s' profile for Amazon Q.";
     public static final String MANIFEST_DEPRECATED_NOTIFICATION_KEY = "doNotShowDeprecatedManifest";
     public static final String MANIFEST_DEPRECATED_NOTIFICATION_TITLE = "Update Amazon Q Extension";
     public static final String MANIFEST_DEPRECATED_NOTIFICATION_BODY = "This version of the plugin"
@@ -35,8 +37,6 @@ public final class Constants {
     public static final String LOGIN_TYPE_KEY = "LOGIN_TYPE";
     public static final String LOGIN_IDC_PARAMS_KEY = "IDC_PARAMS";
     public static final String SSO_TOKEN_ID = "SSO_TOKEN_IN";
-    public static final String PROXY_UPDATE_NOTIFICATION_TITLE = "Proxy settings changed";
-    public static final String PROXY_UPDATE_NOTIFICATION_DESCRIPTION = "Proxy changes detected. Please restart the extension for it to take effect";
     public static final String AWS_BUILDER_ID_URL = "https://view.awsapps.com/start";
     public static final String IDC_PROFILE_NAME = "eclipse-q-profile";
     public static final String IDC_SESSION_NAME = "eclipse-q-session";

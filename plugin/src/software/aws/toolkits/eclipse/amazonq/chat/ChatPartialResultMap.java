@@ -48,7 +48,4 @@ public final class ChatPartialResultMap {
         return tokenToChatMessageMap.getOrDefault(token, null);
     }
 
-    public Boolean hasKey(final String token) {
-        return tokenToChatMessageMap.containsKey(token);
-    }
 }

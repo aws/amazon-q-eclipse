@@ -50,7 +50,7 @@ import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
-public class FeedbackDialog extends Dialog {
+public final class FeedbackDialog extends Dialog {
 
     private static final String TITLE = "Share Feedback";
     private static final int MAX_CHAR_LIMIT = 2000;
@@ -62,11 +62,11 @@ public class FeedbackDialog extends Dialog {
     private Sentiment selectedSentiment = Sentiment.POSITIVE;
     private boolean isCommentQuestionGhostLabelVisible = true;
 
-    public class CustomRadioButton extends Composite {
+    private final class CustomRadioButton extends Composite {
         private final Label iconLabel;
         private final Button radioButton;
 
-        public CustomRadioButton(final Composite parent, final Image image, final int style) {
+        private CustomRadioButton(final Composite parent, final Image image, final int style) {
             super(parent, style);
 
             Composite contentComposite = new Composite(parent, SWT.NONE);
@@ -85,7 +85,7 @@ public class FeedbackDialog extends Dialog {
             radioButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
         }
 
-        public final Button getRadioButton() {
+        public Button getRadioButton() {
             return radioButton;
         }
     }
@@ -112,13 +112,13 @@ public class FeedbackDialog extends Dialog {
     }
 
     @Override
-    protected final void createButtonsForButtonBar(final Composite parent) {
+    protected void createButtonsForButtonBar(final Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, "Share", true);
         createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
     }
 
     @Override
-    protected final void okPressed() {
+    protected void okPressed() {
         Sentiment selectedSentiment = this.selectedSentiment;
         String comment = commentBox.getText();
         ThreadingUtils.executeAsyncTask(() -> Activator.getTelemetryService().emitFeedback(comment, selectedSentiment));
@@ -127,7 +127,7 @@ public class FeedbackDialog extends Dialog {
     }
 
     @Override
-    protected final void cancelPressed() {
+    protected void cancelPressed() {
         UiTelemetryProvider.emitClickEventMetric("feedback_shareFeedbackDialogCancelButton");
         super.cancelPressed();
     }
@@ -142,7 +142,7 @@ public class FeedbackDialog extends Dialog {
     }
 
     @Override
-    protected final Control createDialogArea(final Composite parent) {
+    protected Control createDialogArea(final Composite parent) {
         container = (Composite) super.createDialogArea(parent);
         GridLayout layout = new GridLayout(1, false);
         layout.marginLeft = 10;
@@ -472,13 +472,13 @@ public class FeedbackDialog extends Dialog {
     }
 
     @Override
-    protected final void configureShell(final Shell newShell) {
+    protected void configureShell(final Shell newShell) {
         super.configureShell(newShell);
         newShell.setText(TITLE);
     }
 
     @Override
-    protected final Point getInitialSize() {
+    protected Point getInitialSize() {
         return PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? new Point(800, 670) : new Point(800, 620);
     }
 

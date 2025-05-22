@@ -248,6 +248,10 @@ public final class InlineChatDiffManager {
 
     }
 
+    void endSession() {
+        task = null;
+    }
+
     private void setColorPalette(final boolean isDark) {
         this.annotationAdded = "diffAnnotation.added";
         this.annotationDeleted = "diffAnnotation.deleted";

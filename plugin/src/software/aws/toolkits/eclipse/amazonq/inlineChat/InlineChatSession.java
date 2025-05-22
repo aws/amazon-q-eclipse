@@ -33,9 +33,11 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatMessage;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -97,7 +99,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         if (isSessionActive()) {
             return false;
         }
-        if (editor == null || !(editor instanceof ITextEditor)) {
+        if (editor == null || !(editor instanceof ITextEditor) || (editor.getEditorInput() instanceof InMemoryInput)) {
             return false;
         }
         try {
@@ -232,7 +234,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             var prompt = task.getPrompt();
             var chatPrompt = new ChatPrompt(prompt, prompt, "", Collections.emptyList());
             params = new InlineChatRequestParams(chatPrompt, null, Arrays.asList(task.getCursorState()));
-            chatCommunicationManager.sendInlineChatMessageToChatServer(params);
+            chatCommunicationManager.sendInlineChatMessageToChatServer(new ChatMessage(params));
 
             Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri();
             if (fileUri.isPresent()) {
@@ -273,10 +275,13 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             } catch (Exception e) {
                 Activator.getLogger().error("FAILURE ON EMISSION:", e);
             }
-            uiManager.closePrompt();
+            uiManager.endSession();
+            diffManager.endSession();
             cleanupSessionState();
             setState(SessionState.INACTIVE);
             Activator.getLogger().info("Inline chat session ended.");
+        }).thenRun(() -> {
+            task = null;
         });
     }
 

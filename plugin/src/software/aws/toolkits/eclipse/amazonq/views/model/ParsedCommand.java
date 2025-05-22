@@ -7,10 +7,12 @@ public class ParsedCommand {
 
     private final Command command;
     private final Object params;
+    private final String requestId;
 
-    public ParsedCommand(final Command command, final Object params) {
+    public ParsedCommand(final Command command, final Object params, final String requestId) {
         this.command = command;
         this.params = params;
+        this.requestId = requestId;
     }
 
     public final Command getCommand() {
@@ -19,6 +21,10 @@ public class ParsedCommand {
 
     public final Object getParams() {
         return this.params;
+    }
+
+    public final String getRequestId() {
+        return this.requestId;
     }
 
 }

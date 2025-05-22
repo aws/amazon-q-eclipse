@@ -14,4 +14,3 @@ bin
 package-lock.json
 telemetry/
 plugin/.settings
-plugin/.classpath

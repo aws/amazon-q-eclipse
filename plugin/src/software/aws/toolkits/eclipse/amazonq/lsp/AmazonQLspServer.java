@@ -89,7 +89,7 @@ public interface AmazonQLspServer extends LanguageServer {
             GetConfigurationFromServerParams params);
 
     @JsonRequest("aws/updateConfiguration")
-    CompletableFuture<Void> updateConfiguration(@Nullable UpdateConfigurationParams params);
+    CompletableFuture<Void> updateConfiguration(UpdateConfigurationParams params);
 
     @JsonNotification("telemetry/event")
     void sendTelemetryEvent(Object params);

@@ -1,4 +1,4 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views;
@@ -22,27 +22,26 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class AmazonQViewContainer extends ViewPart implements EventObserver<AmazonQViewType> {
     public static final String ID = "software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer";
+    private static final Map<AmazonQViewType, BaseAmazonQView> VIEWS;
 
     private Composite parentComposite;
     private volatile StackLayout layout;
-    private Map<AmazonQViewType, BaseAmazonQView> views;
     private volatile AmazonQViewType activeViewType;
     private volatile BaseAmazonQView currentView;
     private final ReentrantLock containerLock;
 
-    public AmazonQViewContainer() {
-        activeViewType = AmazonQViewType.CHAT_VIEW;
-        containerLock = new ReentrantLock(true);
-
-        views = Map.of(
-                AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
+    static {
+        VIEWS = Map.of(AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
                 AmazonQViewType.DEPENDENCY_MISSING_VIEW, new DependencyMissingView(),
                 AmazonQViewType.RE_AUTHENTICATE_VIEW, new ReauthenticateView(),
                 AmazonQViewType.LSP_STARTUP_FAILED_VIEW, new LspStartUpFailedView(),
                 AmazonQViewType.CHAT_VIEW, new AmazonQChatWebview(),
-                AmazonQViewType.TOOLKIT_LOGIN_VIEW, new ToolkitLoginWebview()
-        );
+                AmazonQViewType.TOOLKIT_LOGIN_VIEW, new ToolkitLoginWebview());
+    }
 
+    public AmazonQViewContainer() {
+        activeViewType = AmazonQViewType.CHAT_VIEW;
+        containerLock = new ReentrantLock(true);
         Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
     }
 
@@ -65,11 +64,11 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         Display.getDefault().asyncExec(() -> {
             try {
                 containerLock.lock();
-                BaseAmazonQView newView = views.get(activeViewType);
+                BaseAmazonQView newView = VIEWS.get(activeViewType);
 
                 if (currentView != null) {
-                    if (currentView instanceof AmazonQChatWebview) {
-                        ((AmazonQChatWebview) currentView).disposeBrowserState();
+                    if (currentView instanceof AmazonQView) {
+                        ((AmazonQView) currentView).disposeBrowser();
                     }
                     Control[] children = parentComposite.getChildren();
                     for (Control child : children) {
@@ -99,17 +98,17 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     @Override
     public void onEvent(final AmazonQViewType newViewType) {
-        if (newViewType.equals(activeViewType) || !views.containsKey(newViewType)) {
-          return;
-      }
+        if (!VIEWS.containsKey(newViewType)) {
+            return;
+        }
 
-      containerLock.lock();
-      activeViewType = newViewType;
-      containerLock.unlock();
+        containerLock.lock();
+        activeViewType = newViewType;
+        containerLock.unlock();
 
-      if (parentComposite != null && !parentComposite.isDisposed()) {
-          updateChildView();
-      }
+        if (parentComposite != null && !parentComposite.isDisposed()) {
+            updateChildView();
+        }
     }
 
     @Override
@@ -125,4 +124,5 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
         super.dispose();
     }
+
 }

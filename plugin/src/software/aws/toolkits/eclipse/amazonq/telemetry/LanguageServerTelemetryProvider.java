@@ -77,7 +77,7 @@ public final class LanguageServerTelemetryProvider {
         //final step completing makes call to complete full process
         emitSetupAll(result, args);
     }
-    public static void emitSetupAll(final Result result, final RecordLspSetupArgs args) {
+    private static void emitSetupAll(final Result result, final RecordLspSetupArgs args) {
         if (result == null || args == null) {
             return;
         }

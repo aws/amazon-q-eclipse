@@ -4,15 +4,11 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import software.aws.toolkits.eclipse.amazonq.lsp.model.InlineCompletionStates;
 
 public class QSuggestionsContext {
     private List<QSuggestionContext> details = new ArrayList<>();
     private String sessionId;
-    private HashMap<String, InlineCompletionStates> suggestionCompletionResults = new HashMap<String, InlineCompletionStates>();
 
     private long requestedAtEpoch;
     private int currentIndex = -1;

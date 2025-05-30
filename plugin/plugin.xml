@@ -160,6 +160,14 @@
             </view>
         </perspectiveExtension>
     </extension>
+    <extension point="org.eclipse.core.contenttype.contentTypes">
+	    <content-type
+	        id="software.aws.toolkits.eclipse.amazonq.abap"
+	        name="ABAP Source"
+	        base-type="org.eclipse.core.runtime.text"
+	        file-extensions="abap">
+	    </content-type>
+	</extension>
     <extension
         point="org.eclipse.lsp4e.languageServer">
         <server
@@ -175,6 +183,11 @@
             contentType="org.eclipse.jdt.core.javaSource"
             id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
             languageId="java">
+        </contentTypeMapping>
+        <contentTypeMapping
+	        contentType="software.aws.toolkits.eclipse.amazonq.abap"
+	        id="software.aws.toolkits.eclipse.amazonq.qlanguageserver"
+	        languageId="abap">
         </contentTypeMapping>
         <contentTypeMapping
             contentType="org.eclipse.core.runtime.text"
@@ -195,6 +208,10 @@
         <participant
             class="org.eclipse.lsp4e.ConnectDocumentToLanguageServerSetupParticipant"
             contentTypeId="org.eclipse.wst.jsdt.core.jsSource">
+        </participant>
+        <participant
+	        class="org.eclipse.lsp4e.ConnectDocumentToLanguageServerSetupParticipant"
+	        contentTypeId="software.aws.toolkits.eclipse.amazonq.abap">
         </participant>
    </extension>
 
@@ -550,7 +567,8 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
-		                        <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>                       
+		                        <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>
+		                        <equals value="com.sap.adt.programs.ui.AdtProgramEditor"/>
                             </or>
                         </with>
                     </and>

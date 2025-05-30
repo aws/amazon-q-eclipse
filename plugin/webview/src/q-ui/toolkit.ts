@@ -16,13 +16,16 @@ const store = createStore<State>({
         stage: 'START' as Stage,
         ssoRegions: [] as Region[],
         authorizationCode: undefined,
+        redirectUrl: undefined,
         lastLoginIdcInfo: {
             startUrl: '',
             region: '',
         },
         feature: 'awsExplorer',
         cancellable: false,
-        existingConnections: [] as AwsBearerTokenConnection[]
+        existingConnections: [] as AwsBearerTokenConnection[],
+        profiles : [],
+        selectedProfile: null
     },
     getters: {},
     mutations: {

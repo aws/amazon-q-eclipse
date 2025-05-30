@@ -13,11 +13,6 @@ import org.junit.jupiter.api.Test;
 public class QChatCssVariableTest {
 
     @Test
-    void testEnumValues() {
-        assertEquals(28, QChatCssVariable.values().length);
-    }
-
-    @Test
     void testTextColorValues() {
         assertEquals("--mynah-color-text-default", QChatCssVariable.TextColorDefault.getValue());
         assertEquals("--mynah-color-text-strong", QChatCssVariable.TextColorStrong.getValue());

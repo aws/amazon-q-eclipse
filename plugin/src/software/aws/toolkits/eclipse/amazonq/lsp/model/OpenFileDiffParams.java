@@ -3,9 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.net.URI;
 
-public record UpdateCredentialsPayloadData(
-        @JsonProperty("data") BearerCredentials data
-    ) {
+public record OpenFileDiffParams(URI originalFileUri, String originalFileContent, Boolean isDeleted,
+        String fileContent) {
 }

@@ -15,7 +15,7 @@ public final class LspConstants {
         // Prevent instantiation
     }
 
-    public static final String CW_MANIFEST_URL = "https://aws-toolkit-language-servers.amazonaws.com/codewhisperer/0/manifest.json";
+    public static final String CW_MANIFEST_URL = "https://d3akiidp1wvqyg.cloudfront.net/qAgenticChatServer/0/manifest.json";
     public static final int MANIFEST_MAJOR_VERSION = 0;
 
     public static final String CW_LSP_FILENAME = "aws-lsp-codewhisperer.js";
@@ -26,13 +26,13 @@ public final class LspConstants {
     public static final String LSP_SERVER_FOLDER = "servers";
 
     public static final String LSP_SUBDIRECTORY = "lsp";
-    public static final String AMAZONQ_LSP_SUBDIRECTORY = Paths.get(LSP_SUBDIRECTORY, "AmazonQ").toString();
+    public static final String AMAZONQ_LSP_SUBDIRECTORY = Paths.get(LSP_SUBDIRECTORY, "AmazonQAgentic").toString();
 
     public static final VersionRange LSP_SUPPORTED_VERSION_RANGE = createVersionRange();
 
     private static VersionRange createVersionRange() {
         try {
-            return VersionRange.createFromVersionSpec("[3.1.2, 3.10.0)");
+            return VersionRange.createFromVersionSpec("[1.0.0, 1.10.0)");
         } catch (InvalidVersionSpecificationException e) {
             throw new AmazonQPluginException("Failed to parse LSP supported version range", e);
         }

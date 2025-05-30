@@ -94,15 +94,15 @@ public final class DefaultAuthTokenService implements AuthTokenService {
         return new GetSsoTokenParams(source, AWSProduct.AMAZON_Q_FOR_ECLIPSE.toString(), options);
     }
 
-    public static class Builder {
+    public static final class Builder {
         private LspProvider lspProvider;
 
-        public final Builder withLspProvider(final LspProvider lspProvider) {
+        public Builder withLspProvider(final LspProvider lspProvider) {
             this.lspProvider = lspProvider;
             return this;
         }
 
-        public final DefaultAuthTokenService build() {
+        public DefaultAuthTokenService build() {
             if (lspProvider == null) {
                 lspProvider = Activator.getLspProvider();
             }

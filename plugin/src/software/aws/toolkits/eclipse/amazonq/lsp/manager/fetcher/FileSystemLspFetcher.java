@@ -10,11 +10,11 @@ import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.util.PluginArchitecture;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 
-public class FileSystemLspFetcher {
+public final class FileSystemLspFetcher {
 
     private final Path sourceFile;
 
-    public FileSystemLspFetcher(final Builder builder) {
+    private FileSystemLspFetcher(final Builder builder) {
         this.sourceFile = builder.sourceFile;
     }
 
@@ -22,7 +22,7 @@ public class FileSystemLspFetcher {
         return new Builder();
     }
 
-    public final boolean fetch(final PluginPlatform platform, final PluginArchitecture architecture, final Path destination) {
+    public boolean fetch(final PluginPlatform platform, final PluginArchitecture architecture, final Path destination) {
         try {
             if (Files.isDirectory(sourceFile)) {
                 ArtifactUtils.copyDirectory(sourceFile, destination);
@@ -37,15 +37,15 @@ public class FileSystemLspFetcher {
         return true;
     }
 
-    public static class Builder {
+    public static final class Builder {
         private Path sourceFile;
 
-        public final Builder withSourceFile(final Path sourceFile) {
+        public Builder withSourceFile(final Path sourceFile) {
             this.sourceFile = sourceFile;
             return this;
         }
 
-        public final FileSystemLspFetcher build() {
+        public FileSystemLspFetcher build() {
             return new FileSystemLspFetcher(this);
         }
     }

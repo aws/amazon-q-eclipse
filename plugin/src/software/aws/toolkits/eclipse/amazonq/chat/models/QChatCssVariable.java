@@ -11,6 +11,7 @@ public enum QChatCssVariable {
     TextColorWeak("--mynah-color-text-weak"),
     TextColorLink("--mynah-color-text-link"),
     TextColorInput("--mynah-color-text-input"),
+    TextColorAlternate("--mynah-color-text-alternate"),
 
     // Layout
     Background("--mynah-color-bg"),
@@ -45,9 +46,17 @@ public enum QChatCssVariable {
 
     // Card
     CardBackground("--mynah-card-bg"),
+    CardBackgroundAlternate("--mynah-card-bg-alternate"),
 
     // Line height
-    LineHeight("--mynah-line-height");
+    LineHeight("--mynah-line-height"),
+
+    // Input
+    InputBackground("--mynah-input-bg"),
+
+    // Borders
+    InputBorder("--mynah-color-text-input-border"),
+    InputBorderFocused("--mynah-color-text-input-border-focused");
 
     private String value;
 

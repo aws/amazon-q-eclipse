@@ -12,7 +12,8 @@ public enum ChatUIInboundCommandName {
     ErrorMessage("errorMessage"),
     InsertToCursorPosition("insertToCursorPosition"),
     AuthFollowUpClicked("authFollowUpClicked"),
-    GenericCommand("genericCommand");
+    GenericCommand("genericCommand"),
+    ChatOptionsUpdate("aws/chat/chatOptionsUpdate");
 
     private final String value;
 

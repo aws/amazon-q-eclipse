@@ -532,6 +532,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
      */
     private void sendMessageToChatUI(final ChatUIInboundCommand command) {
         String message = jsonHandler.serialize(command);
+        
         String inlineChatCommand = ChatUIInboundCommandName.InlineChatPrompt.getValue();
         if (inlineChatCommand.equals(command.command())) {
             inlineChatListenerFuture.thenApply(listener -> {

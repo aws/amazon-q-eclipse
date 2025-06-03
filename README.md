@@ -1,33 +1,110 @@
 ## Amazon Q for Eclipse
 
-Amazon Q Developer helps users build faster across the entire software development lifecycle by providing tailored responses and code recommendations that conform to their team's internal libraries, proprietary algorithmic techniques, and enterprise code style.
+Amazon Q Developer is an advanced AI-powered coding assistant designed to enhance developer productivity and streamline software development processes.
 
-### Getting Started
+### Key Features
 
-* **Free Tier** - create or log in with an AWS Builder ID (a personal profile from AWS).
-* **Pro Tier** - if your organization is on the Amazon Q Developer Pro tier, log in with single sign-on.
+1. **Intelligent Code Generation & Assistance**
+   - Explains code and answers software development questions
+   - Generates real-time code suggestions from snippets to full functions
+   - Provides inline code suggestions based on your comments and existing code
+   - Supports contextual conversations about your code
 
-### Features
+2. **AI-Powered Development Agents**
+   - Automates complex, multistep tasks including:
+     - Unit testing
+     - Documentation
+     - Code reviews
+   - Assists with implementing features, documenting code, and bootstrapping new projects
+   - Achieved highest scores on the SWE-Bench Leaderboard and Leaderboard Lite
 
-* Code faster with inline code suggestions - Amazon Q Developer generates real-time code suggestions ranging from snippets to full functions based on your comments and existing code. It also supports CLI completions and natural language–to-bash translation in the command line.
-* Get assistance - Amazon Q Developer can generate code, explain code, and provide answers about software development.
-* Customize code recommendations - Securely connect Amazon Q Developer to your private repositories to generate even more relevant code recommendations, ask questions about your company code, and understand your internal code bases faster.
-* Code reference log - Attribute code from Amazon Q that is similar to training data. When code suggestions similar to training data are accepted, they will be added to the code reference log.
+3. **Secure Private Repository Integration**
+   - Connects securely to your private repositories
+   - Customizes and generates more relevant code recommendations
+   - Enables querying about your company-specific code
+   - Accelerates understanding of internal code bases
 
-### How to install
-* **Step 1:** Inside Eclipse, select `Help -> Install New Software...`.
-<img width="200" alt="image" src="https://github.com/user-attachments/assets/f67acea2-ca55-4811-83ab-2ee5aa712039">
+4. **Code Reference Log**
+   - Attributes code suggestions that are similar to training data
+   - Automatically logs accepted code suggestions that match training data
+   - Maintains transparency in AI-generated code origins
 
-* **Step 2:** Add the Amazon Q for Eclipse update site URL `https://amazonq.eclipsetoolkit.amazonwebservices.com/` and select the plugin before continuing.
-<img width="600" alt="Screenshot 2024-11-26 at 9 24 55 AM" src="https://github.com/user-attachments/assets/7ba66f83-6853-4d57-a0f3-bb07c042d14b">
+Amazon Q Developer is designed to be your intelligent coding companion, helping you write better code faster and understand complex codebases more efficiently.
 
-* **Step 3:** Review the installation and license details and continue through to install the plugin. Upon completion you will be prompted to restart the IDE to finish the installation.
-<img width="400" alt="image" src="https://github.com/user-attachments/assets/a586cb2d-9f16-4314-8555-b09d03d01af7">
+### Available Plans
 
-### Screenshots
-![login](https://github.com/user-attachments/assets/5345e2fb-fa43-469f-92b6-b388577077a6)
-![inline](https://github.com/user-attachments/assets/e7a684f9-c568-4c63-a510-1fb85bef52e3)
-![chat](https://github.com/user-attachments/assets/459592ac-2bef-416c-8430-28584a6d709f)
+1. [Free Tier](https://aws.amazon.com/q/developer/getting-started/)
+    - Code faster with code suggestions in the IDE
+    - Review code licenses with reference tracking
+    - Limited monthly access to advanced features:
+        - Chat, debug code, add tests, and more in your IDE (50 interactions/month)
+        - Amazon Q Developer agents for software development (10 uses/month)
+        - Amazon Q Developer Agent for code transformation (1,000 lines of submitted code/month)
+        - Answers about your AWS account resources (25 queries/month)
+
+2. [Pro Tier](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/q-pro-tier-setting-up-access.html)
+    - Manage users and policies with enterprise access controls
+    - Customize Amazon Q to your code base for enhanced suggestions
+    - Increased limits on advanced features:
+        - Unlimited chat, debugging, and testing in your IDE
+        - Unlimited use of Amazon Q Developer agents for software development
+        - Unlimited answers about your AWS account resources
+    - Additional enterprise-grade features
+
+Both tiers continue to receive updates and improvements.
+
+### Installation Instructions
+
+#### Option 1: Install via Eclipse Marketplace (Recommended)
+1. **Open Eclipse Marketplace**
+   - Launch Eclipse IDE
+   - Navigate to `Help > Eclipse Marketplace...`
+   - Search for "Amazon Q"
+   - Click "Install" on the Amazon Q plugin
+
+2. **Complete Installation**
+   - Review the installation details
+   - Accept the license agreement
+   - Click "Finish"
+   - When prompted, restart Eclipse to complete the installation
+
+![Install-Using-Marketplace](https://github.com/user-attachments/assets/dcb77afd-4ee0-4da7-adb0-dbc22cd80f70)
+
+#### Option 2: Install via Update Site
+1. **Open Install Dialog**
+   - Launch Eclipse IDE
+   - Navigate to `Help > Install New Software...`
+
+2. **Add Amazon Q Repository**
+   - Click "Add..." button
+   - Enter the following details:
+     - Name: `Amazon Q for Eclipse`
+     - URL: `https://amazonq.eclipsetoolkit.amazonwebservices.com/`
+   - Click "Add"
+   - Select "software.aws.toolkits.eclipse" from the available software list
+   - Click "Next"
+
+3. **Complete Installation**
+   - Review the installation details
+   - Accept the license agreement
+   - Click "Finish"
+   - When prompted, restart Eclipse to complete the installation
+
+![Install-Using-Update-Site](https://github.com/user-attachments/assets/3d8e0667-a405-4daf-9736-dbcc254a3344)
+
+### Demos & Examples
+
+#### Code Context
+![Explaining-A-Class](https://github.com/user-attachments/assets/86ff704b-8be1-41e0-be91-fc172b40478f)
+
+#### Generate Tests
+![Test-Generation](https://github.com/user-attachments/assets/8f3edc09-6981-4bb2-b0bd-0201e6b73cf1)
+
+#### Create Documentation
+![Inline-Chat](https://github.com/user-attachments/assets/ee867bcf-ef62-4468-86d3-1df53ddabf1b)
+
+#### Code Completion
+![Code-Completion-Example](https://github.com/user-attachments/assets/30b76708-1cd4-4cd1-9abe-22c9a4a6a8bc)
 
 ## License
 

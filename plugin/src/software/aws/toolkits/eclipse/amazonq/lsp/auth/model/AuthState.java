@@ -13,6 +13,10 @@ public record AuthState(
         @JsonProperty("ssoTokenId") String ssoTokenId
     ) {
 
+    public AuthState(final AuthStateType authStateType, final LoginType loginType) {
+        this(authStateType, loginType, null, null, null);
+    }
+
     public Boolean isLoggedIn() {
         return authStateType.equals(AuthStateType.LOGGED_IN);
     }

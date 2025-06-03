@@ -602,6 +602,7 @@ public final class ChatCommunicationManagerTest {
           }
       }
 
+
       @Test
       void testIncorrectChatPartialResult() {
           try (MockedStatic<ProgressNotificationUtils> progressNotificationUtilsMock = mockStatic(ProgressNotificationUtils.class)) {

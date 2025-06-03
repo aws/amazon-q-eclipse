@@ -17,6 +17,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -156,7 +161,9 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                     amazonQLspServer.tabChange(message.getData());
                         break;
                     case FILE_CLICK:
-                    amazonQLspServer.fileClick(message.getData());
+                    if (validateFileInWorkspaceRoot(message.getValueAsString("fullPath"))) {
+                        amazonQLspServer.fileClick(message.getData());
+                    }
                         break;
                     case CHAT_INFO_LINK_CLICK:
                     amazonQLspServer.infoLinkClick(message.getData());
@@ -289,6 +296,37 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         });
 
         return range.get().map(CursorState::new);
+    }
+
+    private boolean validateFileInWorkspaceRoot(final String fullPath) {
+        if (fullPath == null) {
+            return true;
+        }
+
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        IPath path = new Path(fullPath);
+
+        try {
+            IProject[] projects = root.getProjects();
+            boolean isInProjectRoot = false;
+
+            for (IProject project : projects) {
+                if (project.isOpen()) {
+                    IPath projectPath = project.getLocation();
+
+                    if (projectPath.isPrefixOf(path)) {
+                        isInProjectRoot = true;
+                        break;
+                    }
+                }
+            }
+
+            return isInProjectRoot;
+        } catch (Exception e) {
+            Activator.getLogger().error("Error checking project paths", e);
+        }
+
+        return false;
     }
 
     private ChatMessage addEditorState(final ChatMessage chatRequestParams, final boolean addCursorState) {

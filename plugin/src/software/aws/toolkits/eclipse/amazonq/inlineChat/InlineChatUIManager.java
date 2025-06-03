@@ -45,6 +45,7 @@ public final class InlineChatUIManager {
     // UI elements
     private PopupDialog inputBox;
     private ITextViewer viewer;
+    private final int maxInputLength = 256;
     private PaintListener currentPaintListener;
     private final String inputPromptMessage = "Enter instructions for Amazon Q (Enter | Esc)";
     private final String generatingMessage = "Amazon Q is generating...";
@@ -83,7 +84,6 @@ public final class InlineChatUIManager {
             }
 
             var widget = viewer.getTextWidget();
-
             inputBox = new PopupDialog(widget.getShell(), PopupDialog.INFOPOPUP_SHELLSTYLE, false, false, true, false, false, null, null) {
                 private Point screenLocation;
                 private Text inputField;
@@ -167,6 +167,15 @@ public final class InlineChatUIManager {
                     GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
                     gridData.widthHint = 350;
                     inputField.setLayoutData(gridData);
+
+                    // Enforce maximum character count that can be entered into the input
+                    inputField.addVerifyListener(e -> {
+                        String currentText = inputField.getText();
+                        String newText = currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
+                        if (newText.length() > maxInputLength) {
+                            e.doit = false; // Prevent the input
+                        }
+                    });
 
                     inputField.addKeyListener(new KeyAdapter() {
                         @Override
@@ -355,7 +364,7 @@ public final class InlineChatUIManager {
     }
 
     private boolean userInputIsValid(final String input) {
-        return input != null && input.length() >= 2;
+        return input != null && input.length() >= 2 && input.length() < maxInputLength;
     }
 
     /**

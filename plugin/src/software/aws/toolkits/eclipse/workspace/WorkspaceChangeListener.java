@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.workspace;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.core.resources.IResource;
@@ -22,13 +23,15 @@ import org.eclipse.lsp4j.FileRename;
 import org.eclipse.lsp4j.RenameFilesParams;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
 public final class WorkspaceChangeListener implements IResourceChangeListener {
     private static final AtomicReference<WorkspaceChangeListener> INSTANCE = new AtomicReference<>();
 
     private final FileChangeTracker fileChangeTracker;
+    private static final Set<Integer> ALLOWED_RESOURCE_TYPES = Set.of(
+            IResource.FILE,
+            IResource.FOLDER);
 
     private WorkspaceChangeListener() {
         this.fileChangeTracker = new FileChangeTracker();
@@ -52,19 +55,12 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
     }
 
     private void processResourceChange(final IResourceChangeEvent event) {
-        if (!isIndexingEnabled()) {
-            return;
-        }
         try {
             FileChanges changes = fileChangeTracker.trackChanges(event.getDelta());
             notifyLspServer(changes);
         } catch (Exception e) {
             Activator.getLogger().error("Error processing workspace changes", e);
         }
-    }
-
-    private boolean isIndexingEnabled() {
-        return Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.WORKSPACE_INDEX);
     }
 
     public void stop() {
@@ -86,7 +82,7 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
             FileChanges changes = new FileChanges();
 
             delta.accept(resourceDelta -> {
-                if (resourceDelta.getResource().getType() != IResource.FILE) {
+                if (!ALLOWED_RESOURCE_TYPES.contains(resourceDelta.getResource().getType())) {
                     return true;
                 }
 

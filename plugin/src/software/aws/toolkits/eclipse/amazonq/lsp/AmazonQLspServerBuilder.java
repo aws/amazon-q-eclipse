@@ -44,6 +44,8 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         Map<String, Object> awsInitOptions = new HashMap<>();
         Map<String, Object> extendedClientInfoOptions = new HashMap<>();
         Map<String, String> extensionOptions = new HashMap<>();
+        Map<String, Object> awsClientCapabilities = new HashMap<>();
+        Map<String, Object> qOptions = new HashMap<>();
         extensionOptions.put("name", USER_AGENT_CLIENT_NAME);
         extensionOptions.put("version", metadata.getPluginVersion());
         extendedClientInfoOptions.put("extension", extensionOptions);
@@ -51,11 +53,13 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         extendedClientInfoOptions.put("version", metadata.getIdeVersion());
         extendedClientInfoOptions.put("name", metadata.getIdeName());
         awsInitOptions.put("clientInfo", extendedClientInfoOptions);
-        Map<String, Object> clientCapabilities = new HashMap<>();
+        qOptions.put("developerProfiles", true);
+        qOptions.put("customizationsWithMetadata", true);
+        awsClientCapabilities.put("q", qOptions);
         Map<String, Object> window = new HashMap<>();
         window.put("showSaveFileDialog", true);
-        clientCapabilities.put("window", window);
-        awsInitOptions.put("awsClientCapabilities", clientCapabilities);
+        awsClientCapabilities.put("window", window);
+        awsInitOptions.put("awsClientCapabilities", awsClientCapabilities);
         initOptions.put("aws", awsInitOptions);
         return initOptions;
     }

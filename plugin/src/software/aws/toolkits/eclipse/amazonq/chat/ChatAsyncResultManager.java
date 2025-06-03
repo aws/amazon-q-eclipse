@@ -52,6 +52,7 @@ public final class ChatAsyncResultManager {
             results.remove(requestId);
         } else {
             completedResults.put(requestId, result);
+            results.remove(requestId);
         }
     }
 

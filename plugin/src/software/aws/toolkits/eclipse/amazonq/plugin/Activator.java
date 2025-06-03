@@ -7,12 +7,12 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
-import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatEditorListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
@@ -60,7 +60,7 @@ public class Activator extends AbstractUIPlugin {
 
     @Override
     public final void stop(final BundleContext context) throws Exception {
-        ChatStateManager.getInstance().dispose();
+        AmazonQBrowserProvider.getInstance().dispose();
         super.stop(context);
         plugin = null;
         workspaceListener.stop();

@@ -3,18 +3,19 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
+
+import java.util.concurrent.ExecutionException;
+
 import org.eclipse.core.commands.IExecutionListener;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatSession;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
-
-import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
-
-import java.util.concurrent.ExecutionException;
 
 public final class AutoTriggerDocumentListener implements IDocumentListener, IAutoTriggerListener {
     private static final String UNDO_COMMAND_ID = "org.eclipse.ui.edit.undo";
@@ -39,15 +40,18 @@ public final class AutoTriggerDocumentListener implements IDocumentListener, IAu
         if (!shouldSendQuery(e, qSes)) {
             return;
         }
-        if (!qSes.isActive()) {
-            var editor = getActiveTextEditor();
+        var editor = getActiveTextEditor();
+
+        if (!qSes.isActive() && !(editor.getEditorInput() instanceof InMemoryInput)) {
             try {
                 qSes.start(editor);
             } catch (ExecutionException e1) {
                 return;
             }
         }
-        qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset(), e.getText().length());
+        if (!(editor.getEditorInput() instanceof InMemoryInput)) {
+            qSes.invoke(qSes.getViewer().getTextWidget().getCaretOffset(), e.getText().length());
+        }
     }
 
     private boolean shouldSendQuery(final DocumentEvent e, final QInvocationSession session) {

@@ -74,6 +74,9 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
 
     @Override
     public void beforeAll(final ExtensionContext context) {
+        if (activatorStaticMock != null) {
+            activatorStaticMock.close();
+        }
         activatorStaticMock = mockStatic(Activator.class);
     }
 
@@ -81,6 +84,7 @@ public final class ActivatorStaticMockExtension extends StaticMockExtension<Acti
     public void afterAll(final ExtensionContext context) throws Exception {
         if (activatorStaticMock != null) {
             activatorStaticMock.close();
+            activatorStaticMock = null;
         }
     }
 

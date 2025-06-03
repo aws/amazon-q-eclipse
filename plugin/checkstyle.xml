@@ -15,6 +15,12 @@
     <property name="optional" value="true"/>
   </module>
 
+  <module name="Header">
+    <property name="headerFile" value="plugin/copyright-header.txt"/>
+    <property name="fileExtensions" value="java"/>
+    <property name="ignoreLines" value="2"/>
+  </module>
+
   <module name="NewlineAtEndOfFile"/>
   <module name="Translation"/>
   <module name="FileLength"/>

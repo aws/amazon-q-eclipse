@@ -42,7 +42,7 @@ public final class ThemeDetector {
         return Optional.ofNullable(isDarkTheme);
     }
 
-    public boolean themeUsingDarkColors() throws Exception {
+    private boolean themeUsingDarkColors() throws Exception {
         ITheme currentTheme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
         Color backgroundColor = currentTheme.getColorRegistry().get(ACTIVE_TAB_BG_KEY);
         // Check if the background color is dark by examining its RGB values

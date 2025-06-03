@@ -280,39 +280,39 @@ public final class DefaultLspManager implements LspManager {
         return remote.compareTo(storedValue) > 0;
     }
 
-    public static class Builder {
+    public static final class Builder {
         private String manifestUrl;
         private Path workingDirectory;
         private String lspExecutablePrefix;
         private PluginPlatform platformOverride;
         private PluginArchitecture architectureOverride;
 
-        public final Builder withManifestUrl(final String manifestUrl) {
+        public Builder withManifestUrl(final String manifestUrl) {
             this.manifestUrl = manifestUrl;
             return this;
         }
 
-        public final Builder withDirectory(final Path workingDirectory) {
+        public Builder withDirectory(final Path workingDirectory) {
             this.workingDirectory = workingDirectory;
             return this;
         }
 
-        public final Builder withLspExecutablePrefix(final String lspExecutablePrefix) {
+        public Builder withLspExecutablePrefix(final String lspExecutablePrefix) {
             this.lspExecutablePrefix = lspExecutablePrefix;
             return this;
         }
 
-        public final Builder withPlatformOverride(final PluginPlatform platformOverride) {
+        public Builder withPlatformOverride(final PluginPlatform platformOverride) {
             this.platformOverride = platformOverride;
             return this;
         }
 
-        public final Builder withArchitectureOverride(final PluginArchitecture architectureOverride) {
+        public Builder withArchitectureOverride(final PluginArchitecture architectureOverride) {
             this.architectureOverride = architectureOverride;
             return this;
         }
 
-        public final DefaultLspManager build() {
+        public DefaultLspManager build() {
             return new DefaultLspManager(this);
         }
     }

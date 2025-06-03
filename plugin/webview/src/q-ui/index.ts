@@ -5,7 +5,7 @@
 import { createApp } from 'vue'
 import {createStore, Store} from 'vuex'
 import HelloWorld from './components/root.vue'
-import {AwsBearerTokenConnection, Feature, IdcInfo, Region, Stage, State} from "../model";
+import {AwsBearerTokenConnection, Feature, IdcInfo, Profile, Region, Stage, State} from "../model";
 import {IdeClient} from "../ideClient";
 import './assets/common.scss'
 
@@ -15,13 +15,16 @@ const store = createStore<State>({
         stage: 'START' as Stage,
         ssoRegions: [] as Region[],
         authorizationCode: undefined,
+        redirectUrl: undefined,
         lastLoginIdcInfo: {
             startUrl: '',
             region: '',
         },
         feature: 'Q',
         cancellable: false,
-        existingConnections: [] as AwsBearerTokenConnection[]
+        existingConnections: [] as AwsBearerTokenConnection[],
+        profiles: [] as Profile[],
+        selectedProfile: null as Profile|null
     },
     getters: {},
     mutations: {
@@ -37,6 +40,9 @@ const store = createStore<State>({
         setAuthorizationCode(state: State, code: string) {
             state.authorizationCode = code
         },
+        setRedirectUrl(state: State, redirectUrl: string) {
+            state.redirectUrl = redirectUrl
+        },
         setFeature(state: State, feature: Feature) {
             state.feature = feature
         },
@@ -48,14 +54,23 @@ const store = createStore<State>({
         setExistingConnections(state: State, connections: AwsBearerTokenConnection[]) {
             state.existingConnections = connections
         },
+        setProfiles(state, profiles) {
+            state.profiles = Array.isArray(profiles) ? profiles : profiles.profiles || [];
+        },
+        setSelectedProfile(state, profile: Profile) {
+            state.selectedProfile = profile
+        },
         reset(state: State) {
             state.stage = 'START'
             state.ssoRegions = []
             state.authorizationCode = undefined
+            state.redirectUrl = undefined
             state.lastLoginIdcInfo = {
                 startUrl: '',
                 region: ''
             }
+            state.profiles = []
+            state.selectedProfile = null
         }
     },
     actions: {},

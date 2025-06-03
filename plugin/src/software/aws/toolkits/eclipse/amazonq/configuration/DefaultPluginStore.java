@@ -19,7 +19,7 @@ public final class DefaultPluginStore implements PluginStore {
 
     private static DefaultPluginStore instance;
 
-    private IEclipsePreferences preferences;
+    private volatile IEclipsePreferences preferences;
 
     public DefaultPluginStore(final IEclipsePreferences preferences) {
         this.preferences = preferences != null ? preferences : InstanceScope.INSTANCE.getNode("software.aws.toolkits.eclipse");
@@ -34,7 +34,7 @@ public final class DefaultPluginStore implements PluginStore {
     }
 
     @Override
-    public void put(final String key, final String value) {
+    public synchronized void put(final String key, final String value) {
         preferences.put(key, value);
         try {
             preferences.flush();
@@ -49,7 +49,7 @@ public final class DefaultPluginStore implements PluginStore {
     }
 
     @Override
-    public void remove(final String key) {
+    public synchronized void remove(final String key) {
         preferences.remove(key);
         try {
             preferences.flush();
@@ -64,7 +64,7 @@ public final class DefaultPluginStore implements PluginStore {
     }
 
     @Override
-    public <T> void putObject(final String key, final T value) {
+    public synchronized <T> void putObject(final String key, final T value) {
         String jsonValue = GSON.toJson(value);
         byte[] byteValue = jsonValue.getBytes(StandardCharsets.UTF_8);
         preferences.putByteArray(key, byteValue);

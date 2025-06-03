@@ -1,3 +1,6 @@
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.util.Set;
@@ -14,7 +17,7 @@ public final class LanguageUtil {
             "handlebars", "groovy", "go", "diff", "css", "c", "coffeescript",
             "clojure", "bibtex", "abap");
 
-    public static String extractLanguageNameFromFileExtension(
+    private static String extractLanguageNameFromFileExtension(
             final String languageId) {
 
         if (languageId == null) {

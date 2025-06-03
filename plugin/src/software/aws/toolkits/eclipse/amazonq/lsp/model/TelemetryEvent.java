@@ -5,4 +5,8 @@ package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
 import java.util.Map;
 
-public record TelemetryEvent(String name, String result, Map<String, Object> data, ErrorData errorData) { }
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public record TelemetryEvent(@JsonProperty("name") String name, @JsonProperty("result") String result,
+        @JsonProperty("data") Map<String, Object> data, @JsonProperty("errorData") ErrorData errorData) {
+}

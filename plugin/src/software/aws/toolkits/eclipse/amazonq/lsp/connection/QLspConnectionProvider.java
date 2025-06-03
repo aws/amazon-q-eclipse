@@ -21,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.ArchitectureUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
@@ -59,6 +60,9 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         if (!StringUtils.isEmpty(caCertPreference)) {
             env.put("NODE_EXTRA_CA_CERTS", caCertPreference);
             env.put("AWS_CA_BUNDLE", caCertPreference);
+        }
+        if (ArchitectureUtils.isWindowsArm()) {
+            env.put("DISABLE_INDEXING_LIBRARY", "true");
         }
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");

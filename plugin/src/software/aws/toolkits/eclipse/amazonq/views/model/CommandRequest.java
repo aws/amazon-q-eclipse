@@ -7,11 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record CommandRequest(
         @JsonProperty("command") String commandString,
-        @JsonProperty("params") Object params) {
+        @JsonProperty("params") Object params,
+        @JsonProperty("requestId") String requestId) {
 
     public ParsedCommand getParsedCommand() {
         Command command = Command.fromString(commandString).orElse(null);
-        ParsedCommand parsedCommand = new ParsedCommand(command, params);
+        ParsedCommand parsedCommand = new ParsedCommand(command, params, requestId);
         return parsedCommand;
     }
 }

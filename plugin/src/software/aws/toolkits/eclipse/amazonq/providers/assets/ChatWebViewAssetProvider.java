@@ -8,28 +8,17 @@ import java.awt.datatransfer.StringSelection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
-import org.eclipse.swt.browser.ProgressAdapter;
-import org.eclipse.swt.browser.ProgressEvent;
-import org.eclipse.swt.widgets.Display;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
-import software.aws.toolkits.eclipse.amazonq.lsp.AwsServerCapabiltiesProvider;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActions;
-import software.aws.toolkits.eclipse.amazonq.lsp.model.QuickActionsCommandGroup;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
-import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -94,22 +83,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                 return null;
             }
         };
-
-        // Inject chat theme after mynah-ui has loaded
-        browser.addProgressListener(new ProgressAdapter() {
-            @Override
-            public void completed(final ProgressEvent event) {
-                Display.getDefault().syncExec(() -> {
-                    try {
-                        chatTheme.injectTheme(browser);
-                        disableBrowserContextMenu(browser);
-                    } catch (Exception e) {
-                        Activator.getLogger().info("Error occurred while injecting theme into Q chat", e);
-                    }
-                });
-            }
-        });
-
         browser.setText(content.get());
     }
 
@@ -120,6 +93,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
         }
 
         String chatJsPath = chatAsset.get();
+        String themeVariables = chatTheme.getThemeVariables();
 
         return Optional.of(String.format("""
                 <!DOCTYPE html>
@@ -133,80 +107,32 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         img-src 'self' data:; object-src 'none'; base-uri 'none'; connect-src swt:;"
                     >
                     <title>Amazon Q Chat</title>
-                    %s
+                    <style>
+                        %s
+                        body {
+                            background-color: var(--mynah-color-bg);
+                            color: var(--mynah-color-text-default);
+                            height: 100vh;
+                            width: 100%%;
+                            overflow: hidden;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        [class*="mynah-ui-icon-"] {
+                            transform: translateZ(0);
+                        }
+                    </style>
                 </head>
                 <body>
                     %s
                 </body>
                 </html>
-                """, chatJsPath, chatJsPath, generateCss(), generateJS(chatJsPath)));
-    }
-
-    private String generateCss() {
-        return """
-                <style>
-                    body,
-                    html {
-                        background-color: var(--mynah-color-bg);
-                        color: var(--mynah-color-text-default);
-                        height: 100vh;
-                        width: 100%%;
-                        overflow: hidden;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .mynah-ui-icon-plus,
-                    .mynah-ui-icon-cancel {
-                        -webkit-mask-size: 155% !important;
-                        mask-size: 155% !important;
-                        mask-position: center;
-                        scale: 60%;
-                    }
-                    .code-snippet-close-button i.mynah-ui-icon-cancel,
-                    .mynah-chat-item-card-related-content-show-more i.mynah-ui-icon-down-open {
-                        -webkit-mask-size: 195.5% !important;
-                        mask-size: 195.5% !important;
-                        mask-position: center;
-                        aspect-ratio: 1/1;
-                        width: 15px;
-                        height: 15px;
-                        scale: 50%
-                    }
-                    .mynah-ui-icon-tabs {
-                        -webkit-mask-size: 102% !important;
-                        mask-size: 102% !important;
-                        mask-position: center;
-                    }
-                    textarea:placeholder-shown {
-                        line-height: 1.5rem;
-                    }
-                    .mynah-ui-spinner-container {
-                        contain: layout !important;
-                    }
-                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part {
-                        position: static !important;
-                        will-change: transform !important;
-                    }
-                    .mynah-ui-spinner-container,
-                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part,
-                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
-                        border: 0 !important;
-                        outline: none !important;
-                        box-shadow: none !important;
-                        border-radius: 0 !important;
-                    }
-                    .mynah-ui-spinner-container > span.mynah-ui-spinner-logo-part > .mynah-ui-spinner-logo-mask.text {
-                        will-change: transform !important;
-                        transform: translateZ(0) !important;
-                    }
-                </style>
-                """;
+                """, chatJsPath, chatJsPath, themeVariables, generateJS(chatJsPath)));
     }
 
     private String generateJS(final String jsEntrypoint) {
-        var chatQuickActionConfig = generateQuickActionConfig();
-        var contextCommands = generateContextCommands();
         var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
+        var pairProgrammingAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED);
         return String.format("""
                 <script type="text/javascript" src="%s" defer></script>
                 <script type="text/javascript">
@@ -214,194 +140,221 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     const init = () => {
                         waitForFunction('ideCommand')
                             .then(() => {
+                                function refreshUi() {
+                                    document.querySelectorAll('[class*="mynah-ui-icon-"]').forEach(icon => {
+                                        icon.style.transform = 'none';
+                                        void icon.offsetHeight;
+                                        icon.style.transform = 'translateZ(0)';
+                                    });
+                                    document.querySelectorAll('[class*="mynah-chat-wrapper"]').forEach(wrapper => {
+                                        wrapper.style.overflow = 'visible';
+                                    });
+                                }
+
+                                document.addEventListener('visibilitychange', () => {
+                                    if (document.visibilityState === 'visible') {
+                                        refreshUi();
+                                    }
+                                });
+
                                 const mynahUI = amazonQChat.createChat({
                                     postMessage: (message) => {
                                         ideCommand(JSON.stringify(message));
                                     }
                                 },
                                 {
-                                    quickActionCommands: %s,
-                                    disclaimerAcknowledged: %b
+                                    disclaimerAcknowledged: %b,
+                                    pairProgrammingAcknowledged: %b,
+                                    agenticMode: true
                                 });
-                                const tabId = mynahUI.getSelectedTabId();
-                                window.tabId = tabId
-                                mynahUI.updateStore(tabId, { contextCommands: %s });
                                 window.mynah = mynahUI
                             })
                             .catch(error => console.error('Error initializing chat:', error));
                     }
-
                     window.addEventListener('load', init);
-
                     %s
-
-                    %s
-
-                    %s
-
-                    %s
-
                 </script>
-                """, jsEntrypoint, getWaitFunction(), chatQuickActionConfig, "true".equals(disclaimerAcknowledged), contextCommands,
-                getArrowKeyBlockingFunction(), getSelectAllAndCopySupportFunctions(), getPreventEmptyPopupFunction(),
-                getFocusOnChatPromptFunction());
+                """, jsEntrypoint, getWaitFunction(), "true".equals(disclaimerAcknowledged), "true".equals(pairProgrammingAcknowledged),
+                getInputFunctions());
     }
 
-    private String getArrowKeyBlockingFunction() {
+    @SuppressWarnings("MethodLength")
+    private String getInputFunctions() {
         return """
                 window.addEventListener('load', () => {
-                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
-                    if (textarea) {
-                        textarea.addEventListener('keydown', (event) => {
-                            const cursorPosition = textarea.selectionStart;
-                            const hasText = textarea.value.length > 0;
+                    const isMacOs = () => navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
-                            // block arrow keys on empty text area
+                    const cursorPositions = new WeakMap();
+                    const undoStacks = new WeakMap();
+                    const redoStacks = new WeakMap();
+
+                    const getCursorPosition = (element) => {
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            const preCaretRange = range.cloneRange();
+                            preCaretRange.selectNodeContents(element);
+                            preCaretRange.setEnd(range.endContainer, range.endOffset);
+                            return preCaretRange.toString().length;
+                        }
+                        return cursorPositions.get(element) || 0;
+                    };
+
+                    const selectAllContent = (element) => {
+                        const range = document.createRange();
+                        range.selectNodeContents(element);
+                        const selection = window.getSelection();
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                        cursorPositions.set(element, element.innerText.length);
+                    };
+
+                    const updateCursorPosition = (element, newPosition) => {
+                        const position = Math.max(0, Math.min(newPosition, element.innerText.length));
+                        cursorPositions.set(element, position);
+                    };
+
+                    const addInputListener = (element) => {
+                        cursorPositions.set(element, 0);
+                        undoStacks.set(element, []);
+                        redoStacks.set(element, []);
+                        let isUndoRedoAction = false;
+
+                        const saveState = () => {
+                            if (!isUndoRedoAction) {
+                                const currentState = {
+                                    text: element.innerText,
+                                    cursorPosition: getCursorPosition(element)
+                                };
+                                const undoStack = undoStacks.get(element);
+                                undoStack.push(currentState);
+                                redoStacks.set(element, []);
+                                if (undoStack.length > 100) {
+                                    undoStack.shift();
+                                }
+                            }
+                        };
+
+                        const undo = () => {
+                            const undoStack = undoStacks.get(element);
+                            const redoStack = redoStacks.get(element);
+                            if (undoStack.length > 1) {
+                                isUndoRedoAction = true;
+                                redoStack.push(undoStack.pop());
+                                const previousState = undoStack[undoStack.length - 1];
+                                element.innerText = previousState.text;
+                                updateCursorPosition(element, previousState.cursorPosition);
+                                isUndoRedoAction = false;
+                            }
+                        };
+
+                        const redo = () => {
+                            const redoStack = redoStacks.get(element);
+                            if (redoStack.length > 0) {
+                                isUndoRedoAction = true;
+                                const redoState = redoStack.pop();
+                                element.innerText = redoState.text;
+                                updateCursorPosition(element, redoState.cursorPosition);
+                                undoStacks.get(element).push(redoState);
+                                isUndoRedoAction = false;
+                            }
+                        };
+
+                        const updateCursorAfterInput = () => {
+                            setTimeout(() => {
+                                const newPosition = getCursorPosition(element);
+                                updateCursorPosition(element, newPosition);
+                                saveState();
+                            }, 0);
+                        };
+
+                        saveState();
+
+                        element.addEventListener('input', updateCursorAfterInput);
+                        element.addEventListener('paste', updateCursorAfterInput);
+
+                        element.addEventListener('keydown', (event) => {
+                            const cmdOrCtrl = isMacOs() ? event.metaKey : event.ctrlKey;
+
+                            if (cmdOrCtrl && event.key === 'a') {
+                                selectAllContent(element);
+                                event.preventDefault();
+                                event.stopPropagation();
+                                return;
+                            }
+
+                            if (cmdOrCtrl && event.key === 'z') {
+                                if (event.shiftKey) {
+                                    redo();
+                                } else {
+                                    undo();
+                                }
+                                event.preventDefault();
+                                event.stopPropagation();
+                                return;
+                            }
+
+                            const currentText = element.innerText.trim();
+                            const hasText = currentText.length > 0;
+                            const textLength = currentText.length;
+                            const cursorPosition = getCursorPosition(element);
+
                             switch (event.key) {
                                 case 'ArrowLeft':
                                     if (!hasText || cursorPosition === 0) {
                                         event.preventDefault();
                                         event.stopPropagation();
+                                    } else {
+                                        updateCursorPosition(element, cursorPosition - 1);
                                     }
                                     break;
 
                                 case 'ArrowRight':
-                                    if (!hasText || cursorPosition === textarea.value.length) {
+                                    if (!hasText || cursorPosition === textLength) {
                                         event.preventDefault();
                                         event.stopPropagation();
+                                    } else {
+                                        updateCursorPosition(element, cursorPosition + 1);
                                     }
                                     break;
+
+                                case 'ArrowUp':
+                                    updateCursorPosition(element, 0);
+                                    break;
+
+                                case 'ArrowDown':
+                                    updateCursorPosition(element, textLength);
+                                    break;
                             }
+                        }, true);
+
+                        element.addEventListener('focus', () => {
+                            const newPosition = getCursorPosition(element);
+                            updateCursorPosition(element, newPosition);
                         });
-                    }
-                });
-                """;
-    }
-
-    private String getSelectAllAndCopySupportFunctions() {
-        return """
-                window.addEventListener('load', () => {
-                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
-                    if (textarea) {
-                        textarea.addEventListener("keydown", (event) => {
-                            if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
-                                    && event.key === 'a') {
-                                textarea.select();
-                                event.preventDefault();
-                                event.stopPropagation();
-                            }
-                        });
-                    }
-                });
-
-                window.addEventListener('load', () => {
-                    const textarea = document.querySelector('textarea.mynah-chat-prompt-input');
-                    if (textarea) {
-                        textarea.addEventListener("keydown", (event) => {
-                            if (((isMacOs() && event.metaKey) || (!isMacOs() && event.ctrlKey))
-                                    && event.key === 'c') {
-                                copyToClipboard(textarea.value);
-                                event.preventDefault();
-                                event.stopPropagation();
-                            }
-                        });
-                    }
-                });
-                """;
-    }
-
-    private String getPreventEmptyPopupFunction() {
-        String selector = ".mynah-button" + ".mynah-button-secondary.mynah-button-border" + ".fill-state-always"
-                + ".mynah-chat-item-followup-question-option" + ".mynah-ui-clickable-item";
-
-        return """
-                const observer = new MutationObserver((mutations) => {
-                    try {
-                        const selector = '%s';
-
-                        mutations.forEach((mutation) => {
-                            mutation.addedNodes.forEach((node) => {
-                                if (node.nodeType === 1) { // Check if it's an element node
-                                    // Check for direct match
-                                    if (node.matches && node.matches(selector)) {
-                                        attachEventListeners(node);
-                                    }
-                                    // Check for nested matches
-                                    if (node.querySelectorAll) {
-                                        const buttons = node.querySelectorAll(selector); // Missing selector parameter
-                                        buttons.forEach(attachEventListeners);
-                        }
-                    }
-                            });
-                        });
-                    } catch (error) {
-                        console.error('Error in mutation observer:', error);
-                    }
-                });
-
-                function attachEventListeners(element) {
-                    if (!element || element.dataset.hasListener) return; // Prevent duplicate listeners
-
-                    const handleMouseOver = function(event) {
-                        const textSpan = this.querySelector('span.mynah-button-label');
-                        if (textSpan && textSpan.scrollWidth <= textSpan.offsetWidth) {
-                            event.stopImmediatePropagation();
-                            event.stopPropagation();
-                            event.preventDefault();
-                        }
                     };
 
-                    element.addEventListener('mouseover', handleMouseOver, true);
-                    element.dataset.hasListener = 'true';
-                }
+                    document.querySelectorAll('div.mynah-chat-prompt-input').forEach(addInputListener);
 
-                observer.observe(document.body, {
-                    childList: true,
-                    subtree: true,
-                    attributes: true
-                });
-                """.formatted(selector);
-    }
-
-    private String getFocusOnChatPromptFunction() {
-        return """
-                window.addEventListener('load', () => {
-                    const chatContainer = document.querySelector('.mynah-chat-prompt');
-                    if (chatContainer) {
-                        chatContainer.addEventListener('click', (event) => {
-                            if (!event.target.closest('.mynah-chat-prompt-input')) {
-                                keepFocusOnPrompt();
-                            }
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            mutation.addedNodes.forEach((node) => {
+                                if (node.nodeType === 1) {
+                                    if (node.matches('div.mynah-chat-prompt-input')) {
+                                        addInputListener(node);
+                                    }
+                                    node.querySelectorAll('div.mynah-chat-prompt-input').forEach(addInputListener);
+                                }
+                            });
                         });
-                    }
+                    });
+
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
                 });
                 """;
-    }
-
-    /*
-     * Generates javascript for chat options to be supplied to Chat UI defined here
-     * https://github.com/aws/language-servers/blob/
-     * 785f8dee86e9f716fcfa29b2e27eb07a02387557/chat-client/src/client/chat.ts#L87
-     */
-    private String generateQuickActionConfig() {
-        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getChatOptions())
-                .map(ChatOptions::quickActions).map(QuickActions::quickActionsCommandGroups)
-                .map(this::serializeQuickActionCommands).orElse("[]");
-    }
-
-    private String generateContextCommands() {
-        return Optional.ofNullable(AwsServerCapabiltiesProvider.getInstance().getContextCommands())
-                .map(this::serializeQuickActionCommands).orElse("[]");
-    }
-
-    private String serializeQuickActionCommands(final List<QuickActionsCommandGroup> quickActionCommands) {
-        try {
-            ObjectMapper mapper = ObjectMapperFactory.getInstance();
-            return mapper.writeValueAsString(quickActionCommands);
-        } catch (Exception e) {
-            Activator.getLogger().warn("Error occurred when json serializing quick action commands", e);
-            return "";
-        }
     }
 
     private void handleMessageFromUI(final Browser browser, final Object[] arguments) {
@@ -413,7 +366,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
         }
     }
 
-    public Optional<String> resolveJsPath() {
+
+    private Optional<String> resolveJsPath() {
         var chatUiDirectory = getChatUiDirectory();
 
         if (!isValid(chatUiDirectory)) {

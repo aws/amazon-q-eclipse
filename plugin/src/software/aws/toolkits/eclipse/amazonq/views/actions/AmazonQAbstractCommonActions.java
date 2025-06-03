@@ -28,7 +28,9 @@ public abstract class AmazonQAbstractCommonActions {
         private final OpenUserGuideAction openUserGuideAction;
         private final ViewSourceAction viewSourceAction;
         private final ViewLogsAction viewLogsAction;
+        private final ChangeProfileDialogContributionItem changeProfileDialogContributionItem;
         private final ReportAnIssueAction reportAnIssueAction;
+        private final OpenPreferencesAction openPreferencesAction;
 
         Actions() {
             signoutAction = new SignoutAction();
@@ -41,6 +43,8 @@ public abstract class AmazonQAbstractCommonActions {
             viewSourceAction = new ViewSourceAction();
             viewLogsAction = new ViewLogsAction();
             reportAnIssueAction = new ReportAnIssueAction();
+            openPreferencesAction = new OpenPreferencesAction();
+            changeProfileDialogContributionItem = new ChangeProfileDialogContributionItem();
         }
 
         public OpenQChatAction getOpenQChatAction() {
@@ -56,6 +60,8 @@ public abstract class AmazonQAbstractCommonActions {
                 // TODO: Need to update this method as the login condition has to be Pro login
                 // using IAM identity center
                 customizationDialogContributionItem.setVisible(
+                        authState.isLoggedIn() && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
+                changeProfileDialogContributionItem.setVisible(
                         authState.isLoggedIn() && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
             });
         }
@@ -85,7 +91,6 @@ public abstract class AmazonQAbstractCommonActions {
         if (includeToggleAutoTriggerContributionItem) {
             menuManager.add(action.toggleAutoTriggerContributionItem);
         }
-
         menuManager.add(new ContributionItem(action.customizationDialogContributionItem.getId()) {
             @Override
             public boolean isVisible() {
@@ -108,9 +113,31 @@ public abstract class AmazonQAbstractCommonActions {
             }
         });
         menuManager.add(new Separator());
+        menuManager.add(action.openPreferencesAction);
         menuManager.add(feedbackSubMenu);
         menuManager.add(helpSubMenu);
         menuManager.add(new Separator());
+        menuManager.add(new ContributionItem(action.changeProfileDialogContributionItem.getId()) {
+            @Override
+            public boolean isVisible() {
+                return action.changeProfileDialogContributionItem.isVisible();
+            }
+
+            @Override
+            public void fill(final Menu parent, final int index) {
+                action.changeProfileDialogContributionItem.fill(parent, index);
+            }
+
+            @Override
+            public void fill(final Composite parent) {
+                action.changeProfileDialogContributionItem.fill(parent);
+            }
+
+            @Override
+            public void fill(final ToolBar parent, final int index) {
+                action.changeProfileDialogContributionItem.fill(parent, index);
+            }
+        });
         menuManager.add(new ActionContributionItem(action.signoutAction) {
             @Override
             public boolean isVisible() {

@@ -74,7 +74,6 @@ public final class QInlineInputListener implements IDocumentListener, VerifyKeyL
         int curLineInDoc = widget.getLineAtOffset(invocationOffset);
         int lineIdx = invocationOffset - widget.getOffsetAtLine(curLineInDoc);
         String contentInLine = widget.getLine(curLineInDoc);
-        String delimiter = widget.getLineDelimiter();
         if (!rightCtxBuf.isEmpty() && normalSegmentCount > 1) {
             try {
                 int adjustedOffset = QEclipseEditorUtils.getOffsetInFullyExpandedDocument(session.getViewer(),

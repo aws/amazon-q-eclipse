@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
@@ -248,6 +249,10 @@ public final class InlineChatDiffManager {
 
     }
 
+    void endSession() {
+        task = null;
+    }
+
     private void setColorPalette(final boolean isDark) {
         this.annotationAdded = "diffAnnotation.added";
         this.annotationDeleted = "diffAnnotation.deleted";
@@ -284,7 +289,6 @@ public final class InlineChatDiffManager {
             return s;
         }
 
-        return s.replace("&quot;", "\"").replace("&#39;", "'").replace("&lt;", "<").replace("=&lt;", "=<").replace("&lt;=", "<=").replace("&gt;", ">")
-                .replace("=&gt;", "=>").replace("&gt;=", ">=").replace("&nbsp;", " ").replace("&lsquo;", "'").replace("&rsquo;", "'").replace("&amp;", "&");
+        return StringEscapeUtils.unescapeHtml4(s);
     }
 }

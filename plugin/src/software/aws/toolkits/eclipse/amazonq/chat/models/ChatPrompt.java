@@ -7,11 +7,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import software.aws.toolkits.eclipse.amazonq.lsp.model.Command;
-
 public record ChatPrompt(
     @JsonProperty("prompt") String prompt,
     @JsonProperty("escapedPrompt") String escapedPrompt,
     @JsonProperty("command") String command,
-    @JsonProperty("context") List<Command> context
+    @JsonProperty("context") List<Object> context
 ) { }

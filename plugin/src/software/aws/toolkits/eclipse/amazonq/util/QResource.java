@@ -13,7 +13,7 @@ class QResource implements IDisposable {
     private final List<QResource> children = new ArrayList<>();
     private boolean isDisposed = false;
 
-    public void addChild(final QResource child) {
+    private void addChild(final QResource child) {
         if (isDisposed) {
             throw new IllegalStateException("Cannot add a child to a disposed resource");
         }

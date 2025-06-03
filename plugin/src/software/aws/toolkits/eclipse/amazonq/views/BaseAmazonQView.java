@@ -1,4 +1,4 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.views;
@@ -53,10 +53,6 @@ public abstract class BaseAmazonQView {
 
     protected final AmazonQViewCommonActions getAmazonQCommonActions() {
         return amazonQCommonActions;
-    }
-
-    protected final AmazonQStaticActions getAmazonQStaticActions() {
-        return amazonQStaticActions;
     }
 
     protected final Image loadImage(final String imagePath) {

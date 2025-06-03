@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -16,6 +17,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
 
 import com.google.gson.ToNumberPolicy;
 
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResult;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
@@ -42,6 +44,8 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         Map<String, Object> awsInitOptions = new HashMap<>();
         Map<String, Object> extendedClientInfoOptions = new HashMap<>();
         Map<String, String> extensionOptions = new HashMap<>();
+        Map<String, Object> awsClientCapabilities = new HashMap<>();
+        Map<String, Object> qOptions = new HashMap<>();
         extensionOptions.put("name", USER_AGENT_CLIENT_NAME);
         extensionOptions.put("version", metadata.getPluginVersion());
         extendedClientInfoOptions.put("extension", extensionOptions);
@@ -49,13 +53,20 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         extendedClientInfoOptions.put("version", metadata.getIdeVersion());
         extendedClientInfoOptions.put("name", metadata.getIdeName());
         awsInitOptions.put("clientInfo", extendedClientInfoOptions);
+        qOptions.put("developerProfiles", true);
+        qOptions.put("customizationsWithMetadata", true);
+        awsClientCapabilities.put("q", qOptions);
+        Map<String, Object> window = new HashMap<>();
+        window.put("showSaveFileDialog", true);
+        awsClientCapabilities.put("window", window);
+        awsInitOptions.put("awsClientCapabilities", awsClientCapabilities);
         initOptions.put("aws", awsInitOptions);
         return initOptions;
     }
 
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
-        return super.wrapMessageConsumer((Message message) -> {
+        return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 ClientMetadata metadata = PluginClientMetadata.getInstance();
@@ -64,9 +75,9 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
             }
             if (message instanceof ResponseMessage && ((ResponseMessage) message).getResult() instanceof AwsExtendedInitializeResult) {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
-                var awsServerCapabiltiesProvider = AwsServerCapabiltiesProvider.getInstance();
-                awsServerCapabiltiesProvider.setAwsServerCapabilties(result.getAwsServerCapabilities());
-                Activator.getLspProvider().setAmazonQServer(launcher.getRemoteProxy());
+                var command = ChatUIInboundCommand.createCommand("chatOptions", result.getAwsServerCapabilities().chatOptions());
+                Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+                Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
             }
             consumer.consume(message);
         });

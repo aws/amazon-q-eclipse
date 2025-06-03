@@ -10,5 +10,6 @@ public final class PluginStoreKeys {
     }
 
     public static final String CHAT_DISCLAIMER_ACKNOWLEDGED = "qchatDisclaimerAcknowledged";
+    public static final String PAIR_PROGRAMMING_ACKNOWLEDGED = "qchatPairProgrammingAcknowledged";
 
 }

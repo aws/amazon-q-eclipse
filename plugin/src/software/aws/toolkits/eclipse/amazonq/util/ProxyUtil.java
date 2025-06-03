@@ -110,7 +110,7 @@ public final class ProxyUtil {
         };
     }
 
-    protected static String getHttpsProxyPreferenceUrl() throws MalformedURLException {
+    private static String getHttpsProxyPreferenceUrl() throws MalformedURLException {
         String prefValue = Activator.getDefault().getPreferenceStore()
             .getString(AmazonQPreferencePage.HTTPS_PROXY);
 

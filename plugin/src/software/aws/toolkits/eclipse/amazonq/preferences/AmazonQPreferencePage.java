@@ -4,9 +4,10 @@
 package software.aws.toolkits.eclipse.amazonq.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
-import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
@@ -15,14 +16,17 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.ui.dialogs.PreferencesUtil;
 
-import software.aws.toolkits.eclipse.amazonq.customization.CustomizationUtil;
+import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.AwsTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
@@ -95,8 +99,7 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
         createHttpsProxyField();
         createCaCertField();
 
-        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams();
-        params.setSection("aws.q");
+        GetConfigurationFromServerParams params = new GetConfigurationFromServerParams(ExpectedResponseType.DEFAULT);
         Activator.getLspProvider().getAmazonQServer().thenCompose(server -> server.getConfigurationFromServer(params));
     }
 
@@ -371,6 +374,18 @@ public class AmazonQPreferencePage extends FieldEditorPreferencePage implements 
     @Override
     protected void adjustGridLayout() {
         // deliberately left blank to prevent multiple columns from implicitly being created
+    }
+
+    public static void openPreferencePane() {
+        Display.getDefault().asyncExec(() -> {
+            PreferenceDialog dialog = PreferencesUtil.createPreferenceDialogOn(
+                    Display.getDefault().getActiveShell(),
+                    "software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage",
+                    new String[] {"software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage"},
+                    null
+                );
+            dialog.open();
+        });
     }
 
 }

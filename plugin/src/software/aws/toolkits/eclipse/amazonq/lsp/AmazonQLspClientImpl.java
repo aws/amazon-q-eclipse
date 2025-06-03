@@ -3,31 +3,82 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp;
 
-import java.net.MalformedURLException;
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension;
+import org.eclipse.jface.text.Position;
+import org.eclipse.jface.text.source.Annotation;
+import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.lsp4e.LanguageClientImpl;
 import org.eclipse.lsp4j.ConfigurationParams;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.ShowDocumentParams;
 import org.eclipse.lsp4j.ShowDocumentResult;
-import org.eclipse.ui.PartInitException;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.VerifyKeyListener;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IPageListener;
+import org.eclipse.ui.IStorageEditorInput;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.ui.texteditor.ITextEditor;
+
+import com.github.difflib.DiffUtils;
+import com.github.difflib.patch.AbstractDelta;
+import com.github.difflib.patch.Patch;
 
 import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatAsyncResultManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.SerializedChatResult;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogParams;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ShowSaveFileDialogResult;
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
+import software.aws.toolkits.eclipse.amazonq.editor.MemoryStorage;
+import software.aws.toolkits.eclipse.amazonq.inlineChat.TextDiff;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedKind;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.SsoTokenChangedParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenFileDiffParams;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabUiResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -35,11 +86,16 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
-import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
+import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
+import software.aws.toolkits.eclipse.amazonq.util.WorkspaceUtils;
+import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
+import software.aws.toolkits.eclipse.amazonq.views.model.UpdateRedirectUrlCommand;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
+
+    private ThemeDetector themeDetector = new ThemeDetector();
 
     @Override
     public final CompletableFuture<ConnectionMetadata> getConnectionMetadata() {
@@ -81,6 +137,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 projectContextConfig.put(Constants.LSP_INDEX_THREADS_CONFIGURATION_KEY, indexThreadsSetting);
                 qConfig.put(Constants.LSP_PROJECT_CONTEXT_CONFIGURATION_KEY, projectContextConfig);
                 output.add(qConfig);
+                Activator.getLspProvider().activate(AmazonQLspServer.class);
             } else if (item.getSection().equals(Constants.LSP_CW_CONFIGURATION_KEY)) {
                 Map<String, Boolean> cwConfig = new HashMap<>();
                 boolean shareContentSetting = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.Q_DATA_SHARING);
@@ -145,14 +202,42 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final CompletableFuture<ShowDocumentResult> showDocument(final ShowDocumentParams params) {
-        Activator.getLogger().info("Opening redirect URL: " + params.getUri());
+        String uri = params.getUri();
+        Activator.getLogger().info("Opening URI: " + uri);
+
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(params.getUri()));
-                return new ShowDocumentResult(true);
-            } catch (PartInitException | MalformedURLException e) {
-                Activator.getLogger().error("Error opening URL: " + params.getUri(), e);
-                return new ShowDocumentResult(false);
+            final boolean[] success = new boolean[1];
+            if (params.getExternal() != null && params.getExternal()) {
+                var command = new UpdateRedirectUrlCommand(uri);
+                Activator.getEventBroker().post(UpdateRedirectUrlCommand.class, command);
+                Display.getDefault().syncExec(() -> {
+                    try {
+                        PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));
+                        success[0] = true;
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error in UI thread while opening external URI: " + uri, e);
+                        success[0] = false;
+                    }
+                });
+                return new ShowDocumentResult(success[0]);
+            } else {
+                Display.getDefault().syncExec(() -> {
+                    try {
+                        if (!isUriInWorkspace(uri)) {
+                            Activator.getLogger().error("Attempted to open file outside workspace: " + uri);
+                            success[0] = false;
+                        } else {
+                            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                            IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
+                            IDE.openEditorOnFileStore(page, fileStore);
+                            success[0] = true;
+                        }
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error in UI thread while opening URI: " + uri, e);
+                        success[0] = false;
+                    }
+                });
+                return new ShowDocumentResult(success[0]);
             }
         });
     }
@@ -179,4 +264,308 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         }
     }
 
+    @Override
+    public final void sendContextCommands(final Object params) {
+        var command = ChatUIInboundCommand.createCommand("aws/chat/sendContextCommands", params);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+    }
+
+    @Override
+    public final CompletableFuture<Object> openTab(final Object params) {
+        return CompletableFuture.supplyAsync(() -> {
+            String requestId = UUID.randomUUID().toString();
+            var command = ChatUIInboundCommand.createCommand("aws/chat/openTab", params, requestId);
+            Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+            ChatAsyncResultManager manager = ChatAsyncResultManager.getInstance();
+            manager.createRequestId(requestId);
+            OpenTabUiResponse response;
+            try {
+                Object res = ChatAsyncResultManager.getInstance().getResult(requestId);
+                response = ObjectMapperFactory.getInstance().convertValue(res, OpenTabUiResponse.class);
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to retrieve new tab response from chat UI", e);
+            } finally {
+                manager.removeRequestId(requestId);
+            }
+            if (response.result() == null) {
+                Activator.getLogger().warn("Got null tab response from UI");
+                return null;
+            }
+            return response.result();
+        });
+    }
+
+    @Override
+    public final CompletableFuture<ShowSaveFileDialogResult> showSaveFileDialog(final ShowSaveFileDialogParams params) {
+        CompletableFuture<ShowSaveFileDialogResult> future = new CompletableFuture<>();
+        Display.getDefault().syncExec(() -> {
+            String name = "export-chat.md";
+            String path = "";
+            try {
+                URI uri = new URI(params.defaultUri());
+                File file = new File(uri);
+                path = file.getParent();
+                name = file.getName();
+            } catch (URISyntaxException e) {
+                Activator.getLogger().warn("Unable to parse file path details from showSaveFileDialog params: " + e.getMessage());
+            }
+
+            Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+            FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+            dialog.setFilterExtensions(new String[] {"*.md", "*.html"});
+            dialog.setFilterPath(path);
+            dialog.setFileName(name);
+            dialog.setFilterNames(new String[] {"Markdown Files (.md)", "HTML Files (.html)"});
+            dialog.setOverwrite(true);
+
+            String filePath = dialog.open();
+            if (filePath != null) {
+                future.complete(new ShowSaveFileDialogResult(filePath));
+            } else {
+                future.completeExceptionally(new IllegalStateException("User did not provide file path for export"));
+            }
+        });
+        return future;
+    }
+
+    @Override
+    public final CompletableFuture<SerializedChatResult> getSerializedChat(final GetSerializedChatParams params) {
+        return CompletableFuture.supplyAsync(() -> {
+            String requestId = UUID.randomUUID().toString();
+            var command = ChatUIInboundCommand.createCommand("aws/chat/getSerializedChat", params, requestId);
+            ChatAsyncResultManager manager = ChatAsyncResultManager.getInstance();
+            manager.createRequestId(requestId);
+            Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+            SerializedChatResult result;
+            try {
+                Object res = ChatAsyncResultManager.getInstance().getResult(requestId);
+                GetSerializedChatResult serializedChatResult = ObjectMapperFactory.getInstance().convertValue(res, GetSerializedChatResult.class);
+                result = serializedChatResult.result();
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to retrieve serialized chat from chat UI", e);
+            } finally {
+                manager.removeRequestId(requestId);
+            }
+            return result;
+        });
+    }
+
+    @Override
+    public final void openFileDiff(final OpenFileDiffParams params) {
+        String annotationAdded = themeDetector.isDarkTheme() ? "diffAnnotation.added.dark" : "diffAnnotation.added";
+        String annotationDeleted = themeDetector.isDarkTheme() ? "diffAnnotation.deleted.dark"
+                : "diffAnnotation.deleted";
+
+        Display.getDefault().asyncExec(() -> {
+            try {
+                IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                IStorageEditorInput input = new InMemoryInput(
+                        new MemoryStorage(new Path(params.originalFileUri().getPath()).lastSegment(), ""));
+
+                IEditorDescriptor defaultEditor = PlatformUI.getWorkbench().getEditorRegistry()
+                        .getDefaultEditor(".java");
+
+                IEditorPart editor = page.openEditor(input,
+                        defaultEditor != null ? defaultEditor.getId() : "org.eclipse.ui.DefaultTextEditor", true,
+                        IWorkbenchPage.MATCH_INPUT);
+                // Annotation model provides highlighting for the diff additions/deletions
+                IAnnotationModel annotationModel = ((ITextEditor) editor).getDocumentProvider()
+                        .getAnnotationModel(editor.getEditorInput());
+                var document = ((ITextEditor) editor).getDocumentProvider().getDocument(editor.getEditorInput());
+
+                // Split original and new code into lines for diff comparison
+                String[] originalLines = (params.originalFileContent() != null
+                        && !params.originalFileContent().isEmpty())
+                                ? params.originalFileContent().lines().toArray(String[]::new)
+                                : new String[0];
+                String[] newLines = (params.fileContent() != null && !params.fileContent().isEmpty())
+                        ? params.fileContent().lines().toArray(String[]::new)
+                        : new String[0];
+                // Diff generation --> returns Patch object which contains deltas for each line
+                Patch<String> patch = DiffUtils.diff(Arrays.asList(originalLines), Arrays.asList(newLines));
+
+                StringBuilder resultText = new StringBuilder();
+                List<TextDiff> currentDiffs = new ArrayList<>();
+                int currentPos = 0;
+                int currentLine = 0;
+
+                for (AbstractDelta<String> delta : patch.getDeltas()) {
+                    // Continuously copy unchanged lines until we hit a diff
+                    while (currentLine < delta.getSource().getPosition()) {
+                        resultText.append(originalLines[currentLine]).append("\n");
+                        currentPos += originalLines[currentLine].length() + 1;
+                        currentLine++;
+                    }
+
+                    List<String> originalChangedLines = delta.getSource().getLines();
+                    List<String> newChangedLines = delta.getTarget().getLines();
+
+                    // Handle deleted lines and mark position
+                    for (String line : originalChangedLines) {
+                        resultText.append(line).append("\n");
+                        currentDiffs.add(new TextDiff(currentPos, line.length(), true));
+                        currentPos += line.length() + 1;
+                    }
+
+                    // Handle added lines and mark position
+                    for (String line : newChangedLines) {
+                        resultText.append(line).append("\n");
+                        currentDiffs.add(new TextDiff(currentPos, line.length(), false));
+                        currentPos += line.length() + 1;
+                    }
+
+                    currentLine = delta.getSource().getPosition() + delta.getSource().size();
+                }
+                // Loop through remaining unchanged lines
+                while (currentLine < originalLines.length) {
+                    resultText.append(originalLines[currentLine]).append("\n");
+                    currentPos += originalLines[currentLine].length() + 1;
+                    currentLine++;
+                }
+
+                final String finalText = resultText.toString();
+                document.replace(0, document.getLength(), finalText);
+
+                // Add all annotations after text modifications are complete
+                for (TextDiff diff : currentDiffs) {
+                    Position position = new Position(diff.offset(), diff.length());
+                    String annotationType = diff.isDeletion() ? annotationDeleted : annotationAdded;
+                    String annotationText = diff.isDeletion() ? "Deleted Code" : "Added Code";
+                    annotationModel.addAnnotation(new Annotation(annotationType, false, annotationText), position);
+                }
+                makeEditorReadOnly(editor);
+            } catch (CoreException | BadLocationException e) {
+                Activator.getLogger().info("Failed to open file/diff: " + e);
+            }
+        });
+    }
+
+    private void makeEditorReadOnly(final IEditorPart editor) {
+        ITextViewer viewer = editor.getAdapter(ITextViewer.class);
+        if (viewer != null) {
+            VerifyKeyListener verifyKeyListener = event -> event.doit = false;
+            ((ITextViewerExtension) viewer).prependVerifyKeyListener(verifyKeyListener);
+        }
+
+        // stop text‑modifying commands
+        ActionFactory[] ids = {ActionFactory.UNDO, ActionFactory.REDO, ActionFactory.CUT, ActionFactory.PASTE,
+                ActionFactory.DELETE};
+        for (ActionFactory id : ids) {
+            IAction a = ((ITextEditor) editor).getAction(id.getId());
+            if (a != null) {
+                a.setEnabled(false);
+            }
+        }
+
+        IWorkbenchPartSite site = editor.getSite();
+        if (site == null) {
+            return;
+        }
+
+        IWorkbenchWindow window = site.getWorkbenchWindow();
+        if (window == null) {
+            return;
+        }
+
+        Runnable cleanupEditor = () -> {
+            Display.getDefault().asyncExec(() -> {
+                try {
+                    if (editor != null && !editor.isDirty()) {
+                        IWorkbenchPage currentPage = editor.getSite().getPage();
+                        if (currentPage != null) {
+                            // Remove annotations
+                            if (editor instanceof ITextEditor) {
+                                ITextEditor textEditor = (ITextEditor) editor;
+                                IDocumentProvider provider = textEditor.getDocumentProvider();
+                                if (provider != null) {
+                                    IAnnotationModel annotationModel = provider
+                                            .getAnnotationModel(editor.getEditorInput());
+                                    if (annotationModel != null) {
+                                        Iterator<?> annotationIterator = annotationModel.getAnnotationIterator();
+                                        while (annotationIterator.hasNext()) {
+                                            annotationModel.removeAnnotation((Annotation) annotationIterator.next());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Activator.getLogger().error("Error during editor cleanup", e);
+                }
+            });
+        };
+
+        IPageListener pageListener = new IPageListener() {
+            @Override
+            public void pageOpened(final IWorkbenchPage page) {
+            }
+
+            @Override
+            public void pageClosed(final IWorkbenchPage page) {
+                cleanupEditor.run();
+                window.removePageListener(this);
+            }
+
+            @Override
+            public void pageActivated(final IWorkbenchPage page) {
+            }
+        };
+
+        window.addPageListener(pageListener);
+
+        editor.doSave(new NullProgressMonitor());
+    }
+
+    @Override
+    public final void sendChatUpdate(final Object params) {
+        var conversationClickCommand = new ChatUIInboundCommand("aws/chat/sendChatUpdate", null, params,
+                false, null);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, conversationClickCommand);
+    }
+
+    @Override
+    public final void didCopyFile(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didWriteFile(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didAppendFile(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didRemoveFileOrDirectory(final Object params) {
+        refreshProjects();
+    }
+
+    @Override
+    public final void didCreateDirectory(final Object params) {
+        refreshProjects();
+    }
+
+    private void refreshProjects() {
+        WorkspaceUtils.refreshAllProjects();
+    }
+
+    private boolean isUriInWorkspace(final String uri) {
+        try {
+            IWorkspace workspace = ResourcesPlugin.getWorkspace();
+            IPath workspacePath = workspace.getRoot().getLocation();
+
+            URI fileUri = new URI(uri);
+            File file = new File(fileUri);
+            String filePath = file.getCanonicalPath();
+
+            return filePath.startsWith(workspacePath.toFile().getCanonicalPath());
+        } catch (Exception e) {
+            Activator.getLogger().error("Error validating URI location: " + uri, e);
+            return false;
+        }
+    }
 }

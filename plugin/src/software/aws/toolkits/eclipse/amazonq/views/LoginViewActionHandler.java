@@ -3,13 +3,17 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.widgets.Display;
 
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
@@ -20,6 +24,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
 import software.aws.toolkits.eclipse.amazonq.views.model.ParsedCommand;
+import software.aws.toolkits.eclipse.amazonq.views.model.QDeveloperProfile;
 
 public class LoginViewActionHandler implements ViewActionHandler {
 
@@ -51,6 +56,15 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         }
                         Activator.getLoginService().login(LoginType.IAM_IDENTITY_CENTER,
                                 new LoginParams().setLoginIdcParams(loginIdcParams)).get();
+                        if (QDeveloperProfileUtil.getInstance().isProfileSelectionRequired()) {
+                            Map<String, Object> profilesData = new HashMap<>();
+                            profilesData.put("profiles",
+                                    QDeveloperProfileUtil.getInstance().getDeveloperProfiles());
+                            Display.getDefault().asyncExec(() -> {
+                                browser.execute(String.format("ideClient.handleProfiles(%s)",
+                                        JSON_HANDLER.serialize(profilesData)));
+                            });
+                        }
                     }
                     isLoginTaskRunning = false;
                 } catch (Exception e) {
@@ -82,13 +96,17 @@ public class LoginViewActionHandler implements ViewActionHandler {
                             region: 'us-east-1'
                         },
                         feature: 'q',
-                        existConnections: []
+                        existConnections: [],
+                        profiles: []
                     }
                         """, "START", regions).stripIndent();
             browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
             browser.execute(String.format("ideClient.prepareUi(%s)", js));
             browser.execute("ideClient.updateAuthorization('')");
-            browser.execute("document.oncontextmenu = e => e.preventDefault();");
+            break;
+        case ON_SELECT_PROFILE:
+            QDeveloperProfile developerProfile = JSON_HANDLER.convertObject(params, QDeveloperProfile.class);
+            QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true);
             break;
         default:
             Activator.getLogger()

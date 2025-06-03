@@ -13,7 +13,9 @@ public enum Command {
     CHAT_TAB_ADD("aws/chat/tabAdd"),
     CHAT_TAB_REMOVE("aws/chat/tabRemove"),
     CHAT_TAB_CHANGE("aws/chat/tabChange"),
+    FILE_CLICK("aws/chat/fileClick"),
     CHAT_SEND_PROMPT("aws/chat/sendChatPrompt"),
+    CHAT_PROMPT_OPTION_CHANGE("aws/chat/promptInputOptionChange"),
     CHAT_LINK_CLICK("aws/chat/linkClick"),
     CHAT_INFO_LINK_CLICK("aws/chat/infoLinkClick"),
     CHAT_SOURCE_LINK_CLICK("aws/chat/sourceLinkClick"),
@@ -26,12 +28,23 @@ public enum Command {
     CHAT_INSERT_TO_CURSOR_POSITION("insertToCursorPosition"),
     AUTH_FOLLOW_UP_CLICKED("authFollowUpClicked"), //Auth command handled in QChat webview
     DISCLAIMER_ACKNOWLEDGED("disclaimerAcknowledged"),
+    LIST_CONVERSATIONS("aws/chat/listConversations"),
+    CONVERSATION_CLICK("aws/chat/conversationClick"),
+    CREATE_PROMPT("aws/chat/createPrompt"),
+    PROMPT_OPTION_ACKNOWLEDGED("chatPromptOptionAcknowledged"),
+    TAB_BAR_ACTION("aws/chat/tabBarAction"),
+    GET_SERIALIZED_CHAT("aws/chat/getSerializedChat"),
+    STOP_CHAT_RESPONSE("stopChatResponse"),
+    BUTTON_CLICK("aws/chat/buttonClick"),
+    CHAT_OPEN_TAB("aws/chat/openTab"),
+    OPEN_SETTINGS("openSettings"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
     LOGIN_IDC("loginIdC"),
     CANCEL_LOGIN("cancelLogin"),
-    ON_LOAD("onLoad");
+    ON_LOAD("onLoad"),
+    ON_SELECT_PROFILE("onSelectProfile");
 
     private final String commandString;
 

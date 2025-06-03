@@ -52,7 +52,7 @@ public class ChatPromptTest {
         assertEquals("Test prompt", deserializedPrompt.prompt());
         assertEquals("Test escaped prompt", deserializedPrompt.escapedPrompt());
         assertEquals("Test command", deserializedPrompt.command());
-        assertEquals(Collections.singletonList(new Command("foo", "bar")), deserializedPrompt.context());
+        assertEquals("[{\"command\":\"foo\",\"description\":\"bar\"}]", objectMapper.writeValueAsString(deserializedPrompt.context()));
     }
 
     @Test

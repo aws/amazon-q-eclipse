@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.chat.models;
 public enum ChatUIInboundCommandName {
     ChatPrompt("aws/chat/sendChatPrompt"), // This is the odd one out, it follows the same message name as the request.
     InlineChatPrompt("aws/chat/sendInlineChatPrompt"),
+    OpenTab("aws/chat/openTab"),
 
     SendToPrompt("sendToPrompt"),
     ErrorMessage("errorMessage"),

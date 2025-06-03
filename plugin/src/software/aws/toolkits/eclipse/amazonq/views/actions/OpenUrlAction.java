@@ -13,11 +13,6 @@ public class OpenUrlAction extends Action {
     private String url;
     private String metadataId;
 
-    public OpenUrlAction(final String actionText, final ExternalLink link) {
-        setText(actionText);
-        this.url = link.getValue();
-    }
-
     public OpenUrlAction(final String actionText, final String metadataId, final ExternalLink link) {
         setText(actionText);
         this.url = link.getValue();

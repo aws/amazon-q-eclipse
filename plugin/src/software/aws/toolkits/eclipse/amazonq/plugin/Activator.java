@@ -7,12 +7,12 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 import software.aws.toolkits.eclipse.amazonq.broker.EventBroker;
-import software.aws.toolkits.eclipse.amazonq.chat.ChatStateManager;
 import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatEditorListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
+import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProviderImpl;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
@@ -21,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.util.CodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.DefaultCodeReferenceLoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginLogger;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.router.ViewRouter;
 import software.aws.toolkits.eclipse.workspace.WorkspaceChangeListener;
 
@@ -59,10 +60,11 @@ public class Activator extends AbstractUIPlugin {
 
     @Override
     public final void stop(final BundleContext context) throws Exception {
-        ChatStateManager.getInstance().dispose();
+        AmazonQBrowserProvider.getInstance().dispose();
         super.stop(context);
         plugin = null;
         workspaceListener.stop();
+        ThreadingUtils.shutdown();
     }
 
     public static Activator getDefault() {

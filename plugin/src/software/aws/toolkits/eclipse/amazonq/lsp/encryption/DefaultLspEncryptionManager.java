@@ -69,16 +69,16 @@ public final class DefaultLspEncryptionManager implements LspEncryptionManager {
         }
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private LspEncryptionKey lspEncryptionKey;
 
-        public final Builder withLspEncryptionKey(final LspEncryptionKey lspEncryptionKey) {
+        public Builder withLspEncryptionKey(final LspEncryptionKey lspEncryptionKey) {
             this.lspEncryptionKey = lspEncryptionKey;
             return this;
         }
 
-        public final DefaultLspEncryptionManager build() {
+        public DefaultLspEncryptionManager build() {
             return new DefaultLspEncryptionManager(this);
         }
     }

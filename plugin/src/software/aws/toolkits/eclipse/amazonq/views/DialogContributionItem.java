@@ -23,12 +23,6 @@ public class DialogContributionItem extends ContributionItem {
         this.menuItemName = menuItemName;
     }
 
-    public DialogContributionItem(final Dialog dialog, final String menuItemName, final Image icon) {
-        this.dialog = dialog;
-        this.menuItemName = menuItemName;
-        this.icon = icon;
-    }
-
     @Override
     public final void fill(final Menu menu, final int index) {
         MenuItem menuItem = new MenuItem(menu, SWT.NONE, index);

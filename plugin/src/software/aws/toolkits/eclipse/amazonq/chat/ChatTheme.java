@@ -6,54 +6,22 @@ package software.aws.toolkits.eclipse.amazonq.chat;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.swt.browser.Browser;
-
 import software.aws.toolkits.eclipse.amazonq.chat.models.QChatCssVariable;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 
 public final class ChatTheme {
-    private static final String CHAT_THEME_STYLE_TITLE = "CHAT_THEME_STYLE";
-
-    private  ThemeDetector themeDetector;
+    private ThemeDetector themeDetector;
 
     public ChatTheme() {
         this.themeDetector = new ThemeDetector();
     }
 
-    public void injectTheme(final Browser browser) {
-        String css = "";
-
-        if (themeDetector.isDarkTheme()) {
-            css = getCssForDarkTheme();
-        } else {
-            css = getCssForLightTheme();
-        }
-
-        String removeExistingThemeScript = String.format("""
-                    var sheets = document.styleSheets;\
-                    for (var i=0; i<sheets.length; i++){\
-                        var sheet = sheets[i];\
-                        if (sheet.title === "%s") {\
-                            for (var j=0; j<sheet.rules.length; j++){\
-                                sheet.deleteRule(j);\
-                            }\
-                        }\
-                    }\
-                """, CHAT_THEME_STYLE_TITLE);
-
-        String addThemeScript = String.format("""
-                    var style = document.createElement('style');\
-                    style.type = "text/css";\
-                    style.title = "%s";\
-                    document.head.appendChild(style);\
-                    style.sheet.insertRule("%s", style.sheet.cssRules.length);\
-                """, CHAT_THEME_STYLE_TITLE, css);
-
-        browser.evaluate(removeExistingThemeScript);
-        browser.evaluate(addThemeScript);
+    public String getThemeVariables() {
+        Map<QChatCssVariable, String> themeMap = themeDetector.isDarkTheme() ? getDarkThemeMap() : getLightThemeMap();
+        return getCss(themeMap);
     }
 
-    private String getCssForDarkTheme() {
+    private Map<QChatCssVariable, String> getDarkThemeMap() {
         Map<QChatCssVariable, String> themeMap = new HashMap<>();
 
         String defaultTextColor = rgb(238, 238, 238);
@@ -65,10 +33,11 @@ public final class ChatTheme {
         themeMap.put(QChatCssVariable.TextColorWeak, rgba(205, 205, 205, 0.5));
         themeMap.put(QChatCssVariable.TextColorLink, rgb(102, 168, 245));
         themeMap.put(QChatCssVariable.TextColorInput, defaultTextColor);
+        themeMap.put(QChatCssVariable.TextColorAlternate, defaultTextColor);
 
         // Layout
         themeMap.put(QChatCssVariable.Background, rgb(47, 47, 47));
-        themeMap.put(QChatCssVariable.TabActive, cardBackgroundColor);
+        themeMap.put(QChatCssVariable.TabActive, rgb(51, 51, 51));
         themeMap.put(QChatCssVariable.BorderDefault, rgb(76, 76, 76));
         themeMap.put(QChatCssVariable.ColorToggle, rgb(30, 30, 30));
 
@@ -90,7 +59,7 @@ public final class ChatTheme {
         themeMap.put(QChatCssVariable.StatusError, rgb(255, 102, 102));
 
         // Buttons
-        themeMap.put(QChatCssVariable.ButtonBackground, rgb(51, 118, 205));
+        themeMap.put(QChatCssVariable.ButtonBackground, rgb(14, 99, 156));
         themeMap.put(QChatCssVariable.ButtonForeground, rgb(255, 255, 255));
 
         // Alternates
@@ -99,13 +68,19 @@ public final class ChatTheme {
 
         // Card
         themeMap.put(QChatCssVariable.CardBackground, cardBackgroundColor);
+        themeMap.put(QChatCssVariable.CardBackgroundAlternate, rgb(31, 31, 34));
 
         themeMap.put(QChatCssVariable.LineHeight, "1.25em");
 
-        return getCss(themeMap);
+        // Input
+        themeMap.put(QChatCssVariable.InputBackground, rgb(60, 60, 60));
+        themeMap.put(QChatCssVariable.InputBorder, rgb(76, 76, 76));
+        themeMap.put(QChatCssVariable.InputBorderFocused, rgb(14, 99, 156));
+
+        return themeMap;
     }
 
-    private String getCssForLightTheme() {
+    private Map<QChatCssVariable, String> getLightThemeMap() {
         Map<QChatCssVariable, String> themeMap = new HashMap<>();
 
         String defaultTextColor = rgb(10, 10, 10);
@@ -117,10 +92,11 @@ public final class ChatTheme {
         themeMap.put(QChatCssVariable.TextColorWeak, rgba(45, 45, 45, 0.5));
         themeMap.put(QChatCssVariable.TextColorLink, rgb(59, 34, 246));
         themeMap.put(QChatCssVariable.TextColorInput, defaultTextColor);
+        themeMap.put(QChatCssVariable.TextColorAlternate, defaultTextColor);
 
         // Layout
-        themeMap.put(QChatCssVariable.Background, rgb(250, 250, 250));
-        themeMap.put(QChatCssVariable.TabActive, cardBackgroundColor);
+        themeMap.put(QChatCssVariable.Background, rgb(243, 243, 243));
+        themeMap.put(QChatCssVariable.TabActive, rgb(250, 250, 250));
         themeMap.put(QChatCssVariable.BorderDefault, rgb(230, 230, 230));
         themeMap.put(QChatCssVariable.ColorToggle, rgb(220, 220, 220));
 
@@ -151,13 +127,19 @@ public final class ChatTheme {
 
         // Card
         themeMap.put(QChatCssVariable.CardBackground, cardBackgroundColor);
+        themeMap.put(QChatCssVariable.CardBackgroundAlternate, rgb(255, 255, 255));
 
         themeMap.put(QChatCssVariable.LineHeight, "1.25em");
 
-        return getCss(themeMap);
+        // Input
+        themeMap.put(QChatCssVariable.InputBackground, rgb(255, 255, 255));
+        themeMap.put(QChatCssVariable.InputBorder, rgb(230, 230, 230));
+        themeMap.put(QChatCssVariable.InputBorderFocused, rgb(51, 118, 205));
+
+        return themeMap;
     }
 
-    private  String getCss(final Map<QChatCssVariable, String> themeMap) {
+    private String getCss(final Map<QChatCssVariable, String> themeMap) {
         StringBuilder variables = new StringBuilder();
 
         for (var entry : themeMap.entrySet()) {
@@ -165,7 +147,7 @@ public final class ChatTheme {
                 continue;
             }
 
-            variables.append(String.format("%s:%s;",
+            variables.append(String.format("%s:%s !important;",
                     entry.getKey().getValue(),
                     entry.getValue()));
         }
@@ -173,12 +155,11 @@ public final class ChatTheme {
         return String.format(":root{%s}", variables.toString());
     }
 
-    private  String rgb(final Integer r, final Integer g, final Integer b) {
+    private String rgb(final Integer r, final Integer g, final Integer b) {
         return String.format("rgb(%s,%s,%s)", r, g, b);
     }
 
-    private  String rgba(final Integer r, final Integer g, final Integer b, final Double a) {
-        return String.format("rgb(%s,%s,%s,%s)", r, g, b, a);
+    private String rgba(final Integer r, final Integer g, final Integer b, final Double a) {
+        return String.format("rgba(%s,%s,%s,%s)", r, g, b, a);
     }
-
 }

@@ -49,14 +49,12 @@ public final class RemoteLspFetcher implements LspFetcher {
 
     private final Manifest manifest;
     private final VersionRange versionRange;
-    private final boolean integrityChecking;
     private final HttpClient httpClient;
     private RecordLspSetupArgs args = new RecordLspSetupArgs();
 
     private RemoteLspFetcher(final Builder builder) {
         this.manifest = builder.manifest;
         this.versionRange = builder.versionRange != null ? builder.versionRange : LspConstants.LSP_SUPPORTED_VERSION_RANGE;
-        this.integrityChecking = builder.integrityChecking != null ? builder.integrityChecking : true;
         this.httpClient = builder.httpClient != null ? builder.httpClient : HttpClientFactory.getInstance();
     }
 
@@ -420,7 +418,6 @@ public final class RemoteLspFetcher implements LspFetcher {
     public static class Builder {
         private Manifest manifest;
         private VersionRange versionRange;
-        private Boolean integrityChecking;
         private HttpClient httpClient;
 
         public final Builder withManifest(final Manifest manifest) {
@@ -430,11 +427,6 @@ public final class RemoteLspFetcher implements LspFetcher {
 
         public final Builder withVersionRange(final VersionRange versionRange) {
             this.versionRange = versionRange;
-            return this;
-        }
-
-        public final Builder withIntegrityChecking(final boolean integrityChecking) {
-            this.integrityChecking = integrityChecking;
             return this;
         }
 

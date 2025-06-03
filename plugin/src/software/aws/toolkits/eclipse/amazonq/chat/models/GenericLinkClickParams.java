@@ -4,8 +4,10 @@
 package software.aws.toolkits.eclipse.amazonq.chat.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class InfoLinkClickParams {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class GenericLinkClickParams {
     @JsonProperty("tabId")
     private String tabId;
 
@@ -14,6 +16,9 @@ public class InfoLinkClickParams {
 
     @JsonProperty("eventId")
     private String eventId;
+
+    @JsonProperty("messageId")
+    private String messageId;
 
     public final String getTabId() {
         return tabId;
@@ -37,5 +42,13 @@ public class InfoLinkClickParams {
 
     public final void setEventId(final String eventId) {
         this.eventId = eventId;
+    }
+
+    public final String getMessageId() {
+        return messageId;
+    }
+
+    public final void setMessageId(final String messageId) {
+        this.messageId = messageId;
     }
 }

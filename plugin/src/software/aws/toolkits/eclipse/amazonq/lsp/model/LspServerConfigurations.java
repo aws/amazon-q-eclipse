@@ -5,17 +5,17 @@ package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
 import java.util.List;
 
-import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
+import software.aws.toolkits.eclipse.amazonq.views.model.Configuration;
 
-public class LspServerConfigurations {
+public class LspServerConfigurations<T extends Configuration> {
 
-    private final List<Customization> customizations;
+    private final List<T> configurations;
 
-    public LspServerConfigurations(final List<Customization> customizations) {
-        this.customizations = customizations;
+    public LspServerConfigurations(final List<T> configurations) {
+        this.configurations = configurations;
     }
 
-    public final List<Customization> getCustomizations() {
-        return this.customizations;
+    public final List<T> getConfigurations() {
+        return this.configurations;
     }
 }

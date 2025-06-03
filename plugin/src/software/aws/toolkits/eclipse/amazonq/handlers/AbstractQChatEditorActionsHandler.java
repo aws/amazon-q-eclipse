@@ -14,7 +14,6 @@ import org.eclipse.swt.widgets.Display;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
-import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GenericCommandParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SendToPromptParams;
@@ -102,7 +101,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
         );
 
         ChatUIInboundCommand command = ChatUIInboundCommand.createSendToPromptCommand(params);
-        ChatCommunicationManager.getInstance().sendMessageToChatUI(command);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
     }
 
     private void sendGenericCommand(final String selection, final String genericCommandVerb) {
@@ -113,7 +112,7 @@ public abstract class AbstractQChatEditorActionsHandler extends AbstractHandler 
             genericCommandVerb
         );
         ChatUIInboundCommand command = ChatUIInboundCommand.createGenericCommand(params);
-        ChatCommunicationManager.getInstance().sendMessageToChatUI(command);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
     }
 
     private void openQChat() {

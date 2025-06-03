@@ -33,9 +33,11 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
+import software.aws.toolkits.eclipse.amazonq.chat.ChatMessage;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatPrompt;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatRequestParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.InlineChatResult;
+import software.aws.toolkits.eclipse.amazonq.editor.InMemoryInput;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
@@ -97,7 +99,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
         if (isSessionActive()) {
             return false;
         }
-        if (editor == null || !(editor instanceof ITextEditor)) {
+        if (editor == null || !(editor instanceof ITextEditor) || (editor.getEditorInput() instanceof InMemoryInput)) {
             return false;
         }
         try {
@@ -155,7 +157,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 Activator.getLogger().info("Inline chat not submitted. Ending session.");
             }
         }).exceptionally(throwable -> {
-            Activator.getLogger().error("Failed to open user input prompt", throwable);
+            Activator.getLogger().error("Failed to open user input prompt: " + throwable.getMessage());
             uiManager.showErrorNotification();
             endSession();
             return null;
@@ -200,7 +202,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                     blockUserInput(false);
                 }
             }).exceptionally(throwable -> {
-                Activator.getLogger().error("Failed to process diff", throwable);
+                Activator.getLogger().error("Failed to process diff: " + throwable.getMessage());
                 uiManager.showErrorNotification();
                 restoreAndEndSession();
                 return null;
@@ -220,7 +222,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             task.setUserDecision(userAcceptedChanges);
             endSession();
         }).exceptionally(throwable -> {
-            Activator.getLogger().error("Failed to handle decision", throwable);
+            Activator.getLogger().error("Failed to handle decision: " + throwable.getMessage());
             uiManager.showErrorNotification();
             restoreAndEndSession();
             return null;
@@ -232,7 +234,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
             var prompt = task.getPrompt();
             var chatPrompt = new ChatPrompt(prompt, prompt, "", Collections.emptyList());
             params = new InlineChatRequestParams(chatPrompt, null, Arrays.asList(task.getCursorState()));
-            chatCommunicationManager.sendInlineChatMessageToChatServer(params);
+            chatCommunicationManager.sendInlineChatMessageToChatServer(new ChatMessage(params));
 
             Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri();
             if (fileUri.isPresent()) {
@@ -242,7 +244,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
 
             task.setRequestTime(System.currentTimeMillis());
         } catch (Exception e) {
-            Activator.getLogger().error("Failed to send message to chat server: " + e.getMessage(), e);
+            Activator.getLogger().error("Failed to send message to chat server: " + e.getMessage());
             endSession();
         }
     }
@@ -261,7 +263,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 removeFoldingListener(projectionModel);
                 uiThreadFuture.complete(null);
             } catch (Exception e) {
-                Activator.getLogger().error("Error in UI cleanup: " + e.getMessage(), e);
+                Activator.getLogger().error("Error in UI cleanup: " + e.getMessage());
                 uiThreadFuture.completeExceptionally(e);
             }
         });
@@ -271,12 +273,15 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 var inlineChatSessionResult = task.buildResultObject();
                 emitInlineChatEventMetric(inlineChatSessionResult);
             } catch (Exception e) {
-                Activator.getLogger().error("FAILURE ON EMISSION:", e);
+                Activator.getLogger().error("FAILURE ON EMISSION: " + e.getMessage());
             }
-            uiManager.closePrompt();
+            uiManager.endSession();
+            diffManager.endSession();
             cleanupSessionState();
             setState(SessionState.INACTIVE);
             Activator.getLogger().info("Inline chat session ended.");
+        }).thenRun(() -> {
+            task = null;
         });
     }
 
@@ -297,7 +302,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 diffManager.restoreState();
                 future.complete(null);
             } catch (Exception e) {
-                Activator.getLogger().error("Error restoring editor state: " + e.getMessage(), e);
+                Activator.getLogger().error("Error restoring editor state: " + e.getMessage());
                 future.completeExceptionally(e);
             }
         });
@@ -414,7 +419,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 ((ITextViewerExtension) viewer).removeVerifyKeyListener(verifyKeyListener);
                 verifyKeyListener = null;
             } catch (Exception e) {
-                Activator.getLogger().error("Failed to remove verify key listener", e);
+                Activator.getLogger().error("Failed to remove verify key listener: " + e.getMessage());
             }
         }
     }
@@ -426,7 +431,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 contextActivation = null;
             }
         } catch (Exception e) {
-            Activator.getLogger().error("Error cleaning up context: " + e.getMessage(), e);
+            Activator.getLogger().error("Error cleaning up context: " + e.getMessage());
         }
     }
 
@@ -437,7 +442,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 workbenchPage = null;
             }
         } catch (Exception e) {
-            Activator.getLogger().error("Failed to clean up part listener: " + e.getMessage(), e);
+            Activator.getLogger().error("Failed to clean up part listener: " + e.getMessage());
         }
     }
 
@@ -457,7 +462,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 isCompoundChange = false;
             }
         } catch (Exception e) {
-            Activator.getLogger().error("Error cleaning up document state: " + e.getMessage(), e);
+            Activator.getLogger().error("Error cleaning up document state: " + e.getMessage());
         }
     }
 
@@ -478,7 +483,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
                 final String selectionText = document.get(region.getOffset(), region.getLength());
                 task = new InlineChatTask(editor, selectionText, region, selectedLines);
             } catch (Exception e) {
-                Activator.getLogger().error("Failed to expand selection region: " + e.getMessage(), e);
+                Activator.getLogger().error("Failed to expand selection region: " + e.getMessage());
                 var region = new Region(selection.getOffset(), selection.getLength());
                 task = new InlineChatTask(editor, selection.getText(), region, selectedLines);
             }
@@ -513,7 +518,7 @@ public final class InlineChatSession extends FoldingListener implements ChatUiRe
 
             return new Region(startRegion.getOffset(), selectionLength);
         } catch (Exception e) {
-            Activator.getLogger().error("Could not calculate line information: " + e.getMessage(), e);
+            Activator.getLogger().error("Could not calculate line information: " + e.getMessage());
             return new Region(selection.getOffset(), selection.getLength());
         }
     }

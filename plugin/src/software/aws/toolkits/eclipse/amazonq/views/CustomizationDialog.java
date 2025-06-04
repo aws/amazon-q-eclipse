@@ -47,6 +47,8 @@ public final class CustomizationDialog extends Dialog {
     private List<Customization> customizationsResponse;
     private ResponseSelection responseSelection;
     private Customization selectedCustomization;
+    private final int smallFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 8 : 12;
+    private final int mediumFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 10 : 14;
 
     public enum ResponseSelection {
         AMAZON_Q_FOUNDATION_DEFAULT,
@@ -81,7 +83,7 @@ public final class CustomizationDialog extends Dialog {
             radioButton = new Button(topRow, SWT.RADIO | style);
             radioButton.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
-            textFont = createFont(12, SWT.NORMAL);
+            textFont = createFont(smallFont, SWT.NORMAL);
 
             textLabel = new Label(topRow, SWT.WRAP);
             textLabel.setText(text);
@@ -90,7 +92,7 @@ public final class CustomizationDialog extends Dialog {
             textData.horizontalIndent = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 3 : 0;
             textLabel.setLayoutData(textData);
 
-            subtextFont = createFont(11, SWT.ITALIC);
+            subtextFont = createFont(smallFont, SWT.ITALIC);
 
             subtextLabel = new Label(this, SWT.WRAP);
             subtextLabel.setText(subtext);
@@ -243,7 +245,7 @@ public final class CustomizationDialog extends Dialog {
         mainLayout.verticalSpacing = 10;
         container.setLayout(mainLayout);
 
-        titleFont = createFont(14, SWT.BOLD);
+        titleFont = createFont(mediumFont, SWT.BOLD);
 
         Label titleLabel = new Label(container, SWT.NONE);
         titleLabel.setText("Select an Amazon Q Customization");

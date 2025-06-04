@@ -73,11 +73,7 @@ public final class CustomizationUtil {
                 for (final Customization validCustomization : customizations) {
                     if (validCustomization.getProfile().getArn().equals(currentCustomization.getArn())
                             && validCustomization.getProfile().getArn()
-<<<<<<< HEAD
-                                    .equals(currentCustomization.getProfile().getArn())) {
-=======
                                     .equals(QDeveloperProfileUtil.getInstance().getSelectedProfile().getArn())) {
->>>>>>> dc4aed1 (Add profile validation)
                         return;
                     }
                 }

@@ -68,9 +68,13 @@ public final class CustomizationUtil {
             Customization currentCustomization = Activator.getPluginStore()
                     .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
 
-            for (final Customization validCustomization : customizations) {
-                if (validCustomization.getArn().equals(currentCustomization.getArn())) {
-                    return;
+            if (currentCustomization.getProfile() != null) {
+                for (final Customization validCustomization : customizations) {
+                    if (validCustomization.getProfile().getArn().equals(currentCustomization.getArn())
+                            && validCustomization.getProfile().getArn()
+                                    .equals(currentCustomization.getProfile().getArn())) {
+                        return;
+                    }
                 }
             }
 

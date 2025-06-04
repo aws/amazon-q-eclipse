@@ -14,6 +14,7 @@ import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.widgets.Display;
 
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
@@ -69,7 +70,8 @@ public final class CustomizationUtil {
                     .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
 
             for (final Customization validCustomization : customizations) {
-                if (validCustomization.getArn().equals(currentCustomization.getArn())) {
+                if (validCustomization.getArn().equals(currentCustomization.getArn()) && validCustomization.getProfile()
+                        .getArn().equals(QDeveloperProfileUtil.getInstance().getSelectedProfile().getArn())) {
                     return;
                 }
             }

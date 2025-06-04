@@ -69,13 +69,10 @@ public final class CustomizationUtil {
             Customization currentCustomization = Activator.getPluginStore()
                     .getObject(Constants.CUSTOMIZATION_STORAGE_INTERNAL_KEY, Customization.class);
 
-            if (currentCustomization.getProfile() != null) {
-                for (final Customization validCustomization : customizations) {
-                    if (validCustomization.getProfile().getArn().equals(currentCustomization.getArn())
-                            && validCustomization.getProfile().getArn()
-                                    .equals(QDeveloperProfileUtil.getInstance().getSelectedProfile().getArn())) {
-                        return;
-                    }
+            for (final Customization validCustomization : customizations) {
+                if (validCustomization.getArn().equals(currentCustomization.getArn()) && validCustomization.getProfile()
+                        .getArn().equals(QDeveloperProfileUtil.getInstance().getSelectedProfile().getArn())) {
+                    return;
                 }
             }
 

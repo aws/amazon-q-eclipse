@@ -22,13 +22,16 @@ public enum QChatCssVariable {
     // Code syntax
     SyntaxBackground("--mynah-color-syntax-bg"),
     SyntaxVariable("--mynah-color-syntax-variable"),
+    SyntaxKeyword("--mynah-color-syntax-keyword"),
     SyntaxFunction("--mynah-color-syntax-function"),
+    SyntaxClassName("--mynah-color-syntax-class-name"),
     SyntaxOperator("--mynah-color-syntax-operator"),
     SyntaxAttributeValue("--mynah-color-syntax-attr-value"),
     SyntaxAttribute("--mynah-color-syntax-attr"),
     SyntaxProperty("--mynah-color-syntax-property"),
     SyntaxComment("--mynah-color-syntax-comment"),
     SyntaxCode("--mynah-color-syntax-code"),
+    SyntaxString("--mynah-color-syntax-string"),
 
     // Status
     StatusInfo("--mynah-color-status-info"),

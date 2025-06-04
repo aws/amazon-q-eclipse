@@ -4,7 +4,7 @@
 <template>
     <div class="font-amazon">
         <div class="title bottom-small-gap">{{ this.authenticatingText }}</div>
-        <div class="hint bottom-small-gap wrap">{{ this.redirectUrl }}</div>
+        <div class="hint bottom-small-gap">{{ this.redirectUrl }}</div>
         <div v-if="requireConfirmationCodeOrNot" class="confirmation-code-container bottom-small-gap">
             <div class="hint">CONFIRMATION CODE</div>
             <div class="confirmation-code">{{ this.authorizationCode }}</div>

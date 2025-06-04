@@ -42,15 +42,18 @@ public final class ChatTheme {
         themeMap.put(QChatCssVariable.ColorToggle, rgb(30, 30, 30));
 
         // Code Syntax
-        themeMap.put(QChatCssVariable.SyntaxBackground, rgb(29, 30, 34));
-        themeMap.put(QChatCssVariable.SyntaxVariable, rgb(247, 247, 80));
-        themeMap.put(QChatCssVariable.SyntaxFunction, rgb(86, 178, 80));
+        themeMap.put(QChatCssVariable.SyntaxBackground, rgb(30, 31, 34));
+        themeMap.put(QChatCssVariable.SyntaxVariable, rgb(102, 225, 248));
+        themeMap.put(QChatCssVariable.SyntaxKeyword, rgb(204, 108, 29));
+        themeMap.put(QChatCssVariable.SyntaxClassName, rgb(18, 144, 195));
+        themeMap.put(QChatCssVariable.SyntaxFunction, rgb(187, 100, 29));
         themeMap.put(QChatCssVariable.SyntaxOperator, rgb(217, 111, 187));
         themeMap.put(QChatCssVariable.SyntaxAttributeValue, rgb(66, 141, 190));
         themeMap.put(QChatCssVariable.SyntaxAttribute, rgb(179, 108, 50));
         themeMap.put(QChatCssVariable.SyntaxProperty, rgb(57, 171, 184));
         themeMap.put(QChatCssVariable.SyntaxComment, rgb(130, 130, 130));
         themeMap.put(QChatCssVariable.SyntaxCode, defaultTextColor);
+        themeMap.put(QChatCssVariable.SyntaxString, rgb(23, 198, 163));
 
         // Status
         themeMap.put(QChatCssVariable.StatusInfo, rgb(55, 148, 255));
@@ -101,15 +104,17 @@ public final class ChatTheme {
         themeMap.put(QChatCssVariable.ColorToggle, rgb(220, 220, 220));
 
         // Code Syntax
-        themeMap.put(QChatCssVariable.SyntaxBackground, rgb(220, 232, 250));
-        themeMap.put(QChatCssVariable.SyntaxVariable, rgb(247, 247, 80));
+        themeMap.put(QChatCssVariable.SyntaxBackground, rgb(255, 255, 255));
+        themeMap.put(QChatCssVariable.SyntaxVariable, rgb(37, 37, 201));
         themeMap.put(QChatCssVariable.SyntaxFunction, rgb(86, 178, 80));
+        themeMap.put(QChatCssVariable.SyntaxClassName, rgb(18, 144, 195));
         themeMap.put(QChatCssVariable.SyntaxOperator, rgb(217, 111, 187));
         themeMap.put(QChatCssVariable.SyntaxAttributeValue, rgb(66, 141, 190));
         themeMap.put(QChatCssVariable.SyntaxAttribute, rgb(179, 108, 50));
         themeMap.put(QChatCssVariable.SyntaxProperty, rgb(57, 171, 184));
         themeMap.put(QChatCssVariable.SyntaxComment, rgb(130, 130, 130));
         themeMap.put(QChatCssVariable.SyntaxCode, defaultTextColor);
+        themeMap.put(QChatCssVariable.SyntaxString, rgb(70, 33, 255));
 
         // Status
         themeMap.put(QChatCssVariable.StatusInfo, rgb(55, 148, 255));

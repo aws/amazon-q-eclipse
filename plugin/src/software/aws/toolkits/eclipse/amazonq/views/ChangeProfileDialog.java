@@ -45,6 +45,9 @@ public final class ChangeProfileDialog extends Dialog {
     private RadioButtonWithDescriptor selectedRadioButton;
     private Font loadingLabelFont;
     private Font scrollableLabelFont;
+    private final int smallFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 8 : 12;
+    private final int mediumFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 10 : 14;
+    private final int largeFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 12 : 16;
 
     public final class RadioButtonWithDescriptor extends Composite {
 
@@ -75,8 +78,8 @@ public final class ChangeProfileDialog extends Dialog {
             radioButton = new Button(topRow, SWT.RADIO | style);
             radioButton.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
-            profileNameFont = createFont(12, SWT.NORMAL);
-            regionFont = createFont(12, SWT.ITALIC);
+            profileNameFont = createFont(smallFont, SWT.NORMAL);
+            regionFont = createFont(smallFont, SWT.ITALIC);
 
             profileNameAndRegionText = new StyledText(topRow, SWT.READ_ONLY);
             profileNameAndRegionText.setText(profileName + " - " + region);
@@ -231,7 +234,7 @@ public final class ChangeProfileDialog extends Dialog {
         scrollableLabelData.verticalIndent = 0;
         scrollableLabel.setLayoutData(scrollableLabelData);
 
-        scrollableLabelFont = createFont(16, SWT.BOLD);
+        scrollableLabelFont = createFont(largeFont, SWT.BOLD);
         scrollableLabel.setFont(scrollableLabelFont);
 
         Runnable showDownArrowWhenScrollable = new Runnable() {
@@ -270,14 +273,14 @@ public final class ChangeProfileDialog extends Dialog {
     }
 
     private void setupHeaderText(final Composite container) {
-        titleFont = createFont(14, SWT.BOLD);
+        titleFont = createFont(mediumFont, SWT.BOLD);
 
         Label headerLabel = new Label(container, SWT.NONE);
         headerLabel.setText(HEADER);
         headerLabel.setFont(titleFont);
         headerLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        descriptionFont = createFont(12, SWT.NORMAL);
+        descriptionFont = createFont(smallFont, SWT.NORMAL);
 
         StyledText descriptionText = new StyledText(container, SWT.READ_ONLY | SWT.WRAP);
         descriptionText.setText(DESCRIPTION);
@@ -296,7 +299,7 @@ public final class ChangeProfileDialog extends Dialog {
         loadingLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
         loadingLabel.setText("Loading profiles   ");
 
-        loadingLabelFont = createFont(11, SWT.ITALIC);
+        loadingLabelFont = createFont(smallFont, SWT.ITALIC);
         loadingLabel.setFont(loadingLabelFont);
 
         Point size = loadingLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT);

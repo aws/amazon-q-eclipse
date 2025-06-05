@@ -44,8 +44,8 @@ public final class LspProviderImpl implements LspProvider {
             ServerEntry entry = serverRegistry.get(AmazonQLspServer.class);
             if (entry != null && entry.getFuture() != null) {
                 entry.getFuture().complete(serverRegistry.get(lspType).getServer());
+                onServerActivation();
             }
-            onServerActivation();
         }
     }
 

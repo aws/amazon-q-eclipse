@@ -47,6 +47,7 @@ public final class CustomizationDialog extends Dialog {
     private List<Customization> customizationsResponse;
     private ResponseSelection responseSelection;
     private Customization selectedCustomization;
+    private RadioButtonWithDescriptor customizationButton;
     private final int smallFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 8 : 12;
     private final int mediumFont = PluginUtils.getPlatform().equals(PluginPlatform.WINDOWS) ? 10 : 14;
 
@@ -192,6 +193,7 @@ public final class CustomizationDialog extends Dialog {
             if (currentCustomization != null
                     && customizations.get(index).getArn().equals(currentCustomization.getArn())) {
                 selectedCustomizationIndex = customizationsCount;
+                customizationButton.setSelection(true);
             }
             addFormattedOption(combo, customizations.get(index).getName(),
                     customizations.get(index).getProfile().getName(), customizations.get(index).getDescription());
@@ -261,7 +263,7 @@ public final class CustomizationDialog extends Dialog {
         RadioButtonWithDescriptor defaultAmazonQFoundationButton = createRadioButton(container,
                 "Amazon Q foundation (Default)", "Receive suggestions from Amazon Q base model.", SWT.NONE,
                 isDefaultAmazonQFoundationSelected);
-        RadioButtonWithDescriptor customizationButton = createRadioButton(container, "Customization",
+        customizationButton = createRadioButton(container, "Customization",
                 "Receive Amazon Q suggestions based on your company's codebase.", SWT.NONE,
                 !isDefaultAmazonQFoundationSelected);
 

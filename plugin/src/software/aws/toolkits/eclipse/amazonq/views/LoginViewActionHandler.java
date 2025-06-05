@@ -108,7 +108,7 @@ public class LoginViewActionHandler implements ViewActionHandler {
         case ON_SELECT_PROFILE:
             QDeveloperProfile developerProfile = JSON_HANDLER.convertObject(params, QDeveloperProfile.class);
             QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true).thenRun(() -> {
-            	CustomizationUtil.validateCurrentCustomization();
+                CustomizationUtil.validateCurrentCustomization();
             });
             break;
         default:

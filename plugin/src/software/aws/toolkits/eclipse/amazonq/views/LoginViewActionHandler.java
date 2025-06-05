@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginParams;
@@ -106,7 +107,9 @@ public class LoginViewActionHandler implements ViewActionHandler {
             break;
         case ON_SELECT_PROFILE:
             QDeveloperProfile developerProfile = JSON_HANDLER.convertObject(params, QDeveloperProfile.class);
-            QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true);
+            QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true).thenRun(() -> {
+                CustomizationUtil.validateCurrentCustomization();
+            });
             break;
         default:
             Activator.getLogger()

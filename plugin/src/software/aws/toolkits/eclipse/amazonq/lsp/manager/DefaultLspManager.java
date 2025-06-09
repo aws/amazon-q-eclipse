@@ -221,15 +221,15 @@ public final class DefaultLspManager implements LspManager {
 
         var serverCommand = result.getServerCommand();
         var expectedServerCommand = getNodeForPlatform();
-        if (!serverCommand.equalsIgnoreCase(expectedServerCommand) || !Files.exists(serverDirPath.resolve(serverCommand))) {
-            throw new AmazonQPluginException("Error finding Amazon Q Language Server Command");
-        }
+        //if (!serverCommand.equalsIgnoreCase(expectedServerCommand)) {
+          //  throw new AmazonQPluginException("Error finding Amazon Q Language Server Command");
+        //}
 
         var serverCommandArgs = result.getServerCommandArgs();
 
-        if (!serverCommandArgs.equalsIgnoreCase(lspExecutablePrefix) || !Files.exists(serverDirPath.resolve(serverCommandArgs))) {
-            throw new AmazonQPluginException("Error finding Amazon Q Language Server Command Args");
-        }
+//        if (!serverCommandArgs.equalsIgnoreCase(lspExecutablePrefix) || !Files.exists(serverDirPath.resolve(serverCommandArgs))) {
+  //          throw new AmazonQPluginException("Error finding Amazon Q Language Server Command Args");
+    //    }
     }
 
     private String getNodeForPlatform() {

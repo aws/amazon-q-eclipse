@@ -140,16 +140,16 @@ public abstract class AmazonQAbstractCommonActions {
                 action.changeProfileDialogContributionItem.fill(parent, index);
             }
         });
-        menuManager.add(new ActionContributionItem(action.signoutAction) {
-            @Override
-            public boolean isVisible() {
-                return action.signoutAction.isEnabled();
-            }
-        });
         menuManager.add(new ActionContributionItem(action.manageSubscriptionsAction) {
             @Override
             public boolean isVisible() {
                 return action.manageSubscriptionsAction.isEnabled();
+            }
+        });
+        menuManager.add(new ActionContributionItem(action.signoutAction) {
+            @Override
+            public boolean isVisible() {
+                return action.signoutAction.isEnabled();
             }
         });
     }

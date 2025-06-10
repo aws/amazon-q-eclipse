@@ -79,7 +79,7 @@ public final class ToolkitLoginWebview extends AmazonQView implements EventObser
     public void onEvent(final UpdateRedirectUrlCommand redirectUrlCommand) {
         Display.getDefault().asyncExec(() -> {
             var browser = getBrowser();
-            if (!browser.isDisposed()) {
+            if (browser != null && !browser.isDisposed()) {
                 String command = "ideClient.updateRedirectUrl('" + redirectUrlCommand.redirectUrl() + "')";
                 browser.execute(command);
             }

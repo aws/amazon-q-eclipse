@@ -31,6 +31,7 @@ public abstract class AmazonQAbstractCommonActions {
         private final ChangeProfileDialogContributionItem changeProfileDialogContributionItem;
         private final ReportAnIssueAction reportAnIssueAction;
         private final OpenPreferencesAction openPreferencesAction;
+        private final ManageSubscriptionsAction manageSubscriptionsAction;
 
         Actions() {
             signoutAction = new SignoutAction();
@@ -45,6 +46,7 @@ public abstract class AmazonQAbstractCommonActions {
             reportAnIssueAction = new ReportAnIssueAction();
             openPreferencesAction = new OpenPreferencesAction();
             changeProfileDialogContributionItem = new ChangeProfileDialogContributionItem();
+            manageSubscriptionsAction = new ManageSubscriptionsAction();
         }
 
         public OpenQChatAction getOpenQChatAction() {
@@ -56,7 +58,7 @@ public abstract class AmazonQAbstractCommonActions {
                 signoutAction.setVisible(authState.isLoggedIn());
                 feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
                 toggleAutoTriggerContributionItem.setVisible(authState.isLoggedIn());
-
+                manageSubscriptionsAction.setVisible(authState.isLoggedIn() && authState.loginType().equals(LoginType.BUILDER_ID));
                 // TODO: Need to update this method as the login condition has to be Pro login
                 // using IAM identity center
                 customizationDialogContributionItem.setVisible(
@@ -136,6 +138,12 @@ public abstract class AmazonQAbstractCommonActions {
             @Override
             public void fill(final ToolBar parent, final int index) {
                 action.changeProfileDialogContributionItem.fill(parent, index);
+            }
+        });
+        menuManager.add(new ActionContributionItem(action.manageSubscriptionsAction) {
+            @Override
+            public boolean isVisible() {
+                return action.manageSubscriptionsAction.isEnabled();
             }
         });
         menuManager.add(new ActionContributionItem(action.signoutAction) {

@@ -221,7 +221,7 @@ public final class DefaultLspManager implements LspManager {
 
         var serverCommand = result.getServerCommand();
         var expectedServerCommand = getNodeForPlatform();
-        if (!serverCommand.equalsIgnoreCase(expectedServerCommand) || !Files.exists(serverDirPath.resolve(serverCommand))) {
+        if (!serverCommand.equalsIgnoreCase(expectedServerCommand)  || !Files.exists(serverDirPath.resolve(serverCommand))) {
             throw new AmazonQPluginException("Error finding Amazon Q Language Server Command");
         }
 

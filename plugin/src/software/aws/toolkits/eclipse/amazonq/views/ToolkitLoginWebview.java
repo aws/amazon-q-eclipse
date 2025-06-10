@@ -45,6 +45,7 @@ public final class ToolkitLoginWebview extends AmazonQView implements EventObser
             }
 
             browser.setVisible(false);
+            var webviewReference = this;
             browser.addProgressListener(new ProgressAdapter() {
                 @Override
                 public void completed(final ProgressEvent event) {
@@ -53,6 +54,7 @@ public final class ToolkitLoginWebview extends AmazonQView implements EventObser
                             browser.setVisible(true);
                         }
                     });
+                    Activator.getEventBroker().subscribe(UpdateRedirectUrlCommand.class, webviewReference);
                 }
             });
 
@@ -77,8 +79,10 @@ public final class ToolkitLoginWebview extends AmazonQView implements EventObser
     public void onEvent(final UpdateRedirectUrlCommand redirectUrlCommand) {
         Display.getDefault().asyncExec(() -> {
             var browser = getBrowser();
-            String command = "ideClient.updateRedirectUrl('" + redirectUrlCommand.redirectUrl() + "')";
-            browser.execute(command);
+            if (browser != null && !browser.isDisposed()) {
+                String command = "ideClient.updateRedirectUrl('" + redirectUrlCommand.redirectUrl() + "')";
+                browser.execute(command);
+            }
         });
     }
 }

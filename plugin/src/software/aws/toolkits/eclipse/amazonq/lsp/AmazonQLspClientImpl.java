@@ -209,11 +209,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             final boolean[] success = new boolean[1];
             if (params.getExternal() != null && params.getExternal()) {
                 var command = new UpdateRedirectUrlCommand(uri);
-                // if it is a login url and not related to subscriptions, invoke the redirect url call
-                if(!uri.contains("subscription"))
-                {
-                    Activator.getEventBroker().post(UpdateRedirectUrlCommand.class, command);
-                }  
+                Activator.getEventBroker().post(UpdateRedirectUrlCommand.class, command);
                 Display.getDefault().syncExec(() -> {
                     try {
                         PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL(new URL(uri));

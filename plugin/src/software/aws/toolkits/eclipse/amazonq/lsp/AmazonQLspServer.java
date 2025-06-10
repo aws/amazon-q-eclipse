@@ -4,7 +4,6 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;

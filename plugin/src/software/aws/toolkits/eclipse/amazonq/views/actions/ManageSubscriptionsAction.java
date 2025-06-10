@@ -1,8 +1,7 @@
-package software.aws.toolkits.eclipse.amazonq.views.actions;
+// Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -13,25 +12,24 @@ import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 public class ManageSubscriptionsAction extends Action {
 
     public ManageSubscriptionsAction() {
-        setText("Manage Subscriptions");
+        setText("Manage Q Developer Pro Subscription");
     }
 
     @Override
-    public void run() {
+    public final void run() {
         UiTelemetryProvider.emitClickEventMetric("manageSubscriptions");
         Activator.getLspProvider().getAmazonQServer()
             .thenAccept(server -> {
                 ExecuteCommandParams params = new ExecuteCommandParams();
                 params.setCommand("aws/chat/manageSubscription");
-                
                 server.getWorkspaceService().executeCommand(params).exceptionally(ex -> {
-                    // Log error if needed
+                    Activator.getLogger().error("Error executing manage subscriptions actions", ex);
                     return null;
                 });
             });
     }
-    
-    public void setVisible(final boolean isVisible) {
+
+    public final void setVisible(final boolean isVisible) {
         super.setEnabled(isVisible);
     }
 }

@@ -5,6 +5,7 @@ package software.aws.toolkits.eclipse.amazonq.providers.lsp;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.lsp4j.services.LanguageServer;
@@ -40,11 +41,14 @@ public final class LspProviderImpl implements LspProvider {
 
     @Override
     public <T extends LanguageServer> void activate(final Class<T> lspType) {
-        synchronized (AmazonQLspServer.class) {
+        synchronized (lspType) {
             ServerEntry entry = serverRegistry.get(AmazonQLspServer.class);
             if (entry != null && entry.getFuture() != null) {
                 entry.getFuture().complete(serverRegistry.get(lspType).getServer());
+            }
+            if (!entry.isActive) {
                 onServerActivation();
+                entry.isActive = true;
             }
         }
     }
@@ -57,11 +61,13 @@ public final class LspProviderImpl implements LspProvider {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends LanguageServer> CompletableFuture<T> getServer(final Class<T> lspType) {
-        ServerEntry entry = serverRegistry.computeIfAbsent(lspType, k -> new ServerEntry());
-        if (entry.getServer() != null) {
-            return CompletableFuture.completedFuture((T) entry.getServer());
+        synchronized (lspType) {
+            ServerEntry entry = serverRegistry.computeIfAbsent(lspType, k -> new ServerEntry());
+            if (entry.getServer() != null) {
+                return CompletableFuture.completedFuture((T) entry.getServer());
+            }
+            return entry.getFutureWithTimeout(TIMEOUT_SECONDS);
         }
-        return entry.getFutureWithTimeout(TIMEOUT_SECONDS);
     }
 
     private void onServerActivation() {
@@ -75,14 +81,16 @@ public final class LspProviderImpl implements LspProvider {
     }
 
     private static final class ServerEntry {
-        private LanguageServer server;
-        private CompletableFuture<LanguageServer> future;
+        private volatile LanguageServer server;
+        private volatile CompletableFuture<LanguageServer> future = new CompletableFuture<>();
+        private volatile boolean isActive;
 
-        public void setServer(final LanguageServer server) {
+        public synchronized void setServer(final LanguageServer server) {
             this.server = server;
-            if (future != null) {
-                future.complete(server);
+            if (future.isDone()) {
+                future = new CompletableFuture<>();
             }
+            future.complete(server);
         }
 
         public LanguageServer getServer() {
@@ -95,11 +103,12 @@ public final class LspProviderImpl implements LspProvider {
 
         @SuppressWarnings("unchecked")
         public <T extends LanguageServer> CompletableFuture<T> getFutureWithTimeout(final long timeoutSeconds) {
-            if (future == null) {
-                future = new CompletableFuture<>();
-            }
             return future.orTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                        .thenApply(server -> (T) server);
+                        .thenApply(server -> (T) server)
+                        .exceptionally(e -> {
+                            throw new CompletionException("Failed to get server within timeout", e);
+                        });
         }
     }
+
 }

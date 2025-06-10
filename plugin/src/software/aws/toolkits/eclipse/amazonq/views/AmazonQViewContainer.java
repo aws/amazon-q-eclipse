@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.views;
 
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
@@ -28,7 +27,6 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     private volatile StackLayout layout;
     private volatile AmazonQViewType activeViewType;
     private volatile BaseAmazonQView currentView;
-    private final ReentrantLock containerLock;
 
     static {
         VIEWS = Map.of(AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
@@ -41,7 +39,6 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
 
     public AmazonQViewContainer() {
         activeViewType = AmazonQViewType.CHAT_VIEW;
-        containerLock = new ReentrantLock(true);
         Activator.getEventBroker().subscribe(AmazonQViewType.class, this);
     }
 
@@ -56,43 +53,36 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         parent.setLayout(gridLayout);
 
         parentComposite = parent;
-
-        updateChildView();
     }
 
     private void updateChildView() {
         Display.getDefault().asyncExec(() -> {
-            try {
-                containerLock.lock();
-                BaseAmazonQView newView = VIEWS.get(activeViewType);
+            BaseAmazonQView newView = VIEWS.get(activeViewType);
 
-                if (currentView != null) {
-                    if (currentView instanceof AmazonQView) {
-                        ((AmazonQView) currentView).disposeBrowser();
+            if (currentView != null) {
+                if (currentView instanceof AmazonQView) {
+                    ((AmazonQView) currentView).disposeBrowser();
+                }
+                Control[] children = parentComposite.getChildren();
+                for (Control child : children) {
+                    if (child != null && !child.isDisposed()) {
+                        child.dispose();
                     }
-                    Control[] children = parentComposite.getChildren();
-                    for (Control child : children) {
-                        if (child != null && !child.isDisposed()) {
-                            child.dispose();
-                        }
-                    }
-
-                    currentView.dispose();
                 }
 
-                newView.setViewSite(getViewSite());
-
-                Composite newViewComposite = newView.setupView(parentComposite);
-                GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
-                newViewComposite.setLayoutData(gridData);
-
-                layout.topControl = newViewComposite;
-                parentComposite.layout(true, true);
-
-                currentView = newView;
-            } finally {
-                containerLock.unlock();
+                currentView.dispose();
             }
+
+            newView.setViewSite(getViewSite());
+
+            Composite newViewComposite = newView.setupView(parentComposite);
+            GridData gridData = new GridData(SWT.CENTER, SWT.CENTER, true, true);
+            newViewComposite.setLayoutData(gridData);
+
+            layout.topControl = newViewComposite;
+            parentComposite.layout(true, true);
+
+            currentView = newView;
         });
     }
 
@@ -102,9 +92,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
             return;
         }
 
-        containerLock.lock();
         activeViewType = newViewType;
-        containerLock.unlock();
 
         if (parentComposite != null && !parentComposite.isDisposed()) {
             updateChildView();

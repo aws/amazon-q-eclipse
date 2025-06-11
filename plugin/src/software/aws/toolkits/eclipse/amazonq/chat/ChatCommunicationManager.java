@@ -25,7 +25,11 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.swt.widgets.Display;
+
+import com.google.gson.JsonObject;
 
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
@@ -435,13 +439,39 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private void sendErrorToUi(final String tabId, final Throwable exception) {
         String errorTitle = "An error occurred while processing your request.";
-        String errorMessage = String.format("Details: %s", exception.getMessage());
+        String errorMessage;
+        
+        if (exception instanceof ResponseErrorException) {
+            ResponseError responseError = ((ResponseErrorException) exception).getResponseError();
+            
+            if (responseError.getData() instanceof JsonObject) {
+                JsonObject responseData = (JsonObject) responseError.getData();
+                
+                if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString()) 
+                    && responseData.has("body")) {
+                    String body = responseData.get("body").getAsString();
+                    errorMessage = String.format("Details: %s", body);
+                } else {
+                    errorMessage = String.format("Details: %s", responseError.getMessage());
+                }
+            } else {
+                errorMessage = String.format("Details: %s", responseError.getMessage());
+            }
+        } else if (exception.getCause() instanceof ResponseErrorException) {
+            ResponseError responseError = ((ResponseErrorException) exception.getCause()).getResponseError();
+            errorMessage = String.format("Details: %s", responseError.getMessage());
+        } else {
+            errorMessage = String.format("Details: %s", exception.getMessage());
+        }
+        
+        errorMessage = errorMessage.replace("\\n", System.lineSeparator());
+        
         ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
-        // show error in Chat UI
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);
         sendMessageToChatUI(chatUIInboundCommand);
     }
+
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
         if (listener != null) {

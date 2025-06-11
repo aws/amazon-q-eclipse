@@ -440,14 +440,11 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private void sendErrorToUi(final String tabId, final Throwable exception) {
         String errorTitle = "An error occurred while processing your request.";
         String errorMessage;
-        
         if (exception instanceof ResponseErrorException) {
             ResponseError responseError = ((ResponseErrorException) exception).getResponseError();
-            
             if (responseError.getData() instanceof JsonObject) {
                 JsonObject responseData = (JsonObject) responseError.getData();
-                
-                if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString()) 
+                if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString())
                     && responseData.has("body")) {
                     String body = responseData.get("body").getAsString();
                     errorMessage = String.format("Details: %s", body);
@@ -463,9 +460,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         } else {
             errorMessage = String.format("Details: %s", exception.getMessage());
         }
-        
         errorMessage = errorMessage.replace("\\n", System.lineSeparator());
-        
         ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);

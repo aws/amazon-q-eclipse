@@ -81,7 +81,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private volatile boolean isActive = false;
     private volatile boolean isQueueProcessorRunning = false;
-    private volatile boolean isChatReady = false;
     private volatile Thread queueProcessorThread;
 
     private final String inlineChatTabId = "123456789";
@@ -116,7 +115,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     public void sendMessageToChatServer(final Command command, final ChatMessage message) {
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {
             try {
-                if (isChatReady && (!isQueueProcessorRunning || (queueProcessorThread != null && !queueProcessorThread.isAlive()))) {
+                if (!isQueueProcessorRunning || (queueProcessorThread != null && !queueProcessorThread.isAlive())) {
                     isQueueProcessorRunning = false;
                     startCommandQueueProcessor();
                 }
@@ -149,10 +148,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         });
                         break;
                     case CHAT_READY:
-                        if (!isChatReady) {
-                            amazonQLspServer.chatReady();
-                            isChatReady = true;
-                        }
+                        amazonQLspServer.chatReady();
                         startCommandQueueProcessor();
                         break;
                     case CHAT_TAB_ADD:

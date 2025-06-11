@@ -436,9 +436,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private void sendErrorToUi(final String tabId, final Throwable exception) {
         String errorTitle = "An error occurred while processing your request.";
         String errorMessage = extractErrorMessage(exception);
-        // Convert literal \n characters to proper line breaks for UI display
-        // Language server sends error messages with \n\n patterns (e.g., "Error message \n\nRequest ID: 123")
-        errorMessage = errorMessage.replace("\\n", System.lineSeparator());
         ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);
@@ -453,6 +450,9 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString())
                     && responseData.has("body")) {
                     String body = responseData.get("body").getAsString();
+                    // Convert literal \n characters to proper line breaks for QModelResponse errors with Request IDs
+                    // Language server sends these errors with \n\n patterns (e.g., "Error message \n\nRequest ID: 123")
+                    body = body.replace("\\n", System.lineSeparator());
                     return String.format("Details: %s", body);
                 } else {
                     return String.format("Details: %s", responseError.getMessage());

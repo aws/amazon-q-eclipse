@@ -435,32 +435,41 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private void sendErrorToUi(final String tabId, final Throwable exception) {
         String errorTitle = "An error occurred while processing your request.";
-        String errorMessage;
-        if (exception instanceof ResponseErrorException) {
-            ResponseError responseError = ((ResponseErrorException) exception).getResponseError();
-            if (responseError.getData() instanceof JsonObject) {
-                JsonObject responseData = (JsonObject) responseError.getData();
-                if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString())
-                    && responseData.has("body")) {
-                    String body = responseData.get("body").getAsString();
-                    errorMessage = String.format("Details: %s", body);
-                } else {
-                    errorMessage = String.format("Details: %s", responseError.getMessage());
-                }
-            } else {
-                errorMessage = String.format("Details: %s", responseError.getMessage());
-            }
-        } else if (exception.getCause() instanceof ResponseErrorException) {
-            ResponseError responseError = ((ResponseErrorException) exception.getCause()).getResponseError();
-            errorMessage = String.format("Details: %s", responseError.getMessage());
-        } else {
-            errorMessage = String.format("Details: %s", exception.getMessage());
-        }
+        String errorMessage = extractErrorMessage(exception);
         errorMessage = errorMessage.replace("\\n", System.lineSeparator());
         ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);
         sendMessageToChatUI(chatUIInboundCommand);
+    }
+
+    private String extractErrorMessage(final Throwable exception) {
+        if (exception instanceof ResponseErrorException) {
+            ResponseError responseError = ((ResponseErrorException) exception).getResponseError();
+            if (responseError != null && responseError.getData() instanceof JsonObject) {
+                JsonObject responseData = (JsonObject) responseError.getData();
+                if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString())
+                    && responseData.has("body")) {
+                    String body = responseData.get("body").getAsString();
+                    return String.format("Details: %s", body);
+                } else {
+                    return String.format("Details: %s", responseError.getMessage());
+                }
+            } else if (responseError != null) {
+                return String.format("Details: %s", responseError.getMessage());
+            } else {
+                return String.format("Details: %s", exception.getMessage());
+            }
+        } else if (exception.getCause() instanceof ResponseErrorException) {
+            ResponseError responseError = ((ResponseErrorException) exception.getCause()).getResponseError();
+            if (responseError != null) {
+                return String.format("Details: %s", responseError.getMessage());
+            } else {
+                return String.format("Details: %s", exception.getMessage());
+            }
+        } else {
+            return String.format("Details: %s", exception.getMessage());
+        }
     }
 
 

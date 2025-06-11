@@ -27,6 +27,7 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
     private volatile StackLayout layout;
     private volatile AmazonQViewType activeViewType;
     private volatile BaseAmazonQView currentView;
+    private volatile AmazonQViewType queuedViewType;
 
     static {
         VIEWS = Map.of(AmazonQViewType.CHAT_ASSET_MISSING_VIEW, new ChatAssetMissingView(),
@@ -53,6 +54,12 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
         parent.setLayout(gridLayout);
 
         parentComposite = parent;
+
+        if (queuedViewType != null) {
+            AmazonQViewType viewType = queuedViewType;
+            queuedViewType = null;
+            onEvent(viewType);
+        }
     }
 
     private void updateChildView() {
@@ -92,11 +99,13 @@ public final class AmazonQViewContainer extends ViewPart implements EventObserve
             return;
         }
 
-        activeViewType = newViewType;
-
-        if (parentComposite != null && !parentComposite.isDisposed()) {
-            updateChildView();
+        if (parentComposite == null || parentComposite.isDisposed()) {
+            queuedViewType = newViewType;
+            return;
         }
+
+        activeViewType = newViewType;
+        updateChildView();
     }
 
     @Override

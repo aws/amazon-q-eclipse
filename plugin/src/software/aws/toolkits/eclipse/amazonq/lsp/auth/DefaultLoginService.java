@@ -52,7 +52,9 @@ public final class DefaultLoginService implements LoginService {
             if (!authState.isLoggedOut()) {
                 boolean loginOnInvalidToken = false;
                 reAuthenticate(loginOnInvalidToken).thenRun(() -> {
-                    QDeveloperProfileUtil.getInstance().initialize();
+                    if (authStateManager.getAuthState().loginType().equals(LoginType.IAM_IDENTITY_CENTER)) {
+                        QDeveloperProfileUtil.getInstance().initialize();
+                    }
                 });
             }
         }

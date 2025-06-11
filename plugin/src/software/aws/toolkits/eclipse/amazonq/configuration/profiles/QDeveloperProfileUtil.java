@@ -24,9 +24,6 @@ import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.broker.events.QDeveloperProfileState;
 import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthState;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.AuthStateType;
-import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.GetConfigurationFromServerParams.ExpectedResponseType;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.LspServerConfigurations;
@@ -118,13 +115,16 @@ public final class QDeveloperProfileUtil {
             queryForDeveloperProfilesFuture(true, true).exceptionally(throwable -> {
                 Activator.getLogger().error(
                         "Plugin initialization with saved developer profile failed. Prompting user to log back in.");
-                Activator.getEventBroker().post(AuthState.class,
-                        new AuthState(AuthStateType.LOGGED_OUT, LoginType.IAM_IDENTITY_CENTER));
+                Activator.getLoginService().logout();
                 return null;
             }).thenAccept(result -> {
                 CustomizationUtil.validateCurrentCustomization();
             });
             savedDeveloperProfile = null;
+        } else {
+            Activator.getLogger().info("No saved developer profile found, logging out");
+            profileSelectionTask.complete(null);
+            Activator.getLoginService().logout();
         }
     }
 

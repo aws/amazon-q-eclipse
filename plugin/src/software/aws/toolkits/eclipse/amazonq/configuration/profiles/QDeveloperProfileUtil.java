@@ -118,13 +118,16 @@ public final class QDeveloperProfileUtil {
             queryForDeveloperProfilesFuture(true, true).exceptionally(throwable -> {
                 Activator.getLogger().error(
                         "Plugin initialization with saved developer profile failed. Prompting user to log back in.");
-                Activator.getEventBroker().post(AuthState.class,
-                        new AuthState(AuthStateType.LOGGED_OUT, LoginType.IAM_IDENTITY_CENTER));
+                Activator.getLoginService().logout();
                 return null;
             }).thenAccept(result -> {
                 CustomizationUtil.validateCurrentCustomization();
             });
             savedDeveloperProfile = null;
+        } else {
+            Activator.getLogger().info("No saved developer profile found, logging out");
+            profileSelectionTask.complete(null);
+            Activator.getLoginService().logout();
         }
     }
 

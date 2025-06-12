@@ -25,7 +25,11 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.swt.widgets.Display;
+
+import com.google.gson.JsonObject;
 
 import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ButtonClickResult;
@@ -431,13 +435,45 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
 
     private void sendErrorToUi(final String tabId, final Throwable exception) {
         String errorTitle = "An error occurred while processing your request.";
-        String errorMessage = String.format("Details: %s", exception.getMessage());
+        String errorMessage = extractErrorMessage(exception);
         ErrorParams errorParams = new ErrorParams(tabId, null, errorMessage, errorTitle);
-        // show error in Chat UI
         ChatUIInboundCommand chatUIInboundCommand = new ChatUIInboundCommand(
                 ChatUIInboundCommandName.ErrorMessage.getValue(), tabId, errorParams, false, null);
         sendMessageToChatUI(chatUIInboundCommand);
     }
+
+    private String extractErrorMessage(final Throwable exception) {
+        if (exception instanceof ResponseErrorException) {
+            ResponseError responseError = ((ResponseErrorException) exception).getResponseError();
+            if (responseError != null && responseError.getData() instanceof JsonObject) {
+                JsonObject responseData = (JsonObject) responseError.getData();
+                if (responseData.has("type") && "answer".equals(responseData.get("type").getAsString())
+                    && responseData.has("body")) {
+                    String body = responseData.get("body").getAsString();
+                    // Convert literal \n characters to proper line breaks for QModelResponse errors with Request IDs
+                    // Language server sends these errors with \n\n patterns (e.g., "Error message \n\nRequest ID: 123")
+                    body = body.replace("\\n", System.lineSeparator());
+                    return String.format("Details: %s", body);
+                } else {
+                    return String.format("Details: %s", responseError.getMessage());
+                }
+            } else if (responseError != null) {
+                return String.format("Details: %s", responseError.getMessage());
+            } else {
+                return String.format("Details: %s", exception.getMessage());
+            }
+        } else if (exception.getCause() instanceof ResponseErrorException) {
+            ResponseError responseError = ((ResponseErrorException) exception.getCause()).getResponseError();
+            if (responseError != null) {
+                return String.format("Details: %s", responseError.getMessage());
+            } else {
+                return String.format("Details: %s", exception.getMessage());
+            }
+        } else {
+            return String.format("Details: %s", exception.getMessage());
+        }
+    }
+
 
     public void setChatUiRequestListener(final ChatUiRequestListener listener) {
         if (listener != null) {

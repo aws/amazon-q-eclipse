@@ -14,7 +14,7 @@ public abstract class WebViewAssetProvider {
 
     protected final String getWaitFunction() {
         return """
-                function waitForFunction(functionName, timeout = 30000) {
+                function waitForFunction(functionName, timeout = 120000) {
                     return new Promise((resolve, reject) => {
                         const startTime = Date.now();
                         const checkFunction = () => {

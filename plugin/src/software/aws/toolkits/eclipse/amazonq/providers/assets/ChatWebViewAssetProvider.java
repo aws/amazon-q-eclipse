@@ -12,10 +12,14 @@ import java.util.Optional;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
+import org.eclipse.swt.widgets.Display;
 
+import software.aws.toolkits.eclipse.amazonq.broker.api.EventObserver;
 import software.aws.toolkits.eclipse.amazonq.broker.events.ChatWebViewAssetState;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatTheme;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.ChatOptions;
 import software.aws.toolkits.eclipse.amazonq.configuration.PluginStoreKeys;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
@@ -28,7 +32,7 @@ import software.aws.toolkits.eclipse.amazonq.views.LoginViewCommandParser;
 import software.aws.toolkits.eclipse.amazonq.views.ViewActionHandler;
 import software.aws.toolkits.eclipse.amazonq.views.ViewCommandParser;
 
-public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
+public final class ChatWebViewAssetProvider extends WebViewAssetProvider implements EventObserver<ChatUIInboundCommand> {
 
     private WebviewAssetServer webviewAssetServer;
     private final ChatTheme chatTheme;
@@ -36,6 +40,10 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     private final ViewActionHandler actionHandler;
     private final ChatCommunicationManager chatCommunicationManager;
     private Optional<String> content;
+    private volatile boolean modelSelectionEnabled = false;
+    private Browser currentBrowser;
+    private volatile boolean serverCapabilitiesReceived = false;
+    private Browser pendingBrowser = null;
 
     public ChatWebViewAssetProvider() {
         chatTheme = new ChatTheme();
@@ -43,6 +51,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
         chatCommunicationManager = ChatCommunicationManager.getInstance();
         actionHandler = new AmazonQChatViewActionHandler(chatCommunicationManager);
         content = Optional.empty();
+        Activator.getEventBroker().subscribe(ChatUIInboundCommand.class, this);
     }
 
     @Override
@@ -56,6 +65,18 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     @Override
     public void injectAssets(final Browser browser) {
+        this.currentBrowser = browser;
+        
+        if (serverCapabilitiesReceived && content.isPresent()) {
+            injectBrowserFunctions(browser);
+            browser.setText(content.get());
+        } else {
+            this.pendingBrowser = browser;
+            browser.setText(generateLoadingHTML());
+        }
+    }
+    
+    private void injectBrowserFunctions(final Browser browser) {
         new BrowserFunction(browser, "ideCommand") {
             @Override
             public Object function(final Object[] arguments) {
@@ -83,7 +104,62 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                 return null;
             }
         };
-        browser.setText(content.get());
+    }
+    
+    private String generateLoadingHTML() {
+        String themeVariables = chatTheme.getThemeVariables();
+        return String.format("""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Amazon Q Chat</title>
+                <style>
+                    %s
+                    body {
+                        background-color: var(--mynah-color-bg);
+                        color: var(--mynah-color-text-default);
+                        height: 100vh;
+                        width: 100%%;
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        font-family: system-ui, -apple-system, sans-serif;
+                    }
+                    .loading-container {
+                        text-align: center;
+                        padding: 20px;
+                    }
+                    .loading-text {
+                        font-size: 16px;
+                        margin-bottom: 10px;
+                    }
+                    .loading-spinner {
+                        width: 20px;
+                        height: 20px;
+                        border: 2px solid var(--mynah-color-border-default);
+                        border-top: 2px solid var(--mynah-color-text-default);
+                        border-radius: 50%%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto;
+                    }
+                    @keyframes spin {
+                        0%% { transform: rotate(0deg); }
+                        100%% { transform: rotate(360deg); }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="loading-container">
+                    <div class="loading-text">Loading Amazon Q...</div>
+                    <div class="loading-spinner"></div>
+                </div>
+            </body>
+            </html>
+            """, themeVariables);
     }
 
     private Optional<String> resolveContent() {
@@ -166,7 +242,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                     disclaimerAcknowledged: %b,
                                     pairProgrammingAcknowledged: %b,
                                     agenticMode: true,
-                                    modelSelectionEnabled: true
+                                    modelSelectionEnabled: %b
                                 });
                                 window.mynah = mynahUI
                             })
@@ -176,6 +252,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     %s
                 </script>
                 """, jsEntrypoint, getWaitFunction(), "true".equals(disclaimerAcknowledged), "true".equals(pairProgrammingAcknowledged),
+                modelSelectionEnabled, // Use dynamic value from server capabilities
                 getInputFunctions());
     }
 
@@ -408,6 +485,56 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
     private boolean isValid(final Optional<String> chatUiDirectory) {
         return chatUiDirectory.isPresent() && Files.exists(Paths.get(chatUiDirectory.get()));
+    }
+
+    @Override
+    public final void onEvent(final ChatUIInboundCommand command) {
+        if ("chatOptions".equals(command.command())) {
+            if (command.params() instanceof ChatOptions chatOptions) {
+                try {
+                    this.modelSelectionEnabled = chatOptions.modelSelection();
+                    this.serverCapabilitiesReceived = true;
+                    
+                    content = resolveContent();
+                    
+                    if (pendingBrowser != null && !pendingBrowser.isDisposed()) {
+                        Display.getDefault().asyncExec(() -> {
+                            if (!pendingBrowser.isDisposed()) {
+                                injectBrowserFunctions(pendingBrowser);
+                                pendingBrowser.setText(content.get());
+                                pendingBrowser = null;
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    this.modelSelectionEnabled = true;
+                    this.serverCapabilitiesReceived = true;
+                }
+            }
+        }
+        else if ("aws/chat/chatOptionsUpdate".equals(command.command())) {
+            if (command.params() instanceof java.util.Map) {
+                boolean oldValue = this.modelSelectionEnabled;
+                this.modelSelectionEnabled = true;
+                
+                if (oldValue != this.modelSelectionEnabled && currentBrowser != null && !currentBrowser.isDisposed()) {
+                    updateWebviewModelSelection();
+                }
+            }
+        }
+    }
+    
+    private void updateWebviewModelSelection() {
+        Display.getDefault().asyncExec(() -> {
+            if (currentBrowser != null && !currentBrowser.isDisposed()) {
+                String updateScript = String.format(
+                    "if (window.mynah && window.mynah.updateConfiguration) { " +
+                    "window.mynah.updateConfiguration({modelSelectionEnabled: %b}); }", 
+                    modelSelectionEnabled
+                );
+                currentBrowser.execute(updateScript);
+            }
+        });
     }
 
     @Override

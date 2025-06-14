@@ -67,6 +67,8 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case STOP_CHAT_RESPONSE:
             case BUTTON_CLICK:
             case TAB_BAR_ACTION:
+            case LIST_MCP_SERVERS:
+            case MCP_SERVER_CLICK:
                 chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
             case CHAT_INFO_LINK_CLICK:

@@ -116,6 +116,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
         return instance;
     }
 
+    @SuppressWarnings("MethodLength")
     public void sendMessageToChatServer(final Command command, final ChatMessage message) {
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {
             try {

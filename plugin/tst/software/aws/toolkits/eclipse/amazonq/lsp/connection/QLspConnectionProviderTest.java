@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.lsp4e.server.ProcessStreamConnectionProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.MockedStatic;
@@ -51,8 +53,7 @@ public final class QLspConnectionProviderTest {
     @RegisterExtension
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();
 
-    @RegisterExtension
-    private static MockedStatic<PluginUtils> pluginUtilsMock = Mockito.mockStatic(PluginUtils.class);
+    private MockedStatic<PluginUtils> pluginUtilsMock;
 
     private static final class TestProcessConnectionProvider extends ProcessStreamConnectionProvider {
 
@@ -72,6 +73,19 @@ public final class QLspConnectionProviderTest {
             super.addEnvironmentVariables(env);
         }
 
+    }
+
+    @BeforeEach
+    void setupMocks() {
+        pluginUtilsMock = Mockito.mockStatic(PluginUtils.class);
+        pluginUtilsMock.when(PluginUtils::getPlatform).thenReturn(PluginPlatform.LINUX);
+    }
+
+    @AfterEach
+    void tearDownMocks() {
+        if (pluginUtilsMock != null) {
+            pluginUtilsMock.close();
+        }
     }
 
     @Test
@@ -107,7 +121,6 @@ public final class QLspConnectionProviderTest {
 
         MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("");
-        pluginUtilsMock.when(PluginUtils::getPlatform).thenReturn(PluginPlatform.LINUX);
 
         Map<String, String> env = new HashMap<>();
 
@@ -128,7 +141,6 @@ public final class QLspConnectionProviderTest {
 
         MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("http://proxy:8080");
-        pluginUtilsMock.when(PluginUtils::getPlatform).thenReturn(PluginPlatform.LINUX);
 
         Map<String, String> env = new HashMap<>();
         env.put("HTTPS_PROXY", "http://proxy:8080");

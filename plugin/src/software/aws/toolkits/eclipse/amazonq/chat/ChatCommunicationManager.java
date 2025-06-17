@@ -83,7 +83,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private CompletableFuture<ChatUiRequestListener> inlineChatListenerFuture;
     private Map<String, CompletableFuture<String>> inflightRequestByTabId = new ConcurrentHashMap<String, CompletableFuture<String>>();
 
-    private volatile boolean isActive = false;
+    private volatile boolean isChatReady = false;
     private volatile boolean isQueueProcessorRunning = false;
     private volatile Thread queueProcessorThread;
 
@@ -153,8 +153,8 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         });
                         break;
                     case CHAT_READY:
+                        isChatReady = true;
                         amazonQLspServer.chatReady();
-                        startCommandQueueProcessor();
                         break;
                     case CHAT_TAB_ADD:
                         amazonQLspServer.tabAdd(message.getData());
@@ -517,7 +517,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     }
 
     public void activate() {
-        this.isActive = true;
+        startCommandQueueProcessor();
     }
 
     /*
@@ -678,8 +678,9 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             queueProcessorThread = Thread.currentThread();
             while (isQueueProcessorRunning && !Thread.currentThread().isInterrupted()) {
                 try {
-                    if (!isActive) {
-                        break;
+                    if (!isChatReady) {
+                        Thread.sleep(100);
+                        continue;
                     }
                     ChatUIInboundCommand command = commandQueue.take();
                     sendMessageToChatUI(command);

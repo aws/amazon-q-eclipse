@@ -89,19 +89,26 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             if (shell == null || shell.isEmpty()) {
                 shell = "/bin/zsh"; // fallback
             }
-            var pb = new ProcessBuilder(shell, "-l", "-c", "printenv PATH");
+            String shellPath = null;
+            var pb = new ProcessBuilder(shell, "-l", "-c", "-i", "/usr/bin/env");
             pb.redirectErrorStream(true);
             var process = pb.start();
-            String shellPath = null;
             try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                shellPath = reader.readLine();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                     // Only look for PATH
+                    if (line.startsWith("PATH=")) {
+                        shellPath = line.substring(5); // 5 is the length of "PATH="
+                        break;
+                    }
+                }
             }
 
             if (!process.waitFor(5, TimeUnit.SECONDS)) {
                 process.destroyForcibly();
             }
 
-             // Append shell PATH to existing PATH if needed
+            // Append shell PATH to existing PATH if needed
             if (shellPath != null && !shellPath.isEmpty()) {
                 String currentPath = System.getenv("PATH");
                 if (currentPath != null && !currentPath.isEmpty()) {

@@ -107,7 +107,6 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
                 process.destroyForcibly();
             }
 
-            // Append shell PATH to existing PATH if needed
             if (shellPath != null && !shellPath.isEmpty()) {
                 env.put("PATH", shellPath);
             }

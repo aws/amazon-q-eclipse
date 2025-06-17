@@ -4,6 +4,7 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -74,68 +75,46 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         env.put("ENABLE_TOKEN_PROVIDER", "true");
 
         if (needsPatchEnvVariables()) {
-            Activator.getLogger().info("Retrieving required variables");
-            var patchVariables = getPatchVariables();
-            env.putAll(patchVariables);
+            Activator.getLogger().info("Adding required variables");
+            addPatchVariables(env);
         }
     }
 
     private boolean needsPatchEnvVariables() {
-        try {
-            if (!PluginUtils.getPlatform().equals(PluginPlatform.MAC)) {
-                return false;
-            }
-            return hasInvalidPath(System.getenv("PATH"));
-        } catch (Exception e) {
-            Activator.getLogger().error("Error occurred when determining if patch variables are needed", e);
-            return false;
-        }
+        return PluginUtils.getPlatform().equals(PluginPlatform.MAC);
     }
 
-    private boolean hasInvalidPath(final String path) {
-        if (path == null || path.isEmpty()) {
-            return true;
-        }
-        String[] expectedPaths = {"/usr/bin", "usr/local/bin", "/bin", "/usr/sbin", "/sbin"};
-        // Check if PATH contains at least one common macOS directory
-        for (String expected: expectedPaths) {
-            if (path.contains(expected)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private Map<String, String> getPatchVariables() {
-        Map<String, String> envMap = new HashMap<String, String>();
+    private void addPatchVariables(final Map<String, String> env) {
         try {
             var shell = System.getenv("SHELL");
             if (shell == null || shell.isEmpty()) {
-                shell = "bin/zsh"; // fallback
+                shell = "/bin/zsh"; // fallback
             }
-            var pb = new ProcessBuilder(shell, "-l", "-c", "/usr/bin/env");
+            var pb = new ProcessBuilder(shell, "-l", "-c", "-i",  "echo $PATH");
             pb.redirectErrorStream(true);
             var process = pb.start();
-
+            String shellPath = null;
             try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    int idx = line.indexOf('=');
-                    if (idx > 0) {
-                        var key = line.substring(0, idx);
-                        var value = line.substring(idx + 1);
-                        envMap.put(key, value);
-                    }
-                }
+                shellPath = reader.readLine();
             }
 
             if (!process.waitFor(5, TimeUnit.SECONDS)) {
                 process.destroyForcibly();
             }
+
+             // Append shell PATH to existing PATH if needed
+            if (shellPath != null && !shellPath.isEmpty()) {
+                String currentPath = System.getenv("PATH");
+                if (currentPath != null && !currentPath.isEmpty()) {
+                    // concatenate instead of overwriting if path is already present
+                    env.put("PATH", currentPath + File.pathSeparator + shellPath);
+                } else {
+                    env.put("PATH", shellPath);
+                }
+            }
         } catch (Exception e) {
-            Activator.getLogger().error("Error occurred when attempting to retrieve  env variables", e);
+            Activator.getLogger().error("Error occurred when attempting to add path variable", e);
         }
-        return envMap;
     }
 
     @Override

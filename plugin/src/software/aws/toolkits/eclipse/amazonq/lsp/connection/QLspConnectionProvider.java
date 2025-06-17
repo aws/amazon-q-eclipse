@@ -4,7 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -110,13 +109,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
 
             // Append shell PATH to existing PATH if needed
             if (shellPath != null && !shellPath.isEmpty()) {
-                String currentPath = System.getenv("PATH");
-                if (currentPath != null && !currentPath.isEmpty()) {
-                    // concatenate instead of overwriting if path is already present
-                    env.put("PATH", currentPath + File.pathSeparator + shellPath);
-                } else {
-                    env.put("PATH", shellPath);
-                }
+                env.put("PATH", shellPath);
             }
         } catch (Exception e) {
             Activator.getLogger().error("Error occurred when attempting to add path variable", e);

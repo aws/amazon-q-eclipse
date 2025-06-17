@@ -120,7 +120,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     public void sendMessageToChatServer(final Command command, final ChatMessage message) {
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {
             try {
-                if (!isQueueProcessorRunning || (queueProcessorThread != null && !queueProcessorThread.isAlive())) {
+                if (isQueueProcessorRunning && (queueProcessorThread != null && !queueProcessorThread.isAlive())) {
                     isQueueProcessorRunning = false;
                     startCommandQueueProcessor();
                 }

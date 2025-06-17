@@ -119,8 +119,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                             padding: 0;
                         }
                         .mynah-ui-icon-down-open {
-                            -webkit-mask-size: 185%%;
-                            scale: 80%%;
+                            -webkit-mask-size: 180%% !important;
+                            scale: 80%% !important;
                         }
                         [class*="mynah-ui-icon-"] {
                             transform: translateZ(0);

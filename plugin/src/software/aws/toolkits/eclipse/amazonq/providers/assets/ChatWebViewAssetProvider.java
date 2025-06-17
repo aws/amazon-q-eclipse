@@ -118,6 +118,10 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                             margin: 0;
                             padding: 0;
                         }
+                        .mynah-ui-icon-down-open {
+                            -webkit-mask-size: 180%% !important;
+                            scale: 80%% !important;
+                        }
                         [class*="mynah-ui-icon-"] {
                             transform: translateZ(0);
                         }
@@ -165,7 +169,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                 {
                                     disclaimerAcknowledged: %b,
                                     pairProgrammingAcknowledged: %b,
-                                    agenticMode: true
+                                    agenticMode: true,
+                                    modelSelectionEnabled: true
                                 });
                                 window.mynah = mynahUI
                             })

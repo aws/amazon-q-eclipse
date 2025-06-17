@@ -525,6 +525,13 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     }
 
     @Override
+    public final void chatOptionsUpdate(final Object params) {
+        var chatOptionsUpdateCommand = new ChatUIInboundCommand("aws/chat/chatOptionsUpdate", null, params,
+                false, null);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, chatOptionsUpdateCommand);
+    }
+
+    @Override
     public final void didCopyFile(final Object params) {
         refreshProjects();
     }

@@ -3,4 +3,4 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-public record AwsServerCapabilities(ChatOptions chatOptions) { }
+public record AwsServerCapabilities(Object chatOptions) { }

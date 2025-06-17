@@ -38,6 +38,8 @@ public enum Command {
     BUTTON_CLICK("aws/chat/buttonClick"),
     CHAT_OPEN_TAB("aws/chat/openTab"),
     OPEN_SETTINGS("openSettings"),
+    LIST_MCP_SERVERS("aws/chat/listMcpServers"),
+    MCP_SERVER_CLICK("aws/chat/mcpServerClick"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),

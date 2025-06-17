@@ -238,6 +238,26 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             sendErrorToUi(tabId, new Throwable(response.failureReason()));
                         }
                         break;
+                    case LIST_MCP_SERVERS:
+                        try {
+                            Object mcpServersResponse = amazonQLspServer.listMcpServers(message.getData()).get();
+                            var listMcpServersCommand = ChatUIInboundCommand.createCommand("aws/chat/listMcpServers",
+                                    mcpServersResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, listMcpServersCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing listMcpServers: " + e);
+                        }
+                        break;
+                    case MCP_SERVER_CLICK:
+                        try {
+                            Object mcpServerClickResponse = amazonQLspServer.mcpServerClick(message.getData()).get();
+                            var mcpServerClickCommand = ChatUIInboundCommand.createCommand("aws/chat/mcpServerClick",
+                                    mcpServerClickResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, mcpServerClickCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing mcpServerClick: " + e);
+                        }
+                        break;
                     default:
                         throw new AmazonQPluginException("Unexpected command received from Chat UI: " + command.toString());
                 }

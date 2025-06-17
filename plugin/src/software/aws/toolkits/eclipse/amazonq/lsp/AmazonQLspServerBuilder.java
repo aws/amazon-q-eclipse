@@ -55,6 +55,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         awsInitOptions.put("clientInfo", extendedClientInfoOptions);
         qOptions.put("developerProfiles", true);
         qOptions.put("customizationsWithMetadata", true);
+        qOptions.put("mcp", true);
         awsClientCapabilities.put("q", qOptions);
         Map<String, Object> window = new HashMap<>();
         window.put("showSaveFileDialog", true);

@@ -31,6 +31,8 @@ import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtil
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 
 public final class QLspConnectionProviderTest {
@@ -49,6 +51,8 @@ public final class QLspConnectionProviderTest {
     @RegisterExtension
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();
 
+    @RegisterExtension
+    private static MockedStatic<PluginUtils> pluginUtilsMock = Mockito.mockStatic(PluginUtils.class);
 
     private static final class TestProcessConnectionProvider extends ProcessStreamConnectionProvider {
 
@@ -103,6 +107,7 @@ public final class QLspConnectionProviderTest {
 
         MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("");
+        pluginUtilsMock.when(PluginUtils::getPlatform).thenReturn(PluginPlatform.LINUX);
 
         Map<String, String> env = new HashMap<>();
 
@@ -123,6 +128,7 @@ public final class QLspConnectionProviderTest {
 
         MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
         proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("http://proxy:8080");
+        pluginUtilsMock.when(PluginUtils::getPlatform).thenReturn(PluginPlatform.LINUX);
 
         Map<String, String> env = new HashMap<>();
         env.put("HTTPS_PROXY", "http://proxy:8080");

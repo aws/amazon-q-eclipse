@@ -89,7 +89,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             if (shell == null || shell.isEmpty()) {
                 shell = "/bin/zsh"; // fallback
             }
-            var pb = new ProcessBuilder(shell, "-l", "-c", "-i",  "echo $PATH");
+            var pb = new ProcessBuilder(shell, "-l", "-c", "printenv PATH");
             pb.redirectErrorStream(true);
             var process = pb.start();
             String shellPath = null;

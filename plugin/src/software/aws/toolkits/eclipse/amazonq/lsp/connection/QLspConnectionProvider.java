@@ -3,13 +3,16 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
@@ -22,6 +25,8 @@ import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.ArchitectureUtils;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
@@ -66,6 +71,48 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         }
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
+
+        if (needsPatchEnvVariables()) {
+            Activator.getLogger().info("Adding required variables");
+            addPatchVariables(env);
+        }
+    }
+
+    private boolean needsPatchEnvVariables() {
+        return PluginUtils.getPlatform().equals(PluginPlatform.MAC);
+    }
+
+    private void addPatchVariables(final Map<String, String> env) {
+        try {
+            var shell = System.getenv("SHELL");
+            if (shell == null || shell.isEmpty()) {
+                shell = "/bin/zsh"; // fallback
+            }
+            String shellPath = null;
+            var pb = new ProcessBuilder(shell, "-l", "-c", "-i", "/usr/bin/env");
+            pb.redirectErrorStream(true);
+            var process = pb.start();
+            try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                     // Only look for PATH
+                    if (line.startsWith("PATH=")) {
+                        shellPath = line.substring(5); // 5 is the length of "PATH="
+                        break;
+                    }
+                }
+            }
+
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+            }
+
+            if (shellPath != null && !shellPath.isEmpty()) {
+                env.put("PATH", shellPath);
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error occurred when attempting to add path variable", e);
+        }
     }
 
     @Override

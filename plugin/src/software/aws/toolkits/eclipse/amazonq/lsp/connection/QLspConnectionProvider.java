@@ -85,7 +85,6 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             if (!PluginUtils.getPlatform().equals(PluginPlatform.MAC)) {
                 return false;
             }
-
             return hasInvalidPath(System.getenv("PATH"));
         } catch (Exception e) {
             Activator.getLogger().error("Error occurred when determining if patch variables are needed", e);

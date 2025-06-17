@@ -3,13 +3,17 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.connection;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import software.amazon.awssdk.utils.StringUtils;
 import software.aws.toolkits.eclipse.amazonq.broker.events.AmazonQLspState;
@@ -22,6 +26,8 @@ import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspManagerProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.LanguageServerTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ExceptionMetadata;
 import software.aws.toolkits.eclipse.amazonq.util.ArchitectureUtils;
+import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
 import software.aws.toolkits.telemetry.TelemetryDefinitions.Result;
 
@@ -66,6 +72,71 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         }
         env.put("ENABLE_INLINE_COMPLETION", "true");
         env.put("ENABLE_TOKEN_PROVIDER", "true");
+
+        if (needsPatchEnvVariables()) {
+            Activator.getLogger().info("Retrieving required variables");
+            var patchVariables = getPatchVariables();
+            env.putAll(patchVariables);
+        }
+    }
+
+    private boolean needsPatchEnvVariables() {
+        try {
+            if (!PluginUtils.getPlatform().equals(PluginPlatform.MAC)) {
+                return false;
+            }
+
+            return hasInvalidPath(System.getenv("PATH"));
+        } catch (Exception e) {
+            Activator.getLogger().error("Error occurred when determining if patch variables are needed", e);
+            return false;
+        }
+    }
+
+    private boolean hasInvalidPath(final String path) {
+        if (path == null || path.isEmpty()) {
+            return true;
+        }
+        String[] expectedPaths = {"/usr/bin", "usr/local/bin", "/bin", "/usr/sbin", "/sbin"};
+        // Check if PATH contains at least one common macOS directory
+        for (String expected: expectedPaths) {
+            if (path.contains(expected)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Map<String, String> getPatchVariables() {
+        Map<String, String> envMap = new HashMap<String, String>();
+        try {
+            var shell = System.getenv("SHELL");
+            if (shell == null || shell.isEmpty()) {
+                shell = "bin/zsh"; // fallback
+            }
+            var pb = new ProcessBuilder(shell, "-l", "-c", "/usr/bin/env");
+            pb.redirectErrorStream(true);
+            var process = pb.start();
+
+            try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    int idx = line.indexOf('=');
+                    if (idx > 0) {
+                        var key = line.substring(0, idx);
+                        var value = line.substring(idx + 1);
+                        envMap.put(key, value);
+                    }
+                }
+            }
+
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error occurred when attempting to retrieve  env variables", e);
+        }
+        return envMap;
     }
 
     @Override

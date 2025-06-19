@@ -360,7 +360,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             try {
                 IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
                 IStorageEditorInput input = new InMemoryInput(
-                        new MemoryStorage(new Path(params.originalFileUri().getPath()).lastSegment(), ""));
+                        new MemoryStorage(new Path(params.originalFileUri()).lastSegment(), ""));
 
                 IEditorDescriptor defaultEditor = PlatformUI.getWorkbench().getEditorRegistry()
                         .getDefaultEditor(".java");

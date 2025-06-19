@@ -3,8 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.lsp.model;
 
-import java.net.URI;
-
-public record OpenFileDiffParams(URI originalFileUri, String originalFileContent, Boolean isDeleted,
+public record OpenFileDiffParams(String originalFileUri, String originalFileContent, Boolean isDeleted,
         String fileContent) {
 }

@@ -48,9 +48,11 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     @Override
     public void initialize() {
         if (content.isEmpty()) {
-            content = resolveContent();
-            Activator.getEventBroker().post(ChatWebViewAssetState.class,
-                    content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);
+            ThreadingUtils.executeAsyncTask(() -> {
+                content = resolveContent();
+                Activator.getEventBroker().post(ChatWebViewAssetState.class,
+                        content.isPresent() ? ChatWebViewAssetState.RESOLVED : ChatWebViewAssetState.DEPENDENCY_MISSING);
+            });
         }
     }
 

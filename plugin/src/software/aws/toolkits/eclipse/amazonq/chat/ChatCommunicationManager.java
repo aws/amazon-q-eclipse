@@ -128,8 +128,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                 switch (command) {
                     case CHAT_SEND_PROMPT:
                         message.addValueForKey("context", message.getValueForKey("prompt.context"));
-                        // Log the message data to see if pinnedContext is included
-                        Activator.getLogger().info("CHAT_SEND_PROMPT message data: " + message.getData());
                         addEditorState(message, true);
                         sendEncryptedChatMessage(message.getValueAsString("tabId"), token -> {
                             String encryptedMessage = lspEncryptionManager.encrypt(message.getData());

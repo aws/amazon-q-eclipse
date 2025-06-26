@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -44,7 +45,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPageListener;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
@@ -574,5 +577,73 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             Activator.getLogger().error("Error validating URI location: " + uri, e);
             return false;
         }
+    }
+
+    @Override
+    public final void sendPinnedContext(final Object params) {
+        Activator.getLogger().info("Pinned Context: sendPinnedContext called with params: " + params);
+        
+        // Get current active editor and add textDocument information
+        IEditorPart activeEditor = null;
+        try {
+            var workbench = PlatformUI.getWorkbench();
+            if (workbench != null) {
+                var activeWindow = workbench.getActiveWorkbenchWindow();
+                if (activeWindow != null) {
+                    var activePage = activeWindow.getActivePage();
+                    if (activePage != null) {
+                        activeEditor = activePage.getActiveEditor();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Activator.getLogger().warn("Could not get active editor: " + e.getMessage());
+        }
+        
+        Object updatedParams = params;
+        if (activeEditor != null && activeEditor instanceof ITextEditor) {
+            ITextEditor textEditor = (ITextEditor) activeEditor;
+            IEditorInput editorInput = textEditor.getEditorInput();
+            
+            if (editorInput instanceof IFileEditorInput) {
+                IFileEditorInput fileInput = (IFileEditorInput) editorInput;
+                IFile file = fileInput.getFile();
+                
+                // Create textDocument with workspace-relative path if in workspace, absolute otherwise
+                String uri;
+                if (file.getWorkspace().getRoot().exists(file.getFullPath())) {
+                    uri = file.getFullPath().toString();
+                } else {
+                    uri = file.getLocation().toString();
+                }
+                
+                Map<String, Object> textDocument = new HashMap<>();
+                textDocument.put("uri", uri);
+                
+                if (params instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> paramsMap = new HashMap<>((Map<String, Object>) params);
+                    paramsMap.put("textDocument", textDocument);
+                    updatedParams = paramsMap;
+                } else {
+                    Map<String, Object> wrappedParams = new HashMap<>();
+                    wrappedParams.put("params", params);
+                    wrappedParams.put("textDocument", textDocument);
+                    updatedParams = wrappedParams;
+                }
+            }
+        }
+        
+        var sendPinnedContextCommand = new ChatUIInboundCommand("aws/chat/sendPinnedContext", null, updatedParams,
+                false, null);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, sendPinnedContextCommand);
+    }
+
+    @Override
+    public final void activeEditorChanged(final Object params) {
+        // This notification is sent from Eclipse to server when editor changes
+        // In Phase 3, this will be handled by the ActiveEditorChangeListener
+        // For now, just log it
+        Activator.getLogger().info("Active editor changed notification received: " + params);
     }
 }

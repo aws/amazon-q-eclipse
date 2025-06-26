@@ -41,7 +41,6 @@ import software.aws.toolkits.eclipse.amazonq.chat.models.EncryptedQuickActionPar
 import software.aws.toolkits.eclipse.amazonq.chat.models.ErrorParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ReferenceTrackerInformation;
 import software.aws.toolkits.eclipse.amazonq.exception.AmazonQPluginException;
-import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.DefaultLspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;

@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
@@ -26,7 +25,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
  * Listens for active editor changes and notifies the language server
  * with debouncing to avoid excessive notifications.
  */
-public class ActiveEditorChangeListener implements IPartListener2 {
+public final class ActiveEditorChangeListener implements IPartListener2 {
     private static final long DEBOUNCE_DELAY_MS = 100L;
 
     private final AmazonQLspServer languageServer;

@@ -582,7 +582,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     @Override
     public final void sendPinnedContext(final Object params) {
         Activator.getLogger().info("Pinned Context: sendPinnedContext called with params: " + params);
-        
+
         // Get current active editor and add textDocument information
         IEditorPart activeEditor = null;
         try {
@@ -599,16 +599,16 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         } catch (Exception e) {
             Activator.getLogger().warn("Could not get active editor: " + e.getMessage());
         }
-        
+
         Object updatedParams = params;
         if (activeEditor != null && activeEditor instanceof ITextEditor) {
             ITextEditor textEditor = (ITextEditor) activeEditor;
             IEditorInput editorInput = textEditor.getEditorInput();
-            
+
             if (editorInput instanceof IFileEditorInput) {
                 IFileEditorInput fileInput = (IFileEditorInput) editorInput;
                 IFile file = fileInput.getFile();
-                
+
                 // Create textDocument with workspace-relative path if in workspace, absolute otherwise
                 String uri;
                 if (file.getWorkspace().getRoot().exists(file.getFullPath())) {
@@ -616,10 +616,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 } else {
                     uri = file.getLocation().toString();
                 }
-                
+
                 Map<String, Object> textDocument = new HashMap<>();
                 textDocument.put("uri", uri);
-                
+
                 if (params instanceof Map) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> paramsMap = new HashMap<>((Map<String, Object>) params);
@@ -633,7 +633,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 }
             }
         }
-        
+
         var sendPinnedContextCommand = new ChatUIInboundCommand("aws/chat/sendPinnedContext", null, updatedParams,
                 false, null);
         Activator.getEventBroker().post(ChatUIInboundCommand.class, sendPinnedContextCommand);

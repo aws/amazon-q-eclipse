@@ -144,7 +144,7 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonNotification("aws/chat/sendPinnedContext")
     void sendPinnedContext(Object params);
-    
+
     @JsonNotification("aws/chat/activeEditorChanged")
     void activeEditorChanged(Object params);
 }

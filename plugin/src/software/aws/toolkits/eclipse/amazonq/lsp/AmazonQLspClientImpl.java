@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -45,9 +44,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorDescriptor;
-import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPageListener;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
@@ -85,6 +82,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabUiResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -583,42 +581,15 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
     public final void sendPinnedContext(final Object params) {
         Activator.getLogger().info("Pinned Context: sendPinnedContext called with params: " + params);
 
-        // Get current active editor and add textDocument information
-        IEditorPart activeEditor = null;
-        try {
-            var workbench = PlatformUI.getWorkbench();
-            if (workbench != null) {
-                var activeWindow = workbench.getActiveWorkbenchWindow();
-                if (activeWindow != null) {
-                    var activePage = activeWindow.getActivePage();
-                    if (activePage != null) {
-                        activeEditor = activePage.getActiveEditor();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Activator.getLogger().warn("Could not get active editor: " + e.getMessage());
-        }
-
         Object updatedParams = params;
-        if (activeEditor != null && activeEditor instanceof ITextEditor) {
-            ITextEditor textEditor = (ITextEditor) activeEditor;
-            IEditorInput editorInput = textEditor.getEditorInput();
 
-            if (editorInput instanceof IFileEditorInput) {
-                IFileEditorInput fileInput = (IFileEditorInput) editorInput;
-                IFile file = fileInput.getFile();
-
-                // Create textDocument with workspace-relative path if in workspace, absolute otherwise
-                String uri;
-                if (file.getWorkspace().getRoot().exists(file.getFullPath())) {
-                    uri = file.getFullPath().toString();
-                } else {
-                    uri = file.getLocation().toString();
-                }
-
+        // Use existing utility to get active text editor and file URI
+        ITextEditor activeEditor = QEclipseEditorUtils.getActiveTextEditor();
+        if (activeEditor != null) {
+            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(activeEditor.getEditorInput());
+            if (fileUri.isPresent()) {
                 Map<String, Object> textDocument = new HashMap<>();
-                textDocument.put("uri", uri);
+                textDocument.put("uri", fileUri.get());
 
                 if (params instanceof Map) {
                     @SuppressWarnings("unchecked")

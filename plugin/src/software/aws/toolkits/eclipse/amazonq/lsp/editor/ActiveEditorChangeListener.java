@@ -5,14 +5,11 @@ package software.aws.toolkits.eclipse.amazonq.lsp.editor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.PlatformUI;
@@ -20,6 +17,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServer;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 
 /**
  * Listens for active editor changes and notifies the language server
@@ -114,37 +112,20 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
         Map<String, Object> params = new HashMap<>();
 
         if (editor != null) {
-            IEditorInput editorInput = editor.getEditorInput();
-
-            if (editorInput instanceof IFileEditorInput) {
-                IFileEditorInput fileInput = (IFileEditorInput) editorInput;
-                IFile file = fileInput.getFile();
-
-                // Create textDocument with workspace-relative path if in workspace, absolute otherwise
+            // Use existing utility to get file URI
+            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(editor.getEditorInput());
+            if (fileUri.isPresent()) {
                 Map<String, String> textDocument = new HashMap<>();
-                if (file.getWorkspace().getRoot().exists(file.getFullPath())) {
-                    // workspace-relative path
-                    textDocument.put("uri", file.getFullPath().toString());
-                } else {
-                    // absolute path
-                    textDocument.put("uri", file.getLocation().toString());
-                }
+                textDocument.put("uri", fileUri.get());
                 params.put("textDocument", textDocument);
 
-                // Add cursor state if available
-                try {
-                    ITextSelection selection = (ITextSelection) editor.getSelectionProvider().getSelection();
-                    if (selection != null) {
+                // Use existing utility to get cursor state - but only if this editor is the active one
+                if (editor == QEclipseEditorUtils.getActiveTextEditor()) {
+                    QEclipseEditorUtils.getActiveSelectionRange().ifPresent(range -> {
                         Map<String, Object> cursorState = new HashMap<>();
-                        Map<String, Integer> range = new HashMap<>();
-                        range.put("start", selection.getOffset());
-                        range.put("end", selection.getOffset() + selection.getLength());
                         cursorState.put("range", range);
                         params.put("cursorState", cursorState);
-                    }
-                } catch (Exception e) {
-                    // Cursor state is optional, continue without it
-                    Activator.getLogger().info("Could not get cursor state: " + e.getMessage());
+                    });
                 }
             }
         } else {
@@ -162,16 +143,16 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
     public static ActiveEditorChangeListener register(final AmazonQLspServer languageServer, final ScheduledExecutorService executor) {
         ActiveEditorChangeListener listener = new ActiveEditorChangeListener(languageServer, executor);
 
-        // Register with all workbench windows
+        // Register with the current active workbench window
+        if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null) {
+            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getPartService().addPartListener(listener);
+        }
+
+        // Register with any new windows that open
         PlatformUI.getWorkbench().addWindowListener(new org.eclipse.ui.IWindowListener() {
             @Override
-            public void windowActivated(final org.eclipse.ui.IWorkbenchWindow window) {
+            public void windowOpened(final org.eclipse.ui.IWorkbenchWindow window) {
                 window.getPartService().addPartListener(listener);
-            }
-
-            @Override
-            public void windowDeactivated(final org.eclipse.ui.IWorkbenchWindow window) {
-                // Keep listener active
             }
 
             @Override
@@ -180,15 +161,15 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
             }
 
             @Override
-            public void windowOpened(final org.eclipse.ui.IWorkbenchWindow window) {
-                window.getPartService().addPartListener(listener);
+            public void windowActivated(final org.eclipse.ui.IWorkbenchWindow window) {
+                // No action needed
+            }
+
+            @Override
+            public void windowDeactivated(final org.eclipse.ui.IWorkbenchWindow window) {
+                // No action needed
             }
         });
-
-        // Register with current active window if available
-        if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null) {
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getPartService().addPartListener(listener);
-        }
 
         return listener;
     }
@@ -201,7 +182,7 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
             debounceTask.cancel(true);
         }
 
-        // Remove from all workbench windows
+        // Remove from current workbench windows
         for (org.eclipse.ui.IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
             window.getPartService().removePartListener(this);
         }

@@ -40,6 +40,11 @@ public enum Command {
     OPEN_SETTINGS("openSettings"),
     LIST_MCP_SERVERS("aws/chat/listMcpServers"),
     MCP_SERVER_CLICK("aws/chat/mcpServerClick"),
+    LIST_RULES("aws/chat/listRules"),
+    RULE_CLICK("aws/chat/ruleClick"),
+    PINNED_CONTEXT_ADD("aws/chat/pinnedContextAdd"),
+    PINNED_CONTEXT_REMOVE("aws/chat/pinnedContextRemove"),
+    SEND_PINNED_CONTEXT("aws/chat/sendPinnedContext"),
 
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),

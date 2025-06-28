@@ -82,6 +82,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabUiResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -574,5 +575,46 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             Activator.getLogger().error("Error validating URI location: " + uri, e);
             return false;
         }
+    }
+
+    @Override
+    public final void sendPinnedContext(final Object params) {
+        Activator.getLogger().info("Pinned Context: sendPinnedContext called with params: " + params);
+
+        Object updatedParams = params;
+
+        // Use existing utility to get active text editor and file URI
+        ITextEditor activeEditor = QEclipseEditorUtils.getActiveTextEditor();
+        if (activeEditor != null) {
+            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(activeEditor.getEditorInput());
+            if (fileUri.isPresent()) {
+                Map<String, Object> textDocument = new HashMap<>();
+                textDocument.put("uri", fileUri.get());
+
+                if (params instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> paramsMap = new HashMap<>((Map<String, Object>) params);
+                    paramsMap.put("textDocument", textDocument);
+                    updatedParams = paramsMap;
+                } else {
+                    Map<String, Object> wrappedParams = new HashMap<>();
+                    wrappedParams.put("params", params);
+                    wrappedParams.put("textDocument", textDocument);
+                    updatedParams = wrappedParams;
+                }
+            }
+        }
+
+        var sendPinnedContextCommand = new ChatUIInboundCommand("aws/chat/sendPinnedContext", null, updatedParams,
+                false, null);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, sendPinnedContextCommand);
+    }
+
+    @Override
+    public final void activeEditorChanged(final Object params) {
+        // This notification is sent from Eclipse to server when editor changes
+        // In Phase 3, this will be handled by the ActiveEditorChangeListener
+        // For now, just log it
+        Activator.getLogger().info("Active editor changed notification received: " + params);
     }
 }

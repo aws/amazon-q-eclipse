@@ -17,7 +17,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IWorkspace;
@@ -82,6 +84,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabUiResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
@@ -223,15 +226,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             } else {
                 Display.getDefault().syncExec(() -> {
                     try {
-                        if (!isUriInWorkspace(uri)) {
-                            Activator.getLogger().error("Attempted to open file outside workspace: " + uri);
-                            success[0] = false;
-                        } else {
-                            IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-                            IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
-                            IDE.openEditorOnFileStore(page, fileStore);
-                            success[0] = true;
-                        }
+                        IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                        IFileStore fileStore = EFS.getLocalFileSystem().getStore(new URI(uri));
+                        IDE.openEditorOnFileStore(page, fileStore);
+                        success[0] = true;
                     } catch (Exception e) {
                         Activator.getLogger().error("Error in UI thread while opening URI: " + uri, e);
                         success[0] = false;
@@ -573,6 +571,86 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         } catch (Exception e) {
             Activator.getLogger().error("Error validating URI location: " + uri, e);
             return false;
+        }
+    }
+
+    @Override
+    public final void sendPinnedContext(final Object params) {
+        Object updatedParams = params;
+        Optional<String> fileUri = getActiveFileUri();
+        if (fileUri.isPresent()) {
+            Map<String, Object> textDocument = Map.of("uri", fileUri.get());
+            if (params instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> paramsMap = new HashMap<>((Map<String, Object>) params);
+                paramsMap.put("textDocument", textDocument);
+                updatedParams = paramsMap;
+            } else {
+                updatedParams = Map.of("params", params, "textDocument", textDocument);
+            }
+        }
+
+        var sendPinnedContextCommand = new ChatUIInboundCommand("aws/chat/sendPinnedContext", null, updatedParams,
+                false, null);
+        Activator.getEventBroker().post(ChatUIInboundCommand.class, sendPinnedContextCommand);
+    }
+
+    private Optional<String> getActiveFileUri() {
+        AtomicReference<Optional<String>> fileUri = new AtomicReference<>();
+        Display.getDefault().syncExec(() -> {
+            try {
+                fileUri.set(getActiveEditorRelativePath());
+            } catch (Exception e) {
+                Activator.getLogger().error("Error getting active file URI", e);
+                fileUri.set(Optional.empty());
+            }
+        });
+        return fileUri.get();
+    }
+
+    private Optional<String> getActiveEditorRelativePath() {
+        var activeEditor = QEclipseEditorUtils.getActiveTextEditor();
+        if (activeEditor == null) {
+            return Optional.empty();
+        }
+        return QEclipseEditorUtils.getOpenFileUri(activeEditor.getEditorInput())
+                .map(this::getRelativePath);
+    }
+
+    private String getRelativePath(final String absoluteUri) {
+        try {
+            if (StringUtils.isBlank(absoluteUri)) {
+                return absoluteUri;
+            }
+
+            var uri = new URI(absoluteUri);
+            var activeFilePath = new File(uri).getCanonicalPath();
+
+            // Get workspace root path
+            var workspace = ResourcesPlugin.getWorkspace();
+            var workspacePath = workspace.getRoot().getLocation();
+            if (workspacePath == null) {
+                return activeFilePath;
+            }
+
+            var workspaceRoot = workspacePath.toFile().getCanonicalPath();
+            if (StringUtils.isBlank(workspaceRoot)) {
+                return activeFilePath;
+            }
+
+            if (StringUtils.startsWithIgnoreCase(activeFilePath, workspaceRoot)) {
+                var relativePath = activeFilePath.substring(workspaceRoot.length());
+                if (relativePath.startsWith("\\") || relativePath.startsWith("/")) {
+                    relativePath = relativePath.substring(1);
+                }
+                return relativePath.replace('\\', '/');
+            }
+
+            // Not in workspace, return absolute path
+            return activeFilePath;
+        } catch (Exception e) {
+            Activator.getLogger().error("Error occurred when attempting to determine relative path for: " + absoluteUri, e);
+            return absoluteUri;
         }
     }
 }

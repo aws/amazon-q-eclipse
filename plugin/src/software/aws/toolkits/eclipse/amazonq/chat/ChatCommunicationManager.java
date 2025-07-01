@@ -258,6 +258,42 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             Activator.getLogger().error("Error processing mcpServerClick: " + e);
                         }
                         break;
+                    case LIST_RULES:
+                        try {
+                            Object listRulesResponse = amazonQLspServer.listRules(message.getData()).get();
+                            var listRulesCommand = ChatUIInboundCommand.createCommand("aws/chat/listRules",
+                                    listRulesResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, listRulesCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing listRules: " + e);
+                        }
+                        break;
+                    case RULE_CLICK:
+                        try {
+                            Object ruleClickResponse = amazonQLspServer.ruleClick(message.getData()).get();
+                            var ruleClickCommand = ChatUIInboundCommand.createCommand("aws/chat/ruleClick",
+                                    ruleClickResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, ruleClickCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing ruleClick: " + e);
+                        }
+                        break;
+                    case PINNED_CONTEXT_ADD:
+                        try {
+                            Activator.getLogger().info("Pinned Context: Processing add command with data: " + message.getData());
+                            amazonQLspServer.pinnedContextAdd(message.getData());
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Pinned Context: Error processing add command: " + e);
+                        }
+                        break;
+                    case PINNED_CONTEXT_REMOVE:
+                        try {
+                            Activator.getLogger().info("Pinned Context: Processing remove command");
+                            amazonQLspServer.pinnedContextRemove(message.getData());
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Pinned Context: Error processing remove command: " + e);
+                        }
+                        break;
                     default:
                         throw new AmazonQPluginException("Unexpected command received from Chat UI: " + command.toString());
                 }
@@ -269,6 +305,7 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             return null;
         });
     }
+
 
     public void sendInlineChatMessageToChatServer(final ChatMessage chatMessage) {
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {

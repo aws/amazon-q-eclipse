@@ -18,8 +18,6 @@ public enum ChatUIInboundCommandName {
     McpServerClick("aws/chat/mcpServerClick"),
     ListRules("aws/chat/listRules"),
     RuleClick("aws/chat/ruleClick"),
-    PinnedContextAdd("aws/chat/pinnedContextAdd"),
-    PinnedContextRemove("aws/chat/pinnedContextRemove"),
     SendPinnedContext("aws/chat/sendPinnedContext");
 
     private final String value;

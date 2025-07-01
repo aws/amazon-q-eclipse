@@ -66,6 +66,7 @@ import software.amazon.awssdk.services.toolkittelemetry.model.Sentiment;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatAsyncResultManager;
 import software.aws.toolkits.eclipse.amazonq.chat.ChatCommunicationManager;
 import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommand;
+import software.aws.toolkits.eclipse.amazonq.chat.models.ChatUIInboundCommandName;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatParams;
 import software.aws.toolkits.eclipse.amazonq.chat.models.GetSerializedChatResult;
 import software.aws.toolkits.eclipse.amazonq.chat.models.SerializedChatResult;
@@ -590,8 +591,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             }
         }
 
-        var sendPinnedContextCommand = new ChatUIInboundCommand("aws/chat/sendPinnedContext", null, updatedParams,
-                false, null);
+        var sendPinnedContextCommand = ChatUIInboundCommand.createCommand(ChatUIInboundCommandName.SendPinnedContext.getValue(), updatedParams);
         Activator.getEventBroker().post(ChatUIInboundCommand.class, sendPinnedContextCommand);
     }
 

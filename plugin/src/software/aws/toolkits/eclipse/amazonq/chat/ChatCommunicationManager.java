@@ -280,7 +280,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         break;
                     case PINNED_CONTEXT_ADD:
                         try {
-                            Activator.getLogger().info("Pinned Context: Processing add command with data: " + message.getData());
                             amazonQLspServer.pinnedContextAdd(message.getData());
                         } catch (Exception e) {
                             Activator.getLogger().error("Pinned Context: Error processing add command: " + e);
@@ -288,7 +287,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                         break;
                     case PINNED_CONTEXT_REMOVE:
                         try {
-                            Activator.getLogger().info("Pinned Context: Processing remove command");
                             amazonQLspServer.pinnedContextRemove(message.getData());
                         } catch (Exception e) {
                             Activator.getLogger().error("Pinned Context: Error processing remove command: " + e);
@@ -305,7 +303,6 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             return null;
         });
     }
-
 
     public void sendInlineChatMessageToChatServer(final ChatMessage chatMessage) {
         Activator.getLspProvider().getAmazonQServer().thenAcceptAsync(amazonQLspServer -> {

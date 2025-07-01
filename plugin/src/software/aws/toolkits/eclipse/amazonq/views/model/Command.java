@@ -44,8 +44,6 @@ public enum Command {
     RULE_CLICK("aws/chat/ruleClick"),
     PINNED_CONTEXT_ADD("aws/chat/pinnedContextAdd"),
     PINNED_CONTEXT_REMOVE("aws/chat/pinnedContextRemove"),
-    SEND_PINNED_CONTEXT("aws/chat/sendPinnedContext"),
-
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
     LOGIN_IDC("loginIdC"),

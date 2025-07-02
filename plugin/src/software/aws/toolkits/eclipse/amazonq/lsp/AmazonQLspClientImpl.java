@@ -7,6 +7,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
@@ -639,11 +641,10 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             }
 
             if (StringUtils.startsWithIgnoreCase(activeFilePath, workspaceRoot)) {
-                var relativePath = activeFilePath.substring(workspaceRoot.length());
-                if (relativePath.startsWith("\\") || relativePath.startsWith("/")) {
-                    relativePath = relativePath.substring(1);
-                }
-                return relativePath.replace('\\', '/');
+                var workspaceRootPath = Paths.get(workspaceRoot);
+                var activeFilePathObj = Paths.get(activeFilePath);
+                var relativePath = workspaceRootPath.relativize(activeFilePathObj).normalize();
+                return relativePath.toString().replace('\\', '/');
             }
 
             // Not in workspace, return absolute path

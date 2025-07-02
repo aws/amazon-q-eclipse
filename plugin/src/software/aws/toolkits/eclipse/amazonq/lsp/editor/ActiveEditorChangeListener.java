@@ -11,6 +11,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 
@@ -22,7 +23,7 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
     private static ActiveEditorChangeListener instance;
     private static final long DEBOUNCE_DELAY_MS = 100L;
     private ScheduledFuture<?> debounceTask;
-    private org.eclipse.ui.IWorkbenchWindow registeredWindow;
+    private IWorkbenchWindow registeredWindow;
 
     private ActiveEditorChangeListener() { }
 

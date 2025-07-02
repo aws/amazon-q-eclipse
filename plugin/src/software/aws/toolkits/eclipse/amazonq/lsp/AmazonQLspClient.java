@@ -61,4 +61,6 @@ public interface AmazonQLspClient extends LanguageClient {
     @JsonNotification("aws/didCreateDirectory")
     void didCreateDirectory(Object params);
 
+    @JsonNotification("aws/chat/sendPinnedContext")
+    void sendPinnedContext(Object params);
 }

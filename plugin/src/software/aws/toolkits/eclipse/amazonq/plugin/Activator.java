@@ -12,6 +12,7 @@ import software.aws.toolkits.eclipse.amazonq.configuration.PluginStore;
 import software.aws.toolkits.eclipse.amazonq.inlineChat.InlineChatEditorListener;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.DefaultLoginService;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.LoginService;
+import software.aws.toolkits.eclipse.amazonq.lsp.editor.ActiveEditorChangeListener;
 import software.aws.toolkits.eclipse.amazonq.providers.browser.AmazonQBrowserProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProvider;
 import software.aws.toolkits.eclipse.amazonq.providers.lsp.LspProviderImpl;
@@ -39,6 +40,7 @@ public class Activator extends AbstractUIPlugin {
     private static ViewRouter viewRouter = ViewRouter.builder().build();
     private final InlineChatEditorListener editorListener;
     private static WorkspaceChangeListener workspaceListener = WorkspaceChangeListener.getInstance();
+    private static ActiveEditorChangeListener activeEditorListener = ActiveEditorChangeListener.getInstance();
 
     public Activator() {
         super();
@@ -56,6 +58,7 @@ public class Activator extends AbstractUIPlugin {
         editorListener = InlineChatEditorListener.getInstance();
         editorListener.initialize();
         workspaceListener.start();
+        activeEditorListener.initialize();
     }
 
     @Override
@@ -64,6 +67,7 @@ public class Activator extends AbstractUIPlugin {
         super.stop(context);
         plugin = null;
         workspaceListener.stop();
+        activeEditorListener.stop();
         ThreadingUtils.shutdown();
     }
 

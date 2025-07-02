@@ -129,4 +129,19 @@ public interface AmazonQLspServer extends LanguageServer {
 
     @JsonRequest("aws/chat/mcpServerClick")
     CompletableFuture<Object> mcpServerClick(Object params);
+
+    @JsonRequest("aws/chat/listRules")
+    CompletableFuture<Object> listRules(Object params);
+
+    @JsonRequest("aws/chat/ruleClick")
+    CompletableFuture<Object> ruleClick(Object params);
+
+    @JsonNotification("aws/chat/pinnedContextAdd")
+    void pinnedContextAdd(Object params);
+
+    @JsonNotification("aws/chat/pinnedContextRemove")
+    void pinnedContextRemove(Object params);
+
+    @JsonNotification("aws/chat/activeEditorChanged")
+    void activeEditorChanged(Object params);
 }

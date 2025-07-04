@@ -57,6 +57,11 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
     }
 
     @Override
+    public void setContent(final Browser browser) {
+        browser.setText(content.get());
+    }
+
+    @Override
     public void injectAssets(final Browser browser) {
         new BrowserFunction(browser, "ideCommand") {
             @Override
@@ -85,7 +90,6 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                 return null;
             }
         };
-        browser.setText(content.get());
     }
 
     private Optional<String> resolveContent() {

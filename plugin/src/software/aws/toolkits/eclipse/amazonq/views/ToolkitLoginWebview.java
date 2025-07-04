@@ -52,13 +52,14 @@ public final class ToolkitLoginWebview extends AmazonQView implements EventObser
                     Display.getDefault().asyncExec(() -> {
                         if (!browser.isDisposed()) {
                             browser.setVisible(true);
+                            webViewAssetProvider.injectAssets(browser);
                         }
                     });
                     Activator.getEventBroker().subscribe(UpdateRedirectUrlCommand.class, webviewReference);
                 }
             });
 
-            webViewAssetProvider.injectAssets(browser);
+            webViewAssetProvider.setContent(browser);
         }
 
         addFocusListener(parent, browser);

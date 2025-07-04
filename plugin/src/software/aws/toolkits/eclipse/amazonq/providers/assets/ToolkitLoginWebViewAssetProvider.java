@@ -19,6 +19,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
+import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WebviewAssetServer;
 import software.aws.toolkits.eclipse.amazonq.views.LoginViewActionHandler;
 import software.aws.toolkits.eclipse.amazonq.views.LoginViewCommandParser;
@@ -44,11 +45,18 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
     @Override
     public void initialize() {
         if (content.isEmpty()) {
-            content = resolveContent();
-            Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
-                    content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
-                            : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
+            ThreadingUtils.executeAsyncTask(() -> {
+                content = resolveContent();
+                Activator.getEventBroker().post(ToolkitLoginWebViewAssetState.class,
+                        content.isPresent() ? ToolkitLoginWebViewAssetState.RESOLVED
+                                : ToolkitLoginWebViewAssetState.DEPENDENCY_MISSING);
+            });
         }
+    }
+
+    @Override
+    public void setContent(final Browser browser) {
+        browser.setText(content.get());
     }
 
     @Override
@@ -69,8 +77,6 @@ public final class ToolkitLoginWebViewAssetProvider extends WebViewAssetProvider
                 return null;
             }
         };
-
-        browser.setText(content.get());
     }
 
     private Optional<String> resolveContent() {

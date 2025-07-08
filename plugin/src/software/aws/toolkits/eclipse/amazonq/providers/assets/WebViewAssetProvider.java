@@ -7,6 +7,7 @@ import org.eclipse.swt.browser.Browser;
 
 public abstract class WebViewAssetProvider {
 
+    public abstract void setContent(Browser browser);
     public abstract void injectAssets(Browser browser);
 
     public abstract void initialize();

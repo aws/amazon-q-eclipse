@@ -56,6 +56,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         qOptions.put("developerProfiles", true);
         qOptions.put("customizationsWithMetadata", true);
         qOptions.put("mcp", true);
+        qOptions.put("pinnedContextEnabled", true);
         qOptions.put("modelSelection", true);
         awsClientCapabilities.put("q", qOptions);
         Map<String, Object> window = new HashMap<>();

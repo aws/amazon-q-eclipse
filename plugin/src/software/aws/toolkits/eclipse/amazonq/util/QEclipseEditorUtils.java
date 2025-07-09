@@ -145,12 +145,10 @@ public final class QEclipseEditorUtils {
         }
     }
 
-    public static Optional<Range> getActiveSelectionRange() {
-        var editor = getActiveTextEditor();
+    public static Optional<Range> getSelectionRange(final ITextEditor editor) {
         if (editor == null) {
             return Optional.empty();
         }
-
         ISelection selection = getSelection(editor);
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
         if (selection instanceof ITextSelection textSelection) {
@@ -171,6 +169,11 @@ public final class QEclipseEditorUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static Optional<Range> getActiveSelectionRange() {
+        var editor = getActiveTextEditor();
+        return getSelectionRange(editor);
     }
 
     /*

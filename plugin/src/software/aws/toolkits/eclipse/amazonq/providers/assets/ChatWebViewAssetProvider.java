@@ -176,7 +176,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                                     disclaimerAcknowledged: %b,
                                     pairProgrammingAcknowledged: %b,
                                     agenticMode: true,
-                                    modelSelectionEnabled: true
+                                    modelSelectionEnabled: true,
+                                    stringOverrides: { pinContextHint: '' },
                                 });
                                 window.mynah = mynahUI
                             })

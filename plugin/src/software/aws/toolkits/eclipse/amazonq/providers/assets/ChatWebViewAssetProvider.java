@@ -144,7 +144,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
         var disclaimerAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.CHAT_DISCLAIMER_ACKNOWLEDGED);
         var pairProgrammingAcknowledged = Activator.getPluginStore().get(PluginStoreKeys.PAIR_PROGRAMMING_ACKNOWLEDGED);
         return String.format("""
-                <script type="text/javascript" src="%s" defer></script>
+                <script type="text/javascript" charset="UTF-8" src="%s" defer></script>
                 <script type="text/javascript">
                     %s
                     const init = () => {

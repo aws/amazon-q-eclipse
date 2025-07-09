@@ -258,6 +258,32 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             Activator.getLogger().error("Error processing mcpServerClick: " + e);
                         }
                         break;
+                    case LIST_RULES:
+                        try {
+                            Object listRulesResponse = amazonQLspServer.listRules(message.getData()).get();
+                            var listRulesCommand = ChatUIInboundCommand.createCommand(ChatUIInboundCommandName.ListRules.getValue(),
+                                    listRulesResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, listRulesCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing listRules: " + e);
+                        }
+                        break;
+                    case RULE_CLICK:
+                        try {
+                            Object ruleClickResponse = amazonQLspServer.ruleClick(message.getData()).get();
+                            var ruleClickCommand = ChatUIInboundCommand.createCommand(ChatUIInboundCommandName.RuleClick.getValue(),
+                                    ruleClickResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, ruleClickCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing ruleClick: " + e);
+                        }
+                        break;
+                    case PINNED_CONTEXT_ADD:
+                        amazonQLspServer.pinnedContextAdd(message.getData());
+                        break;
+                    case PINNED_CONTEXT_REMOVE:
+                        amazonQLspServer.pinnedContextRemove(message.getData());
+                        break;
                     default:
                         throw new AmazonQPluginException("Unexpected command received from Chat UI: " + command.toString());
                 }

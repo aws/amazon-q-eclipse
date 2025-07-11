@@ -14,6 +14,8 @@ import java.net.URL;
 import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Base64;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -188,6 +190,47 @@ public final class ProxyUtil {
         Activator.getLogger().info("Picked up custom CA cert.");
 
         return sslContext;
+    }
+
+    public static String getCertificatesAsPem() {
+        var certs = getSystemCertificates();
+        if (certs.isEmpty()) {
+            return null;
+        }
+
+        var pemEntries = new ArrayList<String>();
+        var encoder = Base64.getMimeEncoder(64, System.lineSeparator().getBytes());
+
+        for (var cert : certs) {
+            try {
+                String encodedCert = encoder.encodeToString(cert.getEncoded());
+                pemEntries.add("-----BEGIN CERTIFICATE-----");
+                pemEntries.add(encodedCert);
+                pemEntries.add("-----END CERTIFICATE-----");
+            } catch (Exception e) {
+                Activator.getLogger().error("Failed to encode certificate", e);
+            }
+        }
+        return String.join(System.lineSeparator(), pemEntries);
+    }
+
+    public static ArrayList<X509Certificate> getSystemCertificates() {
+        try {
+            var tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+            var certs = new ArrayList<X509Certificate>();
+            for (var tm : tmf.getTrustManagers()) {
+                if (tm instanceof X509TrustManager xtm) {
+                    for (var cert : xtm.getAcceptedIssuers()) {
+                        certs.add(cert);
+                    }
+                }
+            }
+            return certs;
+        } catch (Exception e) {
+            Activator.getLogger().error("Failed to get system certificates", e);
+            return new ArrayList<>();
+        }
     }
 
     static synchronized ProxySelector getProxySelector() {

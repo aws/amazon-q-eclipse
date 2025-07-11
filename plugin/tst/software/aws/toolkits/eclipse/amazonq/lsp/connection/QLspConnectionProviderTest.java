@@ -32,10 +32,13 @@ import software.aws.toolkits.eclipse.amazonq.extensions.implementation.LspManage
 import software.aws.toolkits.eclipse.amazonq.extensions.implementation.ProxyUtilsStaticMockExtension;
 import software.aws.toolkits.eclipse.amazonq.lsp.encryption.LspEncryptionManager;
 import software.aws.toolkits.eclipse.amazonq.lsp.manager.LspInstallResult;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.LoggingService;
 import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
 import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ProxyUtil;
+import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
+import org.eclipse.jface.preference.IPreferenceStore;
 
 public final class QLspConnectionProviderTest {
 
@@ -54,6 +57,7 @@ public final class QLspConnectionProviderTest {
     private static ProxyUtilsStaticMockExtension proxyUtilsStaticMockExtension = new ProxyUtilsStaticMockExtension();
 
     private MockedStatic<PluginUtils> pluginUtilsMock;
+    private IPreferenceStore preferenceStore;
 
     private static final class TestProcessConnectionProvider extends ProcessStreamConnectionProvider {
 
@@ -79,6 +83,10 @@ public final class QLspConnectionProviderTest {
     void setupMocks() {
         pluginUtilsMock = Mockito.mockStatic(PluginUtils.class);
         pluginUtilsMock.when(PluginUtils::getPlatform).thenReturn(PluginPlatform.LINUX);
+
+        preferenceStore = Mockito.mock(IPreferenceStore.class);
+        var activatorMock = activatorStaticMockExtension.getMock(Activator.class);
+        Mockito.when(activatorMock.getPreferenceStore()).thenReturn(preferenceStore);
     }
 
     @AfterEach
@@ -203,6 +211,47 @@ public final class QLspConnectionProviderTest {
         LoggingService loggingServiceMock = activatorStaticMockExtension.getMock(LoggingService.class);
         verify(loggingServiceMock).error("Error occured while initializing communication with Amazon Q Lsp Server",
                 testException);
+    }
+
+    @Test
+    void testCertInjectionWithUserPreference() throws IOException {
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
+
+        Mockito.when(preferenceStore.getString(AmazonQPreferencePage.CA_CERT)).thenReturn("/path/to/user/cert.pem");
+
+        MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
+        proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("");
+
+        Map<String, String> env = new HashMap<>();
+        var provider = new TestQLspConnectionProvider();
+        provider.testAddEnvironmentVariables(env);
+
+        assertEquals("/path/to/user/cert.pem", env.get("NODE_EXTRA_CA_CERTS"));
+        assertEquals("/path/to/user/cert.pem", env.get("AWS_CA_BUNDLE"));
+    }
+
+    @Test
+    void testNoCertInjectionWhenNoCertsFound() throws IOException {
+        LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
+        Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
+
+        Mockito.when(preferenceStore.getString(AmazonQPreferencePage.CA_CERT)).thenReturn("");
+
+        MockedStatic<ProxyUtil> proxyUtilStaticMock = proxyUtilsStaticMockExtension.getStaticMock();
+        proxyUtilStaticMock.when(ProxyUtil::getHttpsProxyUrl).thenReturn("");
+        proxyUtilStaticMock.when(ProxyUtil::getCertificatesAsPem).thenReturn(null);
+
+        Map<String, String> env = new HashMap<>();
+        var provider = new TestQLspConnectionProvider();
+        provider.testAddEnvironmentVariables(env);
+
+        assertFalse(env.containsKey("NODE_EXTRA_CA_CERTS"));
+        assertFalse(env.containsKey("AWS_CA_BUNDLE"));
     }
 
 }

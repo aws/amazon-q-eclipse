@@ -86,14 +86,13 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             Activator.getLogger().info("Using user-defined CA cert: " + caCertPreference);
             return caCertPreference;
         }
-
         try {
             String pemContent = ProxyUtil.getCertificatesAsPem();
             if (StringUtils.isEmpty(pemContent)) {
                 return null;
             }
-            Activator.getLogger().info("Injecting IDE trusted certificates into NODE_EXTRA_CA_CERTS");
             var tempPath = Files.createTempFile("eclipse-q-extra-ca", ".pem");
+            Activator.getLogger().info("Injecting IDE trusted certificates from " + tempPath  + " into NODE_EXTRA_CA_CERTS");
             Files.write(tempPath, pemContent.getBytes());
             return tempPath.toString();
         } catch (Exception e) {

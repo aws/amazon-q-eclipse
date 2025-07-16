@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -58,13 +59,14 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
     @Override
     protected final void addEnvironmentVariables(final Map<String, String> env) {
         String httpsProxyUrl = ProxyUtil.getHttpsProxyUrl();
-        String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
+        String caCertPath = getCaCert();
+
         if (!StringUtils.isEmpty(httpsProxyUrl)) {
             env.put("HTTPS_PROXY", httpsProxyUrl);
         }
-        if (!StringUtils.isEmpty(caCertPreference)) {
-            env.put("NODE_EXTRA_CA_CERTS", caCertPreference);
-            env.put("AWS_CA_BUNDLE", caCertPreference);
+        if (!StringUtils.isEmpty(caCertPath)) {
+            env.put("NODE_EXTRA_CA_CERTS", caCertPath);
+            env.put("AWS_CA_BUNDLE", caCertPath);
         }
         if (ArchitectureUtils.isWindowsArm()) {
             env.put("DISABLE_INDEXING_LIBRARY", "true");
@@ -75,6 +77,27 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
         if (needsPatchEnvVariables()) {
             Activator.getLogger().info("Adding required variables");
             addPatchVariables(env);
+        }
+    }
+
+    private String getCaCert() {
+        String caCertPreference = Activator.getDefault().getPreferenceStore().getString(AmazonQPreferencePage.CA_CERT);
+        if (!StringUtils.isEmpty(caCertPreference)) {
+            Activator.getLogger().info("Using user-defined CA cert: " + caCertPreference);
+            return caCertPreference;
+        }
+        try {
+            String pemContent = ProxyUtil.getCertificatesAsPem();
+            if (StringUtils.isEmpty(pemContent)) {
+                return null;
+            }
+            var tempPath = Files.createTempFile("eclipse-q-extra-ca", ".pem");
+            Activator.getLogger().info("Injecting IDE trusted certificates from " + tempPath  + " into NODE_EXTRA_CA_CERTS");
+            Files.write(tempPath, pemContent.getBytes());
+            return tempPath.toString();
+        } catch (Exception e) {
+            Activator.getLogger().warn("Could not create temp CA cert file", e);
+            return null;
         }
     }
 

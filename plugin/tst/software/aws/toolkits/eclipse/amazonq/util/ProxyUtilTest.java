@@ -17,11 +17,15 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
@@ -130,6 +134,47 @@ public final class ProxyUtilTest {
             when(proxySelector.select(any())).thenReturn(Arrays.asList(httpProxy));
 
             assertEquals("http://proxy.example.com:8080", ProxyUtil.getHttpsProxyUrlForEndpoint("http://foo.com"));
+        }
+    }
+
+    @Test
+    void testGetCertificatesAsPemReturnsNullWhenNoCertificates() {
+        try (MockedStatic<ProxyUtil> proxyUtilMock = mockStatic(ProxyUtil.class, CALLS_REAL_METHODS)) {
+            proxyUtilMock.when(ProxyUtil::getSystemCertificates).thenReturn(new ArrayList<>());
+
+            assertNull(ProxyUtil.getCertificatesAsPem());
+        }
+    }
+
+    @Test
+    void testGetCertificatesAsPemWithValidCertificates() throws Exception {
+        try (MockedStatic<ProxyUtil> proxyUtilMock = mockStatic(ProxyUtil.class, CALLS_REAL_METHODS)) {
+            X509Certificate mockCert = mock(X509Certificate.class);
+            when(mockCert.getEncoded()).thenReturn("test-cert-data".getBytes());
+
+            ArrayList<X509Certificate> certs = new ArrayList<>();
+            certs.add(mockCert);
+            proxyUtilMock.when(ProxyUtil::getSystemCertificates).thenReturn(certs);
+
+            String result = ProxyUtil.getCertificatesAsPem();
+            assertNotNull(result);
+            assertTrue(result.contains("-----BEGIN CERTIFICATE-----"));
+            assertTrue(result.contains("-----END CERTIFICATE-----"));
+        }
+    }
+
+    @Test
+    void testGetCertificatesAsPemHandlesCertificateEncodingError() throws Exception {
+        try (MockedStatic<ProxyUtil> proxyUtilMock = mockStatic(ProxyUtil.class, CALLS_REAL_METHODS)) {
+            X509Certificate mockCert = mock(X509Certificate.class);
+            when(mockCert.getEncoded()).thenThrow(new RuntimeException("Encoding failed"));
+
+            ArrayList<X509Certificate> certs = new ArrayList<>();
+            certs.add(mockCert);
+            proxyUtilMock.when(ProxyUtil::getSystemCertificates).thenReturn(certs);
+
+            String result = ProxyUtil.getCertificatesAsPem();
+            assertEquals("", result);
         }
     }
 }

@@ -8,14 +8,20 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
+//import com.sap.adt.tools.core.ui.editors.IAdtEditor;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.AbapUtil;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
@@ -62,20 +68,33 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
-        if (partRef.getPart(false) instanceof ITextEditor) {
-            ITextEditor editor = (ITextEditor) partRef.getPart(false);
-            handleEditorChange(editor);
+    	Object part = partRef.getPart(false);
+        if (part instanceof ITextEditor) {
+            handleEditorChange((ITextEditor) part);
+        } else if (part instanceof IEditorPart) {
+            // Check if this is an ADT editor by class name
+            String className = part.getClass().getName();
+            if (AbapUtil.isAdtEditor(className)) {
+                handleEditorChange((IEditorPart) part);
+            }
         }
     }
-
+    
     @Override
     public void partClosed(final IWorkbenchPartReference partRef) {
-        if (partRef.getPart(false) instanceof ITextEditor) {
+    	Object part = partRef.getPart(false);
+        if (part instanceof ITextEditor) {
             handleEditorChange(null);
+        } else if (part instanceof IEditorPart) {
+            // Check if this is an ADT editor by class name
+            String className = part.getClass().getName();
+            if (AbapUtil.isAdtEditor(className)) {
+                handleEditorChange(null);
+            }
         }
     }
 
-    private void handleEditorChange(final ITextEditor editor) {
+    private void handleEditorChange(final Object editor) {
         // Cancel any pending notification
         if (debounceTask != null) {
             debounceTask.cancel(false);
@@ -95,26 +114,39 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
         }, DEBOUNCE_DELAY_MS);
     }
 
-    private Map<String, Object> createActiveEditorParams(final ITextEditor editor) {
-        Map<String, Object> params = new HashMap<>();
-        if (editor != null) {
-            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(editor.getEditorInput());
-            if (fileUri.isPresent()) {
-                Map<String, String> textDocument = new HashMap<>();
-                textDocument.put("uri", fileUri.get());
-                params.put("textDocument", textDocument);
-                QEclipseEditorUtils.getSelectionRange(editor).ifPresent(range -> {
-                    Map<String, Object> cursorState = new HashMap<>();
-                    cursorState.put("range", range);
-                    params.put("cursorState", cursorState);
-                });
-            }
-        } else {
-            // Editor is null (closed), send null values
-            params.put("textDocument", null);
-            params.put("cursorState", null);
-        }
-
-        return params;
-    }
+	private Map<String, Object> createActiveEditorParams(final Object editor) {
+	    Map<String, Object> params = new HashMap<>();
+	    if (editor != null) {
+	        if (editor instanceof ITextEditor textEditor) {
+	            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(textEditor.getEditorInput());
+	            
+	            if (fileUri.isPresent()) {
+	                Map<String, String> textDocument = new HashMap<>();
+	                textDocument.put("uri", fileUri.get());
+	                params.put("textDocument", textDocument);
+	                QEclipseEditorUtils.getSelectionRange(textEditor).ifPresent(range -> {
+	                    Map<String, Object> cursorState = new HashMap<>();
+	                    cursorState.put("range", range);
+	                    params.put("cursorState", cursorState);
+	                });
+	            }
+	        } else if (editor instanceof IEditorPart editorPart) {
+                var input = editorPart.getEditorInput();
+                var file = ((FileEditorInput) input).getFile();
+                var uri = file.getFullPath();
+                
+                if (uri != null) {
+                    Map<String, String> textDocument = new HashMap<>();
+                    textDocument.put("uri", AbapUtil.getSemanticCachePath(uri.toOSString()));
+                    params.put("textDocument", textDocument);
+                    params.put("cursorState", null);
+                }
+	        }     
+	    } else {
+	        // Editor is null (closed), send null values
+	        params.put("textDocument", null);
+	        params.put("cursorState", null);
+	    }
+	    return params;
+	}
 }

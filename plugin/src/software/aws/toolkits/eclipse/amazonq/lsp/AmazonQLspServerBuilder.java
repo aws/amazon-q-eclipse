@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -22,6 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResu
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.AbapUtil;
 
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
@@ -71,7 +73,15 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
         return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
-                InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
+                InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();               
+                // Modify workspace folders to replace semanticfs URIs
+                if (initParams.getWorkspaceFolders() != null) {
+                    initParams.getWorkspaceFolders().forEach(folder -> {
+                        if (folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {
+                            folder.setUri(AbapUtil.convertSemanticUriToPath(folder.getUri()));
+                        }
+                    });
+                }
                 ClientMetadata metadata = PluginClientMetadata.getInstance();
                 initParams.setClientInfo(new ClientInfo(USER_AGENT_CLIENT_NAME, metadata.getPluginVersion()));
                 initParams.setInitializationOptions(getInitializationOptions(metadata));

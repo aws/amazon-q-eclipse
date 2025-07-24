@@ -567,16 +567,16 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
-		                        <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>
-		                        <equals value="com.sap.adt.programs.ui.AdtProgramEditor"/>
+		                <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>
+		                <equals value="com.sap.adt.programs.ui.AdtProgramEditor"/>
                                 <equals value="com.sap.adt.programs.ui.AdtIncludeEditor"/>
                                 <equals value="com.sap.adt.abapClassEditor"/>
                                 <equals value="com.sap.adt.abapInterfaceEditor"/>
                                 <equals value="com.sap.adt.sapgui.ui.editors.WinGuiEditor"/>
                                 <equals value="com.sap.adt.cds.srvd.ui.editors.SrvdSourceEditor"/>
                                 <equals value="com.sap.wbobj.bdef.ui.editors.BdefSourceEditor"/>
-		                        <equals value="com.sap.adt.cds.ddl.ui.editors.DdlSourceEditor"/>
-		                        <equals value="com.sap.wbobj.dictionary.tabldt.ui.editors.DdicTableEditor"/>
+		                <equals value="com.sap.adt.cds.ddl.ui.editors.DdlSourceEditor"/>
+		                <equals value="com.sap.wbobj.dictionary.tabldt.ui.editors.DdicTableEditor"/>
                                 <equals value="com.sap.wbobj.dictionary.tablds.ui.editors.DdicStructureEditor"/>
                             </or>
                         </with>

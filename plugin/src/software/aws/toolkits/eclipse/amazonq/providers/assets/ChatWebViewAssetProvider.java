@@ -387,8 +387,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                     "Error loading Chat UI. If override used, please verify the override env variables else restart Eclipse");
             return Optional.empty();
         }
-
-        String jsFile = Paths.get(chatUiDirectory.get()).resolve("amazonq-ui.js").toString();
+        // String jsFile = Paths.get(chatUiDirectory.get()).resolve("amazonq-ui.js").toString();
+        String jsFile = "/Users/floralph/Source/language-servers/chat-client/build/amazonq-ui.js";
         var jsParent = Path.of(jsFile).getParent();
         var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
 

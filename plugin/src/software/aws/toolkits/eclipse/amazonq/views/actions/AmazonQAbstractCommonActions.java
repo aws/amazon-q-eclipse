@@ -32,6 +32,7 @@ public abstract class AmazonQAbstractCommonActions {
         private final ReportAnIssueAction reportAnIssueAction;
         private final OpenPreferencesAction openPreferencesAction;
         private final ManageSubscriptionsAction manageSubscriptionsAction;
+        private final AccountDetailsAction accountDetailsAction;
 
         Actions() {
             signoutAction = new SignoutAction();
@@ -47,6 +48,7 @@ public abstract class AmazonQAbstractCommonActions {
             openPreferencesAction = new OpenPreferencesAction();
             changeProfileDialogContributionItem = new ChangeProfileDialogContributionItem();
             manageSubscriptionsAction = new ManageSubscriptionsAction();
+            accountDetailsAction = new AccountDetailsAction();
         }
 
         public OpenQChatAction getOpenQChatAction() {
@@ -59,6 +61,8 @@ public abstract class AmazonQAbstractCommonActions {
                 feedbackDialogContributionItem.setVisible(authState.isLoggedIn());
                 toggleAutoTriggerContributionItem.setVisible(authState.isLoggedIn());
                 manageSubscriptionsAction.setVisible(authState.isLoggedIn() && authState.loginType().equals(LoginType.BUILDER_ID));
+                // Account Details is visible for IAM Identity Center users (non-BuilderId connections)
+                accountDetailsAction.setVisible(authState.isLoggedIn() && authState.loginType().equals(LoginType.IAM_IDENTITY_CENTER));
                 // TODO: Need to update this method as the login condition has to be Pro login
                 // using IAM identity center
                 customizationDialogContributionItem.setVisible(
@@ -144,6 +148,12 @@ public abstract class AmazonQAbstractCommonActions {
             @Override
             public boolean isVisible() {
                 return action.manageSubscriptionsAction.isEnabled();
+            }
+        });
+        menuManager.add(new ActionContributionItem(action.accountDetailsAction) {
+            @Override
+            public boolean isVisible() {
+                return action.accountDetailsAction.isEnabled();
             }
         });
         menuManager.add(new ActionContributionItem(action.signoutAction) {

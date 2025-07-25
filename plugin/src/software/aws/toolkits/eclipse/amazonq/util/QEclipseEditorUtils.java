@@ -139,7 +139,11 @@ public final class QEclipseEditorUtils {
         if (editorInput instanceof FileStoreEditorInput fileStoreEditorInput) {
             return fileStoreEditorInput.getURI().getPath();
         } else if (editorInput instanceof IFileEditorInput fileEditorInput) {
-            return fileEditorInput.getFile().getRawLocation().toOSString();
+            var file = fileEditorInput.getFile();
+            if (file.getRawLocation() == null && AbapUtil.isAbapFile(file)) {
+                return AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
+            }
+            return file.getRawLocation().toOSString();
         } else {
             throw new AmazonQPluginException("Unexpected editor input type: " + editorInput.getClass().getName());
         }

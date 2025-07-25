@@ -58,6 +58,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         qOptions.put("mcp", true);
         qOptions.put("pinnedContextEnabled", true);
         qOptions.put("modelSelection", true);
+        qOptions.put("subscriptionDetails", true);
         awsClientCapabilities.put("q", qOptions);
         Map<String, Object> window = new HashMap<>();
         window.put("showSaveFileDialog", true);
@@ -80,6 +81,21 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
                 var command = ChatUIInboundCommand.createCommand("chatOptions", result.getAwsServerCapabilities().chatOptions());
                 Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
+                
+                // Log subscription details capability response
+                var chatOptions = result.getAwsServerCapabilities().chatOptions();
+                if (chatOptions instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> chatOptionsMap = (Map<String, Object>) chatOptions;
+                    if (chatOptionsMap.containsKey("subscriptionDetails")) {
+                        Activator.getLogger().info("Server subscriptionDetails capability: " + chatOptionsMap.get("subscriptionDetails"));
+                    } else {
+                        Activator.getLogger().info("Server did not return subscriptionDetails capability");
+                    }
+                } else {
+                    Activator.getLogger().info("Server chatOptions is not a Map");
+                }
+                
                 Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
             }
             consumer.consume(message);

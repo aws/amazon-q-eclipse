@@ -6,7 +6,6 @@ package software.aws.toolkits.eclipse.amazonq.lsp;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.lsp4j.ClientInfo;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -73,8 +72,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
         return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
-                InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();               
-                // Modify workspace folders to replace semanticfs URIs
+                InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
                 if (initParams.getWorkspaceFolders() != null) {
                     initParams.getWorkspaceFolders().forEach(folder -> {
                         if (folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {

@@ -4,9 +4,12 @@
 package software.aws.toolkits.eclipse.amazonq.views.actions;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.lsp4j.ExecuteCommandParams;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.UiTelemetryProvider;
+
+import java.util.Collections;
 
 /**
  * Action to show account details and subscription information.
@@ -20,15 +23,42 @@ public final class AccountDetailsAction extends Action {
     }
 
     @Override
-    public final void run() {
+    public void run() {
         UiTelemetryProvider.emitClickEventMetric("accountDetails");
-        
-        // TODO: Implement subscription details dialog
-        // For now, just log that the action was triggered
-        Activator.getLogger().info("Account Details action triggered - implementation pending");
+
+        System.out.println("[DEBUG] AccountDetailsAction.run() called");
+
+        Activator.getLspProvider().getAmazonQServer()
+            .thenAccept(server -> {
+                System.out.println("[DEBUG] Got Amazon Q server: " + server.getClass().getSimpleName());
+
+                ExecuteCommandParams params = new ExecuteCommandParams();
+                params.setCommand("aws/chat/subscription/show");
+                params.setArguments(Collections.emptyList());
+
+                System.out.println("[DEBUG] Executing command: " + params.getCommand());
+
+                server.getWorkspaceService().executeCommand(params)
+                    .whenComplete((result, throwable) -> {
+                        if (throwable != null) {
+                            System.err.println("[DEBUG] Command execution failed: " + throwable.getMessage());
+                            throwable.printStackTrace();
+                            Activator.getLogger().error("Failed to execute subscription/show command", throwable);
+                        } else {
+                            System.out.println("[DEBUG] Command executed successfully, result: " + result);
+                            Activator.getLogger().info("Successfully executed subscription/show command");
+                        }
+                    });
+            })
+            .exceptionally(ex -> {
+                System.err.println("[DEBUG] Failed to get Amazon Q server: " + ex.getMessage());
+                ex.printStackTrace();
+                Activator.getLogger().error("Failed to get Amazon Q server for subscription details", ex);
+                return null;
+            });
     }
 
-    public final void setVisible(final boolean isVisible) {
+    public void setVisible(final boolean isVisible) {
         super.setEnabled(isVisible);
     }
 }

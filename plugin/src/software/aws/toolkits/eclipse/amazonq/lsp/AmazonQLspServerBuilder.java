@@ -81,7 +81,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 AwsExtendedInitializeResult result = (AwsExtendedInitializeResult) ((ResponseMessage) message).getResult();
                 var command = ChatUIInboundCommand.createCommand("chatOptions", result.getAwsServerCapabilities().chatOptions());
                 Activator.getEventBroker().post(ChatUIInboundCommand.class, command);
-                
+
                 // Log subscription details capability response
                 var chatOptions = result.getAwsServerCapabilities().chatOptions();
                 if (chatOptions instanceof Map) {
@@ -95,7 +95,7 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
                 } else {
                     Activator.getLogger().info("Server chatOptions is not a Map");
                 }
-                
+
                 Activator.getLspProvider().setServer(AmazonQLspServer.class, launcher.getRemoteProxy());
             }
             consumer.consume(message);

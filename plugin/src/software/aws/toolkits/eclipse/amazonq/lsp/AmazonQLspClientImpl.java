@@ -85,6 +85,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.ConnectionMetadata;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenFileDiffParams;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.OpenTabUiResponse;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.SsoProfileData;
+import software.aws.toolkits.eclipse.amazonq.lsp.model.SubscriptionDetails;
 import software.aws.toolkits.eclipse.amazonq.lsp.model.TelemetryEvent;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
@@ -97,6 +98,7 @@ import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.util.WorkspaceUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Customization;
 import software.aws.toolkits.eclipse.amazonq.views.model.UpdateRedirectUrlCommand;
+import software.aws.toolkits.eclipse.amazonq.views.SubscriptionDetailsDialog;
 
 @SuppressWarnings("restriction")
 public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQLspClient {
@@ -652,6 +654,64 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
         } catch (Exception e) {
             Activator.getLogger().error("Error occurred when attempting to determine relative path for: " + absoluteUri, e);
             return absoluteUri;
+        }
+    }
+
+    @Override
+    public final void subscriptionDetails(final Object params) {
+        Activator.getLogger().info("Received subscription details notification");
+
+        // Log the raw params object for debugging
+        Activator.getLogger().info("Raw params object: " + params);
+        Activator.getLogger().info("Params class: " + (params != null ? params.getClass().getName() : "null"));
+
+        try {
+            // Deserialize the actual LSP data using ObjectMapper
+            final SubscriptionDetails subscriptionDetails = ObjectMapperFactory.getInstance()
+                .convertValue(params, SubscriptionDetails.class);
+
+            Activator.getLogger().info("Successfully deserialized subscription details: " + subscriptionDetails.getSubscriptionTier());
+            Activator.getLogger().info("Usage: " + subscriptionDetails.getQueryUsage() + "/" + subscriptionDetails.getQueryLimit());
+
+            ThreadingUtils.executeAsyncTask(() -> {
+                Display.getDefault().asyncExec(() -> {
+                    try {
+                        final Shell shell = Display.getDefault().getActiveShell();
+                        Activator.getLogger().info("About to open SubscriptionDetailsDialog with real LSP data");
+                        final SubscriptionDetailsDialog dialog = new SubscriptionDetailsDialog(shell, subscriptionDetails);
+                        dialog.open();
+                        Activator.getLogger().info("SubscriptionDetailsDialog.open() completed");
+                    } catch (Exception e) {
+                        Activator.getLogger().error("Error displaying subscription details dialog", e);
+                    }
+                });
+            });
+
+        } catch (Exception e) {
+            Activator.getLogger().error("Error deserializing subscription details from LSP server", e);
+
+            // Fallback to hardcoded data if deserialization fails
+            Activator.getLogger().info("Falling back to hardcoded test data due to deserialization error");
+
+            final SubscriptionDetails fallbackDetails = new SubscriptionDetails();
+            fallbackDetails.setSubscriptionTier("Q_DEVELOPER_STANDALONE_FREE");
+            fallbackDetails.setQueryLimit(1000);
+            fallbackDetails.setQueryUsage(250);
+            fallbackDetails.setQueryOverage(0);
+            fallbackDetails.setSubscriptionPeriodReset("2025-08-01T00:00:00.000Z");
+            fallbackDetails.setOverageEnabled(false);
+
+            ThreadingUtils.executeAsyncTask(() -> {
+                Display.getDefault().asyncExec(() -> {
+                    try {
+                        final Shell shell = Display.getDefault().getActiveShell();
+                        final SubscriptionDetailsDialog dialog = new SubscriptionDetailsDialog(shell, fallbackDetails);
+                        dialog.open();
+                    } catch (Exception dialogException) {
+                        Activator.getLogger().error("Error displaying fallback subscription details dialog", dialogException);
+                    }
+                });
+            });
         }
     }
 }

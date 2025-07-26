@@ -65,6 +65,10 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         awsClientCapabilities.put("window", window);
         awsInitOptions.put("awsClientCapabilities", awsClientCapabilities);
         initOptions.put("aws", awsInitOptions);
+
+        // Enable debug logging for authentication troubleshooting
+        initOptions.put("trace", "verbose");
+
         return initOptions;
     }
 

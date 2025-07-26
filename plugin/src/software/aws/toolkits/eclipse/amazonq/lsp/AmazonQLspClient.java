@@ -63,4 +63,7 @@ public interface AmazonQLspClient extends LanguageClient {
 
     @JsonNotification("aws/chat/sendPinnedContext")
     void sendPinnedContext(Object params);
+
+    @JsonNotification("aws/chat/subscription/details")
+    void subscriptionDetails(Object params);
 }

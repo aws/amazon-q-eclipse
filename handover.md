@@ -1,24 +1,31 @@
 # Amazon Q Eclipse - Pricing Tiers Implementation Handover
 
-## Current Status
-
-**Step 4 (UI Implementation)** - Functionally complete, needs final polish and testing.
+**Remote**: https://github.com/aws/amazon-q-eclipse/tree/floralph/subscription
 
 ### Completed Components
 - ✅ **SubscriptionDetails.java** - Flattened model with backward compatibility methods
 - ✅ **SubscriptionDetailsDialog.java** - Complete SWT dialog with platform-specific fonts, progress bars, upgrade button
 - ✅ **AmazonQLspClientImpl.java** - Notification handler with ObjectMapper deserialization, fallback test data
 - ✅ **SubscriptionShowIntegrationTest.java** - Comprehensive integration testing covering complete flow
-- ✅ **Checkstyle compliance** - Fixed 7 trailing whitespace violations
+
+## Next Steps
+
+1. **Telemetry** for dialog interactions and upgrade button clicks
+2. **Cross-platform testing** verification (Windows/Mac font sizing)
+3. **Error handling** might need additional work beyond what is there
+4. **Tests** might need additional beyond what is there
 
 ### Key Implementation Details
 - Dialog displays subscription tier, usage statistics, billing cycle information
 - Progress bar shows usage against limits with visual indicators
-- Upgrade button opens browser to AWS pricing page (hidden for Pro tier users)
-- Handles both real LSP data and fallback test data for error cases
-- Platform-specific font sizing for Windows/Mac compatibility
+- TODO: Verify "Upgrade" button opens browser to AWS pricing page (hidden for Pro tier users)
 
-## Authentication Configuration (Critical)
+### Backend Service Dependency
+If Account Details doesn't show a dialog, check the LSP log for:
+```
+Unable to get subscription details: InternalServerException: Encountered an unexpected error when processing the request, please try again.
+```
+This indicates the backend subscription service is unavailable - the Eclipse implementation is working correctly.
 
 ### Lokesh's Authentication Notes
 
@@ -31,10 +38,9 @@
 
 2. **language-servers repository** (required for all testing):
    - File: [constants.ts](https://github.com/aws/language-servers/pull/1923/files#diff-4db506c91cd59cd0cb524e4e480bf2281b0cc029c67ba1fa4b6ec5b31a4455b0)
-   - Change: `codewhisperer` → `codewhisperer_internal`
 
 ### Test Accounts
-- **Login URL**: https://d-9067c744e4.awsapps.com/start/#/
+- **Login URL**: https://d-9067c744e4.awsapps.com/start
 - **Users**: 
   - `kiro-limited`
   - `kiro-include-pro` 
@@ -45,9 +51,8 @@
 **Problem**: Using `codewhisperer_internal` scopes with standard AWS SSO login causes browser connection errors after clicking "Allow".
 
 **Solution**: 
-- **Regular development**: Keep standard `codewhisperer` scopes, use standard AWS SSO
+- **Regular development**: Keep standard `codewhisperer` scopes in QConstants.java, use standard AWS SSO
 - **Test account testing**: Change to `codewhisperer_internal` scopes, use test account login URL
-- **Always revert** QConstants.java changes after testing
 
 ## Reference Links
 
@@ -60,26 +65,9 @@
 ### Documentation & Design
 - [IDE Plugins: Pricing Tiers Support](https://quip-amazon.com/6cR7AR6dJ4lS/IDE-Plugins-Pricing-Tiers-Support) - Requirements document
 - [Eclipse Q Toolkit dev environment setup](https://quip-amazon.com/6AMUAkkWdAj2/Eclipse-Q-Toolkit-dev-environment-setup) - Development setup
-- Figma designs available in `../../Projects/kiro-pricing/` directory
+- [Figma](https://www.figma.com/board/jnYOvtGfihJ7ZMJIfVAEKL/Q-Pricing-Updates?node-id=604-47071&t=cK8I1Pbun93avI43-0)
 
 ## Development Notes
-
-### Critical Build Workflow
-**Always run `mvn clean` before test compilation** - Tycho has aggressive caching that causes intermittent compilation failures.
-
-```bash
-cd plugin
-mvn clean compile test-compile -Dcheckstyle.skip=true -q
-mvn test -Dtest=YourTestClass -Dcheckstyle.skip=true -q
-```
-
-### Checkstyle Compliance
-Run before committing:
-```bash
-mvn checkstyle:check -Dcheckstyle.includeTestSourceDirectory=true -q
-```
-
-Common violations: trailing spaces, unused imports, line length
 
 ### Test Patterns
 - Follow `AccountDetailsActionTest.java` for simple action testing
@@ -87,17 +75,9 @@ Common violations: trailing spaces, unused imports, line length
 - Mock `Platform` and `FrameworkUtil` static methods for Eclipse API calls
 - Use `atLeastOnce()` for verification when methods may be called multiple times
 
-## Next Steps
-
-1. **Final testing** with real subscription data from language server
-2. **Telemetry integration** for dialog interactions and upgrade button clicks
-3. **Error handling polish** in SubscriptionDetailsDialog
-4. **Cross-platform testing** (Windows/Mac font sizing verification)
-5. **Revert any test-only authentication changes** before final commit
-
 ## Implementation Commits
 
 - `8c0a9686` - Step 1: Initialization protocol capabilities
 - `415a6e5a` - Step 2: Account Details menu item
 - `ee1e1bc5` - Step 3: Protocol support for subscription show command
-- Step 4: In progress (UI implementation and upgrade flow)
+- HEAD - Step 4: Complete UI implementation and subscription upgrade flow

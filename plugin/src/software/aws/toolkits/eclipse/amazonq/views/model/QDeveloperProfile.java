@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.SerializedName;
 
@@ -30,6 +31,7 @@ public class QDeveloperProfile extends Configuration {
         return this.identityDetails;
     }
 
+    @JsonIgnore
     public final String getRegion() {
         return identityDetails != null ? identityDetails.region() : null;
     }

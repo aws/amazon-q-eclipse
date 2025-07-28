@@ -31,7 +31,7 @@ public class QDeveloperProfile extends Configuration {
     }
 
     public final String getRegion() {
-        return identityDetails.region();
+        return identityDetails != null ? identityDetails.region() : null;
     }
 
 }

@@ -64,7 +64,7 @@ public class Configuration {
             }
             return Arn.fromString(arn).accountId().orElse(null);
         } catch (Exception e) {
-            Activator.getLogger().info("Error parsing arn for account Id");
+            Activator.getLogger().error("Error parsing arn for account Id", e);
             return null;
         }
     }

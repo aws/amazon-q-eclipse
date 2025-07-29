@@ -3,9 +3,12 @@
 
 package software.aws.toolkits.eclipse.amazonq.views.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import software.amazon.awssdk.utils.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.SerializedName;
+import software.amazon.awssdk.arns.Arn;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class QDeveloperProfile extends Configuration {
@@ -31,9 +34,15 @@ public class QDeveloperProfile extends Configuration {
         return this.identityDetails;
     }
 
-    @JsonIgnore
     public final String getRegion() {
-        return identityDetails != null ? identityDetails.region() : null;
+        if (identityDetails != null && !StringUtils.isBlank(identityDetails.region())) {
+            return identityDetails.region();
+        }
+        try {
+            return Arn.fromString(getArn()).region().orElse(null);
+        } catch (Exception e) {
+            Activator.getLogger().error("Error parsing arn for region", e);
+            return null;
+        }
     }
-
 }

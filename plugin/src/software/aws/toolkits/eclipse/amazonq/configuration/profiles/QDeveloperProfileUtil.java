@@ -342,6 +342,8 @@ public final class QDeveloperProfileUtil {
             }
         } catch (final JsonProcessingException e) {
             Activator.getLogger().error("Failed to cache Q developer profile");
+        } catch (Exception e) {
+            Activator.getLogger().error("Unexpected error while caching Q developer profile", e);
         }
     }
 
@@ -349,15 +351,17 @@ public final class QDeveloperProfileUtil {
         if (profiles == null || profiles.isEmpty()) {
             try {
                 queryForDeveloperProfiles(false);
+                if (profiles == null || profiles.isEmpty()) {
+                    Activator.getLogger().info("No Q developer profiles found");
+                } else if (profiles.size() == 1) {
+                    handleSingleOrNoProfile(profiles, true, false);
+                }
             } catch (Exception e) {
                 Activator.getLogger().error("Error occurred when fetching profile: ", e);
-            }
-
-            if (profiles.size() == 1) {
-                handleSingleOrNoProfile(profiles, true, false);
+                return false;
             }
         }
-        return profiles.size() > 1;
+        return profiles != null && profiles.size() > 1;
     }
 
     public QDeveloperProfile getSelectedProfile() {

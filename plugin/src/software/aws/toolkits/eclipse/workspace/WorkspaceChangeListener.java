@@ -21,6 +21,11 @@ import org.eclipse.lsp4j.FileCreate;
 import org.eclipse.lsp4j.FileDelete;
 import org.eclipse.lsp4j.FileRename;
 import org.eclipse.lsp4j.RenameFilesParams;
+import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams;
+import org.eclipse.lsp4j.WorkspaceFolder;
+import org.eclipse.lsp4j.WorkspaceFoldersChangeEvent;
+
+
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -31,7 +36,8 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
     private final FileChangeTracker fileChangeTracker;
     private static final Set<Integer> ALLOWED_RESOURCE_TYPES = Set.of(
             IResource.FILE,
-            IResource.FOLDER);
+            IResource.FOLDER,
+            IResource.PROJECT);
 
     private WorkspaceChangeListener() {
         this.fileChangeTracker = new FileChangeTracker();
@@ -70,10 +76,12 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
     private record FileChanges(
             List<FileCreate> created,
             List<FileDelete> deleted,
-            List<FileRename> renamed
+            List<FileRename> renamed,
+            List<WorkspaceFolder> addedFolders,
+            List<WorkspaceFolder> removedFolders
         ) {
             FileChanges() {
-                this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             }
         }
 
@@ -95,7 +103,19 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
 
         private void processResourceDelta(final IResourceDelta delta, final FileChanges changes) {
             try {
-                URI uri = delta.getResource().getLocationURI();
+                IResource resource = delta.getResource();
+                if (resource.getType() == IResource.PROJECT) {
+                    // Only notify for actual project add/remove, not when files inside change
+                    if (delta.getKind() == IResourceDelta.ADDED || delta.getKind() == IResourceDelta.REMOVED) {
+                        processProjectDelta(delta, changes);
+                    }
+                    return;
+                }
+                URI uri = resource.getLocationURI();
+                if (uri == null) {
+                 // Skip if URI is null which is project change
+                    return; 
+                }
                 String uriString = uri.toString();
 
                 switch (delta.getKind()) {
@@ -116,6 +136,30 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
             }
         }
 
+        private void processProjectDelta(IResourceDelta delta, FileChanges changes) {
+            IResource resource = delta.getResource();
+            String name = resource.getName();
+            
+            URI uri = resource.getLocationURI();
+            if (uri == null) {
+                // For deleted projects, construct absolute URI from workspace root + project name
+                URI workspaceRoot = ResourcesPlugin.getWorkspace().getRoot().getLocationURI();
+                uri = workspaceRoot.resolve(name + "/");
+            }
+            
+            String uriString = uri.toString().replaceFirst("^file:/(?!/)", "file:///");
+            WorkspaceFolder folder = new WorkspaceFolder(uriString, name);
+            
+            switch (delta.getKind()) {
+                case IResourceDelta.ADDED:
+                    changes.addedFolders.add(folder);
+                    break;
+                case IResourceDelta.REMOVED:
+                    changes.removedFolders.add(folder);
+                    break;
+            }            
+        }
+
         private void processChangedResource(final IResourceDelta delta, final FileChanges changes, final String newUriString) {
             if ((delta.getFlags() & IResourceDelta.MOVED_FROM) != 0) {
                 URI oldUri = delta.getMovedFromPath().toFile().toURI();
@@ -126,7 +170,8 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
 
     private void notifyLspServer(final FileChanges changes) {
         try {
-            var lspServer = Activator.getLspProvider().getAmazonQServer().get().getWorkspaceService();
+            var abc = Activator.getLspProvider().getAmazonQServer().get();
+            var lspServer = abc.getWorkspaceService();
 
             if (!changes.created.isEmpty()) {
                 lspServer.didCreateFiles(new CreateFilesParams(changes.created));
@@ -138,6 +183,17 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
 
             if (!changes.renamed.isEmpty()) {
                 lspServer.didRenameFiles(new RenameFilesParams(changes.renamed));
+            }
+            if (!changes.addedFolders.isEmpty() || !changes.removedFolders.isEmpty()) {
+                WorkspaceFoldersChangeEvent event = new WorkspaceFoldersChangeEvent(
+                    changes.addedFolders, changes.removedFolders);
+                DidChangeWorkspaceFoldersParams params = new DidChangeWorkspaceFoldersParams(event);
+                try {
+                    lspServer.didChangeWorkspaceFolders(params);
+                    Activator.getLogger().info("didChangeWorkspaceFolders call completed successfully");
+                } catch (Exception e) {
+                    Activator.getLogger().error("Failed to send didChangeWorkspaceFolders", e);
+                }
             }
         } catch (Exception e) {
             Activator.getLogger().error(

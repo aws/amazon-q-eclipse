@@ -4,7 +4,7 @@ Bundle-Name: Amazon Q for Eclipse
 Bundle-Provider: Amazon Web Services
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-SymbolicName: amazon-q-eclipse;singleton:=true
-Bundle-Version: 2.3.1.qualifier
+Bundle-Version: 2.3.2.qualifier
 Automatic-Module-Name: amazon.q.eclipse
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: software.aws.toolkits.eclipse.amazonq.plugin.Activator
@@ -35,6 +35,7 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.31.0",
 Bundle-Classpath: .,
  target/dependency/annotations.jar,
  target/dependency/apache-client.jar,
+ target/dependency/arns.jar,
  target/dependency/auth.jar,
  target/dependency/aws-core.jar,
  target/dependency/aws-json-protocol.jar,

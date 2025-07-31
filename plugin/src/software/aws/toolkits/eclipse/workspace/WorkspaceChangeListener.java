@@ -25,7 +25,7 @@ import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams;
 import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.WorkspaceFoldersChangeEvent;
 
-
+import com.nimbusds.jose.shaded.gson.Gson;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
@@ -172,7 +172,7 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
         try {
             var abc = Activator.getLspProvider().getAmazonQServer().get();
             var lspServer = abc.getWorkspaceService();
-
+            Thread.sleep(10000);
             if (!changes.created.isEmpty()) {
                 lspServer.didCreateFiles(new CreateFilesParams(changes.created));
             }
@@ -189,10 +189,26 @@ public final class WorkspaceChangeListener implements IResourceChangeListener {
                     changes.addedFolders, changes.removedFolders);
                 DidChangeWorkspaceFoldersParams params = new DidChangeWorkspaceFoldersParams(event);
                 try {
+//                    Class<?> builderClass = software.aws.toolkits.eclipse.amazonq.lsp.AmazonQLspServerBuilder.class;
+//                    java.lang.reflect.Field launcherField = builderClass.getDeclaredField("launcher");
+//                    launcherField.setAccessible(true);
+//                    var launcher = launcherField.get(null);
+//                    
+//                    if (launcher != null) {
+//                        // Get the RemoteEndpoint from launcher
+//                        java.lang.reflect.Method getRemoteEndpointMethod = launcher.getClass().getMethod("getRemoteEndpoint");
+//                        var remoteEndpoint = getRemoteEndpointMethod.invoke(launcher);
+//                        
+//                        // Send notification using the RemoteEndpoint
+//                        java.lang.reflect.Method notifyMethod = remoteEndpoint.getClass().getMethod("notify", String.class, Object.class);
+//                        notifyMethod.invoke(remoteEndpoint, "workspace/didChangeWorkspaceFolders", params);
+//                        Activator.getLogger().info("Params constsnt" + new Gson().toJson(params));
+//                        Activator.getLogger().info("didChangeWorkspaceFolders notification sent successfully");
+//                        notifyMethod.invoke(remoteEndpoint, "amazon/dummy", "hello from eclipse");
                     lspServer.didChangeWorkspaceFolders(params);
-                    Activator.getLogger().info("didChangeWorkspaceFolders call completed successfully");
+                    
                 } catch (Exception e) {
-                    Activator.getLogger().error("Failed to send didChangeWorkspaceFolders", e);
+                    Activator.getLogger().error("Failed to send notification via launcher", e);
                 }
             }
         } catch (Exception e) {

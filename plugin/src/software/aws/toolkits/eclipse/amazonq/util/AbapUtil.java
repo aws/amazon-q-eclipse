@@ -22,7 +22,7 @@ public final class AbapUtil {
 
     // ABAP file extensions that require semantic cache path
     private static final Set<String> ABAP_EXTENSIONS = Set.of("asprog", "aclass", "asinc", "aint", "assrvds", "asbdef",
-            "asddls", "astablds", "astabldt", "amdp", "apack", "asrv", "aobj", "aexit", "abdef");
+            "asddls", "astablds", "astabldt", "amdp", "apack", "asrv", "aobj", "aexit", "abdef", "acinc", "asfugr", "apfugr", "asfunc", "asfinc", "apfunc", "apfinc");
 
     private AbapUtil() {
         // Prevent instantiation

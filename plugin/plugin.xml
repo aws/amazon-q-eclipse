@@ -578,6 +578,9 @@
 		                <equals value="com.sap.adt.cds.ddl.ui.editors.DdlSourceEditor"/>
 		                <equals value="com.sap.wbobj.dictionary.tabldt.ui.editors.DdicTableEditor"/>
                                 <equals value="com.sap.wbobj.dictionary.tablds.ui.editors.DdicStructureEditor"/>
+                                <equals value="com.sap.adt.functions.ui.includes.abapFunctionGroupIncludeEditor"/>
+                                <equals value="com.sap.adt.functions.ui.fmodules.abapFunctionModuleEditor"/>
+                                <equals value="com.sap.adt.functions.ui.includes.abapFunctionGroupEditor"/>
                             </or>
                         </with>
                     </and>

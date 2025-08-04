@@ -3,8 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import java.nio.file.Paths;
 import java.util.Set;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 
 /**
@@ -21,8 +23,9 @@ public final class AbapUtil {
     public static final String SEMANTIC_CACHE_FOLDER = ".cache";
 
     // ABAP file extensions that require semantic cache path
-    private static final Set<String> ABAP_EXTENSIONS = Set.of("asprog", "aclass", "asinc", "aint", "assrvds", "asbdef",
-            "asddls", "astablds", "astabldt", "amdp", "apack", "asrv", "aobj", "aexit", "abdef", "acinc", "asfugr", "apfugr", "asfunc", "asfinc", "apfunc", "apfinc");
+    private static final Set<String> ABAP_EXTENSIONS = Set.of("asprog", "aclass", "asinc", "aint", "assrvds",
+            "asbdef", "asddls", "astablds", "astabldt", "amdp", "apack", "asrv", "aobj", "aexit", "abdef",
+            "acinc", "asfugr", "apfugr", "asfunc", "asfinc", "apfunc", "apfinc");
 
     private AbapUtil() {
         // Prevent instantiation
@@ -30,6 +33,9 @@ public final class AbapUtil {
 
     /**
      * Checks if the given class name indicates an ADT editor.
+     * Uses OR condition because ADT editors can match either pattern:
+     * - SAP package prefix (com.sap) for most SAP editors
+     * - ADT pattern (Adt) for editors that may not follow standard SAP naming
      * @param className the class name to check
      * @return true if it's likely an ADT editor
      */
@@ -47,11 +53,11 @@ public final class AbapUtil {
         if (!semanticUri.startsWith(SEMANTIC_FS_SCHEME)) {
             return semanticUri;
         }
-
         String folderName = semanticUri.substring(SEMANTIC_FS_SCHEME.length());
-        String newUri = Platform.getStateLocation(Platform.getBundle(SEMANTIC_BUNDLE_ID)).toString() + "/"
-                + SEMANTIC_CACHE_FOLDER + "/" + folderName;
-        return "file:///" + newUri.replace("\\", "/");
+        IPath cachePath = Platform.getStateLocation(Platform.getBundle(SEMANTIC_BUNDLE_ID))
+                .append(SEMANTIC_CACHE_FOLDER)
+                .append(folderName);
+        return cachePath.toFile().toURI().toString();
     }
 
     /**
@@ -73,7 +79,12 @@ public final class AbapUtil {
      * @return the full semantic cache path
      */
     public static String getSemanticCachePath(final String workspaceRelativePath) {
-        String semanticStateLocation = Platform.getStateLocation(Platform.getBundle(SEMANTIC_BUNDLE_ID)).toString();
-        return semanticStateLocation + "/" + SEMANTIC_CACHE_FOLDER + workspaceRelativePath;
+        if (Paths.get(workspaceRelativePath).isAbsolute()) {
+            throw new IllegalArgumentException("Path must be workspace-relative");
+        }
+        return Platform.getStateLocation(Platform.getBundle(SEMANTIC_BUNDLE_ID))
+                .append(SEMANTIC_CACHE_FOLDER)
+                .append(workspaceRelativePath)
+                .toString();
     }
 }

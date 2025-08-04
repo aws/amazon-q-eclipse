@@ -15,7 +15,6 @@ import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
@@ -65,31 +64,23 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
         }
     }
 
+    private boolean isAdtEditor(final Object part) {
+        return part instanceof IEditorPart && AbapUtil.isAdtEditor(part.getClass().getName());
+    }
+
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
-        Object part = partRef.getPart(false);
-        if (part instanceof ITextEditor) {
-            handleEditorChange((ITextEditor) part);
-        } else if (part instanceof IEditorPart) {
-            // Check if this is an ADT editor by class name
-            String className = part.getClass().getName();
-            if (AbapUtil.isAdtEditor(className)) {
-                handleEditorChange((IEditorPart) part);
-            }
+        var part = partRef.getPart(false);
+        if (part instanceof ITextEditor || isAdtEditor(part)) {
+            handleEditorChange(part);
         }
     }
 
     @Override
     public void partClosed(final IWorkbenchPartReference partRef) {
-        Object part = partRef.getPart(false);
-        if (part instanceof ITextEditor) {
+        var part = partRef.getPart(false);
+        if (part instanceof ITextEditor || isAdtEditor(part)) {
             handleEditorChange(null);
-        } else if (part instanceof IEditorPart) {
-            // Check if this is an ADT editor by class name
-            String className = part.getClass().getName();
-            if (AbapUtil.isAdtEditor(className)) {
-                handleEditorChange(null);
-            }
         }
     }
 
@@ -129,14 +120,13 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
                         params.put("cursorState", cursorState);
                     });
                 }
-            } else if (editor instanceof IEditorPart editorPart) {
-                var input = editorPart.getEditorInput();
-                var file = ((FileEditorInput) input).getFile();
-                var uri = file.getFullPath();
-
-                if (uri != null) {
+            } else if (isAdtEditor(editor)) {
+                // Handle ADT editors specifically
+                var editorPart = (IEditorPart) editor;
+                Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(editorPart.getEditorInput());
+                if (fileUri.isPresent()) {
                     Map<String, String> textDocument = new HashMap<>();
-                    textDocument.put("uri", AbapUtil.getSemanticCachePath(uri.toOSString()));
+                    textDocument.put("uri", fileUri.get());
                     params.put("textDocument", textDocument);
                     params.put("cursorState", null);
                 }

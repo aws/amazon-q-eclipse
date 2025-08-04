@@ -68,18 +68,29 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         return initOptions;
     }
 
+    private void sanitizeWorkspaceFoldersForAbap(final InitializeParams initParams) {
+        try {
+            if (initParams.getWorkspaceFolders() != null) {
+                initParams.getWorkspaceFolders().forEach(folder -> {
+                    if (folder.getUri() != null && folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {
+                        String convertedUri = AbapUtil.convertSemanticUriToPath(folder.getUri());
+                        if (convertedUri != null && !convertedUri.trim().isEmpty()) {
+                            folder.setUri(convertedUri);
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error sanitizing workspace folders for ABAP", e);
+        }
+    }
+
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
         return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
-                if (initParams.getWorkspaceFolders() != null) {
-                    initParams.getWorkspaceFolders().forEach(folder -> {
-                        if (folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {
-                            folder.setUri(AbapUtil.convertSemanticUriToPath(folder.getUri()));
-                        }
-                    });
-                }
+                sanitizeWorkspaceFoldersForAbap(initParams);
                 ClientMetadata metadata = PluginClientMetadata.getInstance();
                 initParams.setClientInfo(new ClientInfo(USER_AGENT_CLIENT_NAME, metadata.getPluginVersion()));
                 initParams.setInitializationOptions(getInitializationOptions(metadata));

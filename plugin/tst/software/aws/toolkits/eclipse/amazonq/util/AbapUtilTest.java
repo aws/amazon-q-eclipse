@@ -146,8 +146,19 @@ class AbapUtilTest {
         platformMock = Mockito.mockStatic(Platform.class);
         Bundle mockBundle = Mockito.mock(Bundle.class);
         IPath mockPath = Mockito.mock(IPath.class);
+        IPath mockCachePath = Mockito.mock(IPath.class);
+        IPath mockFinalPath = Mockito.mock(IPath.class);
         platformMock.when(() -> Platform.getBundle(AbapUtil.SEMANTIC_BUNDLE_ID)).thenReturn(mockBundle);
         platformMock.when(() -> Platform.getStateLocation(mockBundle)).thenReturn(mockPath);
+        // Mock the IPath.append() chain
+        Mockito.when(mockPath.append(AbapUtil.SEMANTIC_CACHE_FOLDER)).thenReturn(mockCachePath);
+        Mockito.when(mockCachePath.append(Mockito.anyString())).thenReturn(mockFinalPath);
+        // Mock toFile().toURI().toString()
+        java.io.File mockFile = Mockito.mock(java.io.File.class);
+        java.net.URI mockUri = java.net.URI.create("file:///mock/state/location/.cache/test/path");
+        Mockito.when(mockFinalPath.toFile()).thenReturn(mockFile);
+        Mockito.when(mockFile.toURI()).thenReturn(mockUri);
+        // For getSemanticCachePath method
         Mockito.when(mockPath.toString()).thenReturn("/mock/state/location");
     }
 }

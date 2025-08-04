@@ -140,7 +140,7 @@ public final class QEclipseEditorUtils {
             return fileStoreEditorInput.getURI().getPath();
         } else if (editorInput instanceof IFileEditorInput fileEditorInput) {
             var file = fileEditorInput.getFile();
-            if (file.getRawLocation() == null && AbapUtil.isAbapFile(file)) {
+            if (AbapUtil.isAbapFile(file)) {
                 return AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
             }
             return file.getRawLocation().toOSString();

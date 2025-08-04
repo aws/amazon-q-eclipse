@@ -4,8 +4,6 @@
 package software.aws.toolkits.eclipse.amazonq.util;
 
 import java.nio.file.Paths;
-import java.util.Set;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 
@@ -17,15 +15,9 @@ public final class AbapUtil {
 
     // ABAP/ADT related constants
     public static final String SEMANTIC_FS_SCHEME = "semanticfs:/";
-    public static final String SAP_PACKAGE_PREFIX = "com.sap";
-    public static final String ADT_CLASS_NAME_PATTERN = "Adt";
+    public static final String ADT_CLASS_NAME_PATTERN = "adt";
     public static final String SEMANTIC_BUNDLE_ID = "org.eclipse.core.resources.semantic";
     public static final String SEMANTIC_CACHE_FOLDER = ".cache";
-
-    // ABAP file extensions that require semantic cache path
-    private static final Set<String> ABAP_EXTENSIONS = Set.of("asprog", "aclass", "asinc", "aint", "assrvds",
-            "asbdef", "asddls", "astablds", "astabldt", "amdp", "apack", "asrv", "aobj", "aexit", "abdef",
-            "acinc", "asfugr", "apfugr", "asfunc", "asfinc", "apfunc", "apfinc");
 
     private AbapUtil() {
         // Prevent instantiation
@@ -40,8 +32,7 @@ public final class AbapUtil {
      * @return true if it's likely an ADT editor
      */
     public static boolean isAdtEditor(final String className) {
-        return className != null
-                && (className.contains(SAP_PACKAGE_PREFIX) || className.contains(ADT_CLASS_NAME_PATTERN));
+        return className != null && className.contains(ADT_CLASS_NAME_PATTERN);
     }
 
     /**
@@ -58,19 +49,6 @@ public final class AbapUtil {
                 .append(SEMANTIC_CACHE_FOLDER)
                 .append(folderName);
         return cachePath.toFile().toURI().toString();
-    }
-
-    /**
-     * Checks if a file is an ABAP file requiring semantic cache.
-     * @param file the file to check
-     * @return true if it's an ABAP file
-     */
-    public static boolean isAbapFile(final IFile file) {
-        if (file == null) {
-            return false;
-        }
-        String extension = file.getFileExtension();
-        return extension != null && ABAP_EXTENSIONS.contains(extension.toLowerCase());
     }
 
     /**

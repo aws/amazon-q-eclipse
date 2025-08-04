@@ -45,10 +45,7 @@ public class QLspConnectionProvider extends AbstractLspConnectionProvider {
             var serverCommand = Paths.get(lspInstallResult.getServerDirectory(), lspInstallResult.getServerCommand());
             List<String> commands = new ArrayList<>();
             commands.add(serverCommand.toString());
-            // commands.add(lspInstallResult.getServerCommandArgs());
-//            commands.add("--inspect=6012");
-//            commands.add("C:/sherry-dev/language-servers/app/aws-lsp-codewhisperer-runtimes/out/agent-standalone.js");
-//            commands.add("--nolazy");
+            commands.add(lspInstallResult.getServerCommandArgs());
             commands.add("--stdio");
             commands.add("--set-credentials-encryption-key");
             setCommands(commands);

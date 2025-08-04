@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.junit.jupiter.api.AfterEach;
@@ -81,55 +80,6 @@ class AbapUtilTest {
         String result = AbapUtil.convertSemanticUriToPath(nonSemanticUri);
 
         assertEquals(nonSemanticUri, result);
-    }
-
-    @Test
-    void isAbapFileWithValidExtensionReturnsTrue() {
-        IFile mockFile = Mockito.mock(IFile.class);
-        Mockito.when(mockFile.getFileExtension()).thenReturn("aclass");
-
-        boolean result = AbapUtil.isAbapFile(mockFile);
-
-        assertTrue(result);
-    }
-
-    @Test
-    void isAbapFileWithUpperCaseExtensionReturnsTrue() {
-        IFile mockFile = Mockito.mock(IFile.class);
-        Mockito.when(mockFile.getFileExtension()).thenReturn("ACLASS");
-
-        boolean result = AbapUtil.isAbapFile(mockFile);
-
-        assertTrue(result);
-    }
-
-    @Test
-    void isAbapFileWithInvalidExtensionReturnsFalse() {
-        IFile mockFile = Mockito.mock(IFile.class);
-        Mockito.when(mockFile.getFileExtension()).thenReturn("java");
-
-        boolean result = AbapUtil.isAbapFile(mockFile);
-
-        assertFalse(result);
-    }
-
-    @Test
-    void isAbapFileWithNullFileReturnsFalse() {
-        IFile file = null;
-
-        boolean result = AbapUtil.isAbapFile(file);
-
-        assertFalse(result);
-    }
-
-    @Test
-    void isAbapFileWithNullExtensionReturnsFalse() {
-        IFile mockFile = Mockito.mock(IFile.class);
-        Mockito.when(mockFile.getFileExtension()).thenReturn(null);
-
-        boolean result = AbapUtil.isAbapFile(mockFile);
-
-        assertFalse(result);
     }
 
     @Test

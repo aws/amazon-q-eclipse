@@ -37,7 +37,7 @@ class AbapUtilTest {
 
     @Test
     void isAdtEditorWithAdtPatternReturnsTrue() {
-        String className = "SomeAdtEditor";
+        String className = "com.sap.adt.editor";
 
         boolean result = AbapUtil.isAdtEditor(className);
 

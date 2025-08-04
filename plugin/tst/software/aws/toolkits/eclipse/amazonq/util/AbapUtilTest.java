@@ -135,7 +135,7 @@ class AbapUtilTest {
     @Test
     void getSemanticCachePathReturnsCorrectPath() {
         setupPlatformMock();
-        String workspaceRelativePath = "/project/file.aclass";
+        String workspaceRelativePath = "project/file.aclass";
 
         String result = AbapUtil.getSemanticCachePath(workspaceRelativePath);
 
@@ -160,5 +160,6 @@ class AbapUtilTest {
         Mockito.when(mockFile.toURI()).thenReturn(mockUri);
         // For getSemanticCachePath method
         Mockito.when(mockPath.toString()).thenReturn("/mock/state/location");
+        Mockito.when(mockFinalPath.toString()).thenReturn("/mock/state/location/.cache/project/file.aclass");
     }
 }

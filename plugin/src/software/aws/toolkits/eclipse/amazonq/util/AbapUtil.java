@@ -57,8 +57,8 @@ public final class AbapUtil {
      * @return the full semantic cache path
      */
     public static String getSemanticCachePath(final String workspaceRelativePath) {
-        if (Paths.get(workspaceRelativePath).isAbsolute()) {
-            throw new IllegalArgumentException("Path must be workspace-relative");
+        if (workspaceRelativePath == null) {
+            throw new IllegalArgumentException("Relative path for ADT plugin file does not exist");
         }
         return Platform.getStateLocation(Platform.getBundle(SEMANTIC_BUNDLE_ID))
                 .append(SEMANTIC_CACHE_FOLDER)

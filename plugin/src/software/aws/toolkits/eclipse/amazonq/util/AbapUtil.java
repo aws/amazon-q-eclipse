@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import java.nio.file.Paths;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 

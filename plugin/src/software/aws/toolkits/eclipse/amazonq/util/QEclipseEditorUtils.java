@@ -141,7 +141,9 @@ public final class QEclipseEditorUtils {
         } else if (editorInput instanceof IFileEditorInput fileEditorInput) {
             var file = fileEditorInput.getFile();
             IEditorPart editorPart = getActivePage().findEditor(editorInput);
-            if (AbapUtil.isAdtEditor(editorPart.getClass().getName())) {
+            if (editorPart != null && AbapUtil.isAdtEditor(editorPart.getClass().getName())) {
+                // Special handling for ABAP files: ADT plugins store files in a semantic cache location
+                // rather than the workspace location, so we need to reference the cached file path
                 return AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
             }
             return file.getRawLocation().toOSString();

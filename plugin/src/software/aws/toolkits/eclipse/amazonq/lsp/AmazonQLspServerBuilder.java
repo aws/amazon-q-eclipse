@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.messages.Message;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
+import org.apache.commons.lang3.StringUtils;
 
 import com.google.gson.ToNumberPolicy;
 
@@ -72,9 +73,9 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         try {
             if (initParams.getWorkspaceFolders() != null) {
                 initParams.getWorkspaceFolders().forEach(folder -> {
-                    if (folder.getUri() != null && folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {
+                    if (StringUtils.isNotBlank(folder.getUri()) && folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {
                         String convertedUri = AbapUtil.convertSemanticUriToPath(folder.getUri());
-                        if (convertedUri != null && !convertedUri.trim().isEmpty()) {
+                        if (StringUtils.isNotBlank(convertedUri)) {
                             folder.setUri(convertedUri);
                         }
                     }

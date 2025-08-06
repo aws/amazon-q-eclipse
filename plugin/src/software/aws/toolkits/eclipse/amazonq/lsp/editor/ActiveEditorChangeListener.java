@@ -70,16 +70,16 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
-        var part = partRef.getPart(false);
-        if (part instanceof ITextEditor || isAdtEditor(part)) {
-            handleEditorChange(part);
+        var editor = partRef.getPart(false);
+        if (editor instanceof ITextEditor || isAdtEditor(editor)) {
+            handleEditorChange(editor);
         }
     }
 
     @Override
     public void partClosed(final IWorkbenchPartReference partRef) {
-        var part = partRef.getPart(false);
-        if (part instanceof ITextEditor || isAdtEditor(part)) {
+        var editor = partRef.getPart(false);
+        if (editor instanceof ITextEditor || isAdtEditor(editor)) {
             handleEditorChange(null);
         }
     }
@@ -107,32 +107,27 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
     private Map<String, Object> createActiveEditorParams(final Object editor) {
         Map<String, Object> params = new HashMap<>();
         if (editor != null) {
-            if (editor instanceof ITextEditor textEditor) {
-                Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(textEditor.getEditorInput());
-
-                if (fileUri.isPresent()) {
-                    Map<String, String> textDocument = new HashMap<>();
-                    textDocument.put("uri", fileUri.get());
-                    params.put("textDocument", textDocument);
+            Optional<String> fileUri = Optional.empty();
+            if (editor instanceof ITextEditor te) {
+                fileUri = QEclipseEditorUtils.getOpenFileUri(te.getEditorInput());
+            } else if (isAdtEditor(editor)) {
+                fileUri = QEclipseEditorUtils.getOpenFileUri(((IEditorPart) editor).getEditorInput());
+            }
+            if (fileUri.isPresent()) {
+                Map<String, String> textDocument = new HashMap<>();
+                textDocument.put("uri", fileUri.get());
+                params.put("textDocument", textDocument);
+                if (editor instanceof ITextEditor textEditor) {
                     QEclipseEditorUtils.getSelectionRange(textEditor).ifPresent(range -> {
                         Map<String, Object> cursorState = new HashMap<>();
                         cursorState.put("range", range);
                         params.put("cursorState", cursorState);
                     });
-                }
-            } else if (isAdtEditor(editor)) {
-                // Handle ADT editors specifically
-                var editorPart = (IEditorPart) editor;
-                Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(editorPart.getEditorInput());
-                if (fileUri.isPresent()) {
-                    Map<String, String> textDocument = new HashMap<>();
-                    textDocument.put("uri", fileUri.get());
-                    params.put("textDocument", textDocument);
+                } else if (isAdtEditor(editor)) {
                     params.put("cursorState", null);
                 }
             }
         } else {
-            // Editor is null (closed), send null values
             params.put("textDocument", null);
             params.put("cursorState", null);
         }

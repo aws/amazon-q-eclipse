@@ -23,10 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -90,6 +88,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
+import software.aws.toolkits.eclipse.amazonq.util.AbapUtil;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
@@ -534,16 +533,26 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void didCopyFile(final Object params) {
+        var path = extractFilePathFromParams(params);
+        Activator.getLogger().info("triggering a copy for:" + path);
         refreshProjects();
     }
 
     @Override
     public final void didWriteFile(final Object params) {
+        var path = extractFilePathFromParams(params);
+        if (AbapUtil.isAbapFile(path)) {
+            AbapUtil.updateAdtServer(path);
+        }
         refreshProjects();
     }
 
     @Override
     public final void didAppendFile(final Object params) {
+        var path = extractFilePathFromParams(params);
+        if (AbapUtil.isAbapFile(path)) {
+            AbapUtil.updateAdtServer(path);
+        }
         refreshProjects();
     }
 
@@ -559,22 +568,16 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     private void refreshProjects() {
         WorkspaceUtils.refreshAllProjects();
+        WorkspaceUtils.refreshAdtViews();
     }
 
-    private boolean isUriInWorkspace(final String uri) {
-        try {
-            IWorkspace workspace = ResourcesPlugin.getWorkspace();
-            IPath workspacePath = workspace.getRoot().getLocation();
-
-            URI fileUri = new URI(uri);
-            File file = new File(fileUri);
-            String filePath = file.getCanonicalPath();
-
-            return filePath.startsWith(workspacePath.toFile().getCanonicalPath());
-        } catch (Exception e) {
-            Activator.getLogger().error("Error validating URI location: " + uri, e);
-            return false;
+    private String extractFilePathFromParams(final Object params) {
+        if (params instanceof Map) {
+            var map = (Map<?, ?>) params;
+            Object path = map.get("path");
+            return path != null ? path.toString() : null;
         }
+        return null;
     }
 
     @Override

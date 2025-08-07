@@ -12,7 +12,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
@@ -176,7 +175,7 @@ public final class AbapUtil {
                     }
                 }
             } catch (Exception e) {
-                Activator.getLogger().error("Failed to save ADT editor", e);
+                Activator.getLogger().error("Failed to update ABAP ADT editor", e);
             }
         });
     }

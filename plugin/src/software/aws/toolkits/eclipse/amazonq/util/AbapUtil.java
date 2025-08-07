@@ -78,20 +78,16 @@ public final class AbapUtil {
     }
 
     /**
-     * Checks if a file is an ABAP file requiring semantic cache.
+     * Checks if a file is an ABAP ADT file referenced via the semantic cache.
      * @param file the file to check
-     * @return true if it's an ABAP file
+     * @return true if it's an ABAP ADT file
      */
     public static boolean isAbapFile(final String filePath) {
         if (StringUtils.isBlank(filePath)) {
             return false;
         }
-        int lastDot = filePath.lastIndexOf('.');
-        if (lastDot == -1) {
-            return false;
-        }
-        String extension = filePath.substring(lastDot + 1);
-        return extension != null && ABAP_EXTENSIONS.contains(extension.toLowerCase());
+        // checks whether a given file is an abap file present in cache by looking for certain strings in the path
+        return StringUtils.containsIgnoreCase(filePath, AbapUtil.SEMANTIC_BUNDLE_ID) && StringUtils.containsIgnoreCase(filePath, ".adt");
     }
 
 
@@ -161,8 +157,7 @@ public final class AbapUtil {
 
                 // Check if file is already open in an editor
                 var existingEditor = findOpenEditor(page, workspaceFile);
-                if (existingEditor != null && AbapUtil.isAdtEditor(existingEditor.getClass().getName())) {
-                    // File is already open, save it to update the remote
+                if (existingEditor != null) {
                     saveOpenEditor(existingEditor);
                 } else {
                     // File not open, open it temporarily in an invisible editor and save to update remote

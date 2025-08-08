@@ -340,7 +340,9 @@ public final class QEclipseEditorUtils {
         if (input instanceof FileEditorInput) {
             IFile file = ((FileEditorInput) input).getFile();
             IContentType contentType = Platform.getContentTypeManager().findContentTypeFor(file.getName());
-            contentTypeName = contentType.getName();
+            if (contentType != null) {
+                contentTypeName = contentType.getName();
+            }
         }
         if (contentTypeName == null) {
             return new GenericTypeheadProcessor();

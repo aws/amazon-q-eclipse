@@ -17,7 +17,6 @@ import org.eclipse.mylyn.commons.ui.dialogs.AbstractNotificationPopup;
 import org.eclipse.swt.widgets.Display;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import software.amazon.awssdk.utils.StringUtils;
@@ -61,51 +60,36 @@ public final class QDeveloperProfileUtil {
                     .ofNullable(Activator.getPluginStore().get(ViewConstants.Q_DEVELOPER_PROFILE_SELECTION_KEY))
                     .map(json -> {
                         try {
-                            if (isValidSerializedProfile(json)) {
-                                return deserializeProfile(json);
+                            Activator.getLogger().info("Found cached developer profile during init, attempting to validate and deserialize");
+                            QDeveloperProfile profile = deserializeProfile(json);
+                            if (isValidCachedProfile(profile)) {
+                                Activator.getLogger().info("Loaded cached developer profile: " + profile.getName());
+                                return profile;
                             } else {
-                                Activator.getLogger().error("Cached profile has invalid format");
+                                Activator.getLogger().error("Cached profile has invalid data");
                             }
                         } catch (final JsonProcessingException e) {
-                            Activator.getLogger().error("Failed to process cached profile", e);
+                            Activator.getLogger().error("Failed to deserialize cached profile", e);
                         }
                         return null;
                     }).orElse(null);
 
         } catch (Exception e) {
-            Activator.getLogger().error("Failed to deserialize developer profile", e);
+            Activator.getLogger().error("Failed to load developer profile during init", e);
         }
         profileSelectionTask = new CompletableFuture<>();
         profiles = new ArrayList<>();
     }
 
-    private boolean isValidSerializedProfile(final String profile) throws JsonProcessingException {
-        JsonNode node = OBJECT_MAPPER.readTree(profile);
-        return node.has("arn") && isValidArn(node.get("arn").asText()) && node.has("name")
-                && StringUtils.isNotBlank(node.get("name").asText()) && node.has("accountId")
-                && isValidAccountId(node.get("accountId").asText()) && node.has("region")
-                && node.get("identityDetails").has("region")
-                && isValidRegion(node.get("identityDetails").get("region").asText());
-    }
 
     private QDeveloperProfile deserializeProfile(final String json) throws JsonProcessingException {
-        QDeveloperProfile deserializedProfile = OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
-
-        if (!isValidProfile(deserializedProfile)) {
-            throw new JsonProcessingException("Cached profile has invalid data") {
-                private static final long serialVersionUID = 1L;
-            };
-        }
-        return deserializedProfile;
+        return OBJECT_MAPPER.readValue(json, QDeveloperProfile.class);
     }
 
     private String serializeProfile(final QDeveloperProfile developerProfile) throws JsonProcessingException {
-        if (!isValidProfile(developerProfile)) {
-            throw new JsonProcessingException("Developer profile has invalid data") {
-                private static final long serialVersionUID = 1L;
-            };
+        if (developerProfile == null) {
+            throw new IllegalArgumentException("Unable to serialize null profile");
         }
-
         return OBJECT_MAPPER.writeValueAsString(developerProfile);
     }
 
@@ -118,6 +102,7 @@ public final class QDeveloperProfileUtil {
                 Activator.getLoginService().logout();
                 return null;
             }).thenAccept(result -> {
+                Activator.getLogger().info("Fetched developer profiles, validating current customization");
                 CustomizationUtil.validateCurrentCustomization();
             });
             savedDeveloperProfile = null;
@@ -135,6 +120,7 @@ public final class QDeveloperProfileUtil {
 
     private synchronized CompletableFuture<List<QDeveloperProfile>> queryForDeveloperProfilesFuture(
             final boolean tryApplyCachedProfile, final boolean applyProfileUnconditionally) {
+        Activator.getLogger().info("Fetching Q developer profiles...");
         return Activator.getLspProvider().getAmazonQServer()
                 .thenCompose(server -> {
                     GetConfigurationFromServerParams params = new GetConfigurationFromServerParams(
@@ -142,7 +128,11 @@ public final class QDeveloperProfileUtil {
                     CompletableFuture<LspServerConfigurations<QDeveloperProfile>> response = server
                             .getConfigurationFromServer(params);
                     return response;
-                }).thenApply(this::processConfigurations).exceptionally(throwable -> {
+                }).thenApply(configurations -> {
+                    var profiles =  processConfigurations(configurations);
+                    Activator.getLogger().info("Fetched " + profiles.size() + " Q developer profiles");
+                    return profiles;
+                }).exceptionally(throwable -> {
                     Activator.getLogger().error("Error occurred while fetching the list of Q Developer Profile: ",
                             throwable);
                     throw new AmazonQPluginException(throwable);
@@ -155,7 +145,7 @@ public final class QDeveloperProfileUtil {
         try {
             return queryForDeveloperProfilesFuture(tryApplyCachedProfile, false).get();
         } catch (InterruptedException e) {
-            Activator.getLogger().error("Interrupted when fetching profile: ", e);
+            Activator.getLogger().error("Error occurred when fetching profile: ", e);
         }
 
         return new ArrayList<>();
@@ -169,22 +159,24 @@ public final class QDeveloperProfileUtil {
         return profileSelectionTask;
     }
 
-    private boolean isValidProfile(final QDeveloperProfile profile) {
-        return profile != null && StringUtils.isNotBlank(profile.getName()) && isValidAccountId(profile.getAccountId())
-                && isValidArn(profile.getArn()) && isValidRegion(profile.getRegion());
+    private boolean isValidFetchedProfile(final QDeveloperProfile profile) {
+        return profile != null;
+    }
+
+    private boolean isValidCachedProfile(final QDeveloperProfile profile) {
+        return profile != null  && isValidAccountId(profile.getAccountId()) && isValidArn(profile.getArn()) && isValidRegion(profile.getRegion());
     }
 
     private boolean isValidAccountId(final String accountId) {
-        return accountId != null && accountId.matches("^\\d{12}$");
+        return StringUtils.isNotBlank(accountId);
     }
 
     private boolean isValidArn(final String arn) {
-        return arn != null && arn.matches("^arn:aws:codewhisperer:[a-z]{2}-[a-z]+-\\d:\\d{12}:profile/[A-Z0-9]+$");
+        return StringUtils.isNotBlank(arn);
     }
 
     private boolean isValidRegion(final String region) {
-        return region != null && region
-                .matches("^[a-z]{2}-(central|north|south|east|west|northeast|southeast|northwest|southwest)-(\\d)$");
+        return StringUtils.isNotBlank(region);
     }
 
     private List<QDeveloperProfile> handleSelectedProfile(final List<QDeveloperProfile> profiles,
@@ -224,6 +216,7 @@ public final class QDeveloperProfileUtil {
     private boolean handleSingleOrNoProfile(final List<QDeveloperProfile> profiles,
             final boolean tryApplyCachedProfile, final boolean applyProfileUnconditionally) {
         if (!profiles.isEmpty() && tryApplyCachedProfile) {
+            Activator.getLogger().info("Found single developer profile, auto-selecting");
             setDeveloperProfile(profiles.get(0), true, applyProfileUnconditionally);
             return true;
         }
@@ -240,7 +233,10 @@ public final class QDeveloperProfileUtil {
                     });
 
             if (isProfileSelected && tryApplyCachedProfile) {
+                Activator.getLogger().info("Using cached profile: " + selectedDeveloperProfile.getName());
                 setDeveloperProfile(selectedDeveloperProfile, true, applyProfileUnconditionally);
+            } else if (!isProfileSelected) {
+                Activator.getLogger().warn("Cached profile not found in available profiles, user selection required");
             }
         }
         return isProfileSelected;
@@ -250,7 +246,8 @@ public final class QDeveloperProfileUtil {
             final LspServerConfigurations<QDeveloperProfile> configurations) {
         return Optional.ofNullable(configurations).map(
                 config -> {
-                    return config.getConfigurations().stream().filter(this::isValidProfile)
+                    // we assume backend would return a valid profile and do not any further validations
+                    return config.getConfigurations().stream().filter(this::isValidFetchedProfile)
                             .collect(Collectors.toList());
                 })
                 .orElse(Collections.emptyList());
@@ -263,9 +260,13 @@ public final class QDeveloperProfileUtil {
         }
 
         try {
-            return queryForDeveloperProfiles(false);
+            List<QDeveloperProfile> fetchedProfiles = queryForDeveloperProfiles(false);
+            if (fetchedProfiles == null || fetchedProfiles.isEmpty()) {
+                Activator.getLogger().warn("No developer profiles available");
+            }
+            return fetchedProfiles;
         } catch (Exception e) {
-            Activator.getLogger().error("Interupted while fetching profiles: " + e);
+            Activator.getLogger().error("Failed to fetch profiles: ", e);
         }
 
         return null;
@@ -283,6 +284,7 @@ public final class QDeveloperProfileUtil {
             return CompletableFuture.completedFuture(null);
         }
 
+        Activator.getLogger().info("Setting developer profile: " + developerProfile.getName());
         selectedDeveloperProfile = developerProfile;
         saveSelectedProfile();
 
@@ -340,6 +342,8 @@ public final class QDeveloperProfileUtil {
             }
         } catch (final JsonProcessingException e) {
             Activator.getLogger().error("Failed to cache Q developer profile");
+        } catch (Exception e) {
+            Activator.getLogger().error("Unexpected error while caching Q developer profile", e);
         }
     }
 
@@ -347,15 +351,17 @@ public final class QDeveloperProfileUtil {
         if (profiles == null || profiles.isEmpty()) {
             try {
                 queryForDeveloperProfiles(false);
+                if (profiles == null || profiles.isEmpty()) {
+                    Activator.getLogger().info("No Q developer profiles found");
+                } else if (profiles.size() == 1) {
+                    handleSingleOrNoProfile(profiles, true, false);
+                }
             } catch (Exception e) {
-                Activator.getLogger().error("Interrupted when fetching profile: ", e);
-            }
-
-            if (profiles.size() == 1) {
-                handleSingleOrNoProfile(profiles, true, false);
+                Activator.getLogger().error("Error occurred when fetching profile: ", e);
+                return false;
             }
         }
-        return profiles.size() > 1;
+        return profiles != null && profiles.size() > 1;
     }
 
     public QDeveloperProfile getSelectedProfile() {

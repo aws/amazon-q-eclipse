@@ -35,8 +35,6 @@ import org.eclipse.swt.widgets.Text;
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
 public final class InlineChatUIManager {
@@ -139,37 +137,34 @@ public final class InlineChatUIManager {
                     composite.setLayout(new GridLayout(1, false));
 
                     inputField = new Text(composite, SWT.BORDER | SWT.MULTI);
-                    if (PluginUtils.getPlatform() == PluginPlatform.WINDOWS) {
-                        Display.getDefault().asyncExec(() -> {
-                            inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
-                            inputField.setText(inputPromptMessage);
-                        });
+                    Display.getDefault().asyncExec(() -> {
+                        inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
+                        inputField.setText(inputPromptMessage);
+                    });
 
-                        inputField.addKeyListener(new KeyAdapter() {
-                            @Override
-                            public void keyPressed(final KeyEvent e) {
-                                // If this is the first character being typed
-                                boolean backspace = (e.keyCode == SWT.DEL || e.keyCode == SWT.BS);
-                                if (inputField.getText().equals(inputPromptMessage)) {
-                                    if (!backspace) {
-                                        inputField.setText("");
-                                        inputField.setForeground(isDarkTheme
-                                                ? Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
-                                                        : Display.getDefault().getSystemColor(SWT.COLOR_BLACK));
-                                    }
-                                    e.doit = !backspace;
-                                } else if (backspace && inputField.getText().length() <= 1) {
-                                    inputField.setText(inputPromptMessage);
-                                    inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
+                    inputField.addKeyListener(new KeyAdapter() {
+                        @Override
+                        public void keyPressed(final KeyEvent e) {
+                            // If this is the first character being typed
+                            boolean backspace = (e.keyCode == SWT.DEL || e.keyCode == SWT.BS);
+                            if (inputField.getText().equals(inputPromptMessage)) {
+                                if (!backspace) {
+                                    inputField.setText("");
+                                    inputField.setForeground(isDarkTheme
+                                            ? Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+                                                    : Display.getDefault().getSystemColor(SWT.COLOR_BLACK));
                                 }
+                                e.doit = !backspace;
+                            } else if (backspace && inputField.getText().length() <= 1) {
+                                inputField.setText(inputPromptMessage);
+                                inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
                             }
-                        });
-                    } else {
-                        inputField.setMessage(inputPromptMessage);
-                    }
+                        }
+                    });
 
                     GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
                     gridData.widthHint = 350;
+                    gridData.heightHint = 25;
                     inputField.setLayoutData(gridData);
 
                     inputField.addKeyListener(new KeyAdapter() {

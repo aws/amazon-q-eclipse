@@ -278,6 +278,16 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             Activator.getLogger().error("Error processing ruleClick: " + e);
                         }
                         break;
+                    case LIST_AVAILABLE_MODELS:
+                        try {
+                            Object listModelsResponse = amazonQLspServer.listAvailableModels(message.getData()).get();
+                            var listModelsCommand = ChatUIInboundCommand.createCommand(ChatUIInboundCommandName.ListAvailableModels.getValue(),
+                                    listModelsResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, listModelsCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing listAvailableModels: " + e);
+                        }
+                        break;
                     case PINNED_CONTEXT_ADD:
                         amazonQLspServer.pinnedContextAdd(message.getData());
                         break;

@@ -136,6 +136,9 @@ public interface AmazonQLspServer extends LanguageServer {
     @JsonRequest("aws/chat/ruleClick")
     CompletableFuture<Object> ruleClick(Object params);
 
+    @JsonRequest("aws/chat/listAvailableModels")
+    CompletableFuture<Object> listAvailableModels(Object params);
+
     @JsonNotification("aws/chat/pinnedContextAdd")
     void pinnedContextAdd(Object params);
 

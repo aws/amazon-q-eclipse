@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.messages.Message;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
+import org.apache.commons.lang3.StringUtils;
 
 import com.google.gson.ToNumberPolicy;
 
@@ -22,6 +23,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.model.AwsExtendedInitializeResu
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.ClientMetadata;
 import software.aws.toolkits.eclipse.amazonq.telemetry.metadata.PluginClientMetadata;
+import software.aws.toolkits.eclipse.amazonq.util.AbapUtil;
 
 public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
 
@@ -67,11 +69,29 @@ public class AmazonQLspServerBuilder extends Builder<AmazonQLspServer> {
         return initOptions;
     }
 
+    private void sanitizeWorkspaceFoldersForAbap(final InitializeParams initParams) {
+        try {
+            if (initParams.getWorkspaceFolders() != null) {
+                initParams.getWorkspaceFolders().forEach(folder -> {
+                    if (StringUtils.isNotBlank(folder.getUri()) && folder.getUri().startsWith(AbapUtil.SEMANTIC_FS_SCHEME)) {
+                        String convertedUri = AbapUtil.convertSemanticUriToPath(folder.getUri());
+                        if (StringUtils.isNotBlank(convertedUri)) {
+                            folder.setUri(convertedUri);
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error sanitizing workspace folders for ABAP", e);
+        }
+    }
+
     @Override
     protected final MessageConsumer wrapMessageConsumer(final MessageConsumer consumer) {
         return super.wrapMessageConsumer((final Message message) -> {
             if (message instanceof RequestMessage && ((RequestMessage) message).getMethod().equals("initialize")) {
                 InitializeParams initParams = (InitializeParams) ((RequestMessage) message).getParams();
+                sanitizeWorkspaceFoldersForAbap(initParams);
                 ClientMetadata metadata = PluginClientMetadata.getInstance();
                 initParams.setClientInfo(new ClientInfo(USER_AGENT_CLIENT_NAME, metadata.getPluginVersion()));
                 initParams.setInitializationOptions(getInitializationOptions(metadata));

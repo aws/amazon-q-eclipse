@@ -9,13 +9,16 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPartListener2;
+
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.aws.toolkits.eclipse.amazonq.util.AbapUtil;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 
@@ -25,7 +28,8 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
     private ScheduledFuture<?> debounceTask;
     private IWorkbenchWindow registeredWindow;
 
-    private ActiveEditorChangeListener() { }
+    private ActiveEditorChangeListener() {
+    }
 
     public static ActiveEditorChangeListener getInstance() {
         if (instance == null) {
@@ -60,22 +64,27 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
         }
     }
 
+    private boolean isAdtEditor(final Object part) {
+        return part instanceof IEditorPart && AbapUtil.isAdtEditor(part.getClass().getName());
+    }
+
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
-        if (partRef.getPart(false) instanceof ITextEditor) {
-            ITextEditor editor = (ITextEditor) partRef.getPart(false);
+        var editor = partRef.getPart(false);
+        if (editor instanceof ITextEditor || isAdtEditor(editor)) {
             handleEditorChange(editor);
         }
     }
 
     @Override
     public void partClosed(final IWorkbenchPartReference partRef) {
-        if (partRef.getPart(false) instanceof ITextEditor) {
+        var editor = partRef.getPart(false);
+        if (editor instanceof ITextEditor || isAdtEditor(editor)) {
             handleEditorChange(null);
         }
     }
 
-    private void handleEditorChange(final ITextEditor editor) {
+    private void handleEditorChange(final Object editor) {
         // Cancel any pending notification
         if (debounceTask != null) {
             debounceTask.cancel(false);
@@ -95,26 +104,33 @@ public final class ActiveEditorChangeListener implements IPartListener2 {
         }, DEBOUNCE_DELAY_MS);
     }
 
-    private Map<String, Object> createActiveEditorParams(final ITextEditor editor) {
+    private Map<String, Object> createActiveEditorParams(final Object editor) {
         Map<String, Object> params = new HashMap<>();
         if (editor != null) {
-            Optional<String> fileUri = QEclipseEditorUtils.getOpenFileUri(editor.getEditorInput());
+            Optional<String> fileUri = Optional.empty();
+            if (editor instanceof ITextEditor te) {
+                fileUri = QEclipseEditorUtils.getOpenFileUri(te.getEditorInput());
+            } else if (isAdtEditor(editor)) {
+                fileUri = QEclipseEditorUtils.getOpenFileUri(((IEditorPart) editor).getEditorInput());
+            }
             if (fileUri.isPresent()) {
                 Map<String, String> textDocument = new HashMap<>();
                 textDocument.put("uri", fileUri.get());
                 params.put("textDocument", textDocument);
-                QEclipseEditorUtils.getSelectionRange(editor).ifPresent(range -> {
-                    Map<String, Object> cursorState = new HashMap<>();
-                    cursorState.put("range", range);
-                    params.put("cursorState", cursorState);
-                });
+                if (editor instanceof ITextEditor textEditor) {
+                    QEclipseEditorUtils.getSelectionRange(textEditor).ifPresent(range -> {
+                        Map<String, Object> cursorState = new HashMap<>();
+                        cursorState.put("range", range);
+                        params.put("cursorState", cursorState);
+                    });
+                } else if (isAdtEditor(editor)) {
+                    params.put("cursorState", null);
+                }
             }
         } else {
-            // Editor is null (closed), send null values
             params.put("textDocument", null);
             params.put("cursorState", null);
         }
-
         return params;
     }
 }

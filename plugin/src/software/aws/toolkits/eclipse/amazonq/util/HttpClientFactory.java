@@ -27,7 +27,7 @@ public final class HttpClientFactory {
         if (instance == null) {
             synchronized (HttpClientFactory.class) {
                 if (instance == null) {
-                    var builder = HttpClient.newBuilder();
+                    var builder = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL);
                     var proxyUrl = ProxyUtil.getHttpsProxyUrl();
                     if (!StringUtils.isEmpty(proxyUrl)) {
                         InetSocketAddress proxyAddress = getProxyAddress(proxyUrl);

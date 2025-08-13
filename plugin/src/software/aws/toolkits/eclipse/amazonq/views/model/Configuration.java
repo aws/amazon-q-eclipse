@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.views.model;
 import com.google.gson.annotations.SerializedName;
 
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
+import software.amazon.awssdk.arns.Arn;
 
 public class Configuration {
     @SerializedName("arn")
@@ -58,18 +59,13 @@ public class Configuration {
 
     private String extractAccountId(final String arn) {
         try {
-            if (arn.trim().isEmpty()) {
-                return "";
+            if (arn == null || arn.trim().isEmpty()) {
+                return null;
             }
-
-            String[] chunks = arn.split(":");
-
-            // The 5th chunk is the account id
-            // eg: arn:aws:codewhisperer:us-west-2:012345678901:profile/ABCDEFGHIJKL
-            return chunks.length < 5 ? "" : chunks[4];
+            return Arn.fromString(arn).accountId().orElse(null);
         } catch (Exception e) {
-            Activator.getLogger().info(e.getMessage());
-            return "";
+            Activator.getLogger().error("Error parsing arn for account Id", e);
+            return null;
         }
     }
 

@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.inlineChat;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -27,13 +29,12 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import software.aws.toolkits.eclipse.amazonq.chat.models.CursorState;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
-import software.aws.toolkits.eclipse.amazonq.util.PluginPlatform;
-import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ToolkitNotification;
 
 public final class InlineChatUIManager {
@@ -52,6 +53,7 @@ public final class InlineChatUIManager {
     private final String decidingMessage = "Accept (Enter) | Reject (Esc)";
     private boolean isDarkTheme;
     private int latestOffset;
+    private Listener paintListenerRef = null;
 
     private InlineChatUIManager() {
         // Prevent instantiation
@@ -134,53 +136,41 @@ public final class InlineChatUIManager {
                     var composite = (Composite) super.createDialogArea(parent);
                     composite.setLayout(new GridLayout(1, false));
 
-                    inputField = new Text(composite, SWT.SEARCH | SWT.BORDER | SWT.SINGLE);
-                    if (PluginUtils.getPlatform() == PluginPlatform.WINDOWS) {
-                        Display.getDefault().asyncExec(() -> {
-                            inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
-                            inputField.setText(inputPromptMessage);
-                        });
-
-                        inputField.addKeyListener(new KeyAdapter() {
-                            @Override
-                            public void keyPressed(final KeyEvent e) {
-                                // If this is the first character being typed
-                                boolean backspace = (e.keyCode == SWT.DEL || e.keyCode == SWT.BS);
-                                if (inputField.getText().equals(inputPromptMessage)) {
-                                    if (!backspace) {
-                                        inputField.setText("");
-                                        inputField.setForeground(isDarkTheme
-                                                ? Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
-                                                        : Display.getDefault().getSystemColor(SWT.COLOR_BLACK));
-                                    }
-                                    e.doit = !backspace;
-                                } else if (backspace && inputField.getText().length() <= 1) {
-                                    inputField.setText(inputPromptMessage);
-                                    inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
-                                }
-                            }
-                        });
-                    } else {
-                        inputField.setMessage(inputPromptMessage);
-                    }
-
-                    GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
-                    gridData.widthHint = 350;
-                    inputField.setLayoutData(gridData);
-
-                    // Enforce maximum character count that can be entered into the input
-                    inputField.addVerifyListener(e -> {
-                        String currentText = inputField.getText();
-                        String newText = currentText.substring(0, e.start) + e.text + currentText.substring(e.end);
-                        if (newText.length() > maxInputLength) {
-                            e.doit = false; // Prevent the input
-                        }
+                    inputField = new Text(composite, SWT.BORDER | SWT.MULTI);
+                    Display.getDefault().asyncExec(() -> {
+                        inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
+                        inputField.setText(inputPromptMessage);
                     });
 
                     inputField.addKeyListener(new KeyAdapter() {
                         @Override
                         public void keyPressed(final KeyEvent e) {
-                            if (e.character == SWT.CR || e.character == SWT.LF) {
+                            // If this is the first character being typed
+                            boolean backspace = (e.keyCode == SWT.DEL || e.keyCode == SWT.BS);
+                            if (inputField.getText().equals(inputPromptMessage)) {
+                                if (!backspace) {
+                                    inputField.setText("");
+                                    inputField.setForeground(isDarkTheme
+                                            ? Display.getDefault().getSystemColor(SWT.COLOR_WHITE)
+                                                    : Display.getDefault().getSystemColor(SWT.COLOR_BLACK));
+                                }
+                                e.doit = !backspace;
+                            } else if (backspace && inputField.getText().length() <= 1) {
+                                inputField.setText(inputPromptMessage);
+                                inputField.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
+                            }
+                        }
+                    });
+
+                    GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
+                    gridData.widthHint = 350;
+                    gridData.heightHint = 25;
+                    inputField.setLayoutData(gridData);
+
+                    inputField.addKeyListener(new KeyAdapter() {
+                        @Override
+                        public void keyPressed(final KeyEvent e) {
+                            if (e.keyCode == SWT.CR || e.keyCode == SWT.LF) {
                                 // Gather inputs and send back to controller
                                 var userInput = inputField.getText();
                                 if (userInputIsValid(userInput)) {
@@ -235,12 +225,49 @@ public final class InlineChatUIManager {
                     latestOffset = task.getSelectionOffset();
                 }
                 currentPaintListener = createPaintListenerPrompt(widget, latestOffset, promptText, isDarkTheme);
-                widget.addPaintListener(currentPaintListener);
+                addPaintListenerAndCapture(widget, currentPaintListener);
                 widget.redraw();
             } catch (Exception e) {
                 Activator.getLogger().error("Failed to create paint listener: " + e.getMessage(), e);
             }
         });
+    }
+
+    private void addPaintListenerAndCapture(final StyledText widget, final PaintListener paintListener) {
+        var listenersBefore = new HashSet<>(Arrays.asList(widget.getListeners(SWT.Paint)));
+        widget.addPaintListener(paintListener);
+        var listenersAfter = widget.getListeners(SWT.Paint);
+        for (var listener : listenersAfter) {
+            if (!listenersBefore.contains(listener)) {
+                if (isAdtPaintListener(listener)) {
+                    paintListenerRef = listener;
+                }
+                break;
+            }
+        }
+    }
+
+    /**
+     * ADT Viewers wrap the paint listener into an internal delegate(PaintListenerDelegate).
+     * which needs to be captured to effectively remove it later
+     * @param listener
+     * @return listener ref
+     */
+    private boolean isAdtPaintListener(final Listener listener) {
+        try {
+            // Use reflection to check if this wraps a PaintListenerDelegate
+            if (listener.getClass().getName().contains("TypedListener")) {
+                var eventListenerField = listener.getClass().getDeclaredField("eventListener");
+                eventListenerField.setAccessible(true);
+                Object eventListener = eventListenerField.get(listener);
+                if (eventListener != null && eventListener.getClass().getName().contains("PaintListenerDelegate")) {
+                   return true;
+                }
+            }
+        } catch (Exception e) {
+            // Ignore reflection errors
+        }
+        return false;
     }
 
     public void updatePromptPosition(final SessionState state) {
@@ -340,9 +367,17 @@ public final class InlineChatUIManager {
             return;
         }
         try {
-            if (viewer.getTextWidget() != null && !viewer.getTextWidget().isDisposed() && currentPaintListener != null) {
-                viewer.getTextWidget().removePaintListener(currentPaintListener);
-                viewer.getTextWidget().redraw();
+            var widget = viewer.getTextWidget();
+            if (widget != null && !widget.isDisposed() && currentPaintListener != null) {
+                // remove adt specific paint listener if present
+                if (paintListenerRef != null) {
+                    widget.removeListener(SWT.Paint, paintListenerRef);
+                    paintListenerRef =  null;
+                }
+                if (currentPaintListener !=  null) {
+                    widget.removePaintListener(currentPaintListener);
+                }
+                widget.redraw();
                 currentPaintListener = null;
             }
         } catch (Exception e) {
@@ -364,7 +399,7 @@ public final class InlineChatUIManager {
     }
 
     private boolean userInputIsValid(final String input) {
-        return input != null && input.length() >= 2 && input.length() < maxInputLength;
+        return input != null && input.length() >= 2;
     }
 
     /**

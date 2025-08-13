@@ -567,8 +567,29 @@
                                 <equals value="org.eclipse.ui.DefaultTextEditor"/>
                                 <equals value="org.eclipse.jdt.ui.CompilationUnitEditor"/>
                                 <equals value="org.eclipse.ui.genericeditor.GenericEditor"/>
-		                        <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>
-		                        <equals value="com.sap.adt.programs.ui.AdtProgramEditor"/>
+		                <equals value="software.aws.toolkits.eclipse.amazonq.views.AmazonQViewContainer"/>
+		                <equals value="com.sap.adt.programs.ui.AdtProgramEditor"/>
+                                <equals value="com.sap.adt.programs.ui.AdtIncludeEditor"/>
+                                <equals value="com.sap.adt.abapClassEditor"/>
+                                <equals value="com.sap.adt.abapInterfaceEditor"/>
+                                <!-- SAP GUI Editor for .asprog files -->
+                                <equals value="com.sap.adt.sapgui.ui.editors.WinGuiEditor"/>
+                                <!-- CDS Service Definition Editor for .assrvds files -->
+                                <equals value="com.sap.adt.cds.srvd.ui.editors.SrvdSourceEditor"/>
+                                <!-- Behavior Definition Editor for .asbdef files -->
+                                <equals value="com.sap.wbobj.bdef.ui.editors.BdefSourceEditor"/>
+		                <!-- CDS Data Definition Language Editor for .asddls files -->
+		                <equals value="com.sap.adt.cds.ddl.ui.editors.DdlSourceEditor"/>
+		                <!-- Dictionary Table Editor for .astabldt files -->
+		                <equals value="com.sap.wbobj.dictionary.tabldt.ui.editors.DdicTableEditor"/>
+                                <!-- Dictionary Structure Editor for .astablds files -->
+                                <equals value="com.sap.wbobj.dictionary.tablds.ui.editors.DdicStructureEditor"/>
+                                <!-- ABAP Function Group Include Editor for .asfugr files -->
+                                <equals value="com.sap.adt.functions.ui.includes.abapFunctionGroupIncludeEditor"/>
+                                <!-- ABAP Function Module Editor for .asfunc files -->
+                                <equals value="com.sap.adt.functions.ui.fmodules.abapFunctionModuleEditor"/>
+                                <!-- ABAP Function Group Editor for .asfugr files -->
+                                <equals value="com.sap.adt.functions.ui.includes.abapFunctionGroupEditor"/>
                             </or>
                         </with>
                     </and>

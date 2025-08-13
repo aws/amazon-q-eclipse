@@ -6,7 +6,7 @@
     <parent>
         <groupId>software.aws.toolkits.eclipse</groupId>
         <artifactId>amazon-q-eclipse-group</artifactId>
-        <version>2.3.1-SNAPSHOT</version>
+        <version>2.3.2-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -89,6 +89,11 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>regions</artifactId>
+            <version>${aws.java.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>arns</artifactId>
             <version>${aws.java.sdk.version}</version>
         </dependency>
         <dependency>

@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.eclipse.amazonq.views;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -399,7 +400,9 @@ public final class ChangeProfileDialog extends Dialog {
     private RadioButtonWithDescriptor createRadioButton(final Composite parent,
             final QDeveloperProfile developerProfile,
             final int style, final boolean isSelected) {
-        RadioButtonWithDescriptor button = new RadioButtonWithDescriptor(parent, developerProfile.getName(),
+        // names can be undefined, show placeholder value when not found
+        String profileName = StringUtils.isNotBlank(developerProfile.getName()) ? developerProfile.getName() : "Unnamed Profile";
+        RadioButtonWithDescriptor button = new RadioButtonWithDescriptor(parent, profileName,
                 developerProfile.getRegion(), developerProfile.getAccountId(), style);
         button.setData(developerProfile);
         button.addSelectionListener(() -> {

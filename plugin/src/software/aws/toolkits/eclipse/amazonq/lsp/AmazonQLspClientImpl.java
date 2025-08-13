@@ -27,7 +27,6 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
@@ -90,6 +89,7 @@ import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils;
 import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import software.aws.toolkits.eclipse.amazonq.telemetry.service.DefaultTelemetryService;
+import software.aws.toolkits.eclipse.amazonq.util.AbapUtil;
 import software.aws.toolkits.eclipse.amazonq.util.Constants;
 import software.aws.toolkits.eclipse.amazonq.util.ObjectMapperFactory;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
@@ -539,11 +539,19 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     @Override
     public final void didWriteFile(final Object params) {
+        var path = extractFilePathFromParams(params);
+        if (AbapUtil.isAbapFile(path)) {
+            AbapUtil.updateAdtServer(path);
+        }
         refreshProjects();
     }
 
     @Override
     public final void didAppendFile(final Object params) {
+        var path = extractFilePathFromParams(params);
+        if (AbapUtil.isAbapFile(path)) {
+            AbapUtil.updateAdtServer(path);
+        }
         refreshProjects();
     }
 
@@ -559,6 +567,7 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
 
     private void refreshProjects() {
         WorkspaceUtils.refreshAllProjects();
+        WorkspaceUtils.refreshAdtViews();
     }
 
     private boolean isUriInWorkspace(final String uri) {
@@ -575,6 +584,15 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
             Activator.getLogger().error("Error validating URI location: " + uri, e);
             return false;
         }
+    }
+
+    private String extractFilePathFromParams(final Object params) {
+        if (params instanceof Map) {
+            var map = (Map<?, ?>) params;
+            Object path = map.get("path");
+            return path != null ? path.toString() : null;
+        }
+        return null;
     }
 
     @Override

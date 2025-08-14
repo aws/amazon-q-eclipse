@@ -57,6 +57,26 @@ To send us a pull request, please:
 GitHub provides additional documentation on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
+## Updating Plugin Version
+
+To update the plugin version across all files:
+
+1. **Prerequisites**: Ensure you have Git Bash (Windows) or Terminal (Mac/Linux)
+2. **Run the version script**:
+   ```bash
+   ./update-version.sh [new-version]
+   ```
+   Example: `./update-version.sh 2.7.0`
+
+3. **What gets updated**:
+   - Root `pom.xml` version
+   - All child `pom.xml` parent versions
+   - `plugin/META-INF/MANIFEST.MF` Bundle-Version
+   - `feature/feature.xml` version
+   - `updatesite/category.xml` version references
+
+4. **Build with new version**: `mvn clean install` and `mvn clean package`
+
 ## Debugging/Running Locally
 To test your changes locally, you can run the plugin from your workspace by importing it into Eclipse.
 

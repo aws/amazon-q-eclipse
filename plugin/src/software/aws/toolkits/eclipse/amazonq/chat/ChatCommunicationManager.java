@@ -72,8 +72,8 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private final Map<String, Long> lastProcessedTimeMap = new ConcurrentHashMap<>();
 
     private static final int MINIMUM_PARTIAL_RESPONSE_LENGTH = 50;
-    private static final int MIN_DELAY_BETWEEN_PARTIALS = 500;
-    private static final int MAX_DELAY_BETWEEN_PARTIALS = 2500;
+    private static final int MIN_DELAY_BETWEEN_PARTIALS = 250;
+    private static final int MAX_DELAY_BETWEEN_PARTIALS = 1500;
     private static final int CHAR_COUNT_FOR_MAX_DELAY = 5000;
 
     private final ConcurrentHashMap<String, Object> partialResultLocks = new ConcurrentHashMap<>();
@@ -638,7 +638,10 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             // send partial response to UI if not cancelled in the interim
             if (Boolean.FALSE.equals(finalResultProcessed.get(token))) {
                 sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, partialChatResult, true, null));
-                lastProcessedTimeMap.put(tabId, currentTime);
+                // only update timestamp for rate-limited messages (string body without additional messages)
+                if (!hasAdditionalMessages && body instanceof String) {
+                    lastProcessedTimeMap.put(tabId, currentTime);
+                }
             }
         }
     }

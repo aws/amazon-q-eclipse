@@ -100,6 +100,8 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
         String chatJsPath = chatAsset.get();
         String themeVariables = chatTheme.getThemeVariables();
+        String webkitWorkarounds = getWebkitProgressWorkaround();
+        String eclipseWebkitScript = getEclipseWebkitScript();
 
         return Optional.of(String.format("""
                 <!DOCTYPE html>
@@ -131,13 +133,57 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         [class*="mynah-ui-icon-"] {
                             transform: translateZ(0);
                         }
+                        %s
                     </style>
                 </head>
                 <body>
                     %s
+                    %s
                 </body>
                 </html>
-                """, chatJsPath, chatJsPath, themeVariables, generateJS(chatJsPath)));
+                """, chatJsPath, chatJsPath, themeVariables, webkitWorkarounds, eclipseWebkitScript, generateJS(chatJsPath)));
+    }
+
+    /**
+     * Replaces the progress icon with a simplified static spinner on Mac to reduce Webkit rendering issues.
+     */
+    private String getWebkitProgressWorkaround() {
+        PluginPlatform platform = PluginUtils.getPlatform();
+        if (platform != PluginPlatform.WINDOWS) {
+            return """
+                    .mynah-ui-icon-progress {
+                        -webkit-mask: none !important;
+                        mask: none !important;
+                        background: none !important;
+                        border: 2px solid currentColor !important;
+                        border-top-color: transparent !important;
+                        border-radius: 50% !important;
+                    }
+
+                    .mynah-ui-icon-progress-subtract {
+                        mask: none !important;
+                        background: none !important;
+                        border: 2px solid currentColor !important;
+                        border-top-color: transparent !important;
+                        border-radius: 50% !important;
+                    }
+                    """;
+        }
+        return "";
+    }
+
+    /**
+     * Injects a script to the UI JS to pass in a flag when SWT Webkit is used.
+     * The backing code has logic to skip styling that adds transparency layers
+     * that can potentially cause rendering issues with Webkit on Mac
+     * @return
+     */
+    private String getEclipseWebkitScript() {
+        PluginPlatform platform = PluginUtils.getPlatform();
+        if (platform != PluginPlatform.WINDOWS) {
+            return "<script>document.body.classList.add('eclipse-swt-webkit');</script>";
+        }
+        return "";
     }
 
     private String generateJS(final String jsEntrypoint) {
@@ -151,21 +197,10 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
                         waitForFunction('ideCommand')
                             .then(() => {
                                 function refreshUi() {
-                                    document.querySelectorAll('[class*="mynah-ui-icon-"]').forEach(icon => {
-                                        icon.style.transform = 'none';
-                                        void icon.offsetHeight;
-                                        icon.style.transform = 'translateZ(0)';
-                                    });
                                     document.querySelectorAll('[class*="mynah-chat-wrapper"]').forEach(wrapper => {
                                         wrapper.style.overflow = 'visible';
                                     });
                                 }
-
-                                document.addEventListener('visibilitychange', () => {
-                                    if (document.visibilityState === 'visible') {
-                                        refreshUi();
-                                    }
-                                });
 
                                 const mynahUI = amazonQChat.createChat({
                                     postMessage: (message) => {

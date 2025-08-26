@@ -24,6 +24,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -42,6 +43,9 @@ import software.aws.toolkits.eclipse.amazonq.preferences.AmazonQPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 public final class QLspConnectionProviderTest {
+
+    @TempDir
+    private java.nio.file.Path tempDir;
 
     @RegisterExtension
     private static ActivatorStaticMockExtension activatorStaticMockExtension = new ActivatorStaticMockExtension();
@@ -99,7 +103,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testConstructorInitializesCorrectly() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
         String serverPath = Paths.get(testDir, "server.js").toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
@@ -126,7 +130,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testAddEnvironmentVariablesWithoutProxy() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
         Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
@@ -148,7 +152,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testAddEnvironmentVariablesWithProxy() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
         Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
@@ -171,7 +175,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testStartInitializesEncryptedCommunication() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
         Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
@@ -197,7 +201,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testStartLogsErrorOnException() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
         Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
@@ -227,7 +231,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testCertInjectionWithUserPreference() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
         Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
@@ -249,7 +253,7 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testNoCertInjectionWhenNoCertsFound() throws IOException {
-        String testDir = Paths.get("test", "dir").toString();
+        String testDir = tempDir.toString();
 
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
         Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,15 +99,18 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testConstructorInitializesCorrectly() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+        String serverPath = Paths.get(testDir, "server.js").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("--test-arg");
 
         var provider = new QLspConnectionProvider();
 
         List<String> expectedCommands = List.of(
-                "/test/dir/server.js",
+                serverPath,
                 "--test-arg",
                 "--stdio",
                 "--set-credentials-encryption-key"
@@ -114,7 +118,7 @@ public final class QLspConnectionProviderTest {
 
         TestProcessConnectionProvider testProcessConnectionProvider = new TestProcessConnectionProvider(
                 expectedCommands,
-                "/test/dir"
+                testDir
         );
 
         assertTrue(testProcessConnectionProvider.equals(provider));
@@ -122,8 +126,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testAddEnvironmentVariablesWithoutProxy() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
@@ -142,8 +148,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testAddEnvironmentVariablesWithProxy() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
@@ -163,8 +171,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testStartInitializesEncryptedCommunication() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
@@ -187,8 +197,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testStartLogsErrorOnException() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
@@ -215,8 +227,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testCertInjectionWithUserPreference() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 
@@ -235,8 +249,10 @@ public final class QLspConnectionProviderTest {
 
     @Test
     void testNoCertInjectionWhenNoCertsFound() throws IOException {
+        String testDir = Paths.get("test", "dir").toString();
+
         LspInstallResult lspInstallResultMock = lspManagerProviderStaticMockExtension.getMock(LspInstallResult.class);
-        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn("/test/dir");
+        Mockito.when(lspInstallResultMock.getServerDirectory()).thenReturn(testDir);
         Mockito.when(lspInstallResultMock.getServerCommand()).thenReturn("server.js");
         Mockito.when(lspInstallResultMock.getServerCommandArgs()).thenReturn("");
 

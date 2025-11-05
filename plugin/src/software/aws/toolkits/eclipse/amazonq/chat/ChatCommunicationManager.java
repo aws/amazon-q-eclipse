@@ -72,8 +72,8 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
     private final Map<String, Long> lastProcessedTimeMap = new ConcurrentHashMap<>();
 
     private static final int MINIMUM_PARTIAL_RESPONSE_LENGTH = 50;
-    private static final int MIN_DELAY_BETWEEN_PARTIALS = 500;
-    private static final int MAX_DELAY_BETWEEN_PARTIALS = 2500;
+    private static final int MIN_DELAY_BETWEEN_PARTIALS = 250;
+    private static final int MAX_DELAY_BETWEEN_PARTIALS = 1500;
     private static final int CHAR_COUNT_FOR_MAX_DELAY = 5000;
 
     private final ConcurrentHashMap<String, Object> partialResultLocks = new ConcurrentHashMap<>();
@@ -276,6 +276,16 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             Activator.getEventBroker().post(ChatUIInboundCommand.class, ruleClickCommand);
                         } catch (Exception e) {
                             Activator.getLogger().error("Error processing ruleClick: " + e);
+                        }
+                        break;
+                    case LIST_AVAILABLE_MODELS:
+                        try {
+                            Object listModelsResponse = amazonQLspServer.listAvailableModels(message.getData()).get();
+                            var listModelsCommand = ChatUIInboundCommand.createCommand(ChatUIInboundCommandName.ListAvailableModels.getValue(),
+                                    listModelsResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, listModelsCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing listAvailableModels: " + e);
                         }
                         break;
                     case PINNED_CONTEXT_ADD:
@@ -628,7 +638,10 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
             // send partial response to UI if not cancelled in the interim
             if (Boolean.FALSE.equals(finalResultProcessed.get(token))) {
                 sendMessageToChatUI(new ChatUIInboundCommand(command, tabId, partialChatResult, true, null));
-                lastProcessedTimeMap.put(tabId, currentTime);
+                // only update timestamp for rate-limited messages (string body without additional messages)
+                if (!hasAdditionalMessages && body instanceof String) {
+                    lastProcessedTimeMap.put(tabId, currentTime);
+                }
             }
         }
     }

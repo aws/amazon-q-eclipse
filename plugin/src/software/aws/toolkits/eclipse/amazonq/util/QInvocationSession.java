@@ -28,10 +28,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
@@ -43,6 +46,10 @@ public final class QInvocationSession extends QResource {
 
     // Static variable to hold the single instance
     private static QInvocationSession instance;
+
+    private static final ExecutorService SESSION_PROCESSOR = Executors.newSingleThreadExecutor();
+    private static volatile UUID pendingRequestId = null;
+    private static final long REQUEST_TIMEOUT_SECONDS = 5;
 
     private volatile QInvocationSessionState state = QInvocationSessionState.INACTIVE;
     private CaretMovementReason caretMovementReason = CaretMovementReason.UNEXAMINED;
@@ -66,7 +73,6 @@ public final class QInvocationSession extends QResource {
     private QInlineTerminationListener terminationListener = null;
     private final boolean isTabOnly = false;
     private Consumer<Integer> unsetVerticalIndent;
-    private final ConcurrentHashMap<UUID, Future<?>> unresolvedTasks = new ConcurrentHashMap<>();
     private Runnable changeStatusToQuerying;
     private Runnable changeStatusToIdle;
     private Runnable changeStatusToPreviewing;
@@ -176,121 +182,152 @@ public final class QInvocationSession extends QResource {
     }
 
     private synchronized void queryAsync(final InlineCompletionParams params, final int invocationOffset) {
-        var uuid = UUID.randomUUID();
-        Activator.getLogger().info(uuid + " queried made at " + invocationOffset);
-        var future = ThreadingUtils.executeAsyncTaskAndReturnFuture(() -> {
+        UUID requestId = UUID.randomUUID();
+        pendingRequestId = requestId;
+
+        SESSION_PROCESSOR.submit(() -> {
             try {
-                var session = QInvocationSession.getInstance();
-                List<InlineCompletionItem> newSuggestions = new ArrayList<InlineCompletionItem>();
-                List<String> sessionId = new ArrayList<String>();
-                long requestInvocation = System.currentTimeMillis();
-
-                // request lsp for suggestions
-                var response = Activator.getLspProvider().getAmazonQServer().get()
-                        .inlineCompletionWithReferences(params);
-                response.thenAccept(result -> {
-                    sessionId.add(result.getSessionId());
-                    var suggestions = result.getItems().parallelStream().map(item -> {
-                        if (isTabOnly) {
-                            String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
-                            item.setInsertText(sanitizedText);
-                        }
-                        return item;
-                    }).collect(Collectors.toList());
-                    newSuggestions.addAll(suggestions);
-                }).get();
-
-                Display.getDefault().asyncExec(() -> {
-                    unresolvedTasks.remove(uuid);
-
-                    if (newSuggestions == null || newSuggestions.isEmpty() || sessionId.get(0) == null || sessionId.get(0).isEmpty()) {
-                        if (!session.isPreviewingSuggestions()) {
-                            end();
-                        }
-                        Activator.getLogger().info(uuid + " returned with no result.");
-                        if (params.getContext().getTriggerKind() == InlineCompletionTriggerKind.Invoke) {
-                            Display display = Display.getDefault();
-                            String message = "Q returned no suggestions";
-                            QEclipseEditorUtils.showToast(message, display, 2000);
-                        }
-                        return;
-                    } else {
-                        Activator.getLogger().info(uuid + " returned with " + newSuggestions.size() + " results.");
+                if (requestId.equals(pendingRequestId)) {
+                    CompletableFuture<Void> task = CompletableFuture.runAsync(() ->
+                        processRequest(params, invocationOffset, requestId));
+                    try {
+                        task.get(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    } catch (TimeoutException e) {
+                        Activator.getLogger().warn(requestId + " inline completion request task timed out after "
+                                + REQUEST_TIMEOUT_SECONDS + " seconds");
                     }
-
-                    suggestionsContext.setSessionId(sessionId.get(0));
-                    suggestionsContext.setRequestedAtEpoch(requestInvocation);
-                    suggestionsContext.getDetails()
-                            .addAll(newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
-
-                    initializeSuggestionCompletionResults();
-
-                    // If the caret positions has moved on from the invocation offset, we need to
-                    // see if there exists in the suggestions fetched
-                    // one more suggestions that qualify for what has been typed since the
-                    // invocation.
-                    // Note that we should not remove the ones that have been disqualified by the
-                    // content typed since the user might still want to explore them.
-                    int currentIdxInSuggestion = 0;
-                    boolean hasAMatch = false;
-                    var viewer = session.getViewer();
-                    if (viewer == null || viewer.getTextWidget() == null || viewer.getTextWidget().getCaretOffset() < invocationOffset) {
-                        // discard all suggestions since the current caret is behind request position
-                        updateCompletionStates(new ArrayList<String>());
-                        end();
-                        return;
-                    }
-
-                    if (viewer != null && viewer.getTextWidget() != null && viewer.getTextWidget().getCaretOffset() > invocationOffset) {
-                        var widget = viewer.getTextWidget();
-                        int currentOffset = widget.getCaretOffset();
-                        String prefix = widget.getTextRange(invocationOffset, currentOffset - invocationOffset);
-                        // Computes the typed prefix and typeahead length from when user invocation happened to
-                        // before suggestions are first shown in UI
-                        // Note: This computation may change later on but follows the same pattern for consistency across IDEs for now
-                        session.initialTypeaheadLength = Optional.of(prefix.length());
-
-                        for (int i = 0; i < newSuggestions.size(); i++) {
-                            if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
-                                currentIdxInSuggestion = i;
-                                hasAMatch = true;
-                                break;
-                            }
-                        }
-                        // indicates that typeahead prefix does not match any suggestions
-                        if (invocationOffset != currentOffset && !hasAMatch) {
-                            // all suggestions filtered out, mark them as discarded
-                            updateCompletionStates(new ArrayList<String>());
-                            end();
-                            return;
-                        }
-
-                        // if typeahead exists, mark all suggestions except for current suggestion index with match as discarded
-                        // As of Jan 25, current logic blocks users from toggling between suggestions when a typeahead exists in QToggleSuggestionsHandler
-                        if (invocationOffset != currentOffset && hasAMatch) {
-                            var currentSuggestion = suggestionsContext.getDetails().get(currentIdxInSuggestion);
-                            var filteredSuggestions = List.of(currentSuggestion.getInlineCompletionItem().getItemId());
-                            updateCompletionStates(filteredSuggestions);
-                        }
-                    }
-
-                    session.invocationOffset = invocationOffset;
-                    suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
-
-                    session.transitionToPreviewingState();
-                    attachListeners();
-                    session.primeListeners();
-                    session.getViewer().getTextWidget().redraw();
-                });
+                } else {
+                    Activator.getLogger().info(requestId + " skipped as newer inline completion request was queued");
+                }
             } catch (InterruptedException e) {
-                Activator.getLogger().error("Inline completion interrupted", e);
-            } catch (Exception e) {
-                Activator.getLogger().error("Error executing inline completion", e);
+                Activator.getLogger().info(requestId + " inline completion request interrupted");
+            } catch (ExecutionException e) {
+                Activator.getLogger().error("Error executing inline completion request " + requestId, e);
             }
         });
-        unresolvedTasks.put(uuid, future);
     }
 
+    private void processRequest(final InlineCompletionParams params, final int invocationOffset, final UUID requestId) {
+        try {
+            Activator.getLogger().info(requestId + " inline query made at offset " + invocationOffset);
+
+            List<InlineCompletionItem> newSuggestions = new ArrayList<>();
+            String sessionId;
+            long requestInvocation = System.currentTimeMillis();
+
+            // Execute the LSP query
+            var response = Activator.getLspProvider().getAmazonQServer().get()
+                    .inlineCompletionWithReferences(params).get();
+
+            sessionId = response.getSessionId();
+            var suggestions = response.getItems().parallelStream()
+                .map(item -> {
+                    if (isTabOnly) {
+                        String sanitizedText = replaceSpacesWithTabs(item.getInsertText(), tabSize);
+                        item.setInsertText(sanitizedText);
+                    }
+                    return item;
+                })
+                .collect(Collectors.toList());
+            newSuggestions.addAll(suggestions);
+
+            Display.getDefault().syncExec(() -> {
+                if (requestId.equals(pendingRequestId)) {
+                    handleQueryResults(newSuggestions, sessionId, requestInvocation,
+                                     new RequestContext(requestId, invocationOffset, params));
+                } else {
+                    Activator.getLogger().info(requestId + " skipped rendering as newer inline completion request queued");
+                }
+            });
+
+        } catch (InterruptedException e) {
+            Activator.getLogger().info(requestId + " inline completion request interrupted");
+        } catch (Exception e) {
+            Activator.getLogger().error("Error processing inline completion request " + requestId, e);
+        }
+    }
+
+    private void handleQueryResults(final List<InlineCompletionItem> newSuggestions,
+                              final String sessionId,
+                              final long requestInvocation,
+                              final RequestContext task) {
+        if (newSuggestions == null || newSuggestions.isEmpty() || sessionId == null || sessionId.isEmpty()) {
+            if (!isPreviewingSuggestions()) {
+                end();
+            }
+            Activator.getLogger().info(task.getUuid() + " returned with no result.");
+            if (task.getParams().getContext().getTriggerKind() == InlineCompletionTriggerKind.Invoke) {
+                Display display = Display.getDefault();
+                String message = "Q returned no suggestions";
+                QEclipseEditorUtils.showToast(message, display, 2000);
+            }
+            return;
+        }
+
+        // Check if current caret position matches the task's invocation offset
+        var viewer = getViewer();
+        if (viewer == null || viewer.getTextWidget() == null) {
+            end();
+            return;
+        }
+
+        int currentCaretOffset = viewer.getTextWidget().getCaretOffset();
+        if (currentCaretOffset != task.getInvocationOffset()) {
+            Activator.getLogger().info(task.getUuid()
+                + " skipped rendering as caret position changed from "
+                + task.getInvocationOffset() + " to " + currentCaretOffset);
+            return;
+        }
+
+        Activator.getLogger().info(task.getUuid() + " returned with " + newSuggestions.size() + " results.");
+
+        suggestionsContext.setSessionId(sessionId);
+        suggestionsContext.setRequestedAtEpoch(requestInvocation);
+        suggestionsContext.getDetails()
+                .addAll(newSuggestions.stream().map(QSuggestionContext::new).collect(Collectors.toList()));
+
+        initializeSuggestionCompletionResults();
+
+        // Handle typeahead if it exists
+        int currentIdxInSuggestion = 0;
+        boolean hasAMatch = false;
+
+        if (currentCaretOffset > task.getInvocationOffset()) {
+            var widget = viewer.getTextWidget();
+            String prefix = widget.getTextRange(task.getInvocationOffset(),
+                                              currentCaretOffset - task.getInvocationOffset());
+            // Computes the typed prefix and typeahead length from when user invocation happened to
+            // before suggestions are first shown in UI
+            initialTypeaheadLength = Optional.of(prefix.length());
+
+            for (int i = 0; i < newSuggestions.size(); i++) {
+                if (newSuggestions.get(i).getInsertText().startsWith(prefix)) {
+                    currentIdxInSuggestion = i;
+                    hasAMatch = true;
+                    break;
+                }
+            }
+            // indicates that typeahead prefix does not match any suggestions
+            if (!hasAMatch) {
+                // all suggestions filtered out, mark them as discarded
+                updateCompletionStates(new ArrayList<String>());
+                end();
+                return;
+            }
+
+            // if typeahead exists, mark all suggestions except for current suggestion index with match as discarded
+            var currentSuggestion = suggestionsContext.getDetails().get(currentIdxInSuggestion);
+            var filteredSuggestions = List.of(currentSuggestion.getInlineCompletionItem().getItemId());
+            updateCompletionStates(filteredSuggestions);
+        }
+
+        invocationOffset = task.getInvocationOffset();
+        suggestionsContext.setCurrentIndex(currentIdxInSuggestion);
+        transitionToPreviewingState();
+        attachListeners();
+        primeListeners();
+        getViewer().getTextWidget().redraw();
+    }
 
     /*
      *  Updates completion state of each suggestion in the `suggestionCompletionResult` map, given the updated filtered suggestion list
@@ -351,7 +388,7 @@ public final class QInvocationSession extends QResource {
 
     // Method to end the session
     public void end() {
-        if (isActive() && unresolvedTasks.isEmpty()) {
+        if (isActive()) {
             if (state == QInvocationSessionState.SUGGESTION_PREVIEWING) {
                 int lastKnownLine = getLastKnownLine();
                 unsetVerticalIndent(lastKnownLine + 1);
@@ -570,20 +607,6 @@ public final class QInvocationSession extends QResource {
         return ((QInlineCaretListener) caretListener).getLastKnownLine();
     }
 
-    public void awaitAllUnresolvedTasks() throws ExecutionException {
-        List<Future<?>> tasks = unresolvedTasks.values().stream().toList();
-        for (Future<?> future : tasks) {
-            try {
-                future.get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-                // Propagate the execution exception
-                throw e;
-            }
-        }
-    }
-
     public void assignQueryingCallback(final Runnable runnable) {
         changeStatusToQuerying = runnable;
     }
@@ -659,7 +682,6 @@ public final class QInvocationSession extends QResource {
         initialTypeaheadLength = Optional.empty();
     }
 
-    // Additional methods for the session can be added here
     @Override
     public void dispose() {
         var widget = viewer.getTextWidget();
@@ -675,15 +697,6 @@ public final class QInvocationSession extends QResource {
         inlineTextFont = null;
         inlineTextFontBold = null;
         caretMovementReason = CaretMovementReason.UNEXAMINED;
-        unresolvedTasks.forEach((uuid, task) -> {
-            boolean cancelled = task.cancel(true);
-            if (cancelled) {
-                Activator.getLogger().info(uuid + " cancelled.");
-            } else {
-                Activator.getLogger().error(uuid + " failed to cancel.");
-            }
-        });
-        unresolvedTasks.clear();
         if (inputListener != null) {
             inputListener.beforeRemoval();
             widget.removeVerifyKeyListener(inputListener);
@@ -713,5 +726,29 @@ public final class QInvocationSession extends QResource {
         editor = null;
         viewer = null;
         suggestionAccepted = false;
+    }
+
+    private static final class RequestContext {
+        private final UUID uuid;
+        private final int invocationOffset;
+        private final InlineCompletionParams params;
+
+        RequestContext(final UUID uuid, final int invocationOffset, final InlineCompletionParams params) {
+            this.uuid = uuid;
+            this.invocationOffset = invocationOffset;
+            this.params = params;
+        }
+
+        public UUID getUuid() {
+            return uuid;
+        }
+
+        public int getInvocationOffset() {
+            return invocationOffset;
+        }
+
+        public InlineCompletionParams getParams() {
+            return params;
+        }
     }
 }

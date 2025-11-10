@@ -39,7 +39,7 @@ public final class AbapUtil {
     public static final String SEMANTIC_CACHE_FOLDER = ".cache";
     private static final Set<String> ABAP_EXTENSIONS = Set.of("asprog", "aclass", "asinc", "aint", "assrvds",
             "asbdef", "asddls", "astablds", "astabldt", "amdp", "apack", "asrv", "aobj", "aexit", "abdef",
-            "acinc", "asfugr", "apfugr", "asfunc", "asfinc", "apfunc", "apfinc");
+            "acinc", "asfugr", "apfugr", "asfunc", "asfinc", "apfunc", "apfinc", "asclass", "asintf");
 
     private AbapUtil() {
         // Prevent instantiation

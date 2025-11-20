@@ -40,7 +40,8 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
         /**
          * When users use ADT plugin and connect to SAP server, the file opened is a customized editor defined by SAP package.
-         * com.sap.adt.programs.ui.internal.programs.editors.ProgramEditor, which cause above logic not executed, inline listener is not attached hence inline auto trigger is broken.
+         * com.sap.adt.programs.ui.internal.programs.editors.ProgramEditor
+         * , which cause above logic not executed, inline listener is not attached hence inline auto trigger is broken.
          * Here is a monkey patch to fix the issue based on how we currently instrument inline auto trigger.
          * We might need to add different class names if we see more variants of such editor/file showing.
          */

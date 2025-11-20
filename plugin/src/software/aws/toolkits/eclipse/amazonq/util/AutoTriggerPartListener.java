@@ -60,11 +60,14 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
 
     @Override
     public void partDeactivated(final IWorkbenchPartReference partRef) {
-        var part = partRef.getPart(false);
-        if (!(part instanceof ITextEditor)) {
+        if (activeDocument == null) {
             return;
         }
-        detachDocumentListenerFromLastActiveDocument();
+
+        boolean isApplicable = part instanceof ITextEditor || part.getClass().getName().contains("ProgramEditor");
+        if (isApplicable) {
+            detachDocumentListenerFromLastActiveDocument();
+        }
     }
 
     private void attachDocumentListenerAndUpdateActiveDocument(final ITextEditor editor) {

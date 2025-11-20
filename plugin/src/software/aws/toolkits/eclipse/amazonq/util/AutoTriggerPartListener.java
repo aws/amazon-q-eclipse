@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 package software.aws.toolkits.eclipse.amazonq.util;
+
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextViewer;
 

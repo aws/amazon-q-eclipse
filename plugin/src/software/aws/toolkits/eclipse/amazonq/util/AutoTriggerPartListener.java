@@ -23,6 +23,9 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         this.docListener = docListener;
     }
 
+    // com.sap.adt.programs.ui.internal.programs.editors.ProgramEditor
+    static final String SAP_ADT_EDITOR_KEYWORD = "ProgramEditor";
+
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
         var part = partRef.getPart(false);
@@ -45,7 +48,7 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
          * Here is a monkey patch to fix the issue based on how we currently instrument inline auto trigger.
          * We might need to add different class names if we see more variants of such editor/file showing.
          */
-        boolean isProgramEditor = part.getClass().getName().contains("ProgramEditor");
+        boolean isProgramEditor = part.getClass().getName().contains(SAP_ADT_EDITOR_KEYWORD);
         if (isProgramEditor) {
             ITextEditor e = getActiveTextEditor();
             var viewer = getActiveTextViewer(e);
@@ -64,7 +67,7 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
             return;
         }
 
-        boolean isApplicable = part instanceof ITextEditor || part.getClass().getName().contains("ProgramEditor");
+        boolean isApplicable = part instanceof ITextEditor || part.getClass().getName().contains(SAP_ADT_EDITOR_KEYWORD);
         if (isApplicable) {
             detachDocumentListenerFromLastActiveDocument();
         }

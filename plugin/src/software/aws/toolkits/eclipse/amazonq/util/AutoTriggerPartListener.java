@@ -45,15 +45,7 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
          * We might need to add different class names if we see more variants of such editor/file showing.
          */
         boolean isProgramEditor = part.getClass().getName().contains("ProgramEditor");
-        if (isEditor) {
-            ITextEditor editor = (ITextEditor) part;
-
-            // We should only have at most one listener listening to one document
-            // at any given moment. Therefore it would be acceptable to override the
-            // listener
-            // This is also assuming an active part cannot be activated again.
-            attachDocumentListenerAndUpdateActiveDocument(editor);
-        } else if (isProgramEditor) {
+        if (isProgramEditor) {
             ITextEditor e = getActiveTextEditor();
             var viewer = getActiveTextViewer(e);
             if (viewer != null) {

@@ -5,11 +5,14 @@ package software.aws.toolkits.eclipse.amazonq.util;
 
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextEditor;
 import static software.aws.toolkits.eclipse.amazonq.util.QEclipseEditorUtils.getActiveTextViewer;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.texteditor.ITextEditor;
 
@@ -23,8 +26,8 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         this.docListener = docListener;
     }
 
-    // com.sap.adt.programs.ui.internal.programs.editors.ProgramEditor
-    static final String SAP_ADT_EDITOR_KEYWORD = "ProgramEditor";
+    static final String SAP_ADT_EDITOR_FQN = "com.sap.adt.programs.ui.internal.programs.editors.ProgramEditor";
+    static final List<String> CUSTOM_EDITOR_FQNS = new ArrayList<>(Arrays.asList(SAP_ADT_EDITOR_FQN));
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
@@ -48,7 +51,7 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
          * Here is a monkey patch to fix the issue based on how we currently instrument inline auto trigger.
          * We might need to add different class names if we see more variants of such editor/file showing.
          */
-        boolean isProgramEditor = part.getClass().getName().contains(SAP_ADT_EDITOR_KEYWORD);
+        boolean isProgramEditor = isCustomizedEditorType(part);
         if (isProgramEditor) {
             ITextEditor e = getActiveTextEditor();
             var viewer = getActiveTextViewer(e);
@@ -67,10 +70,15 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
             return;
         }
 
-        boolean isApplicable = part instanceof ITextEditor || part.getClass().getName().contains(SAP_ADT_EDITOR_KEYWORD);
+        var part = partRef.getPart(false);
+        boolean isApplicable = part instanceof ITextEditor || isCustomizedEditorType(part);
         if (isApplicable) {
             detachDocumentListenerFromLastActiveDocument();
         }
+    }
+
+    private boolean isCustomizedEditorType(final IWorkbenchPart part) {
+        return CUSTOM_EDITOR_FQNS.contains(part.getClass().getName());
     }
 
     private void attachDocumentListenerAndUpdateActiveDocument(final ITextEditor editor) {

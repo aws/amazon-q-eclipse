@@ -22,12 +22,11 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
     private T docListener;
     private IDocument activeDocument;
 
+    private static final List<String> CUSTOM_EDITOR_PREFIXES = new ArrayList<>(Arrays.asList("com.sap.adt"));
+
     public AutoTriggerPartListener(final T docListener) {
         this.docListener = docListener;
     }
-
-    static final String SAP_ADT_EDITOR_FQN = "com.sap.adt.programs.ui.internal.programs.editors.ProgramEditor";
-    static final List<String> CUSTOM_EDITOR_FQNS = new ArrayList<>(Arrays.asList(SAP_ADT_EDITOR_FQN));
 
     @Override
     public void partActivated(final IWorkbenchPartReference partRef) {
@@ -76,9 +75,11 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         }
     }
 
-    private boolean isCustomizedEditorType(final IWorkbenchPart part) {
-        return CUSTOM_EDITOR_FQNS.contains(part.getClass().getName());
-    }
+        private boolean isCustomizedEditorType(final IWorkbenchPart part) {
+            String className = part.getClass().getName();
+            return CUSTOM_EDITOR_PREFIXES.stream()
+                    .anyMatch(prefix -> className.startsWith(prefix));
+        }
 
     private void attachDocumentListenerAndUpdateActiveDocument(final ITextEditor editor) {
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());

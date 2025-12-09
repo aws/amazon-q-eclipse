@@ -75,11 +75,10 @@ public final class AutoTriggerPartListener<T extends IDocumentListener & IAutoTr
         }
     }
 
-        private boolean isCustomizedEditorType(final IWorkbenchPart part) {
-            String className = part.getClass().getName();
-            return CUSTOM_EDITOR_PREFIXES.stream()
-                    .anyMatch(prefix -> className.startsWith(prefix));
-        }
+    private boolean isCustomizedEditorType(final IWorkbenchPart part) {
+        String className = part.getClass().getName();
+        return CUSTOM_EDITOR_PREFIXES.stream().anyMatch(prefix -> className.startsWith(prefix));
+    }
 
     private void attachDocumentListenerAndUpdateActiveDocument(final ITextEditor editor) {
         var document = editor.getDocumentProvider().getDocument(editor.getEditorInput());

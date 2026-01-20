@@ -146,7 +146,10 @@ public final class QEclipseEditorUtils {
                 // rather than the workspace location, so we need to reference the cached file path
                 return AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
             }
-            return file.getRawLocation().toOSString();
+            // Fallback to sematic cache location if rawLocation is null, one of the use case is also file when users connect to a remote SAP project
+            var rawLocation = file.getRawLocation();
+            var path = (rawLocation != null) ? rawLocation.toOSString() : AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
+            return path;
         } else {
             throw new AmazonQPluginException("Unexpected editor input type: " + editorInput.getClass().getName());
         }

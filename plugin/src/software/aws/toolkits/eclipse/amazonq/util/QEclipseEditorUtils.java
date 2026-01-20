@@ -106,7 +106,7 @@ public final class QEclipseEditorUtils {
     public static Optional<String> getOpenFileUri() {
         try {
             return getOpenFilePath()
-            .map(filePath -> Paths.get(filePath).toUri().toString());
+                    .map(filePath -> Paths.get(filePath).toUri().toString());
         } catch (Exception e) {
             Activator.getLogger().error("Unexpected error when determining open file path", e);
             return Optional.empty();
@@ -146,10 +146,11 @@ public final class QEclipseEditorUtils {
                 // rather than the workspace location, so we need to reference the cached file path
                 return AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
             }
-            // Fallback to sematic cache location if rawLocation is null, one of the use case is also file when users connect to a remote SAP project
-            var rawLocation = file.getRawLocation();
-            var path = (rawLocation != null) ? rawLocation.toOSString() : AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
-            return path;
+            // Fallback to semantic cache location if rawLocation is null, one of the use
+            // cases is also file when users connect to a remote SAP project
+            return (file.getRawLocation() != null)
+                    ? file.getRawLocation().toOSString()
+                    : AbapUtil.getSemanticCachePath(file.getFullPath().toOSString());
         } else {
             throw new AmazonQPluginException("Unexpected editor input type: " + editorInput.getClass().getName());
         }
@@ -175,7 +176,8 @@ public final class QEclipseEditorUtils {
                 var end = new Position(endLine, endColumn);
                 return Optional.of(new Range(start, end));
             } catch (org.eclipse.jface.text.BadLocationException e) {
-                Activator.getLogger().error("Error occurred while attempting to determine selected text position in editor", e);
+                Activator.getLogger()
+                        .error("Error occurred while attempting to determine selected text position in editor", e);
             }
         }
         return Optional.empty();
@@ -187,7 +189,8 @@ public final class QEclipseEditorUtils {
     }
 
     /*
-     * Inserts the given text at cursor position and returns cursor position range of the text
+     * Inserts the given text at cursor position and returns cursor position range
+     * of the text
      */
     public static Optional<Range> insertAtCursor(final String text) {
         var editor = getActiveTextEditor();
@@ -257,8 +260,9 @@ public final class QEclipseEditorUtils {
         StringBuilder indentedText = new StringBuilder(lines.get(0));
         for (int i = 1; i < lines.size(); i++) {
             indentedText.append("\n")
-            .append(lines.get(i).isEmpty() ? "" : indentation) // Don't apply the gap to empty lines (eg: end of string may end in a newline)
-            .append(lines.get(i));
+                    .append(lines.get(i).isEmpty() ? "" : indentation) // Don't apply the gap to empty lines (eg: end of
+                                                                       // string may end in a newline)
+                    .append(lines.get(i));
         }
 
         return indentedText.toString();
@@ -271,7 +275,8 @@ public final class QEclipseEditorUtils {
             var content = document.get(lineOffset, offset - lineOffset);
 
             if (content.trim().isEmpty()) {
-                // if current line is blank or contains only whitespace, return line as indentation
+                // if current line is blank or contains only whitespace, return line as
+                // indentation
                 return content;
             }
             return content.substring(0, content.indexOf(content.trim()));
@@ -322,14 +327,18 @@ public final class QEclipseEditorUtils {
             public void notHandled(final String commandId, final NotHandledException exception) {
                 return;
             }
+
             @Override
-            public void postExecuteFailure(final String commandId, final org.eclipse.core.commands.ExecutionException exception) {
+            public void postExecuteFailure(final String commandId,
+                    final org.eclipse.core.commands.ExecutionException exception) {
                 return;
             }
+
             @Override
             public void postExecuteSuccess(final String commandId, final Object returnValue) {
                 return;
             }
+
             @Override
             public void preExecute(final String commandId, final ExecutionEvent event) {
                 callback.accept(commandId);
@@ -351,17 +360,18 @@ public final class QEclipseEditorUtils {
             return new GenericTypeheadProcessor();
         }
         switch (contentTypeName) {
-        // TODO: Add more supported file types here:
-        case "Java Source File":
-            IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
-            boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
-            boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
-            boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
-            return new JavaTypeaheadProcessor(editor, isBracesSetToAutoClose, isBracketsSetToAutoClose, isStringSetToAutoClose);
-        case "JavaScript Source File":
-            return new JavascriptTypeaheadProcessor();
-        default:
-            return new GenericTypeheadProcessor();
+            // TODO: Add more supported file types here:
+            case "Java Source File":
+                IEclipsePreferences preferences = InstanceScope.INSTANCE.getNode("org.eclipse.jdt.ui");
+                boolean isBracesSetToAutoClose = preferences.getBoolean("closeBraces", true);
+                boolean isBracketsSetToAutoClose = preferences.getBoolean("closeBrackets", true);
+                boolean isStringSetToAutoClose = preferences.getBoolean("closeStrings", true);
+                return new JavaTypeaheadProcessor(editor, isBracesSetToAutoClose, isBracketsSetToAutoClose,
+                        isStringSetToAutoClose);
+            case "JavaScript Source File":
+                return new JavascriptTypeaheadProcessor();
+            default:
+                return new GenericTypeheadProcessor();
         }
     }
 

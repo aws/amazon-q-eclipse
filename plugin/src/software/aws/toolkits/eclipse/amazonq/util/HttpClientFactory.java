@@ -28,7 +28,7 @@ public final class HttpClientFactory {
             synchronized (HttpClientFactory.class) {
                 if (instance == null) {
                     var builder = HttpClient.newBuilder()
-//                            .version(HttpClient.Version.HTTP_1_1)
+                           .version(HttpClient.Version.HTTP_1_1)
                             .followRedirects(HttpClient.Redirect.NORMAL);
                     var proxyUrl = ProxyUtil.getHttpsProxyUrl();
                     if (!StringUtils.isEmpty(proxyUrl)) {

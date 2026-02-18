@@ -3,8 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import java.net.Authenticator
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.PasswordAuthentication
 import java.net.ProxySelector;
 import java.net.URL;
 import java.net.http.HttpClient;
@@ -14,6 +16,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 
 public final class HttpClientFactory {
 
@@ -34,6 +37,10 @@ public final class HttpClientFactory {
                     if (!StringUtils.isEmpty(proxyUrl)) {
                         InetSocketAddress proxyAddress = getProxyAddress(proxyUrl);
                         builder.proxy(ProxySelector.of(proxyAddress));
+                        var proxyAuth = getProxyAuthenticator(proxyUrl);
+                        if (proxyAuth != null) {
+                            builder.authenticator(proxyAuth);
+                        }
                     }
                     var sslContext = ProxyUtil.getCustomSslContext();
                     if (sslContext == null) {
@@ -62,6 +69,43 @@ public final class HttpClientFactory {
             return new InetSocketAddress(url.getHost(), url.getPort());
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Invalid proxy URL: " + proxyUrl, e);
+        }
+    }
+
+    private static Authenticator getProxyAuthenticator(final String proxyUrl) {
+        try {
+            URL url = new URL(proxyUrl);
+            String userInfo = url.getUserInfo();
+            if (userInfo == null || userInfo.isEmpty()) {
+                return null;
+            }
+            int colonIndex = userInfo.indexOf(':');
+            if (colonIndex < 0) {
+                return null;
+            }
+            String username = userInfo.substring(0, colonIndex);
+            String password = userInfo.substring(colonIndex + 1);
+            return new java.net.Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    Activator.getLogger().info(String.format(
+                        "Proxy auth requested - scheme: %s, host: %s, port: %d, type: %s, prompt: %s",
+                        getRequestingScheme(), 
+                        getRequestingHost(), 
+                        getRequestingPort(),
+                        getRequestorType(), 
+                        getRequestingPrompt())
+                    );
+                    
+                    if (getRequestorType() == RequestorType.PROXY) {
+                        return new PasswordAuthentication(username, password.toCharArray());
+                    }
+                    
+                    return null;
+                }
+            };
+        } catch (MalformedURLException e) {
+            return null;
         }
     }
 }

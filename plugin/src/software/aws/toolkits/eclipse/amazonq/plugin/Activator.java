@@ -44,9 +44,16 @@ public class Activator extends AbstractUIPlugin {
 
     public Activator() {
         super();
+        // TODO: Needed for MITM proxy as it's using basic auth (should remove assuming corportae proxy will not use basic auth)
+        System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+        System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");
         plugin = this;
         defaultLogger = PluginLogger.getInstance();
-        telemetryService = DefaultTelemetryService.builder().build();
+        try {
+            telemetryService = DefaultTelemetryService.builder().build();
+        } catch(Exception e) {
+            defaultLogger.error("Failed to initialize telemetry service", e);
+        }
         lspProvider = LspProviderImpl.getInstance();
         pluginStore = DefaultPluginStore.getInstance();
         loginService = DefaultLoginService.builder()

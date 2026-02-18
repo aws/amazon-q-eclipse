@@ -44,9 +44,17 @@ public class Activator extends AbstractUIPlugin {
 
     public Activator() {
         super();
+        // TODO: required for basic auth schema, java sdk by default disable basic schema and will automatically refuse to provide credential at CONNECT step
+        // some proxy like MITM proxy is using basic schema, for dev purpose, this line has to be uncomment for MITM proxy to work
+        // System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+
         plugin = this;
         defaultLogger = PluginLogger.getInstance();
-        telemetryService = DefaultTelemetryService.builder().build();
+        try {
+            telemetryService = DefaultTelemetryService.builder().build();
+        } catch (Exception e) {
+            defaultLogger.error("Failed to initialize telemetry service", e);
+        }
         lspProvider = LspProviderImpl.getInstance();
         pluginStore = DefaultPluginStore.getInstance();
         loginService = DefaultLoginService.builder()

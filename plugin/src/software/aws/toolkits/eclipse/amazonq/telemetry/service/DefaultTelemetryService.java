@@ -144,17 +144,35 @@ public final class DefaultTelemetryService implements TelemetryService {
         );
         var proxyUrl = ProxyUtil.getHttpsProxyUrlForEndpoint(endpoint);
         var httpClientBuilder = ApacheHttpClient.builder();
+        var hasProxyCredentials = false;
         if (!StringUtils.isEmpty(proxyUrl)) {
-            httpClientBuilder.proxyConfiguration(ProxyConfiguration.builder()
-                    .endpoint(URI.create(proxyUrl))
-                    .build());
+            try {
+                var url = new java.net.URL(proxyUrl);
+                // Build a clean endpoint URI without userInfo so the SDK doesn't choke
+                var cleanEndpoint = new URI(url.getProtocol(), null, url.getHost(), url.getPort(), null, null, null);
+                var proxyConfigBuilder = ProxyConfiguration.builder()
+                        .endpoint(cleanEndpoint);
+                String userInfo = url.getUserInfo();
+                if (userInfo != null && userInfo.contains(":")) {
+                    int colonIndex = userInfo.indexOf(':');
+                    proxyConfigBuilder.username(userInfo.substring(0, colonIndex));
+                    proxyConfigBuilder.password(userInfo.substring(colonIndex + 1));
+                    hasProxyCredentials = true;
+                }
+                httpClientBuilder.proxyConfiguration(proxyConfigBuilder.build());
+            } catch (java.net.MalformedURLException | java.net.URISyntaxException e) {
+                Activator.getLogger().warn("Could not parse proxy URL: " + proxyUrl, e);
+            }
         }
 
         httpClientBuilder.socketFactory(sslSocketFactory);
 
-        SdkHttpClient sdkHttpClient = httpClientBuilder
-                .credentialsProvider(new SystemDefaultCredentialsProvider())
-                .build();
+        // Only use credentialsProvider when proxy username/password is not set,
+        // as the SDK does not allow both to be configured simultaneously.
+        if (!hasProxyCredentials) {
+            httpClientBuilder.credentialsProvider(new SystemDefaultCredentialsProvider());
+        }
+        SdkHttpClient sdkHttpClient = httpClientBuilder.build();
         CognitoIdentityClient cognitoClient = CognitoIdentityClient.builder()
                 .credentialsProvider(AnonymousCredentialsProvider.create())
                 .region(region)
@@ -168,9 +186,19 @@ public final class DefaultTelemetryService implements TelemetryService {
                 .region(region)
                 .httpClient(sdkHttpClient)
                 .credentialsProvider(credentialsProvider)
-                .endpointOverride(URI.create(endpoint))
+                .endpointOverride(stripUserInfo(endpoint))
                 .overrideConfiguration(o -> o.retryStrategy(RetryMode.STANDARD))
                 .build();
+    }
+
+    private static URI stripUserInfo(final String url) {
+        try {
+            var parsed = new java.net.URL(url);
+            return new URI(parsed.getProtocol(), null, parsed.getHost(), parsed.getPort(),
+                    parsed.getPath().isEmpty() ? null : parsed.getPath(), parsed.getQuery(), null);
+        } catch (java.net.MalformedURLException | java.net.URISyntaxException e) {
+            return URI.create(url);
+        }
     }
 
     public static boolean telemetryEnabled() {

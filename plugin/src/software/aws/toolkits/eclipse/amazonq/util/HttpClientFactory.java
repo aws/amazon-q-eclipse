@@ -3,10 +3,10 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
-import java.net.Authenticator
+import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.PasswordAuthentication
+import java.net.PasswordAuthentication;
 import java.net.ProxySelector;
 import java.net.URL;
 import java.net.http.HttpClient;

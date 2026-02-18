@@ -44,9 +44,10 @@ public class Activator extends AbstractUIPlugin {
 
     public Activator() {
         super();
-        // TODO: Needed for MITM proxy as it's using basic auth (should remove assuming corportae proxy will not use basic auth)
+        // TODO: required for basic auth schema, java sdk by default disable basic schema and will automatically refuse to provide credential at CONNECT step
+        // Not sure if we want to keep this or not, and some proxy like MITM proxy is using basic schema
         System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
-        System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");
+
         plugin = this;
         defaultLogger = PluginLogger.getInstance();
         try {

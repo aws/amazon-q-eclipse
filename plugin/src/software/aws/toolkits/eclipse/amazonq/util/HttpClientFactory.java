@@ -30,9 +30,8 @@ public final class HttpClientFactory {
         if (instance == null) {
             synchronized (HttpClientFactory.class) {
                 if (instance == null) {
-                    var builder = HttpClient.newBuilder()
-                            .version(HttpClient.Version.HTTP_1_1)
-                            .followRedirects(HttpClient.Redirect.NORMAL);
+                    // TODO: do we need to use HttpClient.Version.HTTP_1_1 here?
+                    var builder = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL);
                     var proxyUrl = ProxyUtil.getHttpsProxyUrl();
                     if (!StringUtils.isEmpty(proxyUrl)) {
                         InetSocketAddress proxyAddress = getProxyAddress(proxyUrl);

@@ -52,7 +52,7 @@ public class Activator extends AbstractUIPlugin {
         defaultLogger = PluginLogger.getInstance();
         try {
             telemetryService = DefaultTelemetryService.builder().build();
-        } catch(Exception e) {
+        } catch (Exception e) {
             defaultLogger.error("Failed to initialize telemetry service", e);
         }
         lspProvider = LspProviderImpl.getInstance();

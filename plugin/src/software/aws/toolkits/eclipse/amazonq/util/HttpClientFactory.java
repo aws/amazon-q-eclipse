@@ -89,17 +89,17 @@ public final class HttpClientFactory {
                 protected PasswordAuthentication getPasswordAuthentication() {
                     Activator.getLogger().info(String.format(
                         "Proxy auth requested - scheme: %s, host: %s, port: %d, type: %s, prompt: %s",
-                        getRequestingScheme(), 
-                        getRequestingHost(), 
+                        getRequestingScheme(),
+                        getRequestingHost(),
                         getRequestingPort(),
-                        getRequestorType(), 
+                        getRequestorType(),
                         getRequestingPrompt())
                     );
-                    
+
                     if (getRequestorType() == RequestorType.PROXY) {
                         return new PasswordAuthentication(username, password.toCharArray());
                     }
-                    
+
                     return null;
                 }
             };

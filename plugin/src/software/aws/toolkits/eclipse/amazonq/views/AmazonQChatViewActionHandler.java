@@ -74,6 +74,7 @@ public class AmazonQChatViewActionHandler implements ViewActionHandler {
             case PINNED_CONTEXT_ADD:
             case PINNED_CONTEXT_REMOVE:
             case LIST_AVAILABLE_MODELS:
+            case FILTER_CONTEXT_COMMANDS:
                 chatCommunicationManager.sendMessageToChatServer(command, message);
                 break;
             case CHAT_INFO_LINK_CLICK:

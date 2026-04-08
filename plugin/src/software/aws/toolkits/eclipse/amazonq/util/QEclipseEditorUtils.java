@@ -6,6 +6,7 @@ package software.aws.toolkits.eclipse.amazonq.util;
 import static software.aws.toolkits.eclipse.amazonq.util.QConstants.Q_INLINE_HINT_TEXT_STYLE;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -37,6 +38,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -154,6 +156,37 @@ public final class QEclipseEditorUtils {
         } else {
             throw new AmazonQPluginException("Unexpected editor input type: " + editorInput.getClass().getName());
         }
+    }
+
+    /**
+     * Returns file paths for all currently open editor tabs, excluding in-memory
+     * editors. Used to provide supplemental context for inline completions.
+     */
+    public static List<String> getOpenEditorFilePaths() {
+        List<String> filePaths = new ArrayList<>();
+        try {
+            IWorkbenchPage page = getActivePage();
+            if (page == null) {
+                return filePaths;
+            }
+            for (IEditorReference editorRef : page.getEditorReferences()) {
+                try {
+                    IEditorInput input = editorRef.getEditorInput();
+                    if (input instanceof InMemoryInput) {
+                        continue;
+                    }
+                    String path = getOpenFilePath(input);
+                    if (path != null && !path.isEmpty()) {
+                        filePaths.add(path);
+                    }
+                } catch (Exception e) {
+                    Activator.getLogger().warn("Skipping editor tab: unable to resolve file path", e);
+                }
+            }
+        } catch (Exception e) {
+            Activator.getLogger().error("Error collecting open editor file paths", e);
+        }
+        return filePaths;
     }
 
     public static Optional<Range> getSelectionRange(final ITextEditor editor) {

@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import java.util.List;
+
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.lsp4j.Position;
@@ -41,6 +43,12 @@ public final class InlineCompletionUtils {
         invocationPosition.setLine(startLine);
         invocationPosition.setCharacter(lineOffset);
         params.setPosition(invocationPosition);
+
+        List<String> openTabFilepaths = QEclipseEditorUtils.getOpenEditorFilePaths();
+        if (!openTabFilepaths.isEmpty()) {
+            params.setOpenTabFilepaths(openTabFilepaths);
+        }
+
         return params;
     }
 }

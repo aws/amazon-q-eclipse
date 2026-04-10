@@ -45,6 +45,7 @@ public enum Command {
     PINNED_CONTEXT_ADD("aws/chat/pinnedContextAdd"),
     PINNED_CONTEXT_REMOVE("aws/chat/pinnedContextRemove"),
     LIST_AVAILABLE_MODELS("aws/chat/listAvailableModels"),
+    FILTER_CONTEXT_COMMANDS("aws/chat/filterContextCommands"),
     // Auth
     LOGIN_BUILDER_ID("loginBuilderId"),
     LOGIN_IDC("loginIdC"),

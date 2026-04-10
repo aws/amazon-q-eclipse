@@ -288,6 +288,16 @@ public final class ChatCommunicationManager implements EventObserver<ChatUIInbou
                             Activator.getLogger().error("Error processing listAvailableModels: " + e);
                         }
                         break;
+                    case FILTER_CONTEXT_COMMANDS:
+                        try {
+                            Object filterResponse = amazonQLspServer.filterContextCommands(message.getData()).get();
+                            var filterCommand = ChatUIInboundCommand.createCommand(ChatUIInboundCommandName.FilterContextCommands.getValue(),
+                                    filterResponse);
+                            Activator.getEventBroker().post(ChatUIInboundCommand.class, filterCommand);
+                        } catch (Exception e) {
+                            Activator.getLogger().error("Error processing filterContextCommands: " + e);
+                        }
+                        break;
                     case PINNED_CONTEXT_ADD:
                         amazonQLspServer.pinnedContextAdd(message.getData());
                         break;

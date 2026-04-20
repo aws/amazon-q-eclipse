@@ -21,6 +21,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -111,6 +112,14 @@ public class LoginViewActionHandler implements ViewActionHandler {
             QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true).thenRun(() -> {
                 CustomizationUtil.validateCurrentCustomization();
             });
+            break;
+        case OPEN_URL:
+            if (params instanceof Map) {
+                var urlValue = ((Map<?, ?>) params).get("url");
+                if (urlValue instanceof String && !((String) urlValue).isEmpty()) {
+                    PluginUtils.handleExternalLinkClick((String) urlValue);
+                }
+            }
             break;
         default:
             Activator.getLogger()

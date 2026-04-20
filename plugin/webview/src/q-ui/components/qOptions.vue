@@ -30,7 +30,7 @@
             </span>
             <span class="maintenance-banner__text">
                 Amazon Q Developer is now in maintenance mode. New accounts are no longer available. Existing users can still sign in below.
-                <a class="maintenance-banner__link" href="https://aws.amazon.com/q/developer/" @click="handleLearnMoreClick">Learn more</a>
+                <a class="maintenance-banner__link" href="#" @click.prevent="handleLearnMoreClick">Learn more</a>
             </span>
         </div>
         <button
@@ -121,6 +121,10 @@ export default defineComponent({
         },
         handleLearnMoreClick() {
             window.telemetryApi.postClickEvent("maintenanceLearnMoreLink")
+            window.ideApi.postMessage({
+                command: 'openUrl',
+                params: { url: 'https://aws.amazon.com/q/developer/' }
+            })
         },
         handleBackButtonClick() {
             this.$emit('backToMenu')

@@ -35,19 +35,16 @@
         </button>
         <div class="existing-users-divider font-amazon bottom-small-gap"><span>existing users</span></div>
 
-        <div class="font-amazon" v-if="existConnections.length > 0">
-            <div class="title bottom-small-gap">Connect with an account:</div>
-            <div v-for="(connection, index) in this.existConnections" :key="index">
-                <SelectableItem
-                    @toggle="toggleItemSelection"
-                    :isSelected="selectedLoginOption === connection.id"
-                    :itemId="connection.id"
-                    :login-type="this.connectionType(connection)"
-                    :itemTitle="this.connectionDisplayedName(connection)"
-                    :itemText="this.connectionTypeDescription(connection)"
-                    class="bottom-small-gap"
-                ></SelectableItem>
-            </div>
+        <div v-if="existConnections.length > 0" v-for="(connection, index) in existConnections" :key="connection.id">
+            <SelectableItem
+                @toggle="toggleItemSelection"
+                :isSelected="selectedLoginOption === connection.id"
+                :itemId="connection.id"
+                :login-type="connectionType(connection)"
+                :itemTitle="connectionDisplayedName(connection)"
+                :itemText="connectionTypeDescription(connection)"
+                class="font-amazon bottom-small-gap"
+            ></SelectableItem>
         </div>
         <SelectableItem
             @toggle="toggleItemSelection"

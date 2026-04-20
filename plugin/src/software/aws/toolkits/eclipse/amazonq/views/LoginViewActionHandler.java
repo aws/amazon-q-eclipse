@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
@@ -32,6 +33,8 @@ public class LoginViewActionHandler implements ViewActionHandler {
 
     private static final JsonHandler JSON_HANDLER = new JsonHandler();
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
+    private static final String LAST_IDC_START_URL_KEY = "lastIdcStartUrl";
+    private static final String LAST_IDC_REGION_KEY = "lastIdcRegion";
     private Future<?> loginTask;
     private boolean isLoginTaskRunning = false;
 
@@ -58,6 +61,9 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         }
                         Activator.getLoginService().login(LoginType.IAM_IDENTITY_CENTER,
                                 new LoginParams().setLoginIdcParams(loginIdcParams)).get();
+                        // Persist last-used IdC info for next login
+                        DefaultPluginStore.getInstance().put(LAST_IDC_START_URL_KEY, url);
+                        DefaultPluginStore.getInstance().put(LAST_IDC_REGION_KEY, region);
                         if (QDeveloperProfileUtil.getInstance().isProfileSelectionRequired()) {
                             Map<String, Object> profilesData = new HashMap<>();
                             var profiles = QDeveloperProfileUtil.getInstance().getDeveloperProfiles();
@@ -88,6 +94,14 @@ public class LoginViewActionHandler implements ViewActionHandler {
                     + oidcMetadata.regions().stream().filter(region -> region.metadata().partition().id().equals("aws"))
                             .map(AwsRegion::from).map(AwsRegion::toString).collect(Collectors.joining(","))
                     + "]";
+            String lastStartUrl = DefaultPluginStore.getInstance().get(LAST_IDC_START_URL_KEY);
+            String lastRegion = DefaultPluginStore.getInstance().get(LAST_IDC_REGION_KEY);
+            if (lastStartUrl == null) {
+                lastStartUrl = "";
+            }
+            if (lastRegion == null || lastRegion.isEmpty()) {
+                lastRegion = "us-east-1";
+            }
             var js = String.format("""
                     {
                         stage: '%s',
@@ -95,14 +109,14 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         cancellable: false,
                         idcInfo: {
                             profileName: '',
-                            startUrl: '',
-                            region: 'us-east-1'
+                            startUrl: '%s',
+                            region: '%s'
                         },
                         feature: 'q',
                         existConnections: [],
                         profiles: []
                     }
-                        """, "START", regions).stripIndent();
+                        """, "START", regions, lastStartUrl, lastRegion).stripIndent();
             browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
             browser.execute(String.format("ideClient.prepareUi(%s)", js));
             browser.execute("ideClient.updateAuthorization('')");

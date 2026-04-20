@@ -44,6 +44,11 @@ public final class Constants {
     public static final String TELEMETRY_NOTIFICATION_TITLE = "AWS IDE plugins telemetry";
     public static final String TELEMETRY_NOTIFICATION_BODY = "Usage metrics are collected by default. This can be changed in the \"Amazon Q\" section"
             + " of the IDE preferences.";
+    public static final String KIRO_SUNSET_NOTIFICATION_TITLE = "Amazon Q Developer is transitioning to Kiro";
+    public static final String KIRO_SUNSET_NOTIFICATION_BODY = "Amazon Q Developer is now in maintenance mode. The next generation of the agentic"
+            + " coding experience is available in Kiro.";
+    public static final String KIRO_SUNSET_LEARN_MORE_URL = "https://kiro.dev";
+    public static final String KIRO_SUNSET_NOTIFICATION_DISMISSED_KEY = "kiroSunsetNotificationDismissed";
     public static final String RE_AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to re-authenticate. Please try again.";
     public static final String AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to authenticate. Please try again.";
     public static final String IDE_SSL_HANDSHAKE_TITLE = "SSL Handshake Error";

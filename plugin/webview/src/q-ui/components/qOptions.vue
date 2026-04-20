@@ -3,23 +3,8 @@
 
 <template>
     <div @keydown.enter="handleContinueClick">
-        <div class="font-amazon" v-if="existConnections.length > 0">
-            <div class="title bottom-small-gap">Connect with an existing account:</div>
-            <div v-for="(connection, index) in this.existConnections" :key="index">
-                <SelectableItem
-                    @toggle="toggleItemSelection"
-                    :isSelected="selectedLoginOption === connection.id"
-                    :itemId="connection.id"
-                    :login-type="this.connectionType(connection)"
-                    :itemTitle="this.connectionDisplayedName(connection)"
-                    :itemText="this.connectionTypeDescription(connection)"
-                    class="bottom-small-gap"
-                ></SelectableItem>
-            </div>
-        </div>
-
-        <div class="title font-amazon welcome-header bottom-small-gap" v-if="existingLogin.id === -1">Welcome to Amazon Q</div>
-        <div class="maintenance-banner font-amazon bottom-small-gap" v-if="existingLogin.id === -1">
+        <div class="title font-amazon welcome-header bottom-small-gap">Welcome to Amazon Q</div>
+        <div class="maintenance-banner font-amazon bottom-small-gap">
             <span class="maintenance-banner__icon" aria-hidden="true">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -39,7 +24,6 @@
             disabled
             aria-disabled="true"
             title="New account creation is no longer available"
-            v-if="existingLogin.id === -1"
         >
             <span>Create New Account</span>
             <svg class="create-account-button__lock" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -49,7 +33,22 @@
                 />
             </svg>
         </button>
-        <div class="existing-users-divider font-amazon bottom-small-gap" v-if="existingLogin.id === -1"><span>existing users</span></div>
+        <div class="existing-users-divider font-amazon bottom-small-gap"><span>existing users</span></div>
+
+        <div class="font-amazon" v-if="existConnections.length > 0">
+            <div class="title bottom-small-gap">Connect with an account:</div>
+            <div v-for="(connection, index) in this.existConnections" :key="index">
+                <SelectableItem
+                    @toggle="toggleItemSelection"
+                    :isSelected="selectedLoginOption === connection.id"
+                    :itemId="connection.id"
+                    :login-type="this.connectionType(connection)"
+                    :itemTitle="this.connectionDisplayedName(connection)"
+                    :itemText="this.connectionTypeDescription(connection)"
+                    class="bottom-small-gap"
+                ></SelectableItem>
+            </div>
+        </div>
         <SelectableItem
             @toggle="toggleItemSelection"
             :isSelected="selectedLoginOption === LoginOption.BUILDER_ID"

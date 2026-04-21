@@ -68,9 +68,41 @@ export default defineComponent({
         app: String
     },
     data() {
+        const info = this.$store.state.lastLoginIdcInfo
         return {
             startUrlRegex: /^https:\/\/(([\w-]+(?:\.gamma)?\.awsapps\.com\/start(?:-beta|-alpha)?[\/#]?)|(start\.(?:us-gov-home|us-gov-east-1\.us-gov-home|us-gov-west-1\.us-gov-home)\.awsapps\.com|start\.(?:home|cn-north-1\.home|cn-northwest-1\.home)\.awsapps\.cn)\/directory\/[\w-]+[\/#]?)$/,
-            issueUrlRegex: /^https:\/\/([\w-]+\.)?identitycenter\.(amazonaws\.com|amazonaws\.com\.cn|us-gov\.amazonaws\.com)\/[\w\/-]+[\/#]?$/
+            issueUrlRegex: /^https:\/\/([\w-]+\.)?identitycenter\.(amazonaws\.com|amazonaws\.com\.cn|us-gov\.amazonaws\.com)\/[\w\/-]+[\/#]?$/,
+            startUrl: info.startUrl || '',
+            selectedRegion: info.region || 'us-east-1'
+        }
+    },
+    // SWT Browser + Vue 3 quirk: the mounted() hook on this component does not fire reliably,
+    // so v-model's initial DOM sync is skipped. Push the persisted Start URL into the input
+    // from created() via $nextTick — that callback runs after Vue's next render flush and
+    // does not depend on the mounted lifecycle hook firing.
+    created() {
+        const expected = this.startUrl
+        if (!expected) return
+        this.$nextTick(() => {
+            const el = document.getElementById("startUrl") as HTMLInputElement | null
+            if (!el || el.value) return  // don't overwrite if user already typed
+            el.value = expected
+            el.dispatchEvent(new Event('input', { bubbles: true }))
+            el.focus()
+        })
+    },
+    watch: {
+        startUrl(value: string) {
+            window.ideClient.updateLastLoginIdcInfo({
+                ...this.$store.state.lastLoginIdcInfo,
+                startUrl: value
+            })
+        },
+        selectedRegion(value: string) {
+            window.ideClient.updateLastLoginIdcInfo({
+                ...this.$store.state.lastLoginIdcInfo,
+                region: value
+            })
         }
     },
     computed: {
@@ -79,7 +111,7 @@ export default defineComponent({
             const otherRegions = this.regions
                 .filter(r => r.id !== 'us-east-1')
                 .sort((a, b) => a.name.localeCompare(b.name));
-                
+
             return usEast1 ? [usEast1, ...otherRegions] : otherRegions;
         },
         regions(): Region[] {
@@ -87,28 +119,6 @@ export default defineComponent({
         },
         feature(): Feature {
             return this.$store.state.feature
-        },
-        startUrl: {
-            get() {
-                return this.$store.state.lastLoginIdcInfo.startUrl;
-            },
-            set(value: string) {
-                window.ideClient.updateLastLoginIdcInfo({
-                    ...this.$store.state.lastLoginIdcInfo,
-                    startUrl: value
-                })
-            }
-        },
-        selectedRegion: {
-            get() {
-                return this.$store.state.lastLoginIdcInfo.region;
-            },
-            set(value: string) {
-                window.ideClient.updateLastLoginIdcInfo({
-                    ...this.$store.state.lastLoginIdcInfo,
-                    region: value
-                })
-            }
         },
         isStartUrlValid: {
             get() {
@@ -152,9 +162,6 @@ export default defineComponent({
         handleCodeCatalystSignin() {
             this.$emit('login', new BuilderId())
         }
-    },
-    mounted() {
-        document.getElementById("startUrl")?.focus()
     }
 })
 </script>

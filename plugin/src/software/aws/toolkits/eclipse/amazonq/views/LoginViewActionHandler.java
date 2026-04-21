@@ -102,21 +102,19 @@ public class LoginViewActionHandler implements ViewActionHandler {
             if (lastRegion == null || lastRegion.isEmpty()) {
                 lastRegion = "us-east-1";
             }
-            var js = String.format("""
-                    {
-                        stage: '%s',
-                        regions: %s,
-                        cancellable: false,
-                        idcInfo: {
-                            profileName: '',
-                            startUrl: '%s',
-                            region: '%s'
-                        },
-                        feature: 'q',
-                        existConnections: [],
-                        profiles: []
-                    }
-                        """, "START", regions, lastStartUrl, lastRegion).stripIndent();
+            var js = "{"
+                    + "stage: 'START',"
+                    + "regions: " + regions + ","
+                    + "cancellable: false,"
+                    + "idcInfo: {"
+                    + "  profileName: '',"
+                    + "  startUrl: '" + lastStartUrl + "',"
+                    + "  region: '" + lastRegion + "'"
+                    + "},"
+                    + "feature: 'q',"
+                    + "existConnections: [],"
+                    + "profiles: []"
+                    + "}";
             browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
             browser.execute(String.format("ideClient.prepareUi(%s)", js));
             browser.execute("ideClient.updateAuthorization('')");

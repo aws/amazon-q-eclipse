@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import software.amazon.awssdk.regions.servicemetadata.OidcServiceMetadata;
 import software.amazon.awssdk.utils.StringUtils;
+import software.aws.toolkits.eclipse.amazonq.configuration.DefaultPluginStore;
 import software.aws.toolkits.eclipse.amazonq.configuration.customization.CustomizationUtil;
 import software.aws.toolkits.eclipse.amazonq.configuration.profiles.QDeveloperProfileUtil;
 import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginIdcParams;
@@ -21,6 +22,7 @@ import software.aws.toolkits.eclipse.amazonq.lsp.auth.model.LoginType;
 import software.aws.toolkits.eclipse.amazonq.plugin.Activator;
 import software.aws.toolkits.eclipse.amazonq.util.AwsRegion;
 import software.aws.toolkits.eclipse.amazonq.util.JsonHandler;
+import software.aws.toolkits.eclipse.amazonq.util.PluginUtils;
 import software.aws.toolkits.eclipse.amazonq.util.ThemeDetector;
 import software.aws.toolkits.eclipse.amazonq.util.ThreadingUtils;
 import software.aws.toolkits.eclipse.amazonq.views.model.Command;
@@ -31,6 +33,8 @@ public class LoginViewActionHandler implements ViewActionHandler {
 
     private static final JsonHandler JSON_HANDLER = new JsonHandler();
     private static final ThemeDetector THEME_DETECTOR = new ThemeDetector();
+    private static final String LAST_IDC_START_URL_KEY = "lastIdcStartUrl";
+    private static final String LAST_IDC_REGION_KEY = "lastIdcRegion";
     private Future<?> loginTask;
     private boolean isLoginTaskRunning = false;
 
@@ -57,6 +61,9 @@ public class LoginViewActionHandler implements ViewActionHandler {
                         }
                         Activator.getLoginService().login(LoginType.IAM_IDENTITY_CENTER,
                                 new LoginParams().setLoginIdcParams(loginIdcParams)).get();
+                        // Persist last-used IdC info for next login
+                        DefaultPluginStore.getInstance().put(LAST_IDC_START_URL_KEY, url);
+                        DefaultPluginStore.getInstance().put(LAST_IDC_REGION_KEY, region);
                         if (QDeveloperProfileUtil.getInstance().isProfileSelectionRequired()) {
                             Map<String, Object> profilesData = new HashMap<>();
                             var profiles = QDeveloperProfileUtil.getInstance().getDeveloperProfiles();
@@ -87,21 +94,27 @@ public class LoginViewActionHandler implements ViewActionHandler {
                     + oidcMetadata.regions().stream().filter(region -> region.metadata().partition().id().equals("aws"))
                             .map(AwsRegion::from).map(AwsRegion::toString).collect(Collectors.joining(","))
                     + "]";
-            var js = String.format("""
-                    {
-                        stage: '%s',
-                        regions: %s,
-                        cancellable: false,
-                        idcInfo: {
-                            profileName: '',
-                            startUrl: '',
-                            region: 'us-east-1'
-                        },
-                        feature: 'q',
-                        existConnections: [],
-                        profiles: []
-                    }
-                        """, "START", regions).stripIndent();
+            String lastStartUrl = DefaultPluginStore.getInstance().get(LAST_IDC_START_URL_KEY);
+            String lastRegion = DefaultPluginStore.getInstance().get(LAST_IDC_REGION_KEY);
+            if (lastStartUrl == null) {
+                lastStartUrl = "";
+            }
+            if (lastRegion == null || lastRegion.isEmpty()) {
+                lastRegion = "us-east-1";
+            }
+            var js = "{"
+                    + "stage: 'START',"
+                    + "regions: " + regions + ","
+                    + "cancellable: false,"
+                    + "idcInfo: {"
+                    + "  profileName: '',"
+                    + "  startUrl: '" + lastStartUrl + "',"
+                    + "  region: '" + lastRegion + "'"
+                    + "},"
+                    + "feature: 'q',"
+                    + "existConnections: [],"
+                    + "profiles: []"
+                    + "}";
             browser.execute("changeTheme(" + THEME_DETECTOR.isDarkTheme() + ");");
             browser.execute(String.format("ideClient.prepareUi(%s)", js));
             browser.execute("ideClient.updateAuthorization('')");
@@ -111,6 +124,14 @@ public class LoginViewActionHandler implements ViewActionHandler {
             QDeveloperProfileUtil.getInstance().setDeveloperProfile(developerProfile, true).thenRun(() -> {
                 CustomizationUtil.validateCurrentCustomization();
             });
+            break;
+        case OPEN_URL:
+            if (params instanceof Map) {
+                var urlValue = ((Map<?, ?>) params).get("url");
+                if (urlValue instanceof String && !((String) urlValue).isEmpty()) {
+                    PluginUtils.handleExternalLinkClick((String) urlValue);
+                }
+            }
             break;
         default:
             Activator.getLogger()

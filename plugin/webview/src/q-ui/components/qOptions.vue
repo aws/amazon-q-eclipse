@@ -3,38 +3,65 @@
 
 <template>
     <div @keydown.enter="handleContinueClick">
-        <div class="font-amazon" v-if="existConnections.length > 0">
-            <div class="title bottom-small-gap">Connect with an existing account:</div>
-            <div v-for="(connection, index) in this.existConnections" :key="index">
-                <SelectableItem
-                    @toggle="toggleItemSelection"
-                    :isSelected="selectedLoginOption === connection.id"
-                    :itemId="connection.id"
-                    :login-type="this.connectionType(connection)"
-                    :itemTitle="this.connectionDisplayedName(connection)"
-                    :itemText="this.connectionTypeDescription(connection)"
-                    class="bottom-small-gap"
-                ></SelectableItem>
-            </div>
+        <div class="title font-amazon welcome-header bottom-small-gap">Welcome to Amazon Q</div>
+        <div class="maintenance-banner font-amazon bottom-small-gap">
+            <span class="maintenance-banner__icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 2L1 21h22L12 2zm0 5.3L19.5 19H4.5L12 7.3zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"
+                        fill="currentColor"
+                    />
+                </svg>
+            </span>
+            <span class="maintenance-banner__text">
+                Amazon Q Developer IDE plugins will reach end of support on April 30, 2027. New accounts will no longer available starting 5/15, but existing users can still sign-in below.
+                <a class="maintenance-banner__link" href="#" @click.prevent="handleLearnMoreClick">Learn more</a>
+            </span>
         </div>
+        <button
+            class="create-account-button font-amazon bottom-small-gap"
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="New account creation is no longer available"
+        >
+            <span>Create New Account</span>
+            <svg class="create-account-button__lock" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path
+                    d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V11a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 5a3 3 0 0 1 6 0v3H9V6z"
+                    fill="currentColor"
+                />
+            </svg>
+        </button>
+        <div class="existing-users-divider font-amazon bottom-small-gap"><span>existing users</span></div>
 
-        <div class="title font-amazon bottom-small-gap" v-if="existingLogin.id === -1">Choose a sign-in option:</div>
+        <div v-if="existConnections.length > 0" v-for="(connection, index) in existConnections" :key="connection.id">
+            <SelectableItem
+                @toggle="toggleItemSelection"
+                :isSelected="selectedLoginOption === connection.id"
+                :itemId="connection.id"
+                :login-type="connectionType(connection)"
+                :itemTitle="connectionDisplayedName(connection)"
+                :itemText="connectionTypeDescription(connection)"
+                class="font-amazon bottom-small-gap"
+            ></SelectableItem>
+        </div>
         <SelectableItem
             @toggle="toggleItemSelection"
             :isSelected="selectedLoginOption === LoginOption.BUILDER_ID"
             :itemId="LoginOption.BUILDER_ID"
             :login-type="LoginOption.BUILDER_ID"
-            :itemTitle="'Use for free'"
-            :itemText="'No AWS account required'"
+            :itemTitle="'Builder ID'"
+            :itemText="'Sign in with your existing Builder ID.'"
             class="font-amazon bottom-small-gap"
         ></SelectableItem>
-        <!-- TODO: IdC description undecided -->
         <SelectableItem
             @toggle="toggleItemSelection"
             :isSelected="selectedLoginOption === LoginOption.ENTERPRISE_SSO"
             :itemId="LoginOption.ENTERPRISE_SSO"
             :login-type="LoginOption.ENTERPRISE_SSO"
-            :itemTitle="'Use with Pro license'"
+            :itemTitle="'Identity Center'"
+            :itemText="'Sign in through your organization\'s IAM Identity Center.'"
             class="font-amazon bottom-small-gap"
         ></SelectableItem>
         <button
@@ -43,7 +70,7 @@
             v-on:click="handleContinueClick()"
             tabindex="-1"
         >
-            Continue
+            Sign in with existing account
         </button>
     </div>
 </template>
@@ -88,6 +115,13 @@ export default defineComponent({
             this.selectedLoginOption = itemId
             window.telemetryApi.postClickEvent(itemId + "Option")
         },
+        handleLearnMoreClick() {
+            window.telemetryApi.postClickEvent("maintenanceLearnMoreLink")
+            window.ideApi.postMessage({
+                command: 'openUrl',
+                params: { url: 'https://aws.amazon.com/q/developer/' }
+            })
+        },
         handleBackButtonClick() {
             this.$emit('backToMenu')
         },
@@ -128,4 +162,106 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.welcome-header {
+    text-align: center;
+}
+
+.maintenance-banner {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.45);
+    color: #e0b84d;
+    font-size: 12px;
+    line-height: 1.5;
+
+    &__icon {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 2px;
+        color: inherit;
+    }
+
+    &__text {
+        flex: 1;
+    }
+
+    &__link {
+        color: inherit;
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    &__link:hover {
+        opacity: 0.85;
+    }
+}
+
+body.jb-light .maintenance-banner {
+    background: rgba(180, 120, 10, 0.08);
+    border-color: rgba(180, 120, 10, 0.55);
+    color: #8a6d1c;
+}
+
+.create-account-button {
+    width: 100%;
+    height: 30px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background-color: #3a3a3a;
+    color: #8a8a8a;
+    cursor: not-allowed;
+    margin-bottom: 24px !important;
+
+    &__lock {
+        color: currentColor;
+    }
+}
+
+body.jb-light .create-account-button {
+    background-color: #d4d4d4;
+    color: #7a7a7a;
+}
+
+.existing-users-divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 24px !important;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #3c3c3c;
+    }
+
+    span {
+        white-space: nowrap;
+    }
+}
+
+body.jb-light .existing-users-divider {
+    color: #666;
+
+    &::before,
+    &::after {
+        background: #c8c8c8;
+    }
+}
 </style>

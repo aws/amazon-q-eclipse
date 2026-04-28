@@ -51,7 +51,8 @@ public enum Command {
     LOGIN_IDC("loginIdC"),
     CANCEL_LOGIN("cancelLogin"),
     ON_LOAD("onLoad"),
-    ON_SELECT_PROFILE("onSelectProfile");
+    ON_SELECT_PROFILE("onSelectProfile"),
+    OPEN_URL("openUrl");
 
     private final String commandString;
 

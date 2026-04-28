@@ -134,14 +134,6 @@ public class AmazonQLspClientImpl extends LanguageClientImpl implements AmazonQL
                 qConfig.put(Constants.LSP_CUSTOMIZATION_CONFIGURATION_KEY, Objects.nonNull(storedCustomization) ? storedCustomization.getArn() : null);
                 qConfig.put(Constants.LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY, false);
                 qConfig.put(Constants.LSP_OPT_OUT_TELEMETRY_CONFIGURATION_KEY, !DefaultTelemetryService.telemetryEnabled());
-                Map<String, Object> projectContextConfig = new HashMap<>();
-                boolean indexingSetting = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.WORKSPACE_INDEX);
-                boolean gpuIndexingSetting = Activator.getDefault().getPreferenceStore().getBoolean(AmazonQPreferencePage.USE_GPU_FOR_INDEXING);
-                int indexThreadsSetting = Activator.getDefault().getPreferenceStore().getInt(AmazonQPreferencePage.INDEX_WORKER_THREADS);
-                projectContextConfig.put(Constants.LSP_INDEXING_CONFIGURATION_KEY, indexingSetting);
-                projectContextConfig.put(Constants.LSP_GPU_INDEXING_CONFIGURATION_KEY, gpuIndexingSetting);
-                projectContextConfig.put(Constants.LSP_INDEX_THREADS_CONFIGURATION_KEY, indexThreadsSetting);
-                qConfig.put(Constants.LSP_PROJECT_CONTEXT_CONFIGURATION_KEY, projectContextConfig);
                 output.add(qConfig);
                 Activator.getLspProvider().activate(AmazonQLspServer.class);
             } else if (item.getSection().equals(Constants.LSP_CW_CONFIGURATION_KEY)) {

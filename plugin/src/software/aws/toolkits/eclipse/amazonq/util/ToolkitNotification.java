@@ -72,9 +72,9 @@ public class ToolkitNotification extends AbstractNotificationPopup {
     @Override
     protected final void initializeBounds() {
         Rectangle clArea = getPrimaryClientArea();
-        Point initialSize = getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        int height = Math.max(initialSize.y, MIN_HEIGHT);
-        int width = Math.min(initialSize.x, MAX_WIDTH);
+        int width = Math.min(getShell().computeSize(SWT.DEFAULT, SWT.DEFAULT).x, MAX_WIDTH);
+        // Recompute height with the constrained width so wrapped text and buttons are accounted for
+        int height = Math.max(getShell().computeSize(width, SWT.DEFAULT).y, MIN_HEIGHT);
         Point size = new Point(width, height);
         // Calculate the position for the new notification
         int x = clArea.x + clArea.width - size.x - PADDING_EDGE;

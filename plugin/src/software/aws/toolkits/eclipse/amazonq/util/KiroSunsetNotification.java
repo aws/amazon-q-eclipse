@@ -40,7 +40,6 @@ public final class KiroSunsetNotification extends ToolkitNotification {
             @Override
             public void widgetSelected(final SelectionEvent e) {
                 PluginUtils.openWebpage(Constants.KIRO_SUNSET_LEARN_MORE_URL);
-                close();
             }
         });
 

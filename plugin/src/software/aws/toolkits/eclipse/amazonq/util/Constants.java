@@ -42,8 +42,8 @@ public final class Constants {
             + " of the IDE preferences.";
     public static final String KIRO_SUNSET_NOTIFICATION_TITLE = "Amazon Q Developer end of support";
     public static final String KIRO_SUNSET_NOTIFICATION_BODY = "Amazon Q Developer IDE plugins will reach end of support on April 30, 2027."
-            + " New accounts will no longer available starting 5/15, but existing users can still sign-in below.";
-    public static final String KIRO_SUNSET_LEARN_MORE_URL = "https://aws.amazon.com/q/developer/";
+            + " New accounts will no longer be available starting May 15, 2026, but existing users can still sign-in below.";
+    public static final String KIRO_SUNSET_LEARN_MORE_URL = "https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/";
     public static final String KIRO_SUNSET_NOTIFICATION_DISMISSED_KEY = "kiroSunsetNotificationDismissed";
     public static final String RE_AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to re-authenticate. Please try again.";
     public static final String AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to authenticate. Please try again.";

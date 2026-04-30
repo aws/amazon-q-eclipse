@@ -119,7 +119,7 @@ export default defineComponent({
             window.telemetryApi.postClickEvent("maintenanceLearnMoreLink")
             window.ideApi.postMessage({
                 command: 'openUrl',
-                params: { url: 'https://aws.amazon.com/q/developer/' }
+                params: { url: 'https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/' }
             })
         },
         handleBackButtonClick() {

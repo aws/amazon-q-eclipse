@@ -6,8 +6,8 @@
         <div class="icon">
             <svg
                 v-if="loginType === LoginOption.BUILDER_ID"
-                width="20"
-                height="20"
+                width="16"
+                height="16"
                 viewBox="0 0 16 16"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -21,8 +21,8 @@
             </svg>
             <svg
                 v-if="loginType === LoginOption.ENTERPRISE_SSO"
-                width="20"
-                height="20"
+                width="16"
+                height="16"
                 viewBox="0 0 16 16"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -94,10 +94,11 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .item-container {
-    padding: 15px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
-    height: 38px;
+    min-height: 50px;
+    box-sizing: border-box;
 }
 
 .selected {
@@ -105,6 +106,7 @@ export default defineComponent({
 }
 
 .item-title {
+    font-size: 13px;
     font-weight: bold;
     margin-bottom: 2px;
 }
@@ -112,11 +114,20 @@ export default defineComponent({
 .text {
     display: flex;
     flex-direction: column;
-    font-size: 15px;
+    font-size: 12px;
+    min-width: 0;
+}
+
+.p {
+    line-height: 1.4;
+    white-space: normal;
 }
 
 .icon {
-    margin-right: 15px;
+    margin-right: 11px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 /* Theme specific styles */

@@ -11,10 +11,6 @@ public final class Constants {
 
     public static final String CUSTOMIZATION_STORAGE_INTERNAL_KEY = "aws.q.customization.eclipse";
     public static final String LSP_CUSTOMIZATION_CONFIGURATION_KEY = "customization";
-    public static final String LSP_PROJECT_CONTEXT_CONFIGURATION_KEY = "projectContext";
-    public static final String LSP_INDEXING_CONFIGURATION_KEY = "enableLocalIndexing";
-    public static final String LSP_GPU_INDEXING_CONFIGURATION_KEY = "enableGpuAcceleration";
-    public static final String LSP_INDEX_THREADS_CONFIGURATION_KEY = "indexWorkerThreads";
     public static final String LSP_ENABLE_TELEMETRY_EVENTS_CONFIGURATION_KEY = "enableTelemetryEventsToDestination";
     public static final String LSP_OPT_OUT_TELEMETRY_CONFIGURATION_KEY = "optOutTelemetry";
     public static final String LSP_Q_CONFIGURATION_KEY = "aws.q";
@@ -44,6 +40,11 @@ public final class Constants {
     public static final String TELEMETRY_NOTIFICATION_TITLE = "AWS IDE plugins telemetry";
     public static final String TELEMETRY_NOTIFICATION_BODY = "Usage metrics are collected by default. This can be changed in the \"Amazon Q\" section"
             + " of the IDE preferences.";
+    public static final String KIRO_SUNSET_NOTIFICATION_TITLE = "Amazon Q Developer end of support";
+    public static final String KIRO_SUNSET_NOTIFICATION_BODY = "Amazon Q Developer IDE plugins will reach end of support on April 30, 2027."
+            + " New accounts will no longer be available starting May 15, 2026";
+    public static final String KIRO_SUNSET_LEARN_MORE_URL = "https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/";
+    public static final String KIRO_SUNSET_NOTIFICATION_DISMISSED_KEY = "kiroSunsetNotificationDismissed";
     public static final String RE_AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to re-authenticate. Please try again.";
     public static final String AUTHENTICATE_FAILURE_MESSAGE = "An error occurred while attempting to authenticate. Please try again.";
     public static final String IDE_SSL_HANDSHAKE_TITLE = "SSL Handshake Error";

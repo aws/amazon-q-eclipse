@@ -19,6 +19,7 @@ public enum ChatUIInboundCommandName {
     ListRules("aws/chat/listRules"),
     RuleClick("aws/chat/ruleClick"),
     ListAvailableModels("aws/chat/listAvailableModels"),
+    FilterContextCommands("aws/chat/filterContextCommands"),
     SendPinnedContext("aws/chat/sendPinnedContext");
 
     private final String value;

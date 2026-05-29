@@ -1,12 +1,9 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+# This workflow builds the Eclipse plugin with Maven/Tycho and uploads
+# the plugin JAR and p2 update site as downloadable artifacts.
+#
+# Artifacts are available from the Actions tab on every PR and main push.
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Maven Sanity Build
+name: Maven Build
 
 on:
   push:
@@ -14,17 +11,16 @@ on:
   pull_request:
     branches: [ "main", "feature/*" ]
 
-
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Setup Maven Action
       uses: s4u/setup-maven-action@v1.18.0
       with:
@@ -32,5 +28,24 @@ jobs:
         java-version: 17
         java-distribution: temurin
         maven-version: 3.9.8
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+    - name: Upload plugin JAR
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: amazon-q-eclipse-plugin
+        path: plugin/target/amazon-q-eclipse-*.jar
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Upload update site
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: amazon-q-eclipse-update-site
+        path: updatesite/target/amazon-q-eclipse-update-site-*.zip
+        if-no-files-found: error
+        retention-days: 30

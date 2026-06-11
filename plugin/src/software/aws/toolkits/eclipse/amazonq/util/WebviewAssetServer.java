@@ -3,6 +3,8 @@
 
 package software.aws.toolkits.eclipse.amazonq.util;
 
+import java.nio.file.Path;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -29,7 +31,7 @@ public final class WebviewAssetServer {
             var handler = new ResourceHandler();
 
             ResourceFactory resourceFactory = ResourceFactory.of(server);
-            handler.setBaseResource(resourceFactory.newResource(jsPath));
+            handler.setBaseResource(resourceFactory.newResource(Path.of(jsPath)));
             handler.setDirAllowed(true);
             servletContext.setHandler(handler);
 

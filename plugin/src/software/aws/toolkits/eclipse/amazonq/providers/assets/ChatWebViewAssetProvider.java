@@ -425,7 +425,7 @@ public final class ChatWebViewAssetProvider extends WebViewAssetProvider {
 
         String jsFile = Paths.get(chatUiDirectory.get()).resolve("amazonq-ui.js").toString();
         var jsParent = Path.of(jsFile).getParent();
-        var jsDirectoryPath = Path.of(jsParent.toUri()).normalize().toString();
+        var jsDirectoryPath = jsParent.normalize().toString();
 
         if (webviewAssetServer == null) {
             webviewAssetServer = new WebviewAssetServer();
